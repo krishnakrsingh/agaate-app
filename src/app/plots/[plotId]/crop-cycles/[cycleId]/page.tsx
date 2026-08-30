@@ -256,50 +256,50 @@ export default async function CropCycleDetailPage({
           <article className="card" style={{ margin: 0 }}>
             <div className="card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div className="metric-icon-box emerald" style={{ width: 34, height: 34 }}>
-                  <Icons.Layers size={18} />
+                <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
+                  <Icons.Layers size={16} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Bed Infrastructure (BRD §9)</h3>
+                  <h3 style={{ margin: 0, fontSize: 16 }}>Bed Infrastructure (BRD §9)</h3>
                   <small className="muted">{cycle.bedPreparationEnabled ? "Raised Bed Formation" : "No Bed Config"}</small>
                 </div>
               </div>
-              <span className={`status ${cycle.bedPreparationEnabled ? "active" : "inactive"}`} style={{ fontSize: "0.72rem" }}>
+              <span className={`status ${cycle.bedPreparationEnabled ? "active" : "inactive"}`}>
                 {cycle.bedPreparationEnabled ? "ENABLED" : "DISABLED"}
               </span>
             </div>
 
             {cycle.bedPreparationEnabled ? (
               <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: "0.88rem" }}>
-                  <div style={{ padding: "10px", background: "var(--slate-50)", borderRadius: "var(--radius-sm)" }}>
-                    <span className="muted" style={{ fontSize: "0.75rem", display: "block" }}>Bed Width</span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
+                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                    <span className="mono-label" style={{ display: "block" }}>Bed Width</span>
                     <strong>{cycle.bedWidthCm ? `${cycle.bedWidthCm} cm` : "—"}</strong>
                   </div>
-                  <div style={{ padding: "10px", background: "var(--slate-50)", borderRadius: "var(--radius-sm)" }}>
-                    <span className="muted" style={{ fontSize: "0.75rem", display: "block" }}>Centre-to-Centre</span>
+                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                    <span className="mono-label" style={{ display: "block" }}>Centre-to-Centre</span>
                     <strong>{cycle.bedCenterDistanceCm ? `${cycle.bedCenterDistanceCm} cm` : "—"}</strong>
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", background: "var(--primary-50)", borderRadius: "var(--radius-md)", border: "1px solid var(--primary-200)" }}>
+                <div style={{ padding: 14, background: "var(--soft-stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--hairline)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: "0.85rem", color: "var(--primary-900)" }}>Expected Total Beds:</span>
-                    <strong style={{ fontSize: "1rem", color: "var(--primary-800)" }}>{cycle.expectedTotalBeds?.toString() ?? "—"} beds</strong>
+                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Expected Total Beds:</span>
+                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.expectedTotalBeds?.toString() ?? "—"} beds</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: "0.85rem", color: "var(--primary-900)" }}>Actual Beds Formed:</span>
-                    <strong style={{ fontSize: "1rem", color: "var(--primary-800)" }}>{cycle.actualBedsCreated?.toString() ?? "Pending"}</strong>
+                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Actual Beds Formed:</span>
+                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.actualBedsCreated?.toString() ?? "Pending"}</strong>
                   </div>
                   {bedVariance && (
-                    <div style={{ fontSize: "0.8rem", color: bedVariance.amount >= 0 ? "var(--primary-800)" : "var(--danger-red)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--primary-300)" }}>
+                    <div style={{ fontSize: 12, color: bedVariance.amount >= 0 ? "#166534" : "var(--error)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--hairline)" }}>
                       Variance: <strong>{bedVariance.amount > 0 ? `+${bedVariance.amount}` : bedVariance.amount} beds</strong> ({bedVariance.percentage?.toFixed(1)}%)
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="muted" style={{ fontSize: "0.88rem" }}>Bed preparation was not configured for this crop cycle.</p>
+              <p className="muted" style={{ fontSize: 13 }}>Bed preparation was not configured for this crop cycle.</p>
             )}
           </article>
 
@@ -307,50 +307,50 @@ export default async function CropCycleDetailPage({
           <article className="card" style={{ margin: 0 }}>
             <div className="card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div className="metric-icon-box blue" style={{ width: 34, height: 34 }}>
-                  <Icons.Sprout size={18} />
+                <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
+                  <Icons.Sprout size={16} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Mulching & Population (BRD §10-11)</h3>
+                  <h3 style={{ margin: 0, fontSize: 16 }}>Mulching & Population (BRD §10-11)</h3>
                   <small className="muted">{cycle.mulchEnabled ? cycle.mulchHolePattern?.replaceAll("_", " ") : "Direct Ground"}</small>
                 </div>
               </div>
-              <span className={`status ${cycle.mulchEnabled ? "active" : "inactive"}`} style={{ fontSize: "0.72rem" }}>
+              <span className={`status ${cycle.mulchEnabled ? "active" : "inactive"}`}>
                 {cycle.mulchEnabled ? "MULCH ACTIVE" : "NO MULCH"}
               </span>
             </div>
 
             {cycle.mulchEnabled ? (
               <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: "0.88rem" }}>
-                  <div style={{ padding: "10px", background: "var(--slate-50)", borderRadius: "var(--radius-sm)" }}>
-                    <span className="muted" style={{ fontSize: "0.75rem", display: "block" }}>Hole Pattern</span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
+                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                    <span className="mono-label" style={{ display: "block" }}>Hole Pattern</span>
                     <strong>{cycle.mulchHolePattern?.replaceAll("_", " ") ?? "—"}</strong>
                   </div>
-                  <div style={{ padding: "10px", background: "var(--slate-50)", borderRadius: "var(--radius-sm)" }}>
-                    <span className="muted" style={{ fontSize: "0.75rem", display: "block" }}>Plant Distance</span>
+                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                    <span className="mono-label" style={{ display: "block" }}>Plant Distance</span>
                     <strong>{cycle.plantDistanceCm ? `${cycle.plantDistanceCm} cm` : "—"}</strong>
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", background: "var(--sky-light)", borderRadius: "var(--radius-md)", border: "1px solid var(--sky-border)" }}>
+                <div style={{ padding: 14, background: "var(--soft-stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--hairline)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: "0.85rem", color: "var(--sky-dark)" }}>Expected Population:</span>
-                    <strong style={{ fontSize: "1rem", color: "var(--sky-dark)" }}>{cycle.expectedPlants?.toString() ?? "—"} plants</strong>
+                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Expected Population:</span>
+                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.expectedPlants?.toString() ?? "—"} plants</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: "0.85rem", color: "var(--sky-dark)" }}>Actual Population:</span>
-                    <strong style={{ fontSize: "1rem", color: "var(--sky-dark)" }}>{cycle.actualPlants?.toString() ?? "Pending"}</strong>
+                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Actual Population:</span>
+                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.actualPlants?.toString() ?? "Pending"}</strong>
                   </div>
                   {plantVariance && (
-                    <div style={{ fontSize: "0.8rem", color: plantVariance.amount >= 0 ? "var(--primary-800)" : "var(--danger-red)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--sky-border)" }}>
+                    <div style={{ fontSize: 12, color: plantVariance.amount >= 0 ? "#166534" : "var(--error)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--hairline)" }}>
                       Variance: <strong>{plantVariance.amount > 0 ? `+${plantVariance.amount}` : plantVariance.amount} plants</strong> ({plantVariance.percentage?.toFixed(1)}%)
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="muted" style={{ fontSize: "0.88rem" }}>Mulching film was not enabled for this crop cycle.</p>
+              <p className="muted" style={{ fontSize: 13 }}>Mulch film was not configured for this crop cycle.</p>
             )}
           </article>
         </div>

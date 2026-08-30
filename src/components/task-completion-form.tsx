@@ -99,40 +99,39 @@ export function TaskCompletionForm({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "Task completion failed.");
+        throw new Error(body.error ?? "Completion recording failed.");
       }
 
-      formEl?.reset();
-      setPhotoPreviews([]);
       onComplete();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Task completion failed.");
-    } finally {
+    } catch (err) {
       setPending(false);
+      setError(err instanceof Error ? err.message : "Unable to complete task.");
     }
   }
 
-  const bedActivity = /land|bed preparation/i.test(taskTitle);
-  const plantActivity = /(transplantation|direct sowing)/i.test(taskTitle);
+  const titleLower = taskTitle.toLowerCase();
+  const bedActivity = titleLower.includes("bed") || titleLower.includes("raised") || titleLower.includes("land");
+  const plantActivity = titleLower.includes("transplant") || titleLower.includes("sowing") || titleLower.includes("plant");
 
   return (
     <form
-      className="form"
       onSubmit={submit}
       style={{
         marginTop: 16,
-        padding: 18,
-        background: "var(--slate-50)",
-        borderRadius: "var(--radius-lg)",
-        border: "1px solid var(--border-subtle)",
+        padding: 20,
+        background: "var(--soft-stone)",
+        borderRadius: "var(--radius-sm)",
+        border: "1px solid var(--hairline)",
+        display: "grid",
+        gap: 16,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <Icons.CheckCircle size={18} style={{ color: "var(--primary-600)" }} />
-        <h4 style={{ margin: 0, fontSize: "1.05rem" }}>Record Execution Details</h4>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Icons.CheckCircle size={16} />
+        <h4 style={{ margin: 0, fontSize: 15 }}>Record Activity Completion</h4>
       </div>
 
-      <div className="form-group">
+      <div className="form-group" style={{ margin: 0 }}>
         <label>Completion Remarks & Notes</label>
         <textarea
           name="remarks"
@@ -143,7 +142,7 @@ export function TaskCompletionForm({
       </div>
 
       {bedActivity && (
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Actual Beds Created (BRD §9)</label>
           <input
             name="actualBedsCreated"
@@ -157,7 +156,7 @@ export function TaskCompletionForm({
       )}
 
       {plantActivity && (
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Approximate Actual Plants (BRD §11)</label>
           <input
             name="actualPlants"
@@ -171,36 +170,36 @@ export function TaskCompletionForm({
       )}
 
       {/* Materials Used */}
-      <fieldset>
-        <legend style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icons.Layers size={14} />
-          <span>Material Utilization (BRD §29 - Optional)</span>
-        </legend>
-        <div className="three-column">
-          <div className="form-group">
-            <label>Material Name</label>
-            <input name="materialName" placeholder="e.g., NPK 19:19:19, Neem Oil" />
+      <div style={{ background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+        <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Icons.Layers size={13} />
+          <span>Material Utilization (Optional)</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 10 }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: 12 }}>Material Name</label>
+            <input name="materialName" placeholder="e.g., NPK 19:19:19" />
           </div>
-          <div className="form-group">
-            <label>Quantity</label>
-            <input name="quantity" type="number" min="0.01" step="0.01" placeholder="e.g., 5" />
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: 12 }}>Quantity</label>
+            <input name="quantity" type="number" min="0.01" step="0.01" placeholder="5" />
           </div>
-          <div className="form-group">
-            <label>Unit</label>
-            <input name="unit" placeholder="kg, L, bags, grams" />
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: 12 }}>Unit</label>
+            <input name="unit" placeholder="kg, L, bags" />
           </div>
         </div>
-      </fieldset>
+      </div>
 
       {/* Labour Tracking */}
-      <fieldset>
-        <legend style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icons.Users size={14} />
-          <span>Labour Tracking (BRD §28 - Optional)</span>
-        </legend>
+      <div style={{ background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+        <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Icons.Users size={13} />
+          <span>Labour Tracking (Optional)</span>
+        </div>
         <div className="two-column">
-          <div className="form-group">
-            <label>Number of Labourers</label>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: 12 }}>Number of Labourers</label>
             <input
               name="labourers"
               type="number"
@@ -211,8 +210,8 @@ export function TaskCompletionForm({
               placeholder="e.g., 4"
             />
           </div>
-          <div className="form-group">
-            <label>Hours Worked per Person</label>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: 12 }}>Hours Worked per Person</label>
             <input
               name="hours"
               type="number"
@@ -227,51 +226,47 @@ export function TaskCompletionForm({
         </div>
 
         {calculatedLabourHours && (
-          <div className="hint" style={{ padding: "6px 12px", fontSize: "0.8rem", margin: "4px 0" }}>
-            <Icons.CheckCircle size={14} />
-            <span>Total Labour Utilization: <strong>{calculatedLabourHours} Man-Hours</strong></span>
+          <div style={{ fontSize: 12, color: "#166534", fontWeight: 600 }}>
+            Total Labour Utilization: {calculatedLabourHours} Man-Hours
           </div>
         )}
-      </fieldset>
+      </div>
 
       {/* Evidence Photos */}
-      <div className="form-group">
-        <label>Photo Evidence (Upload completed work photos)</label>
+      <div className="form-group" style={{ margin: 0 }}>
+        <label>Photo Evidence (Optional)</label>
         <input
-          name="evidence"
           type="file"
-          multiple
+          name="evidence"
           accept="image/jpeg,image/png,image/webp"
+          multiple
           onChange={handlePhotoChange}
         />
-
         {photoPreviews.length > 0 && (
-          <div className="upload-previews">
-            {photoPreviews.map((src, i) => (
-              <div className="upload-preview-item" key={i}>
-                <img src={src} alt="Evidence preview" />
-              </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            {photoPreviews.map((url, i) => (
+              <img
+                key={i}
+                src={url}
+                alt={`Evidence preview ${i + 1}`}
+                style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {error && (
-        <div className="error" role="alert">
-          <Icons.AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <div className="error">{error}</div>}
 
-      <button
-        type="submit"
-        className="btn btn-primary"
-        disabled={pending}
-        style={{ width: "100%", padding: "12px 20px" }}
-      >
-        <Icons.Check size={16} />
-        <span>{pending ? "Uploading evidence & completing…" : "Complete Activity"}</span>
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="submit"
+          className="btn btn-primary btn-sm"
+          disabled={pending}
+        >
+          {pending ? "Saving Evidence…" : "Confirm Activity Completion"}
+        </button>
+      </div>
     </form>
   );
 }

@@ -25,17 +25,24 @@ const categories = [
   { value: "CROP_SPECIFIC", label: "Crop-Specific Activity", icon: "Activity" },
 ] as const;
 
-export function TaskForm() {
+export interface TaskFormProps {
+  initialDate?: string;
+  initialFarmId?: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export function TaskForm({ initialDate, initialFarmId, onSuccess, onCancel }: TaskFormProps = {}) {
   const router = useRouter();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [access, setAccess] = useState<Access[]>([]);
-  const [farmId, setFarmId] = useState("");
+  const [farmId, setFarmId] = useState(initialFarmId || "");
   const [plotId, setPlotId] = useState("");
   const [cropCycleId, setCropCycleId] = useState("");
   const [category, setCategory] = useState<string>("FERTIGATION");
   const [priority, setPriority] = useState<string>("MEDIUM");
-  const [planDate, setPlanDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [planDate, setPlanDate] = useState(() => initialDate || new Date().toISOString().slice(0, 10));
 
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -45,12 +52,12 @@ export function TaskForm() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((list: Farm[]) => {
         setFarms(list);
-        if (list.length > 0) {
+        if (!farmId && list.length > 0) {
           setFarmId(list[0].id);
         }
       })
       .catch(() => setError("Unable to load farms."));
-  }, []);
+  }, [farmId]);
 
   useEffect(() => {
     if (!farmId) {
@@ -98,34 +105,36 @@ export function TaskForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Unable to plan activity. Ensure date is within rolling 7 days.");
+        setError(body.error ?? "Failed to create activity.");
         return;
       }
 
-      router.replace("/tasks");
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push("/tasks");
+        router.refresh();
+      }
     } catch {
       setPending(false);
-      setError("Network error.");
+      setError("Network error creating activity.");
     }
   }
 
   const selectedPlot = plots.find((p) => p.id === plotId);
 
   return (
-    <form className="card form" onSubmit={submit}>
-      <div className="card-header">
-        <div>
-          <h2>Schedule Agronomy Activity</h2>
-          <p className="muted" style={{ fontSize: "0.88rem" }}>
-            Create tasks within the rolling 7-day window. Tasks instantly appear in the officer&apos;s daily queue.
-          </p>
+    <form onSubmit={submit} className="card" style={{ padding: 28, display: "grid", gap: 20 }}>
+      {error && (
+        <div className="error" role="alert">
+          <Icons.AlertCircle size={16} />
+          <span>{error}</span>
         </div>
-      </div>
+      )}
 
-      {/* Farm & Assignment */}
+      {/* Target Farm & Officer */}
       <div className="two-column">
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Target Farm</label>
           <select
             name="farmId"
@@ -146,7 +155,7 @@ export function TaskForm() {
           </select>
         </div>
 
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Assigned Farm Officer</label>
           <select name="assignedOfficerId" required disabled={!farmId}>
             <option value="">Select officer…</option>
@@ -158,7 +167,7 @@ export function TaskForm() {
           </select>
         </div>
 
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Plot (Optional)</label>
           <select
             name="plotId"
@@ -180,7 +189,7 @@ export function TaskForm() {
           </select>
         </div>
 
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Crop Cycle (Optional)</label>
           <select
             name="cropCycleId"
@@ -202,7 +211,7 @@ export function TaskForm() {
 
       {/* Date & Priority */}
       <div className="two-column">
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Execution Date (Within 7 Days)</label>
           <input
             name="date"
@@ -213,88 +222,109 @@ export function TaskForm() {
           />
         </div>
 
-        <div className="form-group">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Priority Level</label>
-          <div className="choice-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
             {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => (
-              <div
+              <button
                 key={p}
-                className={`choice-card ${priority === p ? "selected" : ""}`}
+                type="button"
                 onClick={() => setPriority(p)}
-                style={{ padding: "8px 6px", textAlign: "center" }}
+                style={{
+                  padding: "8px 4px",
+                  borderRadius: "var(--radius-xs)",
+                  background: priority === p ? "var(--primary)" : "var(--soft-stone)",
+                  color: priority === p ? "var(--on-primary)" : "var(--ink)",
+                  border: `1px solid ${priority === p ? "var(--primary)" : "var(--hairline)"}`,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: "var(--font-mono)",
+                  cursor: "pointer",
+                }}
               >
-                <span className={`priority-tag ${p.toLowerCase()}`} style={{ justifyContent: "center" }}>
-                  {p}
-                </span>
-              </div>
+                {p}
+              </button>
             ))}
           </div>
         </div>
       </div>
 
       {/* Category Grid */}
-      <div className="form-group">
+      <div className="form-group" style={{ margin: 0 }}>
         <label>Activity Category (BRD §20)</label>
-        <div className="choice-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 8 }}>
           {categories.map((cat) => (
-            <div
+            <button
               key={cat.value}
-              className={`choice-card ${category === cat.value ? "selected" : ""}`}
+              type="button"
               onClick={() => setCategory(cat.value)}
-              style={{ padding: "10px 12px" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: "var(--radius-xs)",
+                background: category === cat.value ? "var(--primary)" : "var(--canvas)",
+                color: category === cat.value ? "var(--on-primary)" : "var(--ink)",
+                border: `1px solid ${category === cat.value ? "var(--primary)" : "var(--hairline)"}`,
+                fontSize: 13,
+                fontWeight: 500,
+                textAlign: "left",
+                cursor: "pointer",
+              }}
             >
-              <strong style={{ fontSize: "0.88rem" }}>{cat.label}</strong>
-            </div>
+              <Icons.Sprout size={14} />
+              <span>{cat.label}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="form-group">
+      {/* Title, Instructions, Description */}
+      <div className="form-group" style={{ margin: 0 }}>
         <label>Activity Title</label>
         <input
           name="title"
-          minLength={3}
-          placeholder="e.g., Foliar spray of Micronutrients + Neem Oil 1500ppm"
+          placeholder="e.g. 19:19:19 Drip Fertigation Cycle (Week 3)"
           required
         />
       </div>
 
-      <div className="form-group">
-        <label>Description & Scope</label>
+      <div className="form-group" style={{ margin: 0 }}>
+        <label>Agronomist Guidance / Technical Instructions (Optional)</label>
+        <input
+          name="instructions"
+          placeholder="e.g. Mix 2.5kg 19-19-19 in 200L tank; run venturi for 45 min"
+        />
+      </div>
+
+      <div className="form-group" style={{ margin: 0 }}>
+        <label>Detailed Description</label>
         <textarea
           name="description"
-          minLength={3}
-          placeholder="Detailed activity description, dosage, dilution ratio, spray pressure…"
-          rows={2}
+          placeholder="Explain field objectives, dose recommendations, and execution prerequisites…"
+          rows={3}
           required
         />
       </div>
 
-      <div className="form-group">
-        <label>Technical Instructions for Officer (Optional)</label>
-        <textarea
-          name="instructions"
-          placeholder="Special notes, spray timings (early morning / late evening), safety equipment…"
-          rows={2}
-        />
+      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={pending || !farmId}
+        >
+          <span>{pending ? "Dispatching…" : "Dispatch to Officer"}</span>
+          <Icons.ArrowRight size={14} />
+        </button>
       </div>
-
-      {error && (
-        <div className="error" role="alert">
-          <Icons.AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <button
-        type="submit"
-        className="btn btn-primary"
-        disabled={pending || !farmId}
-        style={{ padding: "14px 24px" }}
-      >
-        <Icons.Calendar size={18} />
-        <span>{pending ? "Scheduling activity…" : "Assign & Publish to Field Queue"}</span>
-      </button>
     </form>
   );
 }

@@ -64,91 +64,7 @@ export async function POST(request: NextRequest) {
         { status: 422 }
       );
 
-    // ── Stage 4: Biometric presence verification (server-authoritative, not client trust) ──
-    // If user has enrolled passkey/face, require recent server-verified proof within 5 minutes.
-    // No fake confidence, no client boolean — we check audit + DB state.
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const [passkeyCount, faceEnrollment] = await Promise.all([
-      prisma.passkeyCredential.count({ where: { userId: actor.id, revokedAt: null } }),
-      prisma.faceEnrollment.findUnique({ where: { userId: actor.id } }),
-    ]);
-
-    const strictBiometric = process.env.REQUIRE_BIOMETRIC_FOR_ATTENDANCE === "true" && actor.role === "FARM_OFFICER";
-    if (strictBiometric) {
-      if (passkeyCount === 0)
-        return NextResponse.json(
-          { error: "Device enrollment required. Please register a passkey at /settings/biometric before clocking attendance (strict mode)." },
-          { status: 422 }
-        );
-      const hasActiveFaceStrict = faceEnrollment && faceEnrollment.status === "ACTIVE" && !faceEnrollment.revokedAt;
-      if (!hasActiveFaceStrict)
-        return NextResponse.json(
-          { error: "Face enrollment required. Please complete 3-frame face enrollment at /settings/biometric." },
-          { status: 422 }
-        );
-    }
-
-    let webauthnVerified = false;
-    let webauthnCredentialId: string | null = null;
-    let faceVerified = false;
-    let faceDistance: number | null = null;
-    let faceSimilarityPercent: number | null = null;
-    let faceModelId: string | null = null;
-    let faceThresholdVersion: string | null = null;
-    let livenessVerified = false;
-    let livenessChallengeId: string | null = null;
-
-    if (passkeyCount > 0 || strictBiometric) {
-      const recentWebAuthn = await prisma.auditLog.findFirst({
-        where: { actorId: actor.id, action: "WEBAUTHN_AUTH_VERIFY", createdAt: { gte: fiveMinutesAgo } },
-        orderBy: { createdAt: "desc" },
-      });
-      if (!recentWebAuthn) {
-        return NextResponse.json(
-          { error: "Device verification required within 5 minutes. Please verify with Face ID / Fingerprint at /settings/biometric before clocking attendance." },
-          { status: 422 }
-        );
-      }
-      webauthnVerified = true;
-      webauthnCredentialId = (recentWebAuthn.metadata as any)?.credentialId ?? null;
-    }
-
-    const hasActiveFace = faceEnrollment && faceEnrollment.status === "ACTIVE" && !faceEnrollment.revokedAt;
-    if (hasActiveFace || strictBiometric) {
-      const recentFace = await prisma.auditLog.findFirst({
-        where: {
-          actorId: actor.id,
-          action: { in: ["FACE_VERIFY_MATCH", "LIVENESS_VERIFY_PASS"] },
-          createdAt: { gte: fiveMinutesAgo },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-      if (!recentFace) {
-        return NextResponse.json(
-          { error: "Face verification required within 5 minutes. Please verify face at /settings/biometric before clocking attendance." },
-          { status: 422 }
-        );
-      }
-      faceVerified = true;
-      faceDistance = (recentFace.metadata as any)?.distance ?? null;
-      faceSimilarityPercent = (recentFace.metadata as any)?.similarityPercent ?? null;
-      faceModelId = (recentFace.metadata as any)?.modelId ?? faceEnrollment?.modelId ?? null;
-      faceThresholdVersion = (recentFace.metadata as any)?.thresholdVersion ?? faceEnrollment?.thresholdVersion ?? null;
-
-      const recentLiveness = await prisma.auditLog.findFirst({
-        where: { actorId: actor.id, action: "LIVENESS_VERIFY_PASS", createdAt: { gte: fiveMinutesAgo } },
-        orderBy: { createdAt: "desc" },
-      });
-      if (!recentLiveness) {
-        return NextResponse.json(
-          { error: "Liveness verification required within 5 minutes. Please complete the randomized liveness challenge at /settings/biometric." },
-          { status: 422 }
-        );
-      }
-      livenessVerified = true;
-      livenessChallengeId = recentLiveness.entityId;
-    }
-
+    // ── BRD §17 & §18: Pure Selfie + GPS Location Matching ──
     const attendance = await prisma.$transaction(async (tx) => {
       const existing = await tx.attendance.findUnique({
         where: {
@@ -172,15 +88,6 @@ export async function POST(request: NextRequest) {
             startLongitude: input.longitude,
             startSelfieKey: media.storageKey,
             exceptionReason: input.reason,
-            webauthnVerified,
-            webauthnCredentialId,
-            faceVerified,
-            faceDistance,
-            faceSimilarityPercent,
-            faceModelId,
-            faceThresholdVersion,
-            livenessVerified,
-            livenessChallengeId,
           },
         });
         if (outside)
@@ -204,15 +111,6 @@ export async function POST(request: NextRequest) {
           endLongitude: input.longitude,
           endSelfieKey: media.storageKey,
           status: endStatus,
-          webauthnVerified,
-          webauthnCredentialId,
-          faceVerified,
-          faceDistance,
-          faceSimilarityPercent,
-          faceModelId,
-          faceThresholdVersion,
-          livenessVerified,
-          livenessChallengeId,
           exception: outside
             ? {
                 upsert: {
@@ -229,7 +127,7 @@ export async function POST(request: NextRequest) {
       input.action === "START" ? "START_DAY" : "END_DAY",
       "Attendance",
       attendance.id,
-      { farmId: input.farmId, outside, distanceMeters: distance, webauthnVerified, faceVerified, livenessVerified, faceDistance, faceModelId }
+      { farmId: input.farmId, outside, distanceMeters: distance }
     );
     return NextResponse.json({ attendance, distanceMeters: distance, withinGeofence: !outside });
   } catch (error) {

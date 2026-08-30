@@ -87,212 +87,180 @@ export function DashboardClient({
 
   const roleHint =
     role === "SUPER_ADMIN"
-      ? "Global command across every estate, people, and agronomy decision."
+      ? "Global multi-estate operations across land plots, agronomists, and field officers."
       : role === "FARM_ADMIN"
-        ? "Own your assigned farms — plots, crops, people, and daily execution."
-        : role === "AGRONOMIST"
-          ? "Central intelligence — plan, monitor, and prescribe across all farms."
-          : "Field execution — clock in, execute, and capture with precision.";
+      ? "Manage assigned farms — plot layout, crop cycles, team assignments, and approvals."
+      : role === "AGRONOMIST"
+      ? "Central agronomy intelligence — 7-day planning, crop health monitoring, and prescriptions."
+      : "Field execution — live presence clock-in, task dispatch, and real-time incident reports.";
 
   return (
     <div style={{ display: "grid", gap: 0 }}>
-      {/* HERO — Cohere white canvas, tight display */}
-      <section style={{ padding: "56px 0 32px", borderBottom: "1px solid var(--hairline)" }}>
+      {/* ── HERO SECTION — Cohere White Editorial Canvas ── */}
+      <section style={{ padding: "40px 0 32px", borderBottom: "1px solid var(--hairline)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 32, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div style={{ flex: "1 1 560px", minWidth: 0, maxWidth: 760 }}>
             <div style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-              <span style={{
-                fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.28, textTransform: "uppercase",
+              <span className="mono-label" style={{
                 background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-pill)",
                 padding: "4px 10px", color: "var(--ink)"
               }}>
-                {role.replaceAll("_", " ")} • {userName}
+                {role.replaceAll("_", " ")} &bull; {userName}
               </span>
-              <span style={{ width: 6, height: 6, borderRadius: 9999, background: "var(--coral)" }} />
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--slate-cohere)" }}>ENTERPRISE FARM OPERATIONS</span>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)" }} />
+              <span className="mono-label">ENTERPRISE PRECISION AGRI OPS</span>
             </div>
-            <h1 style={{
-              fontFamily: "var(--font-display)", fontSize: "clamp(36px, 5vw, 60px)",
-              lineHeight: 1, letterSpacing: "-1.2px", fontWeight: 400, color: "var(--ink)", margin: "0 0 16px"
-            }}>
-              Controlled intelligence<br />from soil to harvest<span style={{ color: "var(--slate-cohere)" }}>.</span>
+
+            <h1 style={{ margin: "0 0 16px" }}>
+              Controlled intelligence<br />from soil to harvest<span style={{ color: "var(--coral)" }}>.</span>
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.4, color: "var(--body-muted)", maxWidth: 680, margin: "0 0 24px" }}>
-              {roleHint} Manage geofenced attendance, 7-day agronomy, and automated reporting on a single flat, bordered canvas — no shadows, no clutter.
+
+            <p style={{ fontSize: 18, lineHeight: 1.4, color: "var(--body-muted)", maxWidth: 640, margin: "0 0 24px" }}>
+              {roleHint} Geofenced presence attendance, 7-day rolling agronomy dispatch, and automated reports on a controlled, border-driven canvas.
             </p>
+
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
               {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) ? (
-                <Link href="/farms/new" style={{
-                  background: "var(--cohere-primary)", color: "white", borderRadius: "var(--radius-pill)",
-                  padding: "12px 24px", fontSize: 14, fontWeight: 500, display: "inline-flex", gap: 8, alignItems: "center"
-                }}>
-                  <Icons.Plus size={14} /><span>New farm</span>
+                <Link href="/farms/new" className="btn btn-primary">
+                  <Icons.Plus size={14} /><span>Create New Farm</span>
                 </Link>
               ) : role === "FARM_OFFICER" ? (
-                <Link href="/officer/day" style={{
-                  background: "var(--cohere-primary)", color: "white", borderRadius: "var(--radius-pill)",
-                  padding: "12px 24px", fontSize: 14, fontWeight: 500, display: "inline-flex", gap: 8, alignItems: "center"
-                }}>
+                <Link href="/officer/day" className="btn btn-primary">
                   <Icons.Sun size={14} /><span>Open My Day</span>
                 </Link>
               ) : (
-                <Link href="/tasks/new" style={{
-                  background: "var(--cohere-primary)", color: "white", borderRadius: "var(--radius-pill)",
-                  padding: "12px 24px", fontSize: 14, fontWeight: 500, display: "inline-flex", gap: 8, alignItems: "center"
-                }}>
-                  <Icons.Calendar size={14} /><span>Plan activity</span>
+                <Link href="/tasks/new" className="btn btn-primary">
+                  <Icons.Calendar size={14} /><span>Plan 7-Day Activity</span>
                 </Link>
               )}
-              <Link href="/reports/daily" style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-                View daily report →
+              <Link href="/reports/daily" className="btn btn-ghost">
+                View daily report &rarr;
               </Link>
             </div>
           </div>
 
+          {/* Side Product Capability Card */}
           <div style={{
             flex: "0 1 380px", minWidth: 280, background: "var(--soft-stone)", border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-lg)", padding: 24, display: "grid", gap: 14, alignContent: "start"
+            borderRadius: "var(--radius-sm)", padding: 24, display: "grid", gap: 14, alignContent: "start"
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--cohere-primary)", color: "white", display: "grid", placeItems: "center" }}>
-                <Icons.Sprout size={18} />
+              <div style={{ width: 34, height: 34, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
+                <Icons.Sprout size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>Agaate Intelligence</div>
-                <div style={{ fontSize: 12, color: "var(--slate-cohere)" }}>PWA • Offline tolerant • S3 verified</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Agaate Platform Telemetry</div>
+                <div className="mono-label" style={{ fontSize: 11, color: "var(--slate)" }}>PWA &bull; S3 Evidence &bull; Offline Sync</div>
               </div>
             </div>
             <div style={{ height: 1, background: "var(--hairline)" }} />
-            <div style={{ display: "grid", gap: 10, fontSize: 14, color: "var(--ink)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate-cohere)" }}>Hq geofence</span><strong>500 m</strong></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate-cohere)" }}>Weather</span><strong>Open-Meteo live</strong></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate-cohere)" }}>Auth</span><strong>JWT 8h • bcrypt</strong></div>
+            <div style={{ display: "grid", gap: 8, fontSize: 13, color: "var(--ink)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate)" }}>HQ Geofence</span><strong>500 meters</strong></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate)" }}>Weather Telemetry</span><strong>Open-Meteo Live</strong></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--slate)" }}>Security & Access</span><strong>Session Auth &bull; RBAC</strong></div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* TRUST STRIP — Cohere wide spacing, monochrome */}
-      <div style={{ padding: "28px 0", borderBottom: "1px solid var(--hairline)", display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.28, color: "var(--slate-cohere)", textTransform: "uppercase" }}>
-          Trusted across estates • mandya • hosur • nashik • 3 states
+      {/* ── TRUST LOGO STRIP ── */}
+      <div className="trust-logo-strip">
+        <span className="mono-label">
+          DEPLOYED ACROSS ESTATES &bull; MANDYA &bull; HOSUR &bull; NASHIK &bull; 3 STATES
         </span>
-        <div style={{ display: "flex", gap: 28, flexWrap: "wrap", opacity: 0.6, fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink)" }}>
-          <span>SOMNATH AGRO</span><span>NARAYANA SWAMY</span><span>PRIYANKA VENTURES</span><span>AGAATE</span>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", opacity: 0.6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", color: "var(--ink)" }}>
+          <span>SOMNATH AGRO</span><span>NARAYANA SWAMY</span><span>PRIYANKA VENTURES</span><span>AGAATE PRECISION</span>
         </div>
       </div>
 
-      {/* DARK FEATURE BAND — Cohere deep-green, 80px padding */}
-      <section style={{
-        margin: "32px 0 0", background: "var(--deep-green)", color: "white",
-        borderRadius: "var(--radius-lg)", padding: 32, display: "grid", gap: 24
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.28, textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>Live telemetry • API verified</div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 32, lineHeight: 1.2, letterSpacing: "-0.32px", fontWeight: 400, color: "white", margin: "6px 0 0" }}>
-              Operations at a glance
-            </h2>
-          </div>
-          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", maxWidth: 420 }}>
-            Four flat capability cards — no shadows, just hairline rules and mineral type. 3-col desktop, 2 tablet, 1 mobile.
-          </div>
+      {/* ── KPI METRIC CARDS ── */}
+      <section className="metric-grid" style={{ marginTop: 32 }}>
+        <div className="metric-card">
+          <span className="metric-label">Managed Estates</span>
+          <div className="metric-value">{metrics.totalFarms}</div>
+          <div className="metric-sub">{metrics.activeFarms} Active &bull; {metrics.setupFarms} In Setup</div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 16 }}>
-          {[
-            { label: "Managed farms", value: metrics.totalFarms, sub: `${metrics.activeFarms} active • ${metrics.setupFarms} setup`, icon: Icons.Farm },
-            { label: "Plots & crops", value: metrics.totalPlots, sub: `${metrics.totalCrops} active crop cycles`, icon: Icons.Layers },
-            { label: "Dispatch", value: metrics.totalTasks, sub: `${metrics.completedTasks} completed`, icon: Icons.ClipboardList },
-            { label: "Field signals", value: metrics.pendingIncidents, sub: metrics.pendingIncidents ? `${metrics.pendingIncidents} active incidents` : "All clear", icon: Icons.Activity },
-          ].slice(0, 4).map((m, i) => (
-            <div key={i} style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "var(--radius-sm)", padding: 20, display: "grid", gap: 8
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.22, textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>{m.label}</span>
-                <span style={{ width: 28, height: 28, borderRadius: 6, background: "rgba(255,255,255,0.10)", display: "grid", placeItems: "center", color: "white" }}><m.icon size={14} /></span>
-              </div>
-              <div style={{ fontFamily: "var(--font-display)", fontSize: 32, lineHeight: 1, fontWeight: 400, color: "white" }}>{m.value}</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{m.sub}</div>
-            </div>
-          ))}
+        <div className="metric-card">
+          <span className="metric-label">Plots & Crop Cycles</span>
+          <div className="metric-value">{metrics.totalPlots}</div>
+          <div className="metric-sub">{metrics.totalCrops} Active Crop Cycles</div>
         </div>
-        <style>{`@media(max-width:1024px){ section[style*="gridTemplateColumns: repeat(3"]{ grid-template-columns: repeat(2,1fr) !important; } } @media(max-width:640px){ section[style*="gridTemplateColumns: repeat(3"]{ grid-template-columns: 1fr !important; } }`}</style>
+
+        <div className="metric-card">
+          <span className="metric-label">Daily Operations</span>
+          <div className="metric-value">{metrics.totalTasks}</div>
+          <div className="metric-sub">{metrics.completedTasks} Completed Today</div>
+        </div>
+
+        <div className="metric-card">
+          <span className="metric-label">Field Signals</span>
+          <div className="metric-value" style={{ color: metrics.pendingIncidents > 0 ? "var(--error)" : "inherit" }}>
+            {metrics.pendingIncidents}
+          </div>
+          <div className="metric-sub">{metrics.delayedAlerts} Overdue &bull; {metrics.pendingIncidents} Incidents</div>
+        </div>
       </section>
 
-      {/* FIELD INTELLIGENCE & HEALTH ALERTS (BRD §19 & §26) */}
+      {/* ── DARK FEATURE BAND: FIELD INTELLIGENCE & HEALTH SIGNALS ── */}
       {(poorHealthAlerts.length > 0 || activeIncidents.length > 0) && (
-        <section style={{ padding: "36px 0 0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+        <section className="dark-feature-band" style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
             <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--danger-red)" }}>
-                <Icons.AlertTriangle size={16} />
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, letterSpacing: 0.28, textTransform: "uppercase" }}>
-                  Active Field Signals & Crop Health Alerts (BRD §19)
-                </span>
+              <div className="mono-label" style={{ color: "rgba(255, 255, 255, 0.7)", display: "flex", gap: 6, alignItems: "center" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)" }} />
+                <span>ACTIVE FIELD SIGNALS &bull; BRD §19 & §26</span>
               </div>
-              <h2 style={{ fontFamily: "var(--font-body)", fontSize: 22, fontWeight: 500, margin: "4px 0 0", color: "var(--ink)" }}>
-                Attention Required Across Estates
+              <h2 style={{ color: "var(--on-dark)", margin: "8px 0 0" }}>
+                Estates Requiring Agronomy Action
               </h2>
             </div>
+
             {["SUPER_ADMIN", "AGRONOMIST"].includes(role) && (
-              <Link href="/tasks/new" className="btn btn-sm btn-primary" style={{ minHeight: 36 }}>
-                <Icons.Calendar size={14} />
-                <span>Prescribe Corrective Activity</span>
+              <Link href="/tasks/new" className="btn btn-secondary" style={{ background: "white", color: "var(--primary)", borderColor: "white" }}>
+                <Icons.Calendar size={14} /><span>Prescribe Corrective Task</span>
               </Link>
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
             {poorHealthAlerts.map((alert) => (
               <div
                 key={alert.id}
                 style={{
-                  background: "#fff5f5",
-                  border: "1px solid #fed7d7",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.16)",
                   borderRadius: "var(--radius-sm)",
-                  padding: 16,
+                  padding: 20,
                   display: "grid",
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <span
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "var(--radius-pill)",
-                      background: "var(--danger-red)",
-                      color: "white",
-                      textTransform: "uppercase",
-                    }}
-                  >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span className="mono-label" style={{ color: "var(--coral)", fontWeight: 700 }}>
                     POOR CROP HEALTH
                   </span>
-                  <span style={{ fontSize: 12, color: "var(--slate-cohere)" }}>{alert.date}</span>
+                  <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.6)" }}>{alert.date}</span>
                 </div>
                 <div>
-                  <strong style={{ fontSize: "1.05rem", color: "var(--slate-900)" }}>🌱 {alert.cropName}</strong>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "var(--slate-700)" }}>
+                  <strong style={{ fontSize: 16, color: "white" }}>🌱 {alert.cropName}</strong>
+                  <p style={{ margin: "2px 0 0", fontSize: 13, color: "rgba(255, 255, 255, 0.8)" }}>
                     {alert.farmName} &bull; Plot {alert.plotName} &bull; Stage: <strong>{alert.stage}</strong>
                   </p>
                   {alert.impactPercent && (
-                    <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "var(--danger-red)", fontWeight: 600 }}>
-                      Estimated Impact: {alert.impactPercent}%
+                    <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--coral)", fontWeight: 600 }}>
+                      Estimated Yield Impact: {alert.impactPercent}%
                     </p>
                   )}
                 </div>
                 {alert.remarks && (
-                  <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-muted)", fontStyle: "italic", background: "white", padding: "6px 10px", borderRadius: "var(--radius-xs)", border: "1px solid #fee2e2" }}>
+                  <p style={{ margin: 0, fontSize: 12, color: "rgba(255, 255, 255, 0.9)", fontStyle: "italic", background: "rgba(0, 0, 0, 0.2)", padding: "6px 10px", borderRadius: "var(--radius-xs)" }}>
                     &ldquo;{alert.remarks}&rdquo;
                   </p>
                 )}
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-                  <Link href={`/farms/${alert.farmId}`} style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--primary-700)", textDecoration: "underline" }}>
-                    Inspect Plot Details →
+                  <Link href={`/farms/${alert.farmId}`} style={{ fontSize: 12, fontWeight: 600, color: "white", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                    Inspect Plot Details &rarr;
                   </Link>
                 </div>
               </div>
@@ -302,42 +270,32 @@ export function DashboardClient({
               <div
                 key={inc.id}
                 style={{
-                  background: "#fffaf0",
-                  border: "1px solid #feebc8",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.16)",
                   borderRadius: "var(--radius-sm)",
-                  padding: 16,
+                  padding: 20,
                   display: "grid",
                   gap: 8,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                  <span
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "var(--radius-pill)",
-                      background: inc.severity === "CRITICAL" || inc.severity === "HIGH" ? "var(--danger-red)" : "#dd6b20",
-                      color: "white",
-                      textTransform: "uppercase",
-                    }}
-                  >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span className="mono-label" style={{ color: "#fde68a" }}>
                     {inc.level} INCIDENT &bull; {inc.severity}
                   </span>
-                  <span style={{ fontSize: 12, color: "var(--slate-cohere)" }}>{inc.date}</span>
+                  <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.6)" }}>{inc.date}</span>
                 </div>
                 <div>
-                  <strong style={{ fontSize: "1.05rem", color: "var(--slate-900)" }}>{inc.type}</strong>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.85rem", color: "var(--slate-700)" }}>
+                  <strong style={{ fontSize: 16, color: "white" }}>{inc.type}</strong>
+                  <p style={{ margin: "2px 0 0", fontSize: 13, color: "rgba(255, 255, 255, 0.8)" }}>
                     {inc.farmName} {inc.plotName ? `&bull; Plot ${inc.plotName}` : ""} {inc.cropName ? `&bull; ${inc.cropName}` : ""}
                   </p>
                 </div>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-main)", background: "white", padding: "6px 10px", borderRadius: "var(--radius-xs)", border: "1px solid #fef3c7" }}>
+                <p style={{ margin: 0, fontSize: 13, color: "rgba(255, 255, 255, 0.9)", background: "rgba(0, 0, 0, 0.2)", padding: "6px 10px", borderRadius: "var(--radius-xs)" }}>
                   {inc.description}
                 </p>
                 <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-                  <Link href={`/farms/${inc.farmId}`} style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--primary-700)", textDecoration: "underline" }}>
-                    View Farm →
+                  <Link href={`/farms/${inc.farmId}`} style={{ fontSize: 12, fontWeight: 600, color: "white", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                    View Farm Incident &rarr;
                   </Link>
                 </div>
               </div>
@@ -346,100 +304,125 @@ export function DashboardClient({
         </section>
       )}
 
-      {/* FARMS — Cohere product cards: soft-stone, 8px, 32px padding, 3-col */}
-      <section style={{ padding: "48px 0 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20, borderBottom: "1px solid var(--hairline)", paddingBottom: 16 }}>
-          <div style={{ minWidth: 0 }}>
-            <h2 style={{ fontFamily: "var(--font-body)", fontSize: 24, fontWeight: 400, lineHeight: 1.3, color: "var(--ink)", margin: 0 }}>Estate portfolio</h2>
-            <p style={{ fontSize: 14, color: "var(--slate-cohere)", margin: "4px 0 0" }}>Warm stone product cards — checkmarks, divider, pill CTA. 3-col desktop.</p>
+      {/* ── ESTATE PORTFOLIO SECTION (Cohere Research Table Pattern) ── */}
+      <section style={{ marginTop: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 16, borderBottom: "1px solid var(--hairline)", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <div className="mono-label">ESTATE OPERATIONS</div>
+            <h2 style={{ margin: "4px 0 0" }}>Estate Portfolio</h2>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", flex: "1 1 320px", justifyContent: "flex-end", minWidth: 0 }}>
-            <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 320, minWidth: 0 }}>
+
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ position: "relative", minWidth: 240 }}>
               <input
                 type="text"
-                placeholder="Search farms…"
+                placeholder="Search estates, location, owner…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%", padding: "10px 12px 10px 32px", borderRadius: "var(--radius-xs)",
-                  border: "1px solid var(--hairline)", fontSize: 14, background: "white"
-                }}
+                style={{ paddingLeft: 34, height: 36, fontSize: 13 }}
               />
-              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }}><Icons.Search size={14} /></span>
+              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--slate)" }}>
+                <Icons.Search size={14} />
+              </span>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+
+            <div style={{ display: "flex", gap: 4 }}>
               {["ALL", "ACTIVE", "SETUP", "INACTIVE"].map((st) => (
-                <button key={st} type="button" onClick={() => setStatusFilter(st)}
-                  style={{
-                    padding: "6px 12px", borderRadius: "var(--radius-xl)", fontSize: 13, fontWeight: 500,
-                    border: "1px solid", borderColor: statusFilter === st ? "var(--cohere-primary)" : "var(--hairline)",
-                    background: statusFilter === st ? "var(--cohere-primary)" : "transparent",
-                    color: statusFilter === st ? "white" : "var(--ink)"
-                  }}>
-                  {st === "ALL" ? "All" : st}
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  className={`tab-btn ${statusFilter === st ? "active" : ""}`}
+                >
+                  {st}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 16 }}>
+        {/* Flat Rule-Separated Estate Rows */}
+        <div style={{ display: "grid" }}>
           {filteredFarms.map((farm) => {
             const plotCount = farm.plots?.length ?? 0;
             const officerCount = farm.access?.filter((a) => a.user.role === "FARM_OFFICER").length ?? 0;
             const crops = farm.plots?.flatMap((p) => p.cropCycles.map((c) => c.cropName)) ?? [];
+
             return (
-              <Link key={farm.id} href={`/farms/${farm.id}`} style={{
-                background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-sm)",
-                padding: 24, display: "flex", flexDirection: "column", gap: 16, textDecoration: "none", minWidth: 0
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{
-                    fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.22, textTransform: "uppercase",
-                    background: "white", border: "1px solid var(--hairline)", borderRadius: "var(--radius-pill)", padding: "3px 8px", color: "var(--ink)"
-                  }}>
-                    {farm.status}
-                  </span>
-                  <span style={{ fontSize: 12, color: "var(--slate-cohere)", display: "inline-flex", gap: 4, alignItems: "center" }}>
-                    <Icons.MapPin size={12} />{farm.location}
-                  </span>
+              <Link
+                key={farm.id}
+                href={`/farms/${farm.id}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.2fr 1fr 1.5fr 1fr auto",
+                  alignItems: "center",
+                  gap: 16,
+                  padding: "20px 0",
+                  borderBottom: "1px solid var(--hairline)",
+                  transition: "background var(--transition-fast)",
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                    <span className={`status ${farm.status.toLowerCase()}`}>
+                      {farm.status}
+                    </span>
+                    <span className="mono-label" style={{ fontSize: 11 }}>{farm.location}</span>
+                  </div>
+                  <strong style={{ fontSize: 16, color: "var(--ink)" }}>{farm.name}</strong>
+                  <div style={{ fontSize: 13, color: "var(--body-muted)" }}>{farm.ownerName}</div>
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: "var(--font-body)", fontSize: 20, fontWeight: 500, lineHeight: 1.2, color: "var(--ink)", overflowWrap: "break-word" }}>{farm.name}</div>
-                  <div style={{ fontSize: 13, color: "var(--slate-cohere)", marginTop: 4 }}>{farm.ownerName} • {farm.totalArea} acres</div>
+
+                <div>
+                  <div className="mono-label">ACREAGE</div>
+                  <div style={{ fontSize: 14, color: "var(--ink)", fontWeight: 500 }}>
+                    {farm.totalArea} ac ({farm.cultivableArea} cult)
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", minHeight: 22 }}>
-                  {crops.length ? crops.slice(0, 3).map((c, i) => (
-                    <span key={i} style={{ fontSize: 12, fontWeight: 500, background: "white", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: "2px 8px", color: "var(--ink)" }}>🌱 {c}</span>
-                  )) : <span style={{ fontSize: 12, color: "var(--slate-cohere)", fontStyle: "italic" }}>No active crop</span>}
-                  {crops.length > 3 && <span style={{ fontSize: 12, color: "var(--slate-cohere)" }}>+{crops.length - 3}</span>}
+
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {crops.length > 0 ? (
+                    crops.slice(0, 3).map((c, i) => (
+                      <span key={i} className="mono-label" style={{ background: "var(--soft-stone)", padding: "3px 8px", borderRadius: "var(--radius-xs)", color: "var(--ink)" }}>
+                        🌱 {c}
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: 13, color: "var(--muted)", fontStyle: "italic" }}>
+                      No active crop cycles
+                    </span>
+                  )}
+                  {crops.length > 3 && (
+                    <span className="mono-label" style={{ color: "var(--slate)" }}>
+                      +{crops.length - 3}
+                    </span>
+                  )}
                 </div>
-                <div style={{ height: 1, background: "var(--hairline)", margin: "4px 0" }} />
-                <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--slate-cohere)", flexWrap: "wrap" }}>
-                  <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}><Icons.Layers size={12} />{plotCount} plots</span>
-                  <span>•</span><span>{officerCount} officers</span>
+
+                <div style={{ fontSize: 13, color: "var(--body-muted)" }}>
+                  <span>{plotCount} Plots</span> &bull; <span>{officerCount} Officers</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", display: "inline-flex", gap: 6, alignItems: "center" }}>
-                    Open hub <Icons.ArrowRight size={12} />
-                  </span>
-                  <span style={{
-                    fontSize: 12, fontWeight: 500, background: "var(--cohere-primary)", color: "white",
-                    borderRadius: "var(--radius-pill)", padding: "6px 12px"
-                  }}>
-                    View
+
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", display: "inline-flex", gap: 4, alignItems: "center" }}>
+                    <span>Open Hub</span>
+                    <Icons.ArrowRight size={13} />
                   </span>
                 </div>
               </Link>
             );
           })}
+
           {!filteredFarms.length && (
-            <div style={{ gridColumn: "1/-1" }}>
-              <EmptyState icon={<Icons.Farm size={28} />} title="No farms found" description="No estates match your search." />
+            <div style={{ padding: "48px 0" }}>
+              <EmptyState
+                icon={<Icons.Farm size={32} />}
+                title="No estates found"
+                description="No farms match your search or filter criteria."
+              />
             </div>
           )}
         </div>
-        <style>{`@media(max-width:1024px){ div[style*="repeat(3, minmax(0,1fr)"]{ grid-template-columns: repeat(2, minmax(0,1fr)) !important; } } @media(max-width:640px){ div[style*="repeat(3, minmax(0,1fr)"]{ grid-template-columns: 1fr !important; } }`}</style>
       </section>
     </div>
   );

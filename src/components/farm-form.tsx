@@ -63,132 +63,135 @@ export function FarmForm() {
   }
 
   return (
-    <article className="card">
+    <article className="card" style={{ padding: 28 }}>
       <div className="card-header">
         <div>
-          <h2>Setup New Farm Property</h2>
-          <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Add boundary coordinates, cultivable acreage, and water infrastructure.
-          </p>
+          <div className="eyebrow">ESTATE ONBOARDING</div>
+          <h2 style={{ margin: "2px 0 0" }}>Setup New Farm Property</h2>
         </div>
       </div>
 
-      <form className="form two-column" onSubmit={submit}>
-        <div className="form-group">
-          <label>Farm Name</label>
-          <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
-        </div>
-
-        <div className="form-group">
-          <label>Client / Owner Name</label>
-          <input name="ownerName" placeholder="e.g., Ramesh Patel" required maxLength={120} />
-        </div>
-
-        <div className="form-group">
-          <label>Location (City / District)</label>
-          <input name="location" placeholder="e.g., Hosur, Krishnagiri" required maxLength={180} />
-        </div>
-
-        <div className="form-group">
-          <label>Primary Water Source</label>
-          <input name="waterSource" placeholder="e.g., Borewell (20 HP) + Farm Pond" required maxLength={180} />
-        </div>
-
-        <div className="form-group wide">
-          <label>Full Address / Landmark</label>
-          <input name="address" placeholder="Survey No. 42/1, Denkanikottai Road…" maxLength={500} />
-        </div>
-
-        <div className="form-group">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label>Latitude</label>
-            <button
-              type="button"
-              onClick={capture}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--primary-700)",
-                fontSize: "0.78rem",
-                padding: 0,
-                boxShadow: "none",
-                cursor: "pointer",
-              }}
-            >
-              Capture GPS
-            </button>
+      <form onSubmit={submit} style={{ display: "grid", gap: 16 }}>
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Farm Name</label>
+            <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
           </div>
-          <input
-            name="latitude"
-            type="number"
-            step="any"
-            min="-90"
-            max="90"
-            placeholder="e.g., 12.5284"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            required
-          />
-        </div>
 
-        <div className="form-group">
-          <label>Longitude</label>
-          <input
-            name="longitude"
-            type="number"
-            step="any"
-            min="-180"
-            max="180"
-            placeholder="e.g., 77.8341"
-            value={lng}
-            onChange={(e) => setLng(e.target.value)}
-            required
-          />
-        </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Client / Owner Name</label>
+            <input name="ownerName" placeholder="e.g., Ramesh Patel" required maxLength={120} />
+          </div>
 
-        <div className="form-group">
-          <label>Total Farm Area (acres)</label>
-          <input name="totalArea" type="number" step="0.01" min="0.01" placeholder="e.g., 10.0" required />
-        </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Location (City / District)</label>
+            <input name="location" placeholder="e.g., Hosur, Krishnagiri" required maxLength={180} />
+          </div>
 
-        <div className="form-group">
-          <label>Cultivable Area (acres)</label>
-          <input name="cultivableArea" type="number" step="0.01" min="0.01" placeholder="e.g., 8.5" required />
-        </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Primary Water Source</label>
+            <input name="waterSource" placeholder="e.g., Borewell (20 HP) + Farm Pond" required maxLength={180} />
+          </div>
 
-        <div className="form-group wide">
-          <label>Geofence Radius (meters)</label>
-          <input
-            name="geofenceRadiusMeters"
-            type="number"
-            defaultValue="500"
-            min="50"
-            max="10000"
-            required
-          />
-          <small className="muted">
-            Used for automatic selfie attendance validation. Default is 500m around coordinates.
-          </small>
+          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+            <label>Full Address / Landmark</label>
+            <input name="address" placeholder="Survey No. 42/1, Denkanikottai Road…" maxLength={500} />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label>Latitude</label>
+              <button
+                type="button"
+                onClick={capture}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--action-blue)",
+                  fontSize: 11,
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  textTransform: "uppercase",
+                }}
+              >
+                + Capture GPS
+              </button>
+            </div>
+            <input
+              name="latitude"
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              placeholder="e.g., 12.5284"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Longitude</label>
+            <input
+              name="longitude"
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              placeholder="e.g., 77.8341"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Total Farm Area (Acres)</label>
+            <input name="totalArea" type="number" step="0.01" min="0.01" placeholder="e.g., 10.0" required />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Cultivable Area (Acres)</label>
+            <input name="cultivableArea" type="number" step="0.01" min="0.01" placeholder="e.g., 8.5" required />
+          </div>
+
+          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+            <label>Geofence Radius (Meters)</label>
+            <input
+              name="geofenceRadiusMeters"
+              type="number"
+              defaultValue="500"
+              min="50"
+              max="10000"
+              required
+            />
+            <small className="muted" style={{ display: "block", marginTop: 4 }}>
+              Used for automatic selfie attendance validation. Default is 500m around coordinates.
+            </small>
+          </div>
         </div>
 
         {error && (
-          <div className="error wide" role="alert">
+          <div className="error" role="alert">
             <Icons.AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="hint wide" role="status">
+          <div className="success-banner" role="status">
             <Icons.CheckCircle size={16} />
             <span>{success}</span>
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary wide" disabled={pending} style={{ padding: "14px 20px" }}>
-          <Icons.Plus size={18} />
-          <span>{pending ? "Creating farm record…" : "Create Setup Farm Record"}</span>
-        </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "12px 28px" }}>
+            <Icons.Plus size={16} />
+            <span>{pending ? "Creating farm record…" : "Create Setup Farm Record"}</span>
+          </button>
+        </div>
       </form>
     </article>
   );

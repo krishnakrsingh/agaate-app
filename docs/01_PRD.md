@@ -280,10 +280,9 @@ Multiple officers per farm, each with:
 ### F10: Attendance & Location Validation
 
 **Start Day Flow:**
-1. Take Selfie (with liveness detection)
-2. Capture Current Location
-3. WebAuthn device verification (optional)
-4. System records: Date, Time, Selfie, Lat/Long
+1. Take Front-Camera Selfie
+2. Capture Current GPS Location
+3. System records: Date, Time, Selfie Key, Lat/Long, and validates distance against Farm geofence
 
 **End Day Flow:** Same as Start Day
 
@@ -291,18 +290,11 @@ Multiple officers per farm, each with:
 
 | Scenario | Action |
 |---|---|
-| Location matches farm | Attendance marked successfully |
-| Location mismatch | Exception created → Officer provides reason → Admin approval required |
+| Location matches farm (≤500m) | Attendance marked successfully (`OPEN`) |
+| Location mismatch (>500m) | Exception created (`EXCEPTION_PENDING`) → Officer provides reason → Admin approval required |
 | Farm location needs change | Officer raises Location Change Request → Admin approves/rejects |
 
-### F11: Biometric Verification
-
-- **Face Recognition:** Face enrollment, encrypted embedding storage, cosine similarity matching
-- **Liveness Detection:** Challenge-based (smile, blink, turn head) to prevent photo attacks
-- **WebAuthn / Passkeys:** Device-bound credential verification
-- Configurable strict/transitional mode via `REQUIRE_BIOMETRIC_FOR_ATTENDANCE`
-
-### F12: Agronomist Dashboard
+### F11: Agronomist Dashboard
 
 **Dashboard KPIs:**
 - Total Active Farms / Plots

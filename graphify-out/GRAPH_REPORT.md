@@ -1,49 +1,49 @@
 # Graph Report - agaateapp  (2026-08-30)
 
 ## Corpus Check
-- 195 files · ~124,309 words
+- 168 files · ~112,335 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1075 nodes · 2188 edges · 92 communities (75 shown, 17 thin omitted)
+- 953 nodes · 1828 edges · 90 communities (73 shown, 17 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `41da0835`
+- Built from commit: `d7390741`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - apiError
 - farm-hub-client.tsx
-- requireSession
+- navbar.tsx
 - icons.tsx
 - compilerOptions
 - What You Must Do When Invoked
 - 202608300001_initial/migration.sql
-- stage5-e2e.test.ts
+- field-reports.tsx
 - dependencies
 - devDependencies
 - auth.ts
 - Agaate Farm Management PWA — Design Brief
-- field-reports.tsx
+- scripts
 - Rate Limiting in FastAPI
 - 4. Feature Specifications
 - graphify reference: extra exports and benchmark
 - React Countdown Timer Component
 - Ponytail
-- approvals/page.tsx
+- package.json
 - officer-day.tsx
 - examples/README.md
 - Email Validation Function
 - Ponytail Help
-- edit/page.tsx
+- requireSession
 - admin-console.tsx
-- [plotId]/page.tsx
+- plot-edit-form.tsx
 - Debounce Search Input
 - Agaate Farm Management PWA — Technical Design Document (TDD)
-- tasks/new/page.tsx
+- task-form.tsx
 - storage.ts
 - graphify reference: query, path, explain
 - csv-sum.md
@@ -71,79 +71,77 @@
 - graphify reference: transcribe video and audio
 - react-countdown.md
 - seed.ts
-- farms/new/page.tsx
-- reports/page.tsx
+- CropCycleForm
+- edit/page.tsx
 - rules/graphify.md
 - ponytail.md
 - extraction-spec.md
 - workflows/graphify.md
 - next.config.ts
 - next-env.d.ts
-- biometric/page.tsx
+- farms/new/page.tsx
 - login/route.ts
 - final-acceptance-proof.ts
-- fetch-face-models.mjs
+- reports/page.tsx
 - build-docs-html.mjs
-- LivenessChallenge
+- daily/page.tsx
 - attendance-form.tsx
 - Face Recognition Models
 - agaate-critical.spec.ts
 - fetch-bins.mjs
-- scripts
-- navbar.tsx
-- CropCycleForm
-- package.json
-- daily/page.tsx
+- dashboard-client.tsx
 - farm-access-manager.tsx
+- approvals/page.tsx
+- [cycleId]/page.tsx
+- PlotForm
+- @types/bcryptjs
 - Documentation Index
 - mobile-audit.mjs
-- next
-- @simplewebauthn/server
 
 ## God Nodes (most connected - your core abstractions)
-1. `apiError()` - 103 edges
-2. `currentActor()` - 78 edges
-3. `requireFarmAccess()` - 77 edges
-4. `audit()` - 71 edges
-5. `prisma` - 63 edges
-6. `Icons` - 41 edges
-7. `requireSession()` - 35 edges
+1. `apiError()` - 80 edges
+2. `requireFarmAccess()` - 77 edges
+3. `currentActor()` - 57 edges
+4. `audit()` - 54 edges
+5. `prisma` - 48 edges
+6. `Icons` - 36 edges
+7. `requireSession()` - 31 edges
 8. `requireRole()` - 28 edges
-9. `4. Feature Specifications` - 23 edges
+9. `4. Feature Specifications` - 22 edges
 10. `utcDateOnly()` - 19 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `AdminApprovalsPage()` --calls--> `requireSession()`  [EXTRACTED]
   src/app/admin/approvals/page.tsx → src/lib/auth.ts
+- `AdminUsersPage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/admin/users/page.tsx → src/lib/auth.ts
 - `NewFarmPage()` --calls--> `requireSession()`  [EXTRACTED]
   src/app/farms/new/page.tsx → src/lib/auth.ts
+- `OfficerDayPage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/officer/day/page.tsx → src/lib/auth.ts
 - `OfficerReportsPage()` --calls--> `requireSession()`  [EXTRACTED]
   src/app/officer/reports/page.tsx → src/lib/auth.ts
-- `DailyReportPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/reports/daily/page.tsx → src/lib/auth.ts
-- `BiometricPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/settings/biometric/page.tsx → src/lib/auth.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (92 total, 17 thin omitted)
+## Communities (90 total, 17 thin omitted)
 
 ### Community 0 - "apiError"
-Cohesion: 0.06
-Nodes (105): PATCH(), GET(), GET(), GET(), POST(), schema, today(), GET() (+97 more)
+Cohesion: 0.07
+Nodes (98): PATCH(), GET(), GET(), GET(), POST(), schema, today(), GET() (+90 more)
 
 ### Community 1 - "farm-hub-client.tsx"
-Cohesion: 0.08
-Nodes (16): EvidenceGallery(), Farm, FarmEditForm(), CropCycle, Farm, Incident, Milestone, Monitoring (+8 more)
+Cohesion: 0.10
+Nodes (14): EvidenceGallery(), Farm, FarmEditForm(), CropCycle, Farm, Incident, Milestone, Monitoring (+6 more)
 
-### Community 2 - "requireSession"
-Cohesion: 0.19
-Nodes (13): AdminUsersPage(), dynamic, dynamic, OfficerDayPage(), CropCycleDetailPage(), dynamic, dynamic, NewCropCyclePage() (+5 more)
+### Community 2 - "navbar.tsx"
+Cohesion: 0.16
+Nodes (14): AdminUsersPage(), dynamic, dynamic, OfficerDayPage(), dynamic, NewCropCyclePage(), dynamic, NewTaskPage() (+6 more)
 
 ### Community 3 - "icons.tsx"
-Cohesion: 0.10
-Nodes (14): dynamic, VerifyResult, ActiveIncident, DashboardClient(), Farm, MetricData, PoorHealthAlert, IconProps (+6 more)
+Cohesion: 0.21
+Nodes (5): IconProps, Icons, Farm, DEMO_ACCOUNTS, irrigationOptions
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.07
@@ -157,29 +155,29 @@ Nodes (24): For /graphify add and --watch, For /graphify query, For the commit h
 Cohesion: 0.16
 Nodes (25): "AgronomyPlan", "Attendance", "AttendanceException", "AuditLog", "CropCycle", "CropMonitoring", "CropVariety", "Farm" (+17 more)
 
-### Community 7 - "stage5-e2e.test.ts"
-Cohesion: 0.06
-Nodes (42): POST(), schema, POST(), schema, POST(), schema, POST(), schema (+34 more)
+### Community 7 - "field-reports.tsx"
+Cohesion: 0.20
+Nodes (10): cropStages, Cycle, Farm, FieldReports(), handleIncidentSubmit(), handleMonitoringSubmit(), FieldReportsProps, incidentTypes (+2 more)
 
 ### Community 8 - "dependencies"
-Cohesion: 0.09
-Nodes (23): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, bcryptjs, jose, dependencies, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, bcryptjs (+15 more)
+Cohesion: 0.11
+Nodes (19): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, bcryptjs, jose, next, dependencies, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner (+11 more)
 
 ### Community 9 - "devDependencies"
-Cohesion: 0.09
-Nodes (23): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, @playwright/test, prisma, tsx (+15 more)
+Cohesion: 0.10
+Nodes (21): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, @playwright/test, prisma, tsx (+13 more)
 
 ### Community 10 - "auth.ts"
-Cohesion: 0.47
-Nodes (4): POST(), clearSession(), secret, Session
+Cohesion: 0.16
+Nodes (12): POST(), dynamic, LoginPage(), dynamic, Home(), LoginForm(), clearSession(), getSession() (+4 more)
 
 ### Community 11 - "Agaate Farm Management PWA — Design Brief"
 Cohesion: 0.05
 Nodes (42): 1.1 Core Principles, 1.2 Design Tone, 1. Design Philosophy, 2.1 Color Palette, 2.2 Typography, 2.3 Spacing System, 2. Brand Identity, 3.1 Shell Layout (+34 more)
 
-### Community 12 - "field-reports.tsx"
-Cohesion: 0.20
-Nodes (10): cropStages, Cycle, Farm, FieldReports(), handleIncidentSubmit(), handleMonitoringSubmit(), FieldReportsProps, incidentTypes (+2 more)
+### Community 12 - "scripts"
+Cohesion: 0.17
+Nodes (12): scripts, build, build:docs, db:generate, db:migrate, db:seed, dev, lint (+4 more)
 
 ### Community 13 - "Rate Limiting in FastAPI"
 Cohesion: 0.20
@@ -187,7 +185,7 @@ Nodes (10): 1. **Using `slowapi` (Recommended - Easiest)**, 2. **Using `limits` 
 
 ### Community 14 - "4. Feature Specifications"
 Cohesion: 0.05
-Nodes (40): 1. Executive Summary, 2. Platform Hierarchy, 3.1 Super Admin (Agaate), 3.2 Farm Admin, 3.3 Agronomist (Central Agaate Team), 3.4 Farm Officer, 3. User Roles & Permissions, 4. Feature Specifications (+32 more)
+Nodes (39): 1. Executive Summary, 2. Platform Hierarchy, 3.1 Super Admin (Agaate), 3.2 Farm Admin, 3.3 Agronomist (Central Agaate Team), 3.4 Farm Officer, 3. User Roles & Permissions, 4. Feature Specifications (+31 more)
 
 ### Community 15 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -201,13 +199,13 @@ Nodes (9): Advanced Timer with Formatted Display, Basic Countdown Timer, CSS Sty
 Cohesion: 0.22
 Nodes (8): Boundaries, Intensity, Output, Persistence, Ponytail, Rules, The ladder, When NOT to be lazy
 
-### Community 18 - "approvals/page.tsx"
-Cohesion: 0.25
-Nodes (6): AdminApprovalsPage(), dynamic, ApprovalsConsole(), Attendance, Exception, LocationRequest
+### Community 18 - "package.json"
+Cohesion: 0.33
+Nodes (5): name, prisma, seed, private, version
 
 ### Community 19 - "officer-day.tsx"
-Cohesion: 0.18
-Nodes (9): Farm, Report, Task, Task, TaskCompletionForm(), PriorityBadge(), StatusBadge(), EmptyState() (+1 more)
+Cohesion: 0.15
+Nodes (12): Attendance, Exception, LocationRequest, Farm, Report, Task, Task, TaskCompletionForm() (+4 more)
 
 ### Community 20 - "examples/README.md"
 Cohesion: 0.25
@@ -221,17 +219,17 @@ Nodes (7): Comparison, Email Validation, Email Validation Function, More Robust 
 Cohesion: 0.25
 Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
 
-### Community 23 - "edit/page.tsx"
-Cohesion: 0.32
-Nodes (5): dynamic, EditCropCyclePage(), CropCycleEditForm(), Cycle, dateValue()
+### Community 23 - "requireSession"
+Cohesion: 0.24
+Nodes (8): DashboardPage(), dynamic, dynamic, FarmDetailPage(), dynamic, PlotPage(), FarmHubClient(), requireSession()
 
 ### Community 24 - "admin-console.tsx"
 Cohesion: 0.25
 Nodes (5): Access, AdminConsole(), Farm, roles, User
 
-### Community 25 - "[plotId]/page.tsx"
-Cohesion: 0.20
-Nodes (5): dynamic, PlotPage(), options, Plot, PlotEditForm()
+### Community 25 - "plot-edit-form.tsx"
+Cohesion: 0.25
+Nodes (3): options, Plot, PlotEditForm()
 
 ### Community 26 - "Debounce Search Input"
 Cohesion: 0.29
@@ -241,9 +239,9 @@ Nodes (7): Advanced: Debounce with Cancel & Immediate Options, Basic Debounce Fu
 Cohesion: 0.06
 Nodes (35): 1.1 Tech Stack, 1.2 Architecture Pattern, 1.3 Key Architectural Decisions, 1. System Architecture Overview, 2. Directory Structure, 3.1 Entity-Relationship Overview, 3.2 Core Models (20 models), 3.3 Authentication Models (+27 more)
 
-### Community 28 - "tasks/new/page.tsx"
-Cohesion: 0.22
-Nodes (7): dynamic, NewTaskPage(), Access, categories, Farm, Plot, TaskForm()
+### Community 28 - "task-form.tsx"
+Cohesion: 0.25
+Nodes (6): Access, categories, Farm, Plot, TaskForm(), TaskFormProps
 
 ### Community 29 - "storage.ts"
 Cohesion: 0.67
@@ -335,87 +333,79 @@ Nodes (14): ActivateFarmButton(), FarmStatusControl(), Farm, Manual, ManualWeath
 
 ### Community 51 - "Agaate Farm Management PWA — User Flows"
 Cohesion: 0.09
-Nodes (22): 10. Biometric Enrollment Flow, 11. Page Navigation Map, 1. High-Level System Flow, 2. Authentication Flow, 3.1 Create Farm, 3.2 Create User, 3. Super Admin: Farm & User Management, 4.1 Complete Farm Setup (+14 more)
+Nodes (22): 10. Presence & Geofence Verification Flow, 11. Page Navigation Map, 1. High-Level System Flow, 2. Authentication Flow, 3.1 Create Farm, 3.2 Create User, 3. Super Admin: Farm & User Management, 4.1 Complete Farm Setup (+14 more)
 
-### Community 56 - "farms/new/page.tsx"
+### Community 56 - "CropCycleForm"
+Cohesion: 0.29
+Nodes (7): CropCycleForm(), addCustomSupport(), addPresetSupport(), nextStep(), submit(), validateStep(), iso()
+
+### Community 57 - "edit/page.tsx"
+Cohesion: 0.32
+Nodes (5): dynamic, EditCropCyclePage(), CropCycleEditForm(), Cycle, dateValue()
+
+### Community 64 - "farms/new/page.tsx"
 Cohesion: 0.33
 Nodes (3): dynamic, NewFarmPage(), FarmForm()
 
-### Community 57 - "reports/page.tsx"
-Cohesion: 0.33
-Nodes (3): dynamic, OfficerReportsPage(), LocationRequestForm()
-
-### Community 64 - "biometric/page.tsx"
-Cohesion: 0.16
-Nodes (7): BiometricPage(), dynamic, dynamic, PasskeysPage(), FaceVerify(), WebAuthnCredentials(), WebAuthnRegister()
-
 ### Community 66 - "login/route.ts"
-Cohesion: 0.18
-Nodes (14): POST(), LoginPage(), dynamic, Home(), createSession(), getSession(), requireActiveUser(), requireSecret() (+6 more)
+Cohesion: 0.36
+Nodes (8): POST(), createSession(), checkRateLimit(), clearRateLimitStore(), RateLimitRecord, rateLimitStore, recordFailedAttempt(), resetRateLimit()
 
 ### Community 72 - "final-acceptance-proof.ts"
 Cohesion: 0.43
 Nodes (6): loginAndGetCookie(), record(), reports, runAcceptanceProof(), TestReport, uploadAndVerifyMedia()
 
-### Community 73 - "fetch-face-models.mjs"
+### Community 73 - "reports/page.tsx"
 Cohesion: 0.33
-Nodes (4): bases, essential, files, outDir
+Nodes (3): dynamic, OfficerReportsPage(), LocationRequestForm()
 
 ### Community 74 - "build-docs-html.mjs"
 Cohesion: 0.40
 Nodes (4): docFiles, docsData, docsDir, outputFile
 
-### Community 75 - "LivenessChallenge"
-Cohesion: 0.50
-Nodes (3): LivenessChallenge(), ensureModels(), startCamera()
-
-### Community 76 - "attendance-form.tsx"
-Cohesion: 0.16
-Nodes (12): AttendanceForm(), acquireLocation(), handleAttendanceSubmit(), AttendanceRecord, calculateDistanceMeters(), Farm, BiometricFaceScanner(), captureLiveSnapshot() (+4 more)
-
-### Community 82 - "scripts"
-Cohesion: 0.15
-Nodes (13): scripts, build, build:docs, db:generate, db:migrate, db:seed, dev, fetch:face-models (+5 more)
-
-### Community 83 - "navbar.tsx"
-Cohesion: 0.24
-Nodes (7): DashboardPage(), dynamic, dynamic, FarmDetailPage(), FarmHubClient(), LogoutButton(), Navbar()
-
-### Community 84 - "CropCycleForm"
-Cohesion: 0.38
-Nodes (4): CropCycleForm(), nextStep(), validateStep(), iso()
-
-### Community 85 - "package.json"
-Cohesion: 0.33
-Nodes (5): name, prisma, seed, private, version
-
-### Community 86 - "daily/page.tsx"
+### Community 75 - "daily/page.tsx"
 Cohesion: 0.33
 Nodes (3): DailyReportPage(), dynamic, DailyReport()
 
-### Community 87 - "farm-access-manager.tsx"
+### Community 76 - "attendance-form.tsx"
+Cohesion: 0.21
+Nodes (8): AttendanceForm(), AttendanceRecord, calculateDistanceMeters(), Farm, CameraCapture(), captureLiveSnapshot(), triggerCountdown(), CameraCaptureProps
+
+### Community 82 - "dashboard-client.tsx"
+Cohesion: 0.33
+Nodes (5): ActiveIncident, DashboardClient(), Farm, MetricData, PoorHealthAlert
+
+### Community 83 - "farm-access-manager.tsx"
 Cohesion: 0.33
 Nodes (3): AccessResponse, FarmAccessManager(), Person
 
+### Community 84 - "approvals/page.tsx"
+Cohesion: 0.40
+Nodes (3): AdminApprovalsPage(), dynamic, ApprovalsConsole()
+
+### Community 85 - "[cycleId]/page.tsx"
+Cohesion: 0.67
+Nodes (3): CropCycleDetailPage(), dynamic, variance()
+
 ## Knowledge Gaps
-- **478 isolated node(s):** `urls`, `nextConfig`, `name`, `version`, `private` (+473 more)
+- **449 isolated node(s):** `urls`, `nextConfig`, `name`, `version`, `private` (+444 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Icons` connect `icons.tsx` to `biometric/page.tsx`, `farm-hub-client.tsx`, `requireSession`, `stage5-e2e.test.ts`, `attendance-form.tsx`, `field-reports.tsx`, `approvals/page.tsx`, `toast.tsx`, `CropCycleForm`, `officer-day.tsx`, `farm-access-manager.tsx`, `edit/page.tsx`, `admin-console.tsx`, `navbar.tsx`, `tasks/new/page.tsx`, `[plotId]/page.tsx`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
-- **Why does `requireFarmAccess()` connect `apiError` to `[plotId]/page.tsx`, `requireSession`, `navbar.tsx`, `edit/page.tsx`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
-- **Why does `prisma` connect `apiError` to `biometric/page.tsx`, `login/route.ts`, `requireSession`, `stage5-e2e.test.ts`, `final-acceptance-proof.ts`, `auth.ts`, `agaate-critical.spec.ts`, `navbar.tsx`, `edit/page.tsx`, `[plotId]/page.tsx`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `requireFarmAccess()` connect `apiError` to `edit/page.tsx`, `navbar.tsx`, `[cycleId]/page.tsx`, `requireSession`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `Icons` connect `icons.tsx` to `farm-hub-client.tsx`, `navbar.tsx`, `field-reports.tsx`, `auth.ts`, `attendance-form.tsx`, `toast.tsx`, `officer-day.tsx`, `dashboard-client.tsx`, `[cycleId]/page.tsx`, `farm-access-manager.tsx`, `admin-console.tsx`, `edit/page.tsx`, `task-form.tsx`, `plot-edit-form.tsx`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `prisma` connect `apiError` to `login/route.ts`, `navbar.tsx`, `final-acceptance-proof.ts`, `auth.ts`, `agaate-critical.spec.ts`, `[cycleId]/page.tsx`, `requireSession`, `edit/page.tsx`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **What connects `urls`, `nextConfig`, `name` to the rest of the system?**
-  _478 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _449 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `apiError` be split into smaller, more focused modules?**
-  _Cohesion score 0.06252149982800137 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0651383841207716 - nodes in this community are weakly interconnected._
 - **Should `farm-hub-client.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.08374384236453201 - nodes in this community are weakly interconnected._
-- **Should `icons.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09655172413793103 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10144927536231885 - nodes in this community are weakly interconnected._
+- **Should `compilerOptions` be split into smaller, more focused modules?**
+  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._

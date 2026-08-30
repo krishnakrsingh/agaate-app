@@ -99,12 +99,11 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        setError(body.error ?? "Unable to save plot.");
+        setError(body.error ?? "Unable to update plot.");
         return;
       }
 
       setSuccess("Plot saved successfully.");
-      router.replace(`/farms/${plot.farmId}`);
       router.refresh();
     } catch {
       setPending(false);
@@ -113,8 +112,11 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
   }
 
   async function archive() {
-    if (!window.confirm("Archive this plot? Historical records will be preserved.")) return;
+    if (!confirm(`Are you sure you want to archive "${plot.name}"?`)) return;
+
     setPending(true);
+    setError("");
+    setSuccess("");
 
     try {
       const response = await fetch(`/api/plots/${plot.id}`, { method: "DELETE" });
@@ -135,106 +137,107 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
   }
 
   return (
-    <article className="card">
+    <article className="card" style={{ padding: 24 }}>
       <div className="card-header">
         <div>
-          <h2>Edit Plot Details</h2>
-          <p className="muted" style={{ fontSize: "0.88rem" }}>
-            Update plot area, coordinates, status, and irrigation types.
-          </p>
+          <div className="eyebrow">PLOT CONFIGURATION</div>
+          <h2 style={{ margin: "2px 0 0" }}>Edit Plot Details</h2>
         </div>
-        <span className={`status ${plot.status.toLowerCase()}`}>{plot.status}</span>
+        <span className="status active">{plot.status}</span>
       </div>
 
-      <form className="form two-column" data-plot-edit onSubmit={save}>
-        <div className="form-group">
-          <label>Plot name</label>
-          <input name="name" defaultValue={plot.name} required />
-        </div>
-
-        <div className="form-group">
-          <label>Area (acres)</label>
-          <input name="area" type="number" min="0.01" step="0.01" defaultValue={plot.area} required />
-        </div>
-
-        <div className="form-group">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label>Latitude</label>
-            <button
-              type="button"
-              onClick={capture}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--primary-700)",
-                fontSize: "0.78rem",
-                padding: 0,
-                boxShadow: "none",
-                cursor: "pointer",
-              }}
-            >
-              Capture GPS
-            </button>
+      <form data-plot-edit onSubmit={save} style={{ display: "grid", gap: 16 }}>
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Plot Name</label>
+            <input name="name" defaultValue={plot.name} required />
           </div>
-          <input
-            name="latitude"
-            type="number"
-            min="-90"
-            max="90"
-            step="any"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            required
-          />
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Area (Acres)</label>
+            <input name="area" type="number" min="0.01" step="0.01" defaultValue={plot.area} required />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label>Latitude</label>
+              <button
+                type="button"
+                onClick={capture}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--action-blue)",
+                  fontSize: 11,
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  textTransform: "uppercase",
+                }}
+              >
+                + Capture GPS
+              </button>
+            </div>
+            <input
+              name="latitude"
+              type="number"
+              min="-90"
+              max="90"
+              step="any"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Longitude</label>
+            <input
+              name="longitude"
+              type="number"
+              min="-180"
+              max="180"
+              step="any"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Soil Type</label>
+            <input name="soilType" defaultValue={plot.soilType ?? ""} placeholder="e.g., Red Loam" />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Status</label>
+            <select name="status" defaultValue={plot.status}>
+              <option value="SETUP">Setup</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Longitude</label>
-          <input
-            name="longitude"
-            type="number"
-            min="-180"
-            max="180"
-            step="any"
-            value={lng}
-            onChange={(e) => setLng(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Soil type</label>
-          <input name="soilType" defaultValue={plot.soilType ?? ""} placeholder="e.g., Red Loam" />
-        </div>
-
-        <div className="form-group">
-          <label>Status</label>
-          <select name="status" defaultValue={plot.status}>
-            <option value="SETUP">Setup</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
-        </div>
-
-        <fieldset className="wide">
-          <legend>Irrigation Setup</legend>
-          <div style={{ display: "grid", gap: 10 }}>
+        <div style={{ background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 16, display: "grid", gap: 10 }}>
+          <div className="mono-label">Irrigation Setup</div>
+          <div style={{ display: "grid", gap: 8 }}>
             {options.map((type) => (
               <div
                 key={type}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "140px 1fr",
+                  gridTemplateColumns: "130px 1fr",
                   gap: 12,
                   alignItems: "center",
-                  padding: "6px 10px",
-                  background: selected.has(type) ? "var(--primary-50)" : "white",
-                  borderRadius: "var(--radius-sm)",
-                  border: `1px solid ${selected.has(type) ? "var(--primary-200)" : "var(--border-subtle)"}`,
+                  padding: "8px 12px",
+                  background: "var(--canvas)",
+                  borderRadius: "var(--radius-xs)",
+                  border: `1px solid ${selected.has(type) ? "var(--ink)" : "var(--hairline)"}`,
                 }}
               >
-                <label className="check" style={{ margin: 0 }}>
+                <label className="check" style={{ margin: 0, fontSize: 13 }}>
                   <input
                     type="checkbox"
                     checked={selected.has(type)}
@@ -248,28 +251,28 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
                   placeholder={type === "Other" ? "Required for Other" : "Details (optional)"}
                   disabled={!selected.has(type)}
                   maxLength={300}
-                  style={{ padding: "6px 10px", fontSize: "0.85rem" }}
+                  style={{ minHeight: 34, padding: "4px 10px", fontSize: 13 }}
                 />
               </div>
             ))}
           </div>
-        </fieldset>
+        </div>
 
         {error && (
-          <div className="error wide" role="alert">
+          <div className="error" role="alert">
             <Icons.AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="hint wide" role="status">
+          <div className="success-banner" role="status">
             <Icons.CheckCircle size={16} />
             <span>{success}</span>
           </div>
         )}
 
-        <div className="wide" style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap", marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap", marginTop: 8 }}>
           <button type="submit" className="btn btn-primary" disabled={pending}>
             <Icons.Check size={16} />
             <span>{pending ? "Saving…" : "Save Plot Changes"}</span>

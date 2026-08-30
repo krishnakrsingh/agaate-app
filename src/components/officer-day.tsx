@@ -82,36 +82,34 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
 
   return (
     <section>
-      {/* Daily Progress & Command Hub Header */}
+      {/* Daily Progress Header */}
       <div
         className="card"
         style={{
-          border: "1px solid var(--border-subtle)",
-          padding: "20px 24px",
+          padding: 24,
           marginBottom: 20,
-          background: "var(--bg-card)",
+          background: "var(--canvas)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
           <div>
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
               TODAY&apos;S FIELD SHIFT &bull; {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </div>
-            <h3 style={{ margin: "4px 0 0", fontSize: "1.35rem" }}>
+            <h3 style={{ margin: "2px 0 0" }}>
               {completedCount} of {tasks.length} Activities Completed ({progressPercent}%)
             </h3>
           </div>
 
-          {/* Quick Action Shortcuts (BRD §22 & §26) */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
               type="button"
               className="btn btn-sm btn-primary"
               onClick={() => setShowIncidentModal(!showIncidentModal)}
-              style={{ minHeight: 38, background: "var(--danger-red, #dc2626)", borderColor: "var(--danger-red, #dc2626)" }}
+              style={{ background: "var(--coral)", borderColor: "var(--coral)", color: "white" }}
             >
-              <Icons.AlertTriangle size={14} />
+              <Icons.AlertTriangle size={13} />
               <span>{showIncidentModal ? "Close Incident Form" : "Report Incident"}</span>
             </button>
 
@@ -120,7 +118,6 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
               className="btn btn-sm btn-secondary"
               onClick={load}
               title="Refresh task list"
-              style={{ minHeight: 38 }}
             >
               <span>Refresh Queue</span>
             </button>
@@ -128,26 +125,26 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
         </div>
 
         {/* Tactile Progress Bar */}
-        <div style={{ width: "100%", height: 10, background: "var(--slate-100)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+        <div style={{ width: "100%", height: 6, background: "var(--soft-stone)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
           <div
             style={{
               width: `${progressPercent}%`,
               height: "100%",
-              background: "linear-gradient(90deg, var(--primary-600), var(--primary-400))",
+              background: "var(--primary)",
               borderRadius: "var(--radius-full)",
               transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: "0.82rem", color: "var(--text-muted)" }}>
+        <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 13, color: "var(--body-muted)" }}>
           <span><strong>{completedCount}</strong> Done</span>
           <span><strong>{inProgressCount}</strong> In Progress</span>
           <span><strong>{tasks.length - completedCount - inProgressCount}</strong> Remaining</span>
         </div>
       </div>
 
-      {/* Incident Quick Reporting Modal/Drawer (BRD §26) */}
+      {/* Incident Quick Reporting Modal/Drawer */}
       {showIncidentModal && (
         <div style={{ marginBottom: 20 }}>
           <FieldReports
@@ -170,7 +167,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
       )}
 
       {/* Task Filter Tabs */}
-      <div className="tabs-nav" style={{ marginBottom: 18 }}>
+      <div className="tabs-nav" style={{ marginBottom: 20 }}>
         <button
           type="button"
           className={`tab-btn ${originFilter === "ALL" ? "active" : ""}`}
@@ -183,7 +180,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           className={`tab-btn ${originFilter === "AGRONOMIST" ? "active" : ""}`}
           onClick={() => setOriginFilter("AGRONOMIST")}
         >
-          <Icons.Calendar size={14} />
+          <Icons.Calendar size={13} />
           <span>Agronomist ({tasks.filter((t) => t.origin === "AGRONOMIST").length})</span>
         </button>
         <button
@@ -191,7 +188,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           className={`tab-btn ${originFilter === "SYSTEM" ? "active" : ""}`}
           onClick={() => setOriginFilter("SYSTEM")}
         >
-          <Icons.Layers size={14} />
+          <Icons.Layers size={13} />
           <span>Milestones ({tasks.filter((t) => t.origin === "SYSTEM").length})</span>
         </button>
         <button
@@ -199,7 +196,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           className={`tab-btn ${originFilter === "DAILY_MONITORING" ? "active" : ""}`}
           onClick={() => setOriginFilter("DAILY_MONITORING")}
         >
-          <Icons.Camera size={14} />
+          <Icons.Camera size={13} />
           <span>Monitoring ({tasks.filter((t) => t.origin === "DAILY_MONITORING").length})</span>
         </button>
       </div>
@@ -225,9 +222,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                 key={task.id}
                 style={{
                   margin: 0,
-                  border: isCompleted ? "1px solid var(--primary-200)" : "1px solid var(--border-subtle)",
-                  background: isCompleted ? "var(--slate-50)" : "white",
-                  padding: "20px",
+                  background: isCompleted ? "var(--soft-stone)" : "var(--canvas)",
+                  padding: 20,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
@@ -235,39 +231,28 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
                       <StatusBadge status={task.status} />
                       <PriorityBadge priority={task.priority} />
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          padding: "2px 7px",
-                          borderRadius: "var(--radius-xs)",
-                          background: "var(--slate-100)",
-                          color: "var(--slate-700)",
-                          textTransform: "uppercase",
-                        }}
-                      >
+                      <span className="mono-label" style={{ background: "var(--soft-stone)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
                         {task.origin.replaceAll("_", " ")}
                       </span>
                     </div>
 
-                    <h3 style={{ fontSize: "1.2rem", margin: "2px 0 6px", color: isCompleted ? "var(--slate-700)" : "var(--slate-900)" }}>
+                    <h3 style={{ margin: "2px 0 4px" }}>
                       {task.title}
                     </h3>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: 0 }}>
+                    <p style={{ color: "var(--body-muted)", fontSize: 13, margin: 0 }}>
                       <strong>{task.farm.name}</strong> {task.plot ? `&bull; Plot ${task.plot.name}` : ""} {task.cropCycle ? `&bull; 🌱 ${task.cropCycle.cropName}` : ""}
                     </p>
                   </div>
 
-                  {/* Primary Action Button (Target >= 48px on Mobile) */}
-                  <div className="actions" style={{ margin: 0 }}>
+                  {/* Primary Action Button */}
+                  <div style={{ margin: 0 }}>
                     {task.origin === "DAILY_MONITORING" && !isCompleted && (
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-sm"
                         onClick={() => setMonitoringTaskId(isMonitoringActive ? null : task.id)}
-                        style={{ minHeight: 44 }}
                       >
-                        <Icons.Camera size={16} />
+                        <Icons.Camera size={14} />
                         <span>{isMonitoringActive ? "Close Monitoring" : "Submit Monitoring"}</span>
                       </button>
                     )}
@@ -275,11 +260,10 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     {["ASSIGNED", "AVAILABLE", "BLOCKED"].includes(task.status) && task.origin !== "DAILY_MONITORING" && (
                       <button
                         type="button"
-                        className="btn btn-primary"
+                        className="btn btn-primary btn-sm"
                         onClick={() => start(task.id)}
-                        style={{ minHeight: 44 }}
                       >
-                        <Icons.Zap size={16} />
+                        <Icons.Zap size={14} />
                         <span>Start Activity</span>
                       </button>
                     )}
@@ -287,31 +271,30 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     {task.status === "IN_PROGRESS" && (
                       <button
                         type="button"
-                        className="btn btn-secondary"
+                        className="btn btn-secondary btn-sm"
                         onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
-                        style={{ minHeight: 44 }}
                       >
-                        <Icons.CheckCircle size={16} style={{ color: "var(--primary-600)" }} />
+                        <Icons.CheckCircle size={14} />
                         <span>{completionId === task.id ? "Close Details" : "Record Completion"}</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border-subtle)" }}>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: "0 0 4px" }}>
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--hairline)" }}>
+                  <p style={{ fontSize: 14, color: "var(--ink)", margin: "0 0 4px" }}>
                     {task.description}
                   </p>
                   {task.instructions && (
-                    <p style={{ fontSize: "0.85rem", color: "var(--primary-900)", background: "var(--primary-50)", border: "1px solid var(--primary-200)", padding: "8px 12px", borderRadius: "var(--radius-sm)", margin: "8px 0 0" }}>
+                    <p style={{ fontSize: 13, color: "var(--ink)", background: "var(--soft-stone)", border: "1px solid var(--hairline)", padding: "8px 12px", borderRadius: "var(--radius-xs)", margin: "8px 0 0" }}>
                       <strong>Agronomist Guidance:</strong> {task.instructions}
                     </p>
                   )}
                 </div>
 
-                {/* Inline Daily Monitoring Form Pre-filled (BRD §24 & §25) */}
+                {/* Inline Daily Monitoring Form */}
                 {isMonitoringActive && (
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--border-strong)" }}>
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--hairline)" }}>
                     <FieldReports
                       initialFarmId={task.farm.id}
                       initialPlotId={task.plot?.id}
@@ -328,7 +311,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                   </div>
                 )}
 
-                {/* Inline Activity Completion Form (BRD §28 & §29) */}
+                {/* Inline Activity Completion Form */}
                 {completionId === task.id && (
                   <TaskCompletionForm
                     taskId={task.id}

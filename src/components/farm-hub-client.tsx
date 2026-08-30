@@ -119,31 +119,22 @@ export function FarmHubClient({
   return (
     <div style={{ display: "grid", gap: 24 }}>
       {/* Farm Command Header */}
-      <div
-        className="card"
-        style={{
-          border: "1px solid var(--hairline)",
-          padding: 32,
-          marginBottom: 0,
-          background: "var(--canvas)",
-          borderRadius: "var(--radius-sm)",
-        }}
-      >
+      <div className="card" style={{ padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
           <div style={{ minWidth: 0, flex: "1 1 420px" }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
-              <span className={`status ${farm.status.toLowerCase()}`}>
+              <span className={`status-badge ${farm.status === "ACTIVE" ? "badge-active" : "badge-setup"}`}>
                 {farm.status}
               </span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--slate-cohere)", display: "inline-flex", gap: 4, alignItems: "center" }}>
-                <Icons.MapPin size={11} />
-                <span>{farm.location} • {farm.geofenceRadiusMeters}m geofence • {farm.plots.length} plots</span>
+              <span style={{ fontSize: "0.82rem", color: "var(--slate-500)", display: "inline-flex", gap: 4, alignItems: "center" }}>
+                <Icons.MapPin size={12} />
+                <span>{farm.location} &bull; {farm.geofenceRadiusMeters}m geofence &bull; {farm.plots.length} plots</span>
               </span>
             </div>
 
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 4vw, 42px)", lineHeight: 1, letterSpacing: "-0.84px", fontWeight: 400, color: "var(--ink)", margin: "0 0 8px" }}>{farm.name}</h1>
-            <p style={{ color: "var(--body-muted)", fontSize: 15, lineHeight: 1.5, margin: 0 }}>
-              <span style={{ color: "var(--ink)", fontWeight: 500 }}>{farm.ownerName}</span> • {farm.totalArea} acres • {farm.cultivableArea} cultivable • Water: {farm.waterSource}
+            <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)", margin: "0 0 8px" }}>{farm.name}</h1>
+            <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", margin: 0 }}>
+              <strong>{farm.ownerName}</strong> &bull; {farm.totalArea} acres total &bull; {farm.cultivableArea} cultivable &bull; Water: {farm.waterSource}
             </p>
           </div>
 
@@ -158,27 +149,27 @@ export function FarmHubClient({
           </div>
         </div>
 
-        {/* Onboarding — Cohere dark feature band */}
+        {/* Onboarding Activation Pipeline */}
         {isSetup && (
           <div style={{
             marginTop: 20, background: "var(--deep-green)", color: "white", borderRadius: "var(--radius-sm)",
             padding: 16, display: "grid", gap: 10,
           }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.24, textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>
-              <Icons.Sparkles size={12} /><span>Activation pipeline • 3 steps to operational</span>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: "11px", fontWeight: 600, letterSpacing: "0.28px", textTransform: "uppercase", color: "rgba(255, 255, 255, 0.8)" }}>
+              <Icons.Sparkles size={14} /><span>Farm Activation Pipeline &bull; 3 Prerequisites Required (BRD §4)</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
               {[
                 { ok: hasPlots, label: `1. Add Plot (${farm.plots.length})` },
                 { ok: hasActiveCycles, label: "2. Plan Crop Cycle" },
-                { ok: hasMilestones, label: "3. 4 Milestones" },
+                { ok: hasMilestones, label: "3. Auto Milestones (4)" },
               ].map((s) => (
                 <div key={s.label} style={{
-                  padding: "8px 12px", borderRadius: "var(--radius-xs)", border: "1px solid rgba(255,255,255,0.14)",
-                  background: s.ok ? "rgba(255,255,255,0.10)" : "transparent", display: "flex", gap: 6, alignItems: "center",
-                  fontSize: 12, fontWeight: 500, color: s.ok ? "white" : "rgba(255,255,255,0.6)",
+                  padding: "8px 12px", borderRadius: "var(--radius-xs)", border: "1px solid rgba(255,255,255,0.2)",
+                  background: s.ok ? "rgba(255, 255, 255, 0.15)" : "rgba(0,0,0,0.2)", display: "flex", gap: 6, alignItems: "center",
+                  fontSize: 13, fontWeight: 500, color: s.ok ? "#ffffff" : "rgba(255,255,255,0.7)",
                 }}>
-                  {s.ok ? <Icons.CheckCircle size={12} /> : <Icons.AlertCircle size={12} />}<span>{s.label}</span>
+                  {s.ok ? <Icons.CheckCircle size={14} /> : <Icons.AlertCircle size={14} />}<span>{s.label}</span>
                 </div>
               ))}
             </div>

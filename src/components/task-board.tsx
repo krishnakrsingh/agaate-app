@@ -6,6 +6,7 @@ import { StatusBadge, PriorityBadge } from "./ui/badge";
 import { CardSkeleton } from "./ui/skeleton";
 import { EmptyState } from "./ui/empty-state";
 import { useToast } from "./ui/toast";
+import { TaskForm } from "./task-form";
 
 type Task = {
   id: string;
@@ -26,12 +27,13 @@ export function TaskBoard() {
   const toast = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedDayFilter, setSelectedDayFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [targetPlanDate, setTargetPlanDate] = useState<string | undefined>(undefined);
 
   const load = () => {
     setLoading(true);
@@ -102,31 +104,31 @@ export function TaskBoard() {
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
-      const matchesDay =
-        selectedDayFilter === "ALL" || t.dueDate?.slice(0, 10) === selectedDayFilter;
+      const matchesDay = selectedDayFilter === "ALL" || t.dueDate?.slice(0, 10) === selectedDayFilter;
       const matchesSearch =
         searchQuery === "" ||
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.farm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (t.assignedOfficer?.name &&
-          t.assignedOfficer.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        (t.assignedOfficer?.name && t.assignedOfficer.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
       return matchesStatus && matchesDay && matchesSearch;
     });
   }, [tasks, statusFilter, selectedDayFilter, searchQuery]);
 
   return (
     <section>
-      {/* 7-Day Rolling Agronomy Timeline Strip */}
+      {/* Rolling 7-Day Matrix Navigation (Cohere Mineral Surface) */}
       <div
-        className="card"
         style={{
-          border: "1px solid var(--border-subtle)",
-          padding: "16px 20px",
-          marginBottom: 20,
-          background: "var(--bg-card)",
+          background: "var(--soft-stone)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-sm)",
+          padding: 20,
+          marginBottom: 24,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
           <div className="eyebrow">
             <span className="eyebrow-dot"></span>
             7-DAY ROLLING AGRONOMY MATRIX (BRD §19)
@@ -135,7 +137,7 @@ export function TaskBoard() {
             type="button"
             className={`tab-btn ${selectedDayFilter === "ALL" ? "active" : ""}`}
             onClick={() => setSelectedDayFilter("ALL")}
-            style={{ fontSize: "0.78rem", padding: "4px 10px" }}
+            style={{ fontSize: 12, padding: "4px 12px" }}
           >
             Show Full 7-Day Window ({tasks.length})
           </button>
@@ -157,23 +159,24 @@ export function TaskBoard() {
                 key={d.dateStr}
                 onClick={() => setSelectedDayFilter(isSelected ? "ALL" : d.dateStr)}
                 style={{
-                  padding: "10px",
-                  borderRadius: "var(--radius-md)",
-                  background: isSelected ? "var(--primary-50)" : "var(--slate-50)",
-                  border: `2px solid ${isSelected ? "var(--primary-600)" : "var(--border-subtle)"}`,
+                  padding: 12,
+                  borderRadius: "var(--radius-xs)",
+                  background: isSelected ? "var(--primary)" : "var(--canvas)",
+                  color: isSelected ? "var(--on-primary)" : "var(--ink)",
+                  border: `1px solid ${isSelected ? "var(--primary)" : "var(--hairline)"}`,
                   cursor: "pointer",
                   textAlign: "center",
                   transition: "all var(--transition-fast)",
                 }}
               >
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: isSelected ? "var(--primary-800)" : "var(--slate-600)", textTransform: "uppercase", display: "block" }}>
+                <span className="mono-label" style={{ color: isSelected ? "rgba(255, 255, 255, 0.8)" : "var(--slate)", display: "block" }}>
                   {d.weekday}
                 </span>
-                <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", display: "block" }}>
+                <span style={{ fontSize: 13, color: isSelected ? "rgba(255, 255, 255, 0.9)" : "var(--body-muted)", display: "block", marginTop: 2 }}>
                   {d.label}
                 </span>
-                <strong style={{ fontSize: "1.1rem", color: count > 0 ? "var(--primary-700)" : "var(--slate-400)", marginTop: 2, display: "block" }}>
-                  {count} {count === 1 ? "task" : "tasks"}
+                <strong style={{ fontSize: 16, color: isSelected ? "white" : count > 0 ? "var(--ink)" : "var(--muted)", marginTop: 4, display: "block" }}>
+                  {count}
                 </strong>
               </div>
             );
@@ -187,51 +190,46 @@ export function TaskBoard() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: 20,
           flexWrap: "wrap",
           gap: 12,
         }}
       >
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           {/* Search Input */}
-          <div style={{ position: "relative", flex: "1 1 160px", minWidth: 0, maxWidth: 260 }}>
+          <div style={{ position: "relative", minWidth: 240 }}>
             <input
               type="text"
-              placeholder="Search activities, farms, officers…"
+              placeholder="Search activities, farms…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 padding: "8px 12px 8px 32px",
-                borderRadius: "var(--radius-xs)",
-                border: "1px solid var(--hairline)",
-                fontSize: "14px",
-                width: "100%",
-                maxWidth: "100%",
-                background: "white",
+                fontSize: 13,
+                height: 36,
               }}
             />
-            <div
+            <span
               style={{
                 position: "absolute",
                 left: 10,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--slate-400)",
+                color: "var(--slate)",
               }}
             >
               <Icons.Search size={14} />
-            </div>
+            </span>
           </div>
 
           {/* Status Tabs */}
-          <div className="tabs-nav" style={{ margin: 0, padding: 3 }}>
+          <div className="tabs-nav" style={{ margin: 0 }}>
             {["ALL", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "AVAILABLE"].map((st) => (
               <button
                 key={st}
                 type="button"
                 className={`tab-btn ${statusFilter === st ? "active" : ""}`}
                 onClick={() => setStatusFilter(st)}
-                style={{ padding: "5px 10px", fontSize: "0.78rem" }}
               >
                 {st === "ALL" ? "All" : st.replaceAll("_", " ")}
               </button>
@@ -239,10 +237,22 @@ export function TaskBoard() {
           </div>
         </div>
 
-        <Link href="/tasks/new" className="btn btn-sm btn-primary" style={{ minHeight: 38 }}>
-          <Icons.Plus size={14} />
-          <span>Plan Activity</span>
-        </Link>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              setTargetPlanDate(selectedDayFilter !== "ALL" ? selectedDayFilter : undefined);
+              setShowPlanModal(true);
+            }}
+          >
+            <Icons.Plus size={14} />
+            <span>Quick Plan Activity</span>
+          </button>
+          <Link href="/tasks/new" className="btn btn-secondary btn-sm" title="Open full planner page">
+            <Icons.Calendar size={14} />
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -262,7 +272,7 @@ export function TaskBoard() {
 
       {/* Task Cards List */}
       {!loading && (
-        <div style={{ display: "grid", gap: 14 }}>
+        <div style={{ display: "grid", gap: 12 }}>
           {filteredTasks.map((task) => {
             const isEditing = editingId === task.id;
             const isCompleted = task.status === "COMPLETED";
@@ -273,9 +283,8 @@ export function TaskBoard() {
                 key={task.id}
                 style={{
                   margin: 0,
-                  border: isCompleted ? "1px solid var(--primary-200)" : "1px solid var(--border-subtle)",
-                  background: isCompleted ? "var(--slate-50)" : "white",
-                  padding: "18px 20px",
+                  background: isCompleted ? "var(--soft-stone)" : "var(--canvas)",
+                  padding: 20,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
@@ -283,26 +292,16 @@ export function TaskBoard() {
                     <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
                       <StatusBadge status={task.status} />
                       <PriorityBadge priority={task.priority} />
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          padding: "2px 7px",
-                          borderRadius: "var(--radius-xs)",
-                          background: "var(--slate-100)",
-                          color: "var(--slate-700)",
-                          textTransform: "uppercase",
-                        }}
-                      >
+                      <span className="mono-label" style={{ background: "var(--soft-stone)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
                         {task.origin.replaceAll("_", " ")}
                       </span>
-                      <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                        Due: <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
+                      <span className="mono-label" style={{ color: "var(--slate)" }}>
+                        Due: {new Date(task.dueDate).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 style={{ fontSize: "1.15rem", margin: "2px 0 4px" }}>{task.title}</h3>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: 0 }}>
+                    <h3 style={{ margin: "2px 0 4px" }}>{task.title}</h3>
+                    <p style={{ color: "var(--body-muted)", fontSize: 13, margin: 0 }}>
                       <strong>{task.farm.name}</strong> {task.plot ? `&bull; Plot ${task.plot.name}` : ""} {task.cropCycle ? `&bull; 🌱 ${task.cropCycle.cropName}` : ""}{" "}
                       {task.assignedOfficer ? `&bull; Officer: ${task.assignedOfficer.name}` : "• Unassigned"}
                     </p>
@@ -318,12 +317,12 @@ export function TaskBoard() {
                   </button>
                 </div>
 
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border-subtle)" }}>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: "0 0 4px" }}>
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--hairline)" }}>
+                  <p style={{ fontSize: 14, color: "var(--ink)", margin: "0 0 4px" }}>
                     {task.description}
                   </p>
                   {task.instructions && (
-                    <p style={{ fontSize: "0.85rem", color: "var(--primary-900)", background: "var(--primary-50)", border: "1px solid var(--primary-200)", padding: "6px 10px", borderRadius: "var(--radius-sm)", margin: "6px 0 0" }}>
+                    <p style={{ fontSize: 13, color: "var(--ink)", background: "var(--soft-stone)", border: "1px solid var(--hairline)", padding: "8px 12px", borderRadius: "var(--radius-xs)", margin: "6px 0 0" }}>
                       <strong>Agronomist Guidance:</strong> {task.instructions}
                     </p>
                   )}
@@ -333,20 +332,21 @@ export function TaskBoard() {
                 {isEditing && (
                   <form
                     onSubmit={(e) => save(e, task)}
-                    className="form"
                     style={{
                       marginTop: 14,
                       paddingTop: 14,
-                      borderTop: "1px dashed var(--border-strong)",
+                      borderTop: "1px dashed var(--hairline)",
+                      display: "grid",
+                      gap: 12,
                     }}
                   >
                     <div className="two-column">
-                      <div className="form-group">
+                      <div className="form-group" style={{ margin: 0 }}>
                         <label>Title</label>
                         <input name="title" defaultValue={task.title} required />
                       </div>
 
-                      <div className="form-group">
+                      <div className="form-group" style={{ margin: 0 }}>
                         <label>Due Date (Rolling 7-Day Window)</label>
                         <input
                           name="dueDate"
@@ -356,7 +356,7 @@ export function TaskBoard() {
                         />
                       </div>
 
-                      <div className="form-group">
+                      <div className="form-group" style={{ margin: 0 }}>
                         <label>Priority</label>
                         <select name="priority" defaultValue={task.priority}>
                           <option value="LOW">Low</option>
@@ -366,24 +366,27 @@ export function TaskBoard() {
                         </select>
                       </div>
 
-                      <div className="form-group">
+                      <div className="form-group" style={{ margin: 0 }}>
                         <label>Agronomist Guidance / Instructions</label>
                         <input name="instructions" defaultValue={task.instructions || ""} />
                       </div>
 
-                      <div className="form-group wide">
+                      <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
                         <label>Description</label>
                         <textarea name="description" defaultValue={task.description} rows={2} required />
                       </div>
                     </div>
 
                     <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                      <button type="button" className="btn btn-sm btn-secondary" onClick={() => setEditingId(null)}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setEditingId(null)}
+                      >
                         Cancel
                       </button>
-                      <button type="submit" className="btn btn-sm btn-primary">
-                        <Icons.Check size={14} />
-                        <span>Save Changes</span>
+                      <button type="submit" className="btn btn-primary btn-sm">
+                        Save Updates
                       </button>
                     </div>
                   </form>
@@ -394,17 +397,67 @@ export function TaskBoard() {
 
           {!filteredTasks.length && (
             <EmptyState
-              icon={<Icons.Calendar size={28} />}
+              icon={<Icons.ClipboardList size={28} />}
               title="No activities found"
-              description="No tasks match the selected date or category filter in the 7-day rolling window."
-              action={
-                <Link href="/tasks/new" className="btn btn-sm btn-primary">
-                  <Icons.Plus size={14} />
-                  <span>Plan First Activity</span>
-                </Link>
-              }
+              description="No tasks match the selected filter or search query."
             />
           )}
+        </div>
+      )}
+
+      {/* Quick Plan Modal Drawer */}
+      {showPlanModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(2px)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: 720,
+              width: "100%",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              padding: 24,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <div className="eyebrow">
+                  <span className="eyebrow-dot"></span>
+                  7-DAY ROLLING PRESCRIPTION DISPATCH &bull; BRD §20
+                </div>
+                <h3 style={{ margin: "2px 0 0" }}>Plan Agronomy Activity</h3>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setShowPlanModal(false)}
+                style={{ padding: 4 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <TaskForm
+              initialDate={targetPlanDate}
+              onSuccess={() => {
+                toast.success("Activity scheduled in 7-day rolling plan!");
+                setShowPlanModal(false);
+                void load();
+              }}
+              onCancel={() => setShowPlanModal(false)}
+            />
+          </div>
         </div>
       )}
     </section>

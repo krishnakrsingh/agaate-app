@@ -6,7 +6,7 @@ import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { utcDateOnly } from "@/lib/business";
 
-const schema = z.object({ farmId: z.string().cuid(), plotId: z.string().cuid(), cropCycleId: z.string().cuid(), status: z.enum(["GOOD", "POOR"]), stage: z.enum(["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"]), impactPercent: z.coerce.number().min(0).max(100).optional().nullable(), remarks: z.string().max(2000).optional().nullable(), mediaIds: z.array(z.string().cuid()).min(1).max(10) }).superRefine((v, ctx) => { if (v.status === "POOR" && v.impactPercent == null) ctx.addIssue({ code: "custom", path: ["impactPercent"], message: "Impact percentage is required for a poor update." }); });
+const schema = z.object({ farmId: z.string().min(1), plotId: z.string().min(1), cropCycleId: z.string().min(1), status: z.enum(["GOOD", "POOR"]), stage: z.enum(["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"]), impactPercent: z.coerce.number().min(0).max(100).optional().nullable(), remarks: z.string().max(2000).optional().nullable(), mediaIds: z.array(z.string().min(1)).min(1).max(10) }).superRefine((v, ctx) => { if (v.status === "POOR" && v.impactPercent == null) ctx.addIssue({ code: "custom", path: ["impactPercent"], message: "Impact percentage is required for a poor update." }); });
 
 export async function POST(request: NextRequest) {
   try {

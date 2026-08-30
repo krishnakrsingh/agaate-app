@@ -7,7 +7,7 @@ import { apiError } from "@/lib/api";
 import { utcDateOnly } from "@/lib/business";
 
 const manualSchema = z.object({
-  farmId: z.string().cuid(),
+  farmId: z.string().min(1),
   date: z.coerce.date(),
   temperature: z.coerce.number().gte(-50).lte(60).optional().nullable(),
   humidity: z.coerce.number().gte(0).lte(100).optional().nullable(),
@@ -20,7 +20,7 @@ const manualSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    const farmId = z.string().cuid().parse(request.nextUrl.searchParams.get("farmId"));
+    const farmId = z.string().min(1).parse(request.nextUrl.searchParams.get("farmId"));
     const dateParam = request.nextUrl.searchParams.get("date");
     if (!dateParam) throw new Error("date query parameter is required.");
     const date = utcDateOnly(new Date(dateParam));

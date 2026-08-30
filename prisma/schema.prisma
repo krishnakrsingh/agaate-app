@@ -108,10 +108,6 @@ model User {
   reportedIncidents Incident[] @relation("IncidentReporter")
   incidentFollowUps IncidentFollowUp[] @relation("FollowUpAuthor")
   auditLogs AuditLog[] @relation("AuditActor")
-  passkeys PasskeyCredential[]
-  faceEnrollment FaceEnrollment?
-  webauthnChallenges WebAuthnChallenge[]
-  livenessChallenges LivenessChallenge[]
 }
 
 model Farm {
@@ -329,15 +325,6 @@ model Attendance {
   startSelfieKey String?
   endSelfieKey String?
   exceptionReason String?
-  webauthnVerified Boolean @default(false)
-  webauthnCredentialId String?
-  faceVerified Boolean @default(false)
-  faceDistance Decimal? @db.Decimal(6, 3)
-  faceSimilarityPercent Int?
-  faceModelId String?
-  faceThresholdVersion String?
-  livenessVerified Boolean @default(false)
-  livenessChallengeId String?
   user User @relation(fields: [userId], references: [id])
   farm Farm @relation(fields: [farmId], references: [id])
   exception AttendanceException?
@@ -432,71 +419,6 @@ model MediaAsset {
   execution TaskExecution? @relation(fields: [executionId], references: [id], onDelete: Cascade)
   monitoring CropMonitoring? @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
   incident Incident? @relation(fields: [incidentId], references: [id], onDelete: Cascade)
-}
-model PasskeyCredential {
-  id String @id @default(cuid())
-  userId String
-  credentialId String @unique
-  publicKey String
-  counter BigInt @default(0)
-  transports String?
-  deviceType String?
-  backedUp Boolean @default(false)
-  name String?
-  createdAt DateTime @default(now())
-  lastUsedAt DateTime?
-  revokedAt DateTime?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model WebAuthnChallenge {
-  id String @id @default(cuid())
-  userId String
-  challenge String @unique
-  type String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, type])
-  @@index([expiresAt])
-}
-
-model FaceEnrollment {
-  id String @id @default(cuid())
-  userId String @unique
-  modelId String
-  modelVersion String
-  thresholdVersion String?
-  encryptedEmbedding String
-  iv String
-  authTag String
-  status String @default("ACTIVE")
-  consentGivenAt DateTime
-  consentIp String?
-  enrollmentCount Int
-  qualityScore Decimal? @db.Decimal(5, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  revokedAt DateTime?
-  lastVerifiedAt DateTime?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model LivenessChallenge {
-  id String @id @default(cuid())
-  userId String
-  challenge String @unique
-  instruction String
-  expiresAt DateTime
-  used Boolean @default(false)
-  createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, used])
-  @@index([expiresAt])
 }
 
 model AuditLog {

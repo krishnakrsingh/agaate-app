@@ -211,11 +211,8 @@ flowchart TD
     DAY --> START{Day Started?}
     
     START -->|No| START_DAY[Start Day Flow]
-    START_DAY --> SELFIE[Take Selfie]
-    SELFIE --> LIVENESS{Liveness Check\nSmile/Blink/Turn}
-    LIVENESS -->|Pass| LOCATION[Capture GPS Location]
-    LIVENESS -->|Fail| RETRY[Retry Liveness]
-    RETRY --> SELFIE
+    START_DAY --> SELFIE[Take Front-Camera Selfie]
+    SELFIE --> LOCATION[Capture GPS Location]
     
     LOCATION --> GEO_CHECK{Location Within\nFarm Geofence?}
     GEO_CHECK -->|Yes| MARKED[✅ Attendance Marked]
@@ -366,22 +363,19 @@ flowchart TD
 
 ---
 
-## 10. Biometric Enrollment Flow
+## 10. Presence & Geofence Verification Flow
 
 ```mermaid
 flowchart TD
-    SETTINGS([Settings > Biometric]) --> STATUS{Already Enrolled?}
-    
-    STATUS -->|No| CONSENT[Accept Consent\nGive Permission]
-    CONSENT --> CAPTURE[Capture Face Photos\nMultiple Angles]
-    CAPTURE --> PROCESS[TF.js Extracts\nFace Embeddings]
-    PROCESS --> ENCRYPT[Server Encrypts\nAES-256-GCM]
-    ENCRYPT --> STORE[Store Encrypted\nEmbedding in DB]
-    STORE --> DONE([✅ Enrolled])
-    
-    STATUS -->|Yes| MANAGE[View Enrollment\nQuality Score\nLast Verified]
-    MANAGE -->|Re-enroll| CONSENT
-    MANAGE -->|Revoke| REVOKE[Deactivate\nEnrollment]
+    ATTEND([Start / End Day]) --> CAPTURE[Capture Front-Camera Selfie]
+    CAPTURE --> GPS[Read Device Geolocation Lat/Long]
+    GPS --> S3[Upload Selfie to S3 Storage]
+    S3 --> CALC[Server Calculates Haversine Distance to Farm Lat/Long]
+    CALC --> CHECK{Distance <= Geofence Radius?}
+    CHECK -->|Yes| MARK_OPEN[✅ Mark Status OPEN / COMPLETED]
+    CHECK -->|No| REQ_REASON[Prompt Officer for Reason]
+    REQ_REASON --> SUBMIT_EXC[Create Attendance Exception PENDING]
+    SUBMIT_EXC --> ADMIN_REV[Admin Reviews & Approves/Rejects]
 ```
 
 ---
@@ -391,7 +385,7 @@ flowchart TD
 ```
 / (Root) → Redirect to /dashboard or /login
 
-/login                              ← All unauthenticated users
+/login                              ← All unauthenticated users (Email + Password)
 /dashboard                          ← All authenticated users (role-aware)
 
 /farms/new                          ← Super Admin, Farm Admin
@@ -411,7 +405,4 @@ flowchart TD
 
 /admin/users                        ← User Management (Super Admin)
 /admin/approvals                    ← Approval Console (Admin)
-
-/settings/biometric                 ← Face Enrollment
-/settings/passkeys                  ← WebAuthn Credentials
 ```

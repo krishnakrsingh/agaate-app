@@ -815,6 +815,49 @@
     <script type="text/markdown" id="raw-prd">
 # Agaate Farm Management PWA — Product Requirements Document (PRD)
 
+
+<!-- cortex:toc -->
+- [1. Executive Summary](#1-executive-summary)
+  - [Core Product Philosophy](#core-product-philosophy)
+  - [MVP Key Differentiator](#mvp-key-differentiator)
+- [2. Platform Hierarchy](#2-platform-hierarchy)
+  - [Core Data Structure](#core-data-structure)
+- [3. User Roles & Permissions](#3-user-roles--permissions)
+  - [3.1 Super Admin (Agaate)](#31-super-admin-agaate)
+  - [3.2 Farm Admin](#32-farm-admin)
+  - [3.3 Agronomist (Central Agaate Team)](#33-agronomist-central-agaate-team)
+  - [3.4 Farm Officer](#34-farm-officer)
+- [4. Feature Specifications](#4-feature-specifications)
+  - [F1: Farm Creation & Management](#f1-farm-creation--management)
+  - [F2: Plot Management](#f2-plot-management)
+  - [F3: Plot Irrigation Configuration](#f3-plot-irrigation-configuration)
+  - [F4: Crop Cycle Management](#f4-crop-cycle-management)
+  - [F5: Multiple Variety Selection](#f5-multiple-variety-selection)
+  - [F6: Crop Infrastructure Planning](#f6-crop-infrastructure-planning)
+    - [Bed Preparation](#bed-preparation)
+    - [Mulching Configuration](#mulching-configuration)
+    - [Plant Population Planning](#plant-population-planning)
+  - [F7: Crop Milestone Planning](#f7-crop-milestone-planning)
+  - [F8: Additional Crop Support Activities](#f8-additional-crop-support-activities)
+  - [F9: Farm Officer Assignment](#f9-farm-officer-assignment)
+  - [F10: Attendance & Location Validation](#f10-attendance--location-validation)
+  - [F11: Biometric Verification](#f11-biometric-verification)
+  - [F12: Agronomist Dashboard](#f12-agronomist-dashboard)
+  - [F13: 7-Day Agronomy Plan](#f13-7-day-agronomy-plan)
+  - [F14: Weather Information](#f14-weather-information)
+  - [F15: Farm Officer Daily Work Screen ("My Day")](#f15-farm-officer-daily-work-screen-my-day)
+  - [F16: Daily Tasks (Three Sources)](#f16-daily-tasks-three-sources)
+  - [F17: Daily Crop Monitoring](#f17-daily-crop-monitoring)
+  - [F18: Incident Reporting](#f18-incident-reporting)
+  - [F19: Daily Labour Tracking](#f19-daily-labour-tracking)
+  - [F20: Activity Completion Flow](#f20-activity-completion-flow)
+  - [F21: Automatic Reporting](#f21-automatic-reporting)
+  - [F22: Progress Visibility](#f22-progress-visibility)
+- [5. Non-Functional Requirements](#5-non-functional-requirements)
+- [6. Success Metrics](#6-success-metrics)
+- [7. Out of Scope (MVP)](#7-out-of-scope-mvp)
+<!-- cortex:toc:end -->
+
 **Version:** 1.0  
 **Date:** 2026-08-30  
 **Product Owner:** Agaate  
@@ -1052,10 +1095,9 @@ Multiple officers per farm, each with:
 ### F10: Attendance & Location Validation
 
 **Start Day Flow:**
-1. Take Selfie (with liveness detection)
-2. Capture Current Location
-3. WebAuthn device verification (optional)
-4. System records: Date, Time, Selfie, Lat/Long
+1. Take Front-Camera Selfie
+2. Capture Current GPS Location
+3. System records: Date, Time, Selfie Key, Lat/Long, and validates distance against Farm geofence
 
 **End Day Flow:** Same as Start Day
 
@@ -1063,18 +1105,11 @@ Multiple officers per farm, each with:
 
 | Scenario | Action |
 |---|---|
-| Location matches farm | Attendance marked successfully |
-| Location mismatch | Exception created → Officer provides reason → Admin approval required |
+| Location matches farm (≤500m) | Attendance marked successfully (`OPEN`) |
+| Location mismatch (>500m) | Exception created (`EXCEPTION_PENDING`) → Officer provides reason → Admin approval required |
 | Farm location needs change | Officer raises Location Change Request → Admin approves/rejects |
 
-### F11: Biometric Verification
-
-- **Face Recognition:** Face enrollment, encrypted embedding storage, cosine similarity matching
-- **Liveness Detection:** Challenge-based (smile, blink, turn head) to prevent photo attacks
-- **WebAuthn / Passkeys:** Device-bound credential verification
-- Configurable strict/transitional mode via `REQUIRE_BIOMETRIC_FOR_ATTENDANCE`
-
-### F12: Agronomist Dashboard
+### F11: Agronomist Dashboard
 
 **Dashboard KPIs:**
 - Total Active Farms / Plots
@@ -1244,6 +1279,44 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
     <script type="text/markdown" id="raw-tdd">
 # Agaate Farm Management PWA — Technical Design Document (TDD)
 
+
+<!-- cortex:toc -->
+- [1. System Architecture Overview](#1-system-architecture-overview)
+  - [1.1 Tech Stack](#11-tech-stack)
+  - [1.2 Architecture Pattern](#12-architecture-pattern)
+  - [1.3 Key Architectural Decisions](#13-key-architectural-decisions)
+- [2. Directory Structure](#2-directory-structure)
+- [3. Database Design](#3-database-design)
+  - [3.1 Entity-Relationship Overview](#31-entity-relationship-overview)
+  - [3.2 Core Models (20 models)](#32-core-models-20-models)
+  - [3.3 Authentication Models](#33-authentication-models)
+  - [3.4 Enum Types (14 enums)](#34-enum-types-14-enums)
+  - [3.5 Index Strategy](#35-index-strategy)
+- [4. API Design](#4-api-design)
+  - [4.1 API Route Inventory (44 endpoints)](#41-api-route-inventory-44-endpoints)
+    - [Authentication & Security](#authentication--security)
+    - [Farm Management](#farm-management)
+    - [Task & Activity Management](#task--activity-management)
+    - [Attendance & Location](#attendance--location)
+    - [Monitoring & Incidents](#monitoring--incidents)
+    - [Media & Reporting](#media--reporting)
+    - [Dashboard & Users](#dashboard--users)
+  - [4.2 Error Handling Pattern](#42-error-handling-pattern)
+  - [4.3 Access Control Pattern](#43-access-control-pattern)
+- [5. Authentication & Security](#5-authentication--security)
+  - [5.1 Session Management](#51-session-management)
+  - [5.2 Biometric Pipeline](#52-biometric-pipeline)
+  - [5.3 Security Measures](#53-security-measures)
+- [6. Infrastructure](#6-infrastructure)
+  - [6.1 Local Development](#61-local-development)
+  - [6.2 Environment Configuration](#62-environment-configuration)
+  - [6.3 NPM Scripts](#63-npm-scripts)
+- [7. Testing Strategy](#7-testing-strategy)
+  - [7.1 Test Files](#71-test-files)
+  - [7.2 Testing Tools](#72-testing-tools)
+- [8. Performance Considerations](#8-performance-considerations)
+<!-- cortex:toc:end -->
+
 **Version:** 1.0  
 **Date:** 2026-08-30  
 **Status:** Active Implementation
@@ -1261,11 +1334,10 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 | **Styling** | Vanilla CSS (globals.css design system) | — |
 | **Database** | PostgreSQL | 16 (Alpine) |
 | **ORM** | Prisma | 6.8.2 |
-| **Authentication** | JWT (jose), bcryptjs, WebAuthn | — |
-| **Biometrics** | TensorFlow.js + face-api (vladmandic) | 4.22 / 1.7.15 |
-| **Object Storage** | S3-compatible (MinIO for dev) | — |
+| **Authentication** | Session Cookie (jose JWT), bcryptjs | — |
+| **Object Storage** | S3-compatible (AWS S3 / MinIO for dev) | — |
 | **Validation** | Zod | 3.24.4 |
-| **Testing** | Vitest (unit), Playwright (E2E) | 3.2.1 / 1.62.1 |
+| **Testing** | Vitest (unit & integration), Playwright (E2E) | 3.2.1 / 1.62.1 |
 | **Container** | Docker Compose (PostgreSQL + MinIO) | — |
 
 ### 1.2 Architecture Pattern
@@ -1274,10 +1346,9 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 ┌─────────────────────────────────────────────────────────┐
 │                    PWA (Browser)                         │
 │  ┌──────────┐  ┌──────────┐  ┌───────────────────────┐  │
-│  │ React    │  │ Service  │  │ TensorFlow.js         │  │
-│  │ Pages    │  │ Worker   │  │ Face Recognition      │  │
-│  └────┬─────┘  └──────────┘  │ (Client-side only)    │  │
-│       │                      └───────────────────────┘  │
+│  │ React    │  │ Service  │  │ Native Camera Capture │  │
+│  │ Pages    │  │ Worker   │  │ & HTML5 Geolocation   │  │
+│  └────┬─────┘  └──────────┘  └───────────────────────┘  │
 └───────┼─────────────────────────────────────────────────┘
         │ HTTPS
 ┌───────┼─────────────────────────────────────────────────┐
@@ -1705,6 +1776,31 @@ services:
     <script type="text/markdown" id="raw-userflows">
 # Agaate Farm Management PWA — User Flows
 
+
+<!-- cortex:toc -->
+- [1. High-Level System Flow](#1-high-level-system-flow)
+- [2. Authentication Flow](#2-authentication-flow)
+- [3. Super Admin: Farm & User Management](#3-super-admin-farm--user-management)
+  - [3.1 Create Farm](#31-create-farm)
+  - [3.2 Create User](#32-create-user)
+- [4. Farm Admin: Farm Setup Flow](#4-farm-admin-farm-setup-flow)
+  - [4.1 Complete Farm Setup](#41-complete-farm-setup)
+  - [4.2 Plot Detail View](#42-plot-detail-view)
+- [5. Agronomist: Planning & Monitoring](#5-agronomist-planning--monitoring)
+  - [5.1 Dashboard Drill-Down](#51-dashboard-drill-down)
+  - [5.2 Create 7-Day Agronomy Plan](#52-create-7-day-agronomy-plan)
+- [6. Farm Officer: Daily Execution](#6-farm-officer-daily-execution)
+  - [6.1 Complete Day Flow](#61-complete-day-flow)
+  - [6.2 Task Execution Detail](#62-task-execution-detail)
+- [7. Approval Flows](#7-approval-flows)
+  - [7.1 Attendance Exception](#71-attendance-exception)
+  - [7.2 Location Change Request](#72-location-change-request)
+- [8. Incident Management Flow](#8-incident-management-flow)
+- [9. Auto Reporting Flow](#9-auto-reporting-flow)
+- [10. Biometric Enrollment Flow](#10-biometric-enrollment-flow)
+- [11. Page Navigation Map](#11-page-navigation-map)
+<!-- cortex:toc:end -->
+
 **Version:** 1.0  
 **Date:** 2026-08-30
 
@@ -1891,11 +1987,8 @@ flowchart TD
     DAY --> START{Day Started?}
     
     START -->|No| START_DAY[Start Day Flow]
-    START_DAY --> SELFIE[Take Selfie]
-    SELFIE --> LIVENESS{Liveness Check\nSmile/Blink/Turn}
-    LIVENESS -->|Pass| LOCATION[Capture GPS Location]
-    LIVENESS -->|Fail| RETRY[Retry Liveness]
-    RETRY --> SELFIE
+    START_DAY --> SELFIE[Take Front-Camera Selfie]
+    SELFIE --> LOCATION[Capture GPS Location]
     
     LOCATION --> GEO_CHECK{Location Within\nFarm Geofence?}
     GEO_CHECK -->|Yes| MARKED[✅ Attendance Marked]
@@ -2046,22 +2139,19 @@ flowchart TD
 
 ---
 
-## 10. Biometric Enrollment Flow
+## 10. Presence & Geofence Verification Flow
 
 ```mermaid
 flowchart TD
-    SETTINGS([Settings > Biometric]) --> STATUS{Already Enrolled?}
-    
-    STATUS -->|No| CONSENT[Accept Consent\nGive Permission]
-    CONSENT --> CAPTURE[Capture Face Photos\nMultiple Angles]
-    CAPTURE --> PROCESS[TF.js Extracts\nFace Embeddings]
-    PROCESS --> ENCRYPT[Server Encrypts\nAES-256-GCM]
-    ENCRYPT --> STORE[Store Encrypted\nEmbedding in DB]
-    STORE --> DONE([✅ Enrolled])
-    
-    STATUS -->|Yes| MANAGE[View Enrollment\nQuality Score\nLast Verified]
-    MANAGE -->|Re-enroll| CONSENT
-    MANAGE -->|Revoke| REVOKE[Deactivate\nEnrollment]
+    ATTEND([Start / End Day]) --> CAPTURE[Capture Front-Camera Selfie]
+    CAPTURE --> GPS[Read Device Geolocation Lat/Long]
+    GPS --> S3[Upload Selfie to S3 Storage]
+    S3 --> CALC[Server Calculates Haversine Distance to Farm Lat/Long]
+    CALC --> CHECK{Distance <= Geofence Radius?}
+    CHECK -->|Yes| MARK_OPEN[✅ Mark Status OPEN / COMPLETED]
+    CHECK -->|No| REQ_REASON[Prompt Officer for Reason]
+    REQ_REASON --> SUBMIT_EXC[Create Attendance Exception PENDING]
+    SUBMIT_EXC --> ADMIN_REV[Admin Reviews & Approves/Rejects]
 ```
 
 ---
@@ -2071,7 +2161,7 @@ flowchart TD
 ```
 / (Root) → Redirect to /dashboard or /login
 
-/login                              ← All unauthenticated users
+/login                              ← All unauthenticated users (Email + Password)
 /dashboard                          ← All authenticated users (role-aware)
 
 /farms/new                          ← Super Admin, Farm Admin
@@ -2091,9 +2181,6 @@ flowchart TD
 
 /admin/users                        ← User Management (Super Admin)
 /admin/approvals                    ← Approval Console (Admin)
-
-/settings/biometric                 ← Face Enrollment
-/settings/passkeys                  ← WebAuthn Credentials
 ```
 
     </script>
@@ -2101,6 +2188,51 @@ flowchart TD
 
     <script type="text/markdown" id="raw-designbrief">
 # Agaate Farm Management PWA — Design Brief
+
+
+<!-- cortex:toc -->
+- [1. Design Philosophy](#1-design-philosophy)
+  - [1.1 Core Principles](#11-core-principles)
+  - [1.2 Design Tone](#12-design-tone)
+- [2. Brand Identity](#2-brand-identity)
+  - [2.1 Color Palette](#21-color-palette)
+  - [2.2 Typography](#22-typography)
+  - [2.3 Spacing System](#23-spacing-system)
+- [3. Layout System](#3-layout-system)
+  - [3.1 Shell Layout](#31-shell-layout)
+  - [3.2 Responsive Breakpoints](#32-responsive-breakpoints)
+  - [3.3 Navigation](#33-navigation)
+- [4. Component Library](#4-component-library)
+  - [4.1 Core Components](#41-core-components)
+    - [Cards](#cards)
+    - [Buttons](#buttons)
+    - [Form Inputs](#form-inputs)
+    - [Status Badges](#status-badges)
+    - [Toast Notifications](#toast-notifications)
+  - [4.2 Data Display](#42-data-display)
+    - [Metric Cards (Dashboard)](#metric-cards-dashboard)
+    - [Tables](#tables)
+    - [Empty States](#empty-states)
+- [5. Screen-by-Screen Design Specifications](#5-screen-by-screen-design-specifications)
+  - [5.1 Login Page](#51-login-page)
+  - [5.2 Dashboard](#52-dashboard)
+  - [5.3 Farm Hub (Farm Detail Page)](#53-farm-hub-farm-detail-page)
+  - [5.4 Farm Officer "My Day" Screen](#54-farm-officer-my-day-screen)
+  - [5.5 Task Board](#55-task-board)
+  - [5.6 Crop Cycle Creation Wizard](#56-crop-cycle-creation-wizard)
+  - [5.7 Approval Console](#57-approval-console)
+- [6. Interaction Patterns](#6-interaction-patterns)
+  - [6.1 Loading States](#61-loading-states)
+  - [6.2 Confirmation Dialogs](#62-confirmation-dialogs)
+  - [6.3 Form Patterns](#63-form-patterns)
+  - [6.4 Photo Upload](#64-photo-upload)
+- [7. PWA Considerations](#7-pwa-considerations)
+  - [7.1 Manifest](#71-manifest)
+  - [7.2 Mobile Optimizations](#72-mobile-optimizations)
+  - [7.3 Offline Behavior](#73-offline-behavior)
+- [8. Accessibility](#8-accessibility)
+- [9. Icon System](#9-icon-system)
+<!-- cortex:toc:end -->
 
 **Version:** 1.0  
 **Date:** 2026-08-30
@@ -2484,6 +2616,32 @@ All icons: 24×24 default size, `currentColor` fill, configurable via props.
 
     <script type="text/markdown" id="raw-datamodel">
 # Agaate Farm Management PWA — Data Model Reference
+
+
+<!-- cortex:toc -->
+- [1. Entity-Relationship Diagram](#1-entity-relationship-diagram)
+- [2. Enumerations](#2-enumerations)
+  - [2.1 User & Access](#21-user--access)
+  - [2.2 Farm & Plot](#22-farm--plot)
+  - [2.3 Crop & Agronomy](#23-crop--agronomy)
+  - [2.4 Task Workflow](#24-task-workflow)
+  - [2.5 Attendance & Approvals](#25-attendance--approvals)
+  - [2.6 Monitoring & Incidents](#26-monitoring--incidents)
+- [3. Model Specifications](#3-model-specifications)
+  - [3.1 User](#31-user)
+  - [3.2 Farm](#32-farm)
+  - [3.3 FarmAccess](#33-farmaccess)
+  - [3.4 Plot](#34-plot)
+  - [3.5 CropCycle](#35-cropcycle)
+  - [3.6 AgronomyPlan](#36-agronomyplan)
+  - [3.7 Task](#37-task)
+  - [3.8 TaskExecution](#38-taskexecution)
+  - [3.9 Attendance](#39-attendance)
+  - [3.10 Biometric Models](#310-biometric-models)
+- [4. Key Relationships Summary](#4-key-relationships-summary)
+- [5. Business Rules Encoded in Schema](#5-business-rules-encoded-in-schema)
+- [6. Seed Data Structure](#6-seed-data-structure)
+<!-- cortex:toc:end -->
 
 **Version:** 1.0  
 **Date:** 2026-08-30  
@@ -3093,6 +3251,34 @@ The seed script (`prisma/seed.ts`) creates:
 
     <script type="text/markdown" id="raw-engplan">
 # Agaate Farm Management PWA — Engineering Plan
+
+
+<!-- cortex:toc -->
+- [1. Current Implementation Status](#1-current-implementation-status)
+  - [1.1 What's Built](#11-whats-built)
+  - [1.2 Tech Debt & Known Limitations](#12-tech-debt--known-limitations)
+- [2. Architecture Inventory](#2-architecture-inventory)
+  - [2.1 Page Inventory (17 pages)](#21-page-inventory-17-pages)
+  - [2.2 API Inventory (44 endpoints)](#22-api-inventory-44-endpoints)
+  - [2.3 Component Inventory (34+ components)](#23-component-inventory-34-components)
+- [3. Development Workflow](#3-development-workflow)
+  - [3.1 Local Setup](#31-local-setup)
+  - [3.2 Testing](#32-testing)
+  - [3.3 Database Changes](#33-database-changes)
+- [4. Deployment Strategy (Production Readiness)](#4-deployment-strategy-production-readiness)
+  - [4.1 Pre-Production Checklist](#41-pre-production-checklist)
+  - [4.2 Recommended Infrastructure](#42-recommended-infrastructure)
+  - [4.3 Environment-Specific Config](#43-environment-specific-config)
+- [5. Future Roadmap](#5-future-roadmap)
+  - [Phase 2: Data Intelligence](#phase-2-data-intelligence)
+  - [Phase 3: AI & Automation](#phase-3-ai--automation)
+  - [Phase 4: Scale & Enterprise](#phase-4-scale--enterprise)
+- [6. Code Quality Standards](#6-code-quality-standards)
+  - [6.1 Conventions](#61-conventions)
+  - [6.2 Security Practices](#62-security-practices)
+  - [6.3 Testing Standards](#63-testing-standards)
+- [7. Monitoring & Observability (Recommended)](#7-monitoring--observability-recommended)
+<!-- cortex:toc:end -->
 
 **Version:** 1.0  
 **Date:** 2026-08-30  

@@ -19,6 +19,14 @@ export const Icons = {
       <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
     </svg>
   ),
+  Refresh: ({ size = 20, className, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+      <path d="M16 16h5v5" />
+    </svg>
+  ),
   Farm: ({ size = 20, className, ...props }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
       <path d="M3 21h18" />
@@ -285,6 +293,13 @@ export const Icons = {
       <path d="M12 10a2 2 0 0 1 2-2c1.02 0 2.72.1 4.52.72a2 2 0 0 1-1.95 3.44c-.88-.52-1.95-.78-3.47-.78-.55 0-1-.45-1-1Z" />
       <path d="M12 10a2 2 0 0 0-2-2 5.6 5.6 0 0 0-3.44.72 2 2 0 0 0 1.95 3.44c.88-.52 1.95-.78 3.47-.78.55 0 1 .45 1 1" />
       <path d="M10 12a2 2 0 0 0 2 2c1.02 0 2.72.1 4.52.72a2 2 0 0 1-1.95 3.44c-.88-.52-1.95-.78-3.47-.78a5.6 5.6 0 0 1-3.44-.72" />
+    </svg>
+  ),
+  Key: ({ size = 20, className, ...props }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+      <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+      <path d="m21 2-9.6 9.6" />
+      <circle cx="7.5" cy="15.5" r="5.5" />
     </svg>
   ),
   Sparkles: ({ size = 20, className, ...props }: IconProps) => (

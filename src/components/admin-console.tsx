@@ -147,7 +147,7 @@ export function AdminConsole() {
       >
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           {/* Search */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", minWidth: 220 }}>
             <input
               type="text"
               placeholder="Search users…"
@@ -155,34 +155,31 @@ export function AdminConsole() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 padding: "8px 12px 8px 32px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-strong)",
-                fontSize: "0.88rem",
-                width: 220,
+                fontSize: 13,
+                height: 36,
               }}
             />
-            <div
+            <span
               style={{
                 position: "absolute",
                 left: 10,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "var(--slate-400)",
+                color: "var(--slate)",
               }}
             >
               <Icons.Search size={14} />
-            </div>
+            </span>
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="tabs-nav" style={{ margin: 0, padding: 3 }}>
+          <div className="tabs-nav" style={{ margin: 0 }}>
             {["ALL", "SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"].map((r) => (
               <button
                 key={r}
                 type="button"
                 className={`tab-btn ${roleFilter === r ? "active" : ""}`}
                 onClick={() => setRoleFilter(r)}
-                style={{ padding: "5px 10px", fontSize: "0.78rem" }}
               >
                 {r === "ALL" ? "All Users" : r.replaceAll("_", " ")}
               </button>
@@ -192,17 +189,17 @@ export function AdminConsole() {
 
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm"
           onClick={() => setShowCreate(!showCreate)}
         >
           {showCreate ? (
             <>
-              <Icons.X size={16} />
+              <Icons.X size={14} />
               <span>Close Form</span>
             </>
           ) : (
             <>
-              <Icons.Plus size={16} />
+              <Icons.Plus size={14} />
               <span>Create User</span>
             </>
           )}
@@ -217,7 +214,7 @@ export function AdminConsole() {
       )}
 
       {message && (
-        <div className="hint" role="status">
+        <div className="success-banner" role="status">
           <Icons.CheckCircle size={16} />
           <span>{message}</span>
         </div>
@@ -225,259 +222,151 @@ export function AdminConsole() {
 
       {/* Create User Drawer */}
       {showCreate && (
-        <article className="card" style={{ border: "2px solid var(--primary-300)" }}>
+        <article className="card" style={{ padding: 24, marginBottom: 20 }}>
           <div className="card-header">
             <div>
-              <h3>Create New User</h3>
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
-                Add account credentials, role permission, and farm access.
-              </p>
+              <div className="eyebrow">USER ACCESS PROVISIONING</div>
+              <h3 style={{ margin: "2px 0 0" }}>Create New User</h3>
             </div>
           </div>
 
-          <form className="form two-column" onSubmit={create}>
-            <div className="form-group">
-              <label>Full Name</label>
-              <input name="name" minLength={2} placeholder="e.g., Rajesh Kumar" required />
-            </div>
-
-            <div className="form-group">
-              <label>Email Address</label>
-              <input name="email" type="email" placeholder="e.g., rajesh@agaate.farm" required />
-            </div>
-
-            <div className="form-group">
-              <label>Password (Min 12 characters)</label>
-              <input
-                name="password"
-                type="password"
-                minLength={12}
-                placeholder="••••••••••••"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>System Role</label>
-              <select name="role" defaultValue="FARM_OFFICER">
-                {roles.map((r) => (
-                  <option key={r} value={r}>
-                    {r.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <fieldset className="wide">
-              <legend>Farm Access & Management Permissions</legend>
-              <div style={{ display: "grid", gap: 8 }}>
-                {farms.map((f) => (
-                  <div
-                    key={f.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 12px",
-                      background: "white",
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border-subtle)",
-                    }}
-                  >
-                    <label className="check" style={{ margin: 0 }}>
-                      <input type="checkbox" name="farmIds" value={f.id} />
-                      <strong>{f.name}</strong>
-                    </label>
-
-                    <label className="check" style={{ margin: 0, fontSize: "0.82rem", color: "var(--slate-600)" }}>
-                      <input type="checkbox" name="managesFarmIds" value={f.id} />
-                      <span>Farm Admin Manager</span>
-                    </label>
-                  </div>
-                ))}
-                {!farms.length && <p className="muted">No farms created yet.</p>}
+          <form onSubmit={create} style={{ display: "grid", gap: 16 }}>
+            <div className="two-column">
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Full Name</label>
+                <input name="name" placeholder="Ramesh Patel" required />
               </div>
-            </fieldset>
 
-            <button
-              type="submit"
-              className="btn btn-primary wide"
-              disabled={pending}
-              style={{ padding: "12px 20px" }}
-            >
-              <Icons.Plus size={16} />
-              <span>{pending ? "Creating account…" : "Create User Account"}</span>
-            </button>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Email Address</label>
+                <input name="email" type="email" placeholder="ramesh@agaate.local" required />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Temporary Password</label>
+                <input name="password" type="password" minLength={8} placeholder="••••••••••••" required />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Role</label>
+                <select name="role" defaultValue="FARM_OFFICER">
+                  {roles.map((r) => (
+                    <option key={r} value={r}>
+                      {r.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Farm Assignment Multi-select */}
+            <div style={{ background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 8 }}>
+              <div className="mono-label">Assign Farm Access</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+                {farms.map((farm) => (
+                  <label key={farm.id} className="check" style={{ fontSize: 13 }}>
+                    <input type="checkbox" name="farmIds" value={farm.id} />
+                    <span>{farm.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowCreate(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm"
+                disabled={pending}
+              >
+                {pending ? "Creating…" : "Confirm & Create User"}
+              </button>
+            </div>
           </form>
         </article>
       )}
 
-      {/* Users List */}
-      <div style={{ display: "grid", gap: 14 }}>
-        {filteredUsers.map((user) => {
-          const isEditing = editingUserId === user.id;
-          const roleClass = user.role.toLowerCase();
+      {/* Users List (Cohere Data Table) */}
+      <article className="card" style={{ padding: 24 }}>
+        <div className="card-header">
+          <div>
+            <div className="eyebrow">ORGANIZATION DIRECTORY</div>
+            <h3 style={{ margin: "2px 0 0" }}>System Users & Farm Permissions</h3>
+          </div>
+          <span className="mono-label">{filteredUsers.length} Users</span>
+        </div>
 
-          return (
-            <article className="card" key={user.id} style={{ margin: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div className="user-avatar" style={{ width: 42, height: 42, fontSize: "1rem" }}>
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <strong style={{ fontSize: "1.1rem" }}>{user.name}</strong>
-                      <span className={`role-badge ${roleClass}`}>
+        <div style={{ overflowX: "auto" }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>User Details</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Assigned Farms</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => {
+                const isEditing = editingUserId === user.id;
+
+                return (
+                  <tr key={user.id}>
+                    <td>
+                      <strong>{user.name}</strong>
+                      <div style={{ fontSize: 12, color: "var(--body-muted)" }}>{user.email}</div>
+                    </td>
+                    <td>
+                      <span className="mono-label" style={{ background: "var(--soft-stone)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
                         {user.role.replaceAll("_", " ")}
                       </span>
-                      <span className={`status ${user.active ? "active" : "inactive"}`} style={{ fontSize: "0.68rem" }}>
+                    </td>
+                    <td>
+                      <span className={`status ${user.active ? "active" : "blocked"}`}>
                         {user.active ? "Active" : "Disabled"}
                       </span>
-                    </div>
-                    <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 2 }}>
-                      {user.email} &bull; {user.farmAccess.length} farm(s) assigned
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={() => setEditingUserId(isEditing ? null : user.id)}
-                >
-                  <Icons.Edit size={13} />
-                  <span>{isEditing ? "Close" : "Manage Access"}</span>
-                </button>
-              </div>
-
-              {/* Assigned Farms Chips */}
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-                {user.farmAccess.map((a) => {
-                  const farmObj = farms.find((f) => f.id === a.farmId);
-                  return (
-                    <span
-                      key={a.farmId}
-                      style={{
-                        padding: "3px 9px",
-                        borderRadius: "var(--radius-sm)",
-                        background: "var(--slate-100)",
-                        fontSize: "0.78rem",
-                        fontWeight: 600,
-                        color: "var(--slate-700)",
-                      }}
-                    >
-                      {farmObj?.name ?? a.farmId} {a.canManage ? "★ (Manager)" : ""}
-                    </span>
-                  );
-                })}
-              </div>
-
-              {/* In-place User Access Editor */}
-              {isEditing && (
-                <form
-                  className="form"
-                  onSubmit={(e) => update(e, user)}
-                  style={{
-                    marginTop: 16,
-                    padding: 16,
-                    background: "var(--slate-50)",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--border-subtle)",
-                  }}
-                >
-                  <div className="two-column">
-                    <div className="form-group">
-                      <label>System Role</label>
-                      <select name="role" defaultValue={user.role}>
-                        {roles.map((r) => (
-                          <option key={r} value={r}>
-                            {r.replaceAll("_", " ")}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group" style={{ justifyContent: "center" }}>
-                      <label className="check" style={{ marginTop: 18 }}>
-                        <input name="active" type="checkbox" defaultChecked={user.active} />
-                        <strong>Account Active (Can log in)</strong>
-                      </label>
-                    </div>
-                  </div>
-
-                   <div className="form-group wide">
-                    <label>Reset Password (optional, min 12 chars)</label>
-                    <input name="newPassword" type="password" placeholder="Leave blank to keep existing" minLength={12} />
-                  </div>
-
-                  <fieldset>
-                    <legend>Assigned Farms</legend>
-                    <div style={{ display: "grid", gap: 8 }}>
-                      {farms.map((f) => {
-                        const access = user.farmAccess.find((a) => a.farmId === f.id);
-                        return (
-                          <div
-                            key={f.id}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              padding: "6px 10px",
-                              background: "white",
-                              borderRadius: "var(--radius-sm)",
-                              border: "1px solid var(--border-subtle)",
-                            }}
-                          >
-                            <label className="check" style={{ margin: 0 }}>
-                              <input
-                                type="checkbox"
-                                name="farmIds"
-                                value={f.id}
-                                defaultChecked={Boolean(access)}
-                              />
-                              <span>{f.name}</span>
-                            </label>
-
-                            <label className="check" style={{ margin: 0, fontSize: "0.82rem" }}>
-                              <input
-                                type="checkbox"
-                                name="managesFarmIds"
-                                value={f.id}
-                                defaultChecked={Boolean(access?.canManage)}
-                              />
-                              <span>Can Manage</span>
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-
-                  <button
-                    type="submit"
-                    className="btn btn-sm btn-primary"
-                    disabled={pending}
-                    style={{ width: "fit-content" }}
-                  >
-                    <Icons.Check size={14} />
-                    <span>Save User Access</span>
-                  </button>
-                </form>
-              )}
-            </article>
-          );
-        })}
-
-        {!filteredUsers.length && (
-          <div className="empty">
-            <div className="empty-icon">
-              <Icons.Users size={24} />
-            </div>
-            <p>No users found matching your search.</p>
-          </div>
-        )}
-      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", maxWidth: 220 }}>
+                        {user.farmAccess.map((a) => {
+                          const farm = farms.find((f) => f.id === a.farmId);
+                          return (
+                            <span key={a.farmId} className="mono-label" style={{ fontSize: 10, background: "var(--soft-stone)", padding: "2px 6px", borderRadius: "var(--radius-xs)" }}>
+                              {farm?.name ?? a.farmId}
+                            </span>
+                          );
+                        })}
+                        {!user.farmAccess.length && (
+                          <span style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
+                            {user.role === "SUPER_ADMIN" ? "Global Access" : "No farms assigned"}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => setEditingUserId(isEditing ? null : user.id)}
+                      >
+                        <Icons.Edit size={12} />
+                        <span>{isEditing ? "Close" : "Edit"}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
   );
 }

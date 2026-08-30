@@ -93,97 +93,99 @@ export function PlotForm({ farmId }: { farmId: string }) {
   }
 
   return (
-    <article className="card" style={{ border: "2px solid var(--primary-200)", background: "#ffffff" }}>
+    <article className="card" style={{ padding: 24 }}>
       <div className="card-header">
         <div>
-          <h3>Create Plot on this Farm</h3>
-          <p className="muted" style={{ fontSize: "0.85rem" }}>
-            Add a designated plot area, GPS location, and irrigation configuration.
-          </p>
+          <div className="eyebrow">PLOT REGISTRATION</div>
+          <h3 style={{ margin: "2px 0 0" }}>Create Plot on this Farm</h3>
         </div>
       </div>
 
-      <form className="form two-column" onSubmit={submit}>
-        <div className="form-group">
-          <label>Plot name / number</label>
-          <input name="name" placeholder="e.g., Plot 1 - North Sector" required />
-        </div>
-
-        <div className="form-group">
-          <label>Plot area (acres)</label>
-          <input name="area" type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" required />
-        </div>
-
-        <div className="form-group">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label>Latitude</label>
-            <button
-              type="button"
-              onClick={capture}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--primary-700)",
-                fontSize: "0.78rem",
-                padding: 0,
-                boxShadow: "none",
-                cursor: "pointer",
-              }}
-            >
-              Capture GPS
-            </button>
+      <form onSubmit={submit} style={{ display: "grid", gap: 16 }}>
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Plot Name / Identifier</label>
+            <input name="name" placeholder="e.g., Plot 1 - North Sector" required />
           </div>
-          <input
-            name="latitude"
-            type="number"
-            step="any"
-            min="-90"
-            max="90"
-            placeholder="e.g., 12.9716"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            required
-          />
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Plot Area (Acres)</label>
+            <input name="area" type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" required />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label>Latitude</label>
+              <button
+                type="button"
+                onClick={capture}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--action-blue)",
+                  fontSize: 11,
+                  padding: 0,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  textTransform: "uppercase",
+                }}
+              >
+                + Capture GPS
+              </button>
+            </div>
+            <input
+              name="latitude"
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              placeholder="e.g., 12.9716"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Longitude</label>
+            <input
+              name="longitude"
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              placeholder="e.g., 77.5946"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+            <label>Soil Type (Optional)</label>
+            <input name="soilType" placeholder="e.g., Red Sandy Loam (pH 6.8)" />
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Longitude</label>
-          <input
-            name="longitude"
-            type="number"
-            step="any"
-            min="-180"
-            max="180"
-            placeholder="e.g., 77.5946"
-            value={lng}
-            onChange={(e) => setLng(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="form-group wide">
-          <label>Soil type (optional)</label>
-          <input name="soilType" placeholder="e.g., Red Sandy Loam, Black Cotton Soil" />
-        </div>
-
-        <fieldset className="wide">
-          <legend>Irrigation Setup (select all that apply)</legend>
-          <div style={{ display: "grid", gap: 10 }}>
+        {/* Irrigation Setup */}
+        <div style={{ background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 16, display: "grid", gap: 10 }}>
+          <div className="mono-label">Irrigation Setup (Select all that apply)</div>
+          <div style={{ display: "grid", gap: 8 }}>
             {irrigationOptions.map((type) => (
               <div
                 key={type}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "140px 1fr",
+                  gridTemplateColumns: "130px 1fr",
                   gap: 12,
                   alignItems: "center",
-                  padding: "6px 10px",
-                  background: selected.has(type) ? "var(--primary-50)" : "white",
-                  borderRadius: "var(--radius-sm)",
-                  border: `1px solid ${selected.has(type) ? "var(--primary-200)" : "var(--border-subtle)"}`,
+                  padding: "8px 12px",
+                  background: "var(--canvas)",
+                  borderRadius: "var(--radius-xs)",
+                  border: `1px solid ${selected.has(type) ? "var(--ink)" : "var(--hairline)"}`,
                 }}
               >
-                <label className="check" style={{ margin: 0 }}>
+                <label className="check" style={{ margin: 0, fontSize: 13 }}>
                   <input
                     type="checkbox"
                     checked={selected.has(type)}
@@ -196,31 +198,33 @@ export function PlotForm({ farmId }: { farmId: string }) {
                   placeholder={type === "Other" ? "Required: Specify irrigation details" : "Optional details (flow rate, spacing, etc.)"}
                   disabled={!selected.has(type)}
                   maxLength={300}
-                  style={{ padding: "6px 10px", fontSize: "0.85rem" }}
+                  style={{ minHeight: 34, padding: "4px 10px", fontSize: 13 }}
                 />
               </div>
             ))}
           </div>
-        </fieldset>
+        </div>
 
         {error && (
-          <div className="error wide" role="alert">
+          <div className="error" role="alert">
             <Icons.AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="hint wide" role="status">
+          <div className="success-banner" role="status">
             <Icons.CheckCircle size={16} />
             <span>{success}</span>
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary wide" disabled={pending}>
-          <Icons.Plus size={16} />
-          <span>{pending ? "Adding plot…" : "Save Plot to Farm"}</span>
-        </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "10px 24px" }}>
+            <Icons.Plus size={16} />
+            <span>{pending ? "Adding plot…" : "Save Plot to Farm"}</span>
+          </button>
+        </div>
       </form>
     </article>
   );

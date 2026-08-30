@@ -1,6 +1,5 @@
 "use client";
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 
 const DEMO_ACCOUNTS = [
@@ -9,33 +8,28 @@ const DEMO_ACCOUNTS = [
     badge: "Global Director",
     email: "admin@agaate.local",
     password: "LocalAdminPassword-ChangeMe-123",
-    color: "var(--primary-700)",
   },
   {
     role: "Farm Admin",
     badge: "Operations Manager",
     email: "farmadmin@agaate.local",
     password: "LocalAdminPassword-ChangeMe-123",
-    color: "var(--primary-600)",
   },
   {
     role: "Agronomist",
     badge: "Central Agronomy",
     email: "agronomist@agaate.local",
     password: "LocalAdminPassword-ChangeMe-123",
-    color: "var(--sky-blue)",
   },
   {
     role: "Farm Officer",
     badge: "Field Execution",
     email: "officer@agaate.local",
     password: "LocalAdminPassword-ChangeMe-123",
-    color: "var(--harvest-amber)",
   },
 ];
 
 export function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,7 +62,6 @@ export function LoginForm() {
         return;
       }
 
-      // Role-specific redirect for superior UX:
       const userRole = body.user?.role;
       if (userRole === "FARM_OFFICER") {
         window.location.href = "/officer/day";
@@ -84,122 +77,114 @@ export function LoginForm() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 24 }}>
-      {/* Quick Demo Switcher — Cohere capability cards, flat hairline, 8px */}
-      <div style={{
-        background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <span style={{ width: 6, height: 6, borderRadius: 9999, background: "var(--coral)" }} />
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.28, textTransform: "uppercase", color: "var(--slate-cohere)" }}>
-            Select hierarchy persona
+    <div style={{ display: "grid", gap: 20, width: "100%" }}>
+      {/* Demo Account Persona Selector */}
+      <div
+        style={{
+          background: "var(--soft-stone)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-sm)",
+          padding: 16,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)" }} />
+          <span className="mono-label" style={{ color: "var(--ink)" }}>
+            Select Persona to Test
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
           {DEMO_ACCOUNTS.map((acc) => {
-            const active = email === acc.email;
+            const isSelected = email === acc.email;
             return (
               <button
-                key={acc.role}
+                key={acc.email}
                 type="button"
                 onClick={() => quickFill(acc.email, acc.password)}
                 style={{
-                  display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4,
-                  padding: "12px 14px",
-                  background: active ? "var(--cohere-primary)" : "var(--canvas)",
-                  color: active ? "white" : "var(--ink)",
-                  border: `1px solid ${active ? "var(--cohere-primary)" : "var(--hairline)"}`,
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer", textAlign: "left", transition: "all 150ms ease",
-                  minWidth: 0,
+                  background: isSelected ? "var(--primary)" : "var(--canvas)",
+                  color: isSelected ? "var(--on-primary)" : "var(--ink)",
+                  border: `1px solid ${isSelected ? "var(--primary)" : "var(--hairline)"}`,
+                  borderRadius: "var(--radius-xs)",
+                  padding: "8px 10px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "all var(--transition-fast)",
                 }}
               >
-                <strong style={{ fontSize: 13, fontWeight: 500, color: active ? "white" : "var(--ink)", lineHeight: 1.2 }}>{acc.role}</strong>
-                <small style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.7)" : "var(--slate-cohere)", fontFamily: "var(--font-mono)" }}>{acc.badge}</small>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>{acc.role}</div>
+                <div style={{ fontSize: 11, opacity: 0.8 }}>{acc.badge}</div>
               </button>
             );
           })}
         </div>
-        <div style={{ marginTop: 10, fontSize: 12, color: "var(--slate-cohere)", fontFamily: "var(--font-mono)" }}>
-          One tap fills credentials • no registration
-        </div>
       </div>
 
-      {/* Main Login Form */}
-      <form onSubmit={submit} className="form">
-        <div className="form-group">
-          <label htmlFor="email-input">Email address</label>
-          <input
-            id="email-input"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@agaate.local"
-            required
-            autoComplete="email"
-          />
-        </div>
-
-        <div className="form-group">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label htmlFor="password-input">Password</label>
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--primary-700)",
-                fontSize: "0.78rem",
-                padding: 0,
-                boxShadow: "none",
-                cursor: "pointer",
-              }}
-            >
-              {showPassword ? "Hide" : "Show password"}
-            </button>
-          </div>
-
-          <input
-            id="password-input"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-            required
-            autoComplete="current-password"
-          />
+      {/* Main Authentication Card */}
+      <div className="card" style={{ padding: 28 }}>
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ margin: "0 0 4px", fontSize: 24 }}>Sign in to Agaate</h2>
+          <p style={{ margin: 0, fontSize: 14, color: "var(--body-muted)" }}>
+            Enter your credentials to access precision agriculture operations.
+          </p>
         </div>
 
         {error && (
           <div className="error" role="alert">
-            <Icons.AlertCircle size={18} />
+            <Icons.AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={pending || !email || !password}
-          style={{ width: "100%", padding: "14px 20px" }}
-        >
-          {pending ? (
-            <>
-              <Icons.Zap size={18} />
-              <span>Authenticating…</span>
-            </>
-          ) : (
-            <>
-              <Icons.ArrowRight size={18} />
-              <span>Sign In to Agaate</span>
-            </>
-          )}
-        </button>
-      </form>
+        <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label htmlFor="login-email">Email address</label>
+            <input
+              id="login-email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="e.g., admin@agaate.local"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label htmlFor="login-password" style={{ margin: 0 }}>Password</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="btn btn-ghost"
+                style={{ fontSize: 12, padding: 0 }}
+              >
+                {showPassword ? "Hide password" : "Show password"}
+              </button>
+            </div>
+            <input
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              required
+              autoComplete="current-password"
+              placeholder="Enter account password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            disabled={pending || !email || !password}
+            style={{ width: "100%", marginTop: 8 }}
+          >
+            <span>{pending ? "Authenticating…" : "Sign In to Console"}</span>
+            <Icons.ArrowRight size={15} />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

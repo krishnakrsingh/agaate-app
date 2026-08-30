@@ -55,11 +55,10 @@
 | **Styling** | Vanilla CSS (globals.css design system) | — |
 | **Database** | PostgreSQL | 16 (Alpine) |
 | **ORM** | Prisma | 6.8.2 |
-| **Authentication** | JWT (jose), bcryptjs, WebAuthn | — |
-| **Biometrics** | TensorFlow.js + face-api (vladmandic) | 4.22 / 1.7.15 |
-| **Object Storage** | S3-compatible (MinIO for dev) | — |
+| **Authentication** | Session Cookie (jose JWT), bcryptjs | — |
+| **Object Storage** | S3-compatible (AWS S3 / MinIO for dev) | — |
 | **Validation** | Zod | 3.24.4 |
-| **Testing** | Vitest (unit), Playwright (E2E) | 3.2.1 / 1.62.1 |
+| **Testing** | Vitest (unit & integration), Playwright (E2E) | 3.2.1 / 1.62.1 |
 | **Container** | Docker Compose (PostgreSQL + MinIO) | — |
 
 ### 1.2 Architecture Pattern
@@ -68,10 +67,9 @@
 ┌─────────────────────────────────────────────────────────┐
 │                    PWA (Browser)                         │
 │  ┌──────────┐  ┌──────────┐  ┌───────────────────────┐  │
-│  │ React    │  │ Service  │  │ TensorFlow.js         │  │
-│  │ Pages    │  │ Worker   │  │ Face Recognition      │  │
-│  └────┬─────┘  └──────────┘  │ (Client-side only)    │  │
-│       │                      └───────────────────────┘  │
+│  │ React    │  │ Service  │  │ Native Camera Capture │  │
+│  │ Pages    │  │ Worker   │  │ & HTML5 Geolocation   │  │
+│  └────┬─────┘  └──────────┘  └───────────────────────┘  │
 └───────┼─────────────────────────────────────────────────┘
         │ HTTPS
 ┌───────┼─────────────────────────────────────────────────┐

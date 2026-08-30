@@ -7,7 +7,7 @@ import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 
 const date = z.coerce.date();
-const milestone = z.object({ id: z.string().cuid().optional(), name: z.string().min(2).max(120), targetDate: date, remarks: z.string().max(500).optional().nullable() });
+const milestone = z.object({ id: z.string().min(1).optional(), name: z.string().min(2).max(120), targetDate: date, remarks: z.string().max(500).optional().nullable() });
 const patchSchema = z.object({
   cropName: z.string().min(2).max(120).optional(),
   startDate: date.optional(),

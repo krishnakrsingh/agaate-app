@@ -6,7 +6,7 @@ import { audit } from "@/lib/audit";
 import { labourHours } from "@/lib/business";
 import { apiError } from "@/lib/api";
 
-const schema = z.object({ remarks: z.string().max(2000).optional().nullable(), materials: z.array(z.object({ materialName: z.string().min(1).max(120), quantity: z.coerce.number().positive(), unit: z.string().min(1).max(30) })).max(30).default([]), labour: z.array(z.object({ labourers: z.coerce.number().int().positive().max(1000), hours: z.coerce.number().positive().max(24) })).max(20).default([]), mediaIds: z.array(z.string().cuid()).max(20).default([]), actualBedsCreated: z.coerce.number().nonnegative().optional(), actualPlants: z.coerce.number().nonnegative().optional() });
+const schema = z.object({ remarks: z.string().max(2000).optional().nullable(), materials: z.array(z.object({ materialName: z.string().min(1).max(120), quantity: z.coerce.number().positive(), unit: z.string().min(1).max(30) })).max(30).default([]), labour: z.array(z.object({ labourers: z.coerce.number().int().positive().max(1000), hours: z.coerce.number().positive().max(24) })).max(20).default([]), mediaIds: z.array(z.string().min(1)).max(20).default([]), actualBedsCreated: z.coerce.number().nonnegative().optional(), actualPlants: z.coerce.number().nonnegative().optional() });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   try {

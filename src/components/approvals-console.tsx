@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Icons } from "./icons";
+import { EmptyState } from "./ui/empty-state";
+import { StatusBadge } from "./ui/badge";
 
 type Exception = {
   id: string;
@@ -99,7 +101,7 @@ export function ApprovalsConsole() {
           className={`tab-btn ${activeTab === "exceptions" ? "active" : ""}`}
           onClick={() => setActiveTab("exceptions")}
         >
-          <Icons.AlertTriangle size={16} />
+          <Icons.Shield size={14} />
           <span>Attendance Exceptions ({exceptions.length})</span>
         </button>
 
@@ -108,7 +110,7 @@ export function ApprovalsConsole() {
           className={`tab-btn ${activeTab === "locations" ? "active" : ""}`}
           onClick={() => setActiveTab("locations")}
         >
-          <Icons.Compass size={16} />
+          <Icons.MapPin size={14} />
           <span>Location Change Requests ({locations.length})</span>
         </button>
 
@@ -117,8 +119,8 @@ export function ApprovalsConsole() {
           className={`tab-btn ${activeTab === "log" ? "active" : ""}`}
           onClick={() => setActiveTab("log")}
         >
-          <Icons.Clock size={16} />
-          <span>Attendance Logs ({attendance.length})</span>
+          <Icons.Users size={14} />
+          <span>Attendance Log ({attendance.length})</span>
         </button>
       </div>
 
@@ -130,7 +132,7 @@ export function ApprovalsConsole() {
       )}
 
       {message && (
-        <div className="hint" role="status">
+        <div className="success-banner" role="status">
           <Icons.CheckCircle size={16} />
           <span>{message}</span>
         </div>
@@ -138,179 +140,178 @@ export function ApprovalsConsole() {
 
       {/* TAB 1: ATTENDANCE EXCEPTIONS */}
       {activeTab === "exceptions" && (
-        <div style={{ display: "grid", gap: 14 }}>
-          {exceptions.map((x) => (
-            <article
-              className="card"
-              key={x.id}
-              style={{
-                margin: 0,
-                border: "1px solid var(--harvest-border)",
-                background: "white",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <strong style={{ fontSize: "1.1rem" }}>{x.attendance.user.name}</strong>
-                    <span className="priority-tag medium">
-                      {Number(x.distanceMeters).toFixed(0)}m outside geofence
-                    </span>
-                  </div>
-
-                  <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: 0 }}>
-                    Farm: <strong>{x.attendance.farm.name}</strong> &bull; {x.attendance.user.email}
-                  </p>
-
-                  <div
-                    style={{
-                      marginTop: 8,
-                      padding: "8px 12px",
-                      background: "var(--slate-50)",
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border-subtle)",
-                      fontSize: "0.88rem",
-                    }}
-                  >
-                    <strong>Officer Reason:</strong> {x.reason}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-primary"
-                    onClick={() => review(`/api/attendance-exceptions/${x.id}`, "APPROVED", x.id)}
-                    disabled={reviewingId === x.id}
-                  >
-                    <Icons.Check size={14} />
-                    <span>Approve Exception</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={() => review(`/api/attendance-exceptions/${x.id}`, "REJECTED", x.id)}
-                    disabled={reviewingId === x.id}
-                  >
-                    <Icons.X size={14} />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {!exceptions.length && (
-            <div className="empty">
-              <div className="empty-icon">
-                <Icons.CheckCircle size={24} />
-              </div>
-              <p>No pending attendance exceptions to review.</p>
+        <article className="card" style={{ padding: 24 }}>
+          <div className="card-header">
+            <div>
+              <div className="eyebrow">ATTENDANCE GOVERNANCE</div>
+              <h3 style={{ margin: "2px 0 0" }}>Pending Distance Exceptions</h3>
             </div>
+          </div>
+
+          {exceptions.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Officer</th>
+                    <th>Farm</th>
+                    <th>Distance Variance</th>
+                    <th>Officer Reason</th>
+                    <th>Review Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exceptions.map((ex) => (
+                    <tr key={ex.id}>
+                      <td>
+                        <strong>{ex.attendance.user.name}</strong>
+                        <div style={{ fontSize: 12, color: "var(--body-muted)" }}>{ex.attendance.user.email}</div>
+                      </td>
+                      <td>{ex.attendance.farm.name}</td>
+                      <td>
+                        <span className="mono-label" style={{ color: "#92400e", background: "#fffbeb", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
+                          {ex.distanceMeters}m outside 500m
+                        </span>
+                      </td>
+                      <td style={{ maxWidth: 260 }}>&ldquo;{ex.reason}&rdquo;</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-primary"
+                            disabled={reviewingId === ex.id}
+                            onClick={() => review(`/api/attendance-exceptions/${ex.id}`, "APPROVED", ex.id)}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            disabled={reviewingId === ex.id}
+                            onClick={() => review(`/api/attendance-exceptions/${ex.id}`, "REJECTED", ex.id)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              icon={<Icons.Shield size={28} />}
+              title="No pending exceptions"
+              description="All officer attendance records are within geofence boundaries."
+            />
           )}
-        </div>
+        </article>
       )}
 
-      {/* TAB 2: LOCATION REQUESTS */}
+      {/* TAB 2: LOCATION CHANGE REQUESTS */}
       {activeTab === "locations" && (
-        <div style={{ display: "grid", gap: 14 }}>
-          {locations.map((x) => (
-            <article className="card" key={x.id} style={{ margin: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                <div>
-                  <div className="eyebrow" style={{ color: "var(--sky-blue)" }}>
-                    PROPOSED NEW COORDINATES &bull; {x.farm?.name || x.farmId}
-                  </div>
-                  <strong style={{ fontSize: "1.15rem", display: "block", margin: "2px 0 4px" }}>
-                    Lat: {x.proposedLatitude}, Long: {x.proposedLongitude}
-                  </strong>
-                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: "4px 0" }}>
-                    <strong>Reason:</strong> {x.reason}
-                  </p>
-                  <small className="muted">
-                    Farm: <strong>{x.farm?.name ?? x.farmId}</strong> {x.farm?.location ? `(${x.farm.location})` : ""}
-                  </small>
-                </div>
-
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-primary"
-                    onClick={() => review(`/api/location-change-requests/${x.id}`, "APPROVED", x.id)}
-                    disabled={reviewingId === x.id}
-                  >
-                    <Icons.Check size={14} />
-                    <span>Approve & Update Farm</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={() => review(`/api/location-change-requests/${x.id}`, "REJECTED", x.id)}
-                    disabled={reviewingId === x.id}
-                  >
-                    <Icons.X size={14} />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {!locations.length && (
-            <div className="empty">
-              <div className="empty-icon">
-                <Icons.Compass size={24} />
-              </div>
-              <p>No pending farm location change requests.</p>
+        <article className="card" style={{ padding: 24 }}>
+          <div className="card-header">
+            <div>
+              <div className="eyebrow">COORDINATE GOVERNANCE</div>
+              <h3 style={{ margin: "2px 0 0" }}>Proposed Farm GPS Adjustments</h3>
             </div>
+          </div>
+
+          {locations.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Estate</th>
+                    <th>Proposed Coordinates</th>
+                    <th>Reason</th>
+                    <th>Review Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {locations.map((loc) => (
+                    <tr key={loc.id}>
+                      <td><strong>{loc.farm?.name ?? loc.farmId}</strong></td>
+                      <td>
+                        <span className="mono-label">
+                          {Number(loc.proposedLatitude).toFixed(4)}, {Number(loc.proposedLongitude).toFixed(4)}
+                        </span>
+                      </td>
+                      <td style={{ maxWidth: 260 }}>&ldquo;{loc.reason}&rdquo;</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-primary"
+                            disabled={reviewingId === loc.id}
+                            onClick={() => review(`/api/location-change-requests/${loc.id}`, "APPROVED", loc.id)}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-danger"
+                            disabled={reviewingId === loc.id}
+                            onClick={() => review(`/api/location-change-requests/${loc.id}`, "REJECTED", loc.id)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              icon={<Icons.MapPin size={28} />}
+              title="No pending location requests"
+              description="No farm coordinate changes are pending administrator review."
+            />
           )}
-        </div>
+        </article>
       )}
 
-      {/* TAB 3: ATTENDANCE LOG */}
+      {/* TAB 3: ATTENDANCE AUDIT LOG */}
       {activeTab === "log" && (
-        <div style={{ display: "grid", gap: 10 }}>
-          {attendance.map((x) => (
-            <article
-              className="card"
-              key={x.id}
-              style={{
-                margin: 0,
-                padding: "14px 18px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 12,
-              }}
-            >
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <strong style={{ fontSize: "1rem" }}>{x.user.name}</strong>
-                  <span className="muted">&bull;</span>
-                  <span style={{ fontWeight: 600 }}>{x.farm.name}</span>
-                  <span className={`status ${x.status.toLowerCase()}`}>{x.status}</span>
-                </div>
-
-                <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 4 }}>
-                  Date: {new Date(x.attendanceDate).toLocaleDateString()} &bull; Start:{" "}
-                  {x.startAt ? new Date(x.startAt).toLocaleTimeString() : "—"}{" "}
-                  {x.startLatitude && `(${x.startLatitude}, ${x.startLongitude})`} &bull; End:{" "}
-                  {x.endAt ? new Date(x.endAt).toLocaleTimeString() : "Open"}{" "}
-                  {x.endLatitude && `(${x.endLatitude}, ${x.endLongitude})`}
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {!attendance.length && (
-            <div className="empty">
-              <p>No attendance records logged yet.</p>
+        <article className="card" style={{ padding: 24 }}>
+          <div className="card-header">
+            <div>
+              <div className="eyebrow">HISTORICAL TELEMETRY</div>
+              <h3 style={{ margin: "2px 0 0" }}>Global Attendance Log</h3>
             </div>
-          )}
-        </div>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Officer</th>
+                  <th>Farm</th>
+                  <th>Shift Status</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendance.map((att) => (
+                  <tr key={att.id}>
+                    <td><span className="mono-label">{att.attendanceDate?.slice(0, 10)}</span></td>
+                    <td><strong>{att.user.name}</strong></td>
+                    <td>{att.farm.name}</td>
+                    <td><StatusBadge status={att.status} /></td>
+                    <td>{att.startAt ? new Date(att.startAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</td>
+                    <td>{att.endAt ? new Date(att.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Active"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
       )}
     </section>
   );

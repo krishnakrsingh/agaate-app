@@ -7,6 +7,12 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.test.ts"],
     exclude: ["node_modules", "tests/e2e/**"],
+    fileParallelism: false,
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
   resolve: {
     alias: {

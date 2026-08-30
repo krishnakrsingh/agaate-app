@@ -3,7 +3,9 @@ import { ZodError } from "zod";
 import { HttpError } from "@/lib/access";
 import { Prisma } from "@prisma/client";
 export function apiError(error: unknown) {
-  if (error instanceof HttpError) return NextResponse.json({ error: error.message }, { status: error.status });
+  if (error instanceof HttpError || (typeof error === "object" && error !== null && "status" in error && typeof (error as any).status === "number")) {
+    return NextResponse.json({ error: (error as any).message }, { status: (error as any).status });
+  }
   if (error instanceof ZodError) return NextResponse.json({ error: "Validation failed", details: error.flatten() }, { status: 422 });
   if (error instanceof Error && (error.message === "Unauthenticated" || error.message === "Account is unavailable")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   if (error instanceof Prisma.PrismaClientKnownRequestError) { console.error(error); return NextResponse.json({ error: "The requested record could not be saved." }, { status: 409 }); }

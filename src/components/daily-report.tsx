@@ -97,23 +97,23 @@ export function DailyReport() {
           flexWrap: "wrap",
           gap: 16,
           padding: "16px 20px",
-          marginBottom: 20,
+          marginBottom: 24,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 280px" }}>
-          <Icons.Farm size={18} style={{ color: "var(--primary-700)" }} />
-          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontWeight: 600, fontSize: "0.88rem", flex: 1 }}>
-            <span style={{ whiteSpace: "nowrap" }}>Select Farm:</span>
+          <Icons.Farm size={18} />
+          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontWeight: 500, fontSize: 13, flex: 1 }}>
+            <span style={{ whiteSpace: "nowrap" }}>Select Estate:</span>
             <select
               value={farmId}
               onChange={(e) => setFarmId(e.target.value)}
               style={{
-                padding: "8px 12px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-strong)",
-                fontSize: "0.88rem",
+                padding: "6px 12px",
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid var(--hairline)",
+                fontSize: 13,
                 flex: 1,
-                maxWidth: 300,
+                maxWidth: 280,
                 background: "white",
               }}
             >
@@ -134,7 +134,7 @@ export function DailyReport() {
             onClick={() => adjustDate(-1)}
             title="Previous day"
           >
-            <Icons.ArrowLeft size={14} />
+            <Icons.ArrowLeft size={13} />
           </button>
 
           <input
@@ -143,10 +143,10 @@ export function DailyReport() {
             onChange={(e) => setDate(e.target.value)}
             style={{
               padding: "6px 12px",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--border-strong)",
-              fontSize: "0.88rem",
-              fontWeight: 600,
+              borderRadius: "var(--radius-xs)",
+              border: "1px solid var(--hairline)",
+              fontSize: 13,
+              fontWeight: 500,
               background: "white",
             }}
           />
@@ -157,12 +157,12 @@ export function DailyReport() {
             onClick={() => adjustDate(1)}
             title="Next day"
           >
-            <Icons.ArrowRight size={14} />
+            <Icons.ArrowRight size={13} />
           </button>
 
           <button
             type="button"
-            className="btn btn-sm btn-outline"
+            className="btn btn-sm btn-secondary"
             onClick={() => setDate(new Date().toISOString().slice(0, 10))}
           >
             Today
@@ -170,11 +170,11 @@ export function DailyReport() {
 
           <button
             type="button"
-            className="btn btn-sm btn-secondary"
+            className="btn btn-sm btn-primary"
             onClick={() => window.print()}
             title="Print or export PDF report"
           >
-            <Icons.FileText size={14} />
+            <Icons.FileText size={13} />
             <span>Print / PDF</span>
           </button>
         </div>
@@ -195,253 +195,195 @@ export function DailyReport() {
 
       {report && !loading && (
         <>
-          {/* Executive Summary Metrics */}
-          <div className="metric-grid" style={{ margin: "0 0 24px" }}>
-            <article className="metric-card">
-              <div className="metric-card-top">
-                <span className="label">Attendance Roster</span>
-                <div className="metric-icon-box emerald">
-                  <Icons.Users size={18} />
-                </div>
-              </div>
-              <strong className="value">{report.attendance.length}</strong>
-              <span className="subtext" style={{ color: "var(--primary-700)" }}>
-                Officers Present on Site
-              </span>
-            </article>
+          {/* Executive Summary Metrics (Cohere Metric Cards) */}
+          <div className="metric-grid" style={{ marginBottom: 24 }}>
+            <div className="metric-card">
+              <span className="metric-label">Attendance Roster</span>
+              <div className="metric-value">{report.attendance.length}</div>
+              <div className="metric-sub">Verified Officers Present</div>
+            </div>
 
-            <article className="metric-card">
-              <div className="metric-card-top">
-                <span className="label">Task Completion</span>
-                <div className="metric-icon-box blue">
-                  <Icons.CheckCircle size={18} />
-                </div>
-              </div>
-              <strong className="value">
-                {completedTasks}/{totalTasks}
-              </strong>
-              <span className="subtext" style={{ color: "var(--sky-dark)" }}>
-                {taskCompletionRate}% Dispatch Success Rate
-              </span>
-            </article>
+            <div className="metric-card">
+              <span className="metric-label">Task Completion</span>
+              <div className="metric-value">{taskCompletionRate}%</div>
+              <div className="metric-sub">{completedTasks} of {totalTasks} Tasks Done</div>
+            </div>
 
-            <article className="metric-card">
-              <div className="metric-card-top">
-                <span className="label">Labour Man-Hours</span>
-                <div className="metric-icon-box amber">
-                  <Icons.Clock size={18} />
-                </div>
-              </div>
-              <strong className="value">{report.resources.labourHours} hrs</strong>
-              <span className="subtext" style={{ color: "var(--harvest-dark)" }}>
-                Field Labour Tracked
-              </span>
-            </article>
+            <div className="metric-card">
+              <span className="metric-label">Labour Telemetry</span>
+              <div className="metric-value">{report.resources.labourHours}h</div>
+              <div className="metric-sub">Total Field Hours Logged</div>
+            </div>
 
-            <article className="metric-card">
-              <div className="metric-card-top">
-                <span className="label">Photos & Signals</span>
-                <div className="metric-icon-box blue">
-                  <Icons.Camera size={18} />
-                </div>
+            <div className="metric-card">
+              <span className="metric-label">Evidence & Signals</span>
+              <div className="metric-value" style={{ color: report.incidents.length > 0 ? "var(--coral)" : "inherit" }}>
+                {report.photoCount}
               </div>
-              <strong className="value">{report.photoCount}</strong>
-              <span className="subtext" style={{ color: "var(--sky-dark)" }}>
-                Photographic Field Proofs
-              </span>
-            </article>
+              <div className="metric-sub">{report.photoCount} Photos &bull; {report.incidents.length} Incidents</div>
+            </div>
           </div>
 
-          {/* Detailed Structured Report Sections */}
-          <div className="two-column" style={{ alignItems: "start" }}>
-            {/* Attendance Roster */}
-            <article className="card" style={{ margin: 0 }}>
+          {/* Section 1: Verified Field Attendance */}
+          <article className="card" style={{ marginBottom: 20 }}>
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">ROSTER COMPLIANCE</div>
+                <h3 style={{ margin: "2px 0 0" }}>Verified Field Attendance</h3>
+              </div>
+              <span className="mono-label">{report.attendance.length} Recorded</span>
+            </div>
+
+            {report.attendance.length ? (
+              <div style={{ overflowX: "auto" }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Officer</th>
+                      <th>Shift Status</th>
+                      <th>Clock In</th>
+                      <th>Clock Out</th>
+                      <th>Location Verification</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.attendance.map((a, i) => (
+                      <tr key={i}>
+                        <td><strong>{a.user.name}</strong></td>
+                        <td><StatusBadge status={a.status} /></td>
+                        <td>{a.startAt ? new Date(a.startAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</td>
+                        <td>{a.endAt ? new Date(a.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "In Progress"}</td>
+                        <td>
+                          {a.startLatitude && a.startLongitude ? (
+                            <span style={{ fontSize: 12, color: "#166534", display: "inline-flex", gap: 4, alignItems: "center" }}>
+                              <Icons.CheckCircle size={12} />
+                              <span>GPS Verified ({Number(a.startLatitude).toFixed(4)}, {Number(a.startLongitude).toFixed(4)})</span>
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "var(--muted)" }}>No GPS</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Icons.Users size={28} />}
+                title="No attendance records"
+                description="No field officers clocked in for this farm on this date."
+              />
+            )}
+          </article>
+
+          {/* Section 2: Tasks & Agronomy Operations */}
+          <article className="card" style={{ marginBottom: 20 }}>
+            <div className="card-header">
+              <div>
+                <div className="eyebrow">EXECUTION DISPATCH</div>
+                <h3 style={{ margin: "2px 0 0" }}>Agronomy Operations & Tasks</h3>
+              </div>
+              <span className="mono-label">{report.tasks.length} Operations</span>
+            </div>
+
+            {report.tasks.length ? (
+              <div style={{ overflowX: "auto" }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Operation Title</th>
+                      <th>Status</th>
+                      <th>Assigned Officer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.tasks.map((t, i) => (
+                      <tr key={i}>
+                        <td><strong>{t.title}</strong></td>
+                        <td><StatusBadge status={t.status} /></td>
+                        <td>{t.assignedOfficer?.name ?? "Unassigned"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Icons.ClipboardList size={28} />}
+                title="No activities scheduled"
+                description="No agronomy operations or system tasks were scheduled for this date."
+              />
+            )}
+          </article>
+
+          {/* Section 3: Material Consumption & Resource Summary */}
+          <div className="two-column" style={{ marginBottom: 20 }}>
+            <article className="card">
               <div className="card-header">
-                <h3>1. Attendance Roster ({report.attendance.length})</h3>
+                <div>
+                  <div className="eyebrow">INPUT TRACKING</div>
+                  <h3 style={{ margin: "2px 0 0" }}>Materials Consumed</h3>
+                </div>
               </div>
 
-              <div style={{ display: "grid", gap: 10 }}>
-                {report.attendance.map((a, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "12px 14px",
-                      background: "var(--slate-50)",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border-subtle)",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <strong style={{ fontSize: "0.95rem" }}>{a.user.name}</strong>
-                      <StatusBadge status={a.status} />
+              {report.resources.materials.length ? (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {report.resources.materials.map((m, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "10px 14px",
+                        background: "var(--soft-stone)",
+                        borderRadius: "var(--radius-xs)",
+                        fontSize: 14,
+                      }}
+                    >
+                      <strong>{m.materialName}</strong>
+                      <span className="mono-label" style={{ color: "var(--ink)", fontWeight: 600 }}>
+                        {m.quantity} {m.unit}
+                      </span>
                     </div>
-
-                    <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 6, display: "grid", gap: 2 }}>
-                      <div>
-                        <strong>Start:</strong>{" "}
-                        {a.startAt ? new Date(a.startAt).toLocaleTimeString() : "—"}{" "}
-                        {a.startLatitude && `(${a.startLatitude}, ${a.startLongitude})`}
-                      </div>
-                      <div>
-                        <strong>End:</strong>{" "}
-                        {a.endAt ? new Date(a.endAt).toLocaleTimeString() : "Active / Open"}{" "}
-                        {a.endLatitude && `(${a.endLatitude}, ${a.endLongitude})`}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {!report.attendance.length && (
-                  <EmptyState
-                    icon={<Icons.Users size={24} />}
-                    title="No attendance records"
-                    description="No officer clock-in logs recorded for this date."
-                  />
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", fontStyle: "italic" }}>
+                  No materials recorded for today&apos;s completions.
+                </p>
+              )}
             </article>
 
-            {/* Task Execution */}
-            <article className="card" style={{ margin: 0 }}>
+            {/* Crop Monitoring & Incidents */}
+            <article className="card">
               <div className="card-header">
-                <h3>2. Task Execution ({report.tasks.length})</h3>
+                <div>
+                  <div className="eyebrow">FIELD SIGNALS</div>
+                  <h3 style={{ margin: "2px 0 0" }}>Monitoring & Incidents</h3>
+                </div>
               </div>
 
-              <div style={{ display: "grid", gap: 10 }}>
-                {report.tasks.map((t, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "12px 14px",
-                      background: t.status === "COMPLETED" ? "var(--primary-50)" : "var(--slate-50)",
-                      borderRadius: "var(--radius-md)",
-                      border: `1px solid ${t.status === "COMPLETED" ? "var(--primary-200)" : "var(--border-subtle)"}`,
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <strong>{t.title}</strong>
-                      <StatusBadge status={t.status} />
+              <div style={{ display: "grid", gap: 12 }}>
+                <div>
+                  <div className="mono-label" style={{ marginBottom: 6 }}>Daily Monitoring Checks: {report.monitoring.length}</div>
+                  {report.monitoring.map((m, i) => (
+                    <div key={i} style={{ fontSize: 13, color: "var(--ink)", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                      <span>Stage: <strong>{m.stage}</strong> &bull; Status: <StatusBadge status={m.status} /></span>
+                      {m.remarks && <div style={{ color: "var(--body-muted)", fontSize: 12, marginTop: 2 }}>&ldquo;{m.remarks}&rdquo;</div>}
                     </div>
-                    <small className="muted" style={{ display: "block", marginTop: 4 }}>
-                      Officer: {t.assignedOfficer?.name ?? "Unassigned"}
-                    </small>
-                  </div>
-                ))}
+                  ))}
+                </div>
 
-                {!report.tasks.length && (
-                  <EmptyState
-                    icon={<Icons.ClipboardList size={24} />}
-                    title="No planned tasks"
-                    description="No tasks dispatched or recorded for this date."
-                  />
-                )}
-              </div>
-            </article>
-
-            {/* Resource & Labour Tracking */}
-            <article className="card" style={{ margin: 0 }}>
-              <div className="card-header">
-                <h3>3. Resource & Labour Utilization</h3>
-              </div>
-
-              <div style={{ marginBottom: 14 }}>
-                <strong style={{ fontSize: "1.05rem", color: "var(--primary-900)" }}>
-                  Total Labour Hours: {report.resources.labourHours} Man-Hours
-                </strong>
-              </div>
-
-              <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8 }}>
-                Materials Consumed ({report.resources.materials.length})
-              </h4>
-              <div style={{ display: "grid", gap: 6 }}>
-                {report.resources.materials.map((m, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      padding: "8px 12px",
-                      background: "var(--slate-50)",
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border-subtle)",
-                      fontSize: "0.88rem",
-                    }}
-                  >
-                    <strong>{m.materialName}</strong>
-                    <span style={{ fontWeight: 600, color: "var(--primary-800)" }}>
-                      {m.quantity} {m.unit}
-                    </span>
-                  </div>
-                ))}
-
-                {!report.resources.materials.length && (
-                  <p className="muted" style={{ fontSize: "0.85rem" }}>
-                    No material usage recorded today.
-                  </p>
-                )}
-              </div>
-            </article>
-
-            {/* Field Signals & Incidents */}
-            <article className="card" style={{ margin: 0 }}>
-              <div className="card-header">
-                <h3>4. Crop Signals & Incidents</h3>
-              </div>
-
-              <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8 }}>
-                Crop Monitoring ({report.monitoring.length})
-              </h4>
-              <div style={{ display: "grid", gap: 6, marginBottom: 16 }}>
-                {report.monitoring.map((m, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "8px 12px",
-                      background: m.status === "POOR" ? "var(--danger-light)" : "var(--primary-50)",
-                      borderRadius: "var(--radius-sm)",
-                      border: `1px solid ${m.status === "POOR" ? "var(--danger-border)" : "var(--primary-200)"}`,
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <strong>{m.status} &bull; {m.stage}</strong>
+                <div>
+                  <div className="mono-label" style={{ marginBottom: 6 }}>Incidents Logged: {report.incidents.length}</div>
+                  {report.incidents.map((inc, i) => (
+                    <div key={i} style={{ fontSize: 13, color: "var(--error)", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                      <strong>{inc.type} ({inc.level})</strong> &bull; {inc.severity}
+                      <div style={{ color: "var(--ink)", fontSize: 12, marginTop: 2 }}>{inc.description}</div>
                     </div>
-                    {m.remarks && <p style={{ margin: "2px 0 0", color: "var(--text-main)" }}>{m.remarks}</p>}
-                  </div>
-                ))}
-
-                {!report.monitoring.length && (
-                  <p className="muted" style={{ fontSize: "0.85rem" }}>
-                    No crop monitoring records for this date.
-                  </p>
-                )}
-              </div>
-
-              <h4 style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 8 }}>
-                Incidents Logged ({report.incidents.length})
-              </h4>
-              <div style={{ display: "grid", gap: 6 }}>
-                {report.incidents.map((inc, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      padding: "8px 12px",
-                      background: "white",
-                      borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--border-strong)",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    <strong>{inc.type}</strong> ({inc.level} Level &bull; {inc.severity})
-                    <p style={{ margin: "2px 0 0", color: "var(--text-muted)" }}>{inc.description}</p>
-                  </div>
-                ))}
-
-                {!report.incidents.length && (
-                  <p className="muted" style={{ fontSize: "0.85rem" }}>
-                    No incidents recorded for this date.
-                  </p>
-                )}
+                  ))}
+                </div>
               </div>
             </article>
           </div>

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { canTransitionTask } from "@/lib/business";
 import { apiError } from "@/lib/api";
-const schema=z.object({status:z.enum(["ASSIGNED","AVAILABLE","IN_PROGRESS","COMPLETED","CANCELLED","BLOCKED"]).optional(),title:z.string().min(3).max(160).optional(),description:z.string().min(3).max(2000).optional(),instructions:z.string().max(2000).nullable().optional(),priority:z.enum(["LOW","MEDIUM","HIGH","URGENT"]).optional(),dueDate:z.coerce.date().optional(),assignedOfficerId:z.string().cuid().nullable().optional(),plotId:z.string().cuid().nullable().optional(),cropCycleId:z.string().cuid().nullable().optional()});
+const schema=z.object({status:z.enum(["ASSIGNED","AVAILABLE","IN_PROGRESS","COMPLETED","CANCELLED","BLOCKED"]).optional(),title:z.string().min(3).max(160).optional(),description:z.string().min(3).max(2000).optional(),instructions:z.string().max(2000).nullable().optional(),priority:z.enum(["LOW","MEDIUM","HIGH","URGENT"]).optional(),dueDate:z.coerce.date().optional(),assignedOfficerId:z.string().min(1).nullable().optional(),plotId:z.string().min(1).nullable().optional(),cropCycleId:z.string().min(1).nullable().optional()});
 export async function PATCH(request:NextRequest,{params}:{params:Promise<{taskId:string}>}) { try { const {taskId}=await params;const actor=await currentActor();const task=await prisma.task.findUniqueOrThrow({where:{id:taskId}});const input=schema.parse(await request.json());const planningFields = ["category", "priority", "dueDate", "assignedOfficerId", "plotId", "cropCycleId"];
 const hasPlanningFields = Object.keys(input).some(k=>planningFields.includes(k));
 await requireFarmAccess(task.farmId, hasPlanningFields && actor.role === "FARM_ADMIN");

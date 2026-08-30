@@ -6,7 +6,7 @@ import { audit } from "@/lib/audit";
 import { apiError, paginationParams } from "@/lib/api";
 import { isWithinRollingSevenDays, parseUtcDate, utcDateOnly } from "@/lib/business";
 
-const schema = z.object({ farmId: z.string().cuid(), plotId: z.string().cuid().optional().nullable(), cropCycleId: z.string().cuid().optional().nullable(), date: z.coerce.date(), category: z.enum(["FERTIGATION", "FOLIAR_NUTRITION", "SOIL_APPLICATION", "PREVENTIVE_SPRAY", "PEST_CONTROL", "DISEASE_CONTROL", "CROP_MONITORING", "IRRIGATION_RECOMMENDATION", "CULTURAL_PRACTICE", "CROP_SPECIFIC"]), title: z.string().min(3).max(160), description: z.string().min(3).max(2000), instructions: z.string().max(2000).optional().nullable(), priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]), assignedOfficerId: z.string().cuid() });
+const schema = z.object({ farmId: z.string().min(1), plotId: z.string().min(1).optional().nullable(), cropCycleId: z.string().min(1).optional().nullable(), date: z.coerce.date(), category: z.enum(["FERTIGATION", "FOLIAR_NUTRITION", "SOIL_APPLICATION", "PREVENTIVE_SPRAY", "PEST_CONTROL", "DISEASE_CONTROL", "CROP_MONITORING", "IRRIGATION_RECOMMENDATION", "CULTURAL_PRACTICE", "CROP_SPECIFIC"]), title: z.string().min(3).max(160), description: z.string().min(3).max(2000), instructions: z.string().max(2000).optional().nullable(), priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]), assignedOfficerId: z.string().min(1) });
 
 export async function GET(request: NextRequest) {
   try {

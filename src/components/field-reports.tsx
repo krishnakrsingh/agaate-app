@@ -104,51 +104,60 @@ export function FieldReports({
   useEffect(() => {
     fetch("/api/farms")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((list: Pick<Farm, "id" | "name">[]) => {
-        setFarms(list);
-        const targetFarmId = initialFarmId || (list.length > 0 ? list[0].id : "");
-        if (targetFarmId) {
-          handleFarmSelect(targetFarmId, initialPlotId, initialCropCycleId);
+      .then((fList: Farm[]) => {
+        setFarms(fList);
+        if (!selectedFarmId && fList.length > 0) {
+          setSelectedFarmId(fList[0].id);
         }
       })
-      .catch(() => setMessage("Unable to load assigned farms."));
-  }, [initialFarmId, initialPlotId, initialCropCycleId]);
+      .catch(() => setMessage("Failed to load farms."));
+  }, [selectedFarmId]);
 
-  async function handleFarmSelect(id: string, presetPlotId?: string, presetCropId?: string) {
-    setSelectedFarmId(id);
-    setFarm(null);
-    if (!id) return;
-    try {
-      const r = await fetch(`/api/farms/${id}`);
-      if (r.ok) {
-        const data = await r.json();
-        setFarm(data);
-        const effectivePlotId = presetPlotId || (data.plots?.length > 0 ? data.plots[0].id : "");
-        setSelectedPlotId(effectivePlotId);
-        const activePlot = data.plots?.find((p: Plot) => p.id === effectivePlotId);
-        const effectiveCropId = presetCropId || (activePlot?.cropCycles?.length > 0 ? activePlot.cropCycles[0].id : "");
-        setSelectedCropCycleId(effectiveCropId);
-      } else {
-        setMessage("Unable to load farm plots.");
-      }
-    } catch {
-      setMessage("Network error loading farm.");
+  useEffect(() => {
+    if (!selectedFarmId) {
+      setFarm(null);
+      return;
     }
+    fetch(`/api/farms/${selectedFarmId}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((f: Farm) => {
+        setFarm(f);
+        if (initialPlotId) setSelectedPlotId(initialPlotId);
+        if (initialCropCycleId) setSelectedCropCycleId(initialCropCycleId);
+      })
+      .catch(() => setMessage("Failed to load plots for selected farm."));
+  }, [selectedFarmId, initialPlotId, initialCropCycleId]);
+
+  function handleFarmSelect(id: string) {
+    setSelectedFarmId(id);
+    setSelectedPlotId("");
+    setSelectedCropCycleId("");
   }
 
-  const selectedPlot = farm?.plots.find((p) => p.id === selectedPlotId);
-  const availableCrops = selectedPlot?.cropCycles ?? [];
+  const activePlot = farm?.plots.find((p) => p.id === selectedPlotId);
+  const availableCrops = activePlot?.cropCycles ?? [];
 
-  async function handleMonitoringSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleMonitoringSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setPending(true);
     setMessage("");
-    const formEl = event.currentTarget;
+    const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
     try {
-      const mediaIds = await uploadPhotos(selectedFarmId, "CROP_PHOTO", form.getAll("photos"));
-      if (!mediaIds.length) throw new Error("At least one crop photo is mandatory (BRD §24).");
+      if (!selectedFarmId) throw new Error("Please select a farm.");
+      if (!selectedPlotId) throw new Error("Please select a plot.");
+      if (!selectedCropCycleId) throw new Error("Please select an active crop cycle.");
+
+      const photos = form.getAll("photos");
+      if (!photos.length || !(photos[0] instanceof File) || !photos[0].size) {
+        throw new Error("At least one crop photo is required for daily monitoring.");
+      }
+
+      const mediaIds = await uploadPhotos(selectedFarmId, "CROP_PHOTO", photos);
+
+      const impactVal = form.get("impactPercent");
+      const impactPercent = impactVal ? Number(impactVal) : null;
 
       const response = await fetch("/api/monitoring", {
         method: "POST",
@@ -159,7 +168,7 @@ export function FieldReports({
           cropCycleId: selectedCropCycleId,
           status: healthStatus,
           stage: form.get("stage"),
-          impactPercent: healthStatus === "POOR" ? Number(form.get("impactPercent")) : null,
+          impactPercent,
           remarks: form.get("remarks") || null,
           mediaIds,
         }),
@@ -167,36 +176,42 @@ export function FieldReports({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "Monitoring update failed.");
+        throw new Error(body.error ?? "Monitoring submission failed.");
       }
 
       formEl?.reset();
       setMonitoringPhotos([]);
-      setMessage("Daily crop monitoring update recorded & synchronized with agronomy.");
+      setMessage("Daily crop monitoring recorded & synchronized.");
       if (onSuccess) onSuccess();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Monitoring update failed.");
+      setMessage(e instanceof Error ? e.message : "Monitoring report failed.");
     } finally {
       setPending(false);
     }
   }
 
-  async function handleIncidentSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleIncidentSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setPending(true);
     setMessage("");
-    const formEl = event.currentTarget;
+    const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
     try {
-      const mediaIds = await uploadPhotos(selectedFarmId, "INCIDENT_PHOTO", form.getAll("photos"));
+      if (!selectedFarmId) throw new Error("Please select a farm.");
+      if (incidentLevel === "PLOT" && !selectedPlotId) throw new Error("Please select a plot.");
+      if (incidentLevel === "CROP" && !selectedCropCycleId) throw new Error("Please select a crop.");
+
+      const photos = form.getAll("photos");
+      const mediaIds = await uploadPhotos(selectedFarmId, "INCIDENT_PHOTO", photos);
+
       const response = await fetch("/api/incidents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           farmId: selectedFarmId,
           level: incidentLevel,
-          plotId: incidentLevel === "FARM" ? null : selectedPlotId,
+          plotId: incidentLevel !== "FARM" ? selectedPlotId : null,
           cropCycleId: incidentLevel === "CROP" ? selectedCropCycleId : null,
           type: incidentTypeInput || form.get("type"),
           description: form.get("description"),
@@ -227,7 +242,7 @@ export function FieldReports({
     <section>
       {/* Form Tabs */}
       {!hideTabs && (
-        <div className="tabs-nav">
+        <div className="tabs-nav" style={{ marginBottom: 16 }}>
           <button
             type="button"
             className={`tab-btn ${activeFormTab === "monitoring" ? "active" : ""}`}
@@ -236,8 +251,8 @@ export function FieldReports({
               setMessage("");
             }}
           >
-            <Icons.Sprout size={16} />
-            <span>Daily Crop Monitoring (BRD §24)</span>
+            <Icons.Sprout size={14} />
+            <span>Daily Crop Monitoring</span>
           </button>
 
           <button
@@ -248,8 +263,8 @@ export function FieldReports({
               setMessage("");
             }}
           >
-            <Icons.AlertTriangle size={16} />
-            <span>Report Field Incident (BRD §26)</span>
+            <Icons.AlertTriangle size={14} />
+            <span>Report Field Incident</span>
           </button>
         </div>
       )}
@@ -257,7 +272,7 @@ export function FieldReports({
       {onCancel && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
           <button type="button" className="btn btn-sm btn-secondary" onClick={onCancel}>
-            <Icons.X size={14} />
+            <Icons.X size={13} />
             <span>Close</span>
           </button>
         </div>
@@ -267,35 +282,28 @@ export function FieldReports({
         <div
           className={
             message.includes("recorded") || message.includes("transmitted") || message.includes("synchronized")
-              ? "hint"
+              ? "success-banner"
               : "error"
           }
           role="status"
         >
-          {message.includes("recorded") || message.includes("transmitted") || message.includes("synchronized") ? (
-            <Icons.CheckCircle size={18} />
-          ) : (
-            <Icons.AlertCircle size={18} />
-          )}
           <span>{message}</span>
         </div>
       )}
 
       {/* FORM 1: DAILY CROP MONITORING */}
       {activeFormTab === "monitoring" && (
-        <article className="card">
+        <article className="card" style={{ padding: 24 }}>
           <div className="card-header">
             <div>
-              <h3>Daily Crop Health & Stage Capture</h3>
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
-                Mandatory daily visual monitoring update for active crop cycles (BRD §24 & §25).
-              </p>
+              <div className="eyebrow">MONITORING TELEMETRY</div>
+              <h3 style={{ margin: "2px 0 0" }}>Daily Crop Health & Stage Capture</h3>
             </div>
           </div>
 
-          <form className="form" onSubmit={handleMonitoringSubmit}>
+          <form onSubmit={handleMonitoringSubmit} style={{ display: "grid", gap: 16 }}>
             <div className="two-column">
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Assigned Farm</label>
                 <select
                   value={selectedFarmId}
@@ -311,7 +319,7 @@ export function FieldReports({
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Plot</label>
                 <select
                   value={selectedPlotId}
@@ -331,7 +339,7 @@ export function FieldReports({
                 </select>
               </div>
 
-              <div className="form-group wide">
+              <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
                 <label>Active Crop Cycle</label>
                 <select
                   value={selectedCropCycleId}
@@ -349,37 +357,53 @@ export function FieldReports({
               </div>
             </div>
 
-            {/* Health Classification Cards */}
-            <div className="form-group">
+            {/* Health Classification */}
+            <div className="form-group" style={{ margin: 0 }}>
               <label>Crop Health Status</label>
-              <div className="choice-grid">
-                <div
-                  className={`choice-card ${healthStatus === "GOOD" ? "selected" : ""}`}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button
+                  type="button"
                   onClick={() => setHealthStatus("GOOD")}
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "var(--radius-xs)",
+                    background: healthStatus === "GOOD" ? "var(--pale-green)" : "var(--canvas)",
+                    border: `1px solid ${healthStatus === "GOOD" ? "#bbf7d0" : "var(--hairline)"}`,
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Icons.CheckCircle size={18} style={{ color: "var(--primary-600)" }} />
-                    <strong style={{ color: "var(--primary-800)" }}>Good Crop Health</strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icons.CheckCircle size={15} style={{ color: "#166534" }} />
+                    <strong style={{ color: "#166534", fontSize: 13 }}>Good Crop Health</strong>
                   </div>
-                  <small>Vigorous growth, healthy foliage, normal canopy</small>
-                </div>
+                  <div style={{ fontSize: 11, color: "var(--body-muted)", marginTop: 2 }}>Vigorous growth, healthy canopy</div>
+                </button>
 
-                <div
-                  className={`choice-card ${healthStatus === "POOR" ? "selected-danger" : ""}`}
+                <button
+                  type="button"
                   onClick={() => setHealthStatus("POOR")}
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "var(--radius-xs)",
+                    background: healthStatus === "POOR" ? "#fff5f5" : "var(--canvas)",
+                    border: `1px solid ${healthStatus === "POOR" ? "#fed7d7" : "var(--hairline)"}`,
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Icons.AlertTriangle size={18} style={{ color: "var(--danger-red)" }} />
-                    <strong style={{ color: "var(--danger-red)" }}>Poor Crop Health</strong>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icons.AlertTriangle size={15} style={{ color: "var(--error)" }} />
+                    <strong style={{ color: "var(--error)", fontSize: 13 }}>Poor Crop Health</strong>
                   </div>
-                  <small>Yellowing, wilting, pest stress, stunted growth</small>
-                </div>
+                  <div style={{ fontSize: 11, color: "var(--body-muted)", marginTop: 2 }}>Yellowing, wilting, stress</div>
+                </button>
               </div>
             </div>
 
             <div className="two-column">
-              <div className="form-group">
-                <label>Crop Growth Stage (BRD §25)</label>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Crop Growth Stage</label>
                 <select name="stage" defaultValue="Vegetative" required>
                   {cropStages.map((st) => (
                     <option key={st} value={st}>
@@ -390,24 +414,23 @@ export function FieldReports({
               </div>
 
               {healthStatus === "POOR" && (
-                <div className="form-group">
-                  <label>Estimated Impact Percentage (%)</label>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Estimated Impact (%)</label>
                   <input
                     name="impactPercent"
                     type="number"
                     min="1"
                     max="100"
                     step="0.1"
-                    placeholder="e.g., 25"
-                    required={healthStatus === "POOR"}
+                    placeholder="25"
+                    required
                   />
-                  <small className="muted">Required for poor crop status</small>
                 </div>
               )}
             </div>
 
-            <div className="form-group">
-              <label>Crop Photos (Mandatory &bull; At least 1 photo)</label>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Crop Photos (Mandatory)</label>
               <input
                 name="photos"
                 type="file"
@@ -423,83 +446,81 @@ export function FieldReports({
               />
 
               {monitoringPhotos.length > 0 && (
-                <div className="upload-previews">
+                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
                   {monitoringPhotos.map((src, i) => (
-                    <div className="upload-preview-item" key={i}>
-                      <img src={src} alt="Monitoring preview" />
-                    </div>
+                    <img
+                      src={src}
+                      alt="Preview"
+                      key={i}
+                      style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
+                    />
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ margin: 0 }}>
               <label>Remarks & Observations</label>
               <textarea
                 name="remarks"
                 maxLength={2000}
-                placeholder="Describe field conditions, leaf coloration, pest presence, soil moisture…"
-                rows={3}
+                placeholder="Describe field conditions, leaf coloration, pest presence…"
+                rows={2}
               />
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary btn-lg"
               disabled={pending || !selectedCropCycleId}
-              style={{ width: "100%", padding: "14px 20px" }}
+              style={{ width: "100%" }}
             >
-              <Icons.Check size={18} />
-              <span>{pending ? "Uploading photos & recording…" : "Submit Daily Monitoring"}</span>
+              <span>{pending ? "Submitting…" : "Record Daily Monitoring"}</span>
+              <Icons.ArrowRight size={14} />
             </button>
           </form>
         </article>
       )}
 
-      {/* FORM 2: REPORT INCIDENT */}
+      {/* FORM 2: FIELD INCIDENT */}
       {activeFormTab === "incident" && (
-        <article className="card">
+        <article className="card" style={{ padding: 24 }}>
           <div className="card-header">
             <div>
-              <h3>Report Field Incident</h3>
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
-                Report pests, infrastructure failures, water stress, or positive best practices (BRD §26 & §27).
-              </p>
+              <div className="eyebrow" style={{ color: "var(--error)" }}>SIGNAL DISPATCH</div>
+              <h3 style={{ margin: "2px 0 0" }}>Report Field Incident</h3>
             </div>
           </div>
 
-          <form className="form" onSubmit={handleIncidentSubmit}>
-            <div className="form-group">
+          <form onSubmit={handleIncidentSubmit} style={{ display: "grid", gap: 16 }}>
+            {/* Scope Level */}
+            <div className="form-group" style={{ margin: 0 }}>
               <label>Incident Level</label>
-              <div className="choice-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                <div
-                  className={`choice-card ${incidentLevel === "FARM" ? "selected" : ""}`}
-                  onClick={() => setIncidentLevel("FARM")}
-                >
-                  <strong>Farm Level</strong>
-                  <small>Motor, pump, power, labour</small>
-                </div>
-
-                <div
-                  className={`choice-card ${incidentLevel === "PLOT" ? "selected" : ""}`}
-                  onClick={() => setIncidentLevel("PLOT")}
-                >
-                  <strong>Plot Level</strong>
-                  <small>Irrigation leak, soil issue</small>
-                </div>
-
-                <div
-                  className={`choice-card ${incidentLevel === "CROP" ? "selected" : ""}`}
-                  onClick={() => setIncidentLevel("CROP")}
-                >
-                  <strong>Crop Level</strong>
-                  <small>Disease, pest, nutrition</small>
-                </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {(["FARM", "PLOT", "CROP"] as const).map((lvl) => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    onClick={() => setIncidentLevel(lvl)}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "var(--radius-xs)",
+                      background: incidentLevel === lvl ? "var(--primary)" : "var(--soft-stone)",
+                      color: incidentLevel === lvl ? "var(--on-primary)" : "var(--ink)",
+                      border: `1px solid ${incidentLevel === lvl ? "var(--primary)" : "var(--hairline)"}`,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {lvl} Level
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="two-column">
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Farm</label>
                 <select
                   value={selectedFarmId}
@@ -516,7 +537,7 @@ export function FieldReports({
               </div>
 
               {incidentLevel !== "FARM" && (
-                <div className="form-group">
+                <div className="form-group" style={{ margin: 0 }}>
                   <label>Plot</label>
                   <select
                     value={selectedPlotId}
@@ -538,7 +559,7 @@ export function FieldReports({
               )}
 
               {incidentLevel === "CROP" && (
-                <div className="form-group wide">
+                <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
                   <label>Crop Cycle</label>
                   <select
                     value={selectedCropCycleId}
@@ -557,66 +578,47 @@ export function FieldReports({
               )}
             </div>
 
-            {/* Quick Incident Type Suggestions */}
-            <div className="form-group">
-              <label>Incident Type</label>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                {incidentTypes.map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className="btn btn-sm btn-secondary"
-                    onClick={() => setIncidentTypeInput(type)}
-                    style={{
-                      fontSize: "0.78rem",
-                      background: incidentTypeInput === type ? "var(--primary-50)" : "white",
-                      borderColor: incidentTypeInput === type ? "var(--primary-500)" : "var(--border-subtle)",
-                    }}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-              <input
-                name="type"
-                value={incidentTypeInput}
-                onChange={(e) => setIncidentTypeInput(e.target.value)}
-                placeholder="Select suggestion above or type custom incident title…"
-                required
-              />
-            </div>
-
             <div className="two-column">
-              <div className="form-group">
-                <label>Severity</label>
-                <select name="severity" defaultValue="MEDIUM">
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Incident Type</label>
+                <select
+                  name="type"
+                  value={incidentTypeInput}
+                  onChange={(e) => setIncidentTypeInput(e.target.value)}
+                  required
+                >
+                  <option value="">Select incident type…</option>
+                  {incidentTypes.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>Estimated Impact % (Optional)</label>
-                <input name="impactPercent" type="number" min="0" max="100" step="0.1" placeholder="e.g., 15" />
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Severity Rating</label>
+                <select name="severity" defaultValue="MEDIUM" required>
+                  <option value="LOW">Low &bull; Minimal impact</option>
+                  <option value="MEDIUM">Medium &bull; Requires attention</option>
+                  <option value="HIGH">High &bull; Significant threat</option>
+                  <option value="CRITICAL">Critical &bull; Immediate emergency</option>
+                </select>
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Description & Scope</label>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Incident Description</label>
               <textarea
                 name="description"
-                minLength={5}
-                maxLength={2000}
-                placeholder="Detailed description of the issue or positive observation…"
+                placeholder="Explain the incident, affected bed count, root cause observations…"
                 rows={3}
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label>Incident Photos (Optional)</label>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Evidence Photos (Optional)</label>
               <input
                 name="photos"
                 type="file"
@@ -629,13 +631,15 @@ export function FieldReports({
                   setIncidentPhotos(urls);
                 }}
               />
-
               {incidentPhotos.length > 0 && (
-                <div className="upload-previews">
+                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
                   {incidentPhotos.map((src, i) => (
-                    <div className="upload-preview-item" key={i}>
-                      <img src={src} alt="Incident preview" />
-                    </div>
+                    <img
+                      src={src}
+                      alt="Incident preview"
+                      key={i}
+                      style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
+                    />
                   ))}
                 </div>
               )}
@@ -643,12 +647,12 @@ export function FieldReports({
 
             <button
               type="submit"
-              className="btn btn-primary"
-              disabled={pending || !selectedFarmId}
-              style={{ width: "100%", padding: "14px 20px" }}
+              className="btn btn-danger btn-lg"
+              disabled={pending}
+              style={{ width: "100%" }}
             >
-              <Icons.AlertTriangle size={18} />
-              <span>{pending ? "Transmitting incident…" : "Transmit Incident to Agronomist"}</span>
+              <span>{pending ? "Transmitting…" : "Transmit Incident Report"}</span>
+              <Icons.AlertTriangle size={14} />
             </button>
           </form>
         </article>
