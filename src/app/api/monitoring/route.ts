@@ -21,8 +21,23 @@ export async function POST(request: NextRequest) {
       const count = await tx.mediaAsset.updateMany({ where: { id: { in: input.mediaIds }, uploadedById: actor.id, kind: "CROP_PHOTO", monitoringId: null, verifiedAt: { not: null } }, data: { monitoringId: created.id, farmId: input.farmId } });
       if (count.count !== input.mediaIds.length) throw new Error("One or more crop photos are unavailable or unverified.");
       const today = utcDateOnly(new Date());
-      const task = await tx.task.findFirst({ where: { origin: "DAILY_MONITORING", assignedOfficerId: actor.id, cropCycleId: input.cropCycleId, dueDate: today, status: { in: ["ASSIGNED", "AVAILABLE", "IN_PROGRESS"] } } });
-      if (task) { await tx.task.update({ where: { id: task.id }, data: { status: "COMPLETED" } }); await tx.taskExecution.upsert({ where: { taskId: task.id }, update: { officerId: actor.id, status: "COMPLETED", completedAt: new Date() }, create: { taskId: task.id, officerId: actor.id, status: "COMPLETED", startedAt: new Date(), completedAt: new Date() } }); }
+      const task = await tx.task.findFirst({
+        where: {
+          origin: "DAILY_MONITORING",
+          cropCycleId: input.cropCycleId,
+          dueDate: today,
+          status: { in: ["ASSIGNED", "AVAILABLE", "IN_PROGRESS"] },
+          OR: [{ assignedOfficerId: actor.id }, { assignedOfficerId: null }],
+        },
+      });
+      if (task) {
+        await tx.task.update({ where: { id: task.id }, data: { status: "COMPLETED", assignedOfficerId: actor.id } });
+        await tx.taskExecution.upsert({
+          where: { taskId: task.id },
+          update: { officerId: actor.id, status: "COMPLETED", completedAt: new Date() },
+          create: { taskId: task.id, officerId: actor.id, status: "COMPLETED", startedAt: new Date(), completedAt: new Date() },
+        });
+      }
       return created;
     });
     await audit(actor.id, "CREATE", "CropMonitoring", monitoring.id, { status: monitoring.status });

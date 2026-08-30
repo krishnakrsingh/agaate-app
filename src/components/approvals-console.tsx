@@ -10,7 +10,7 @@ type Exception = {
   reason: string;
   attendance: {
     user: { name: string; email: string };
-    farm: { name: string };
+    farm: { name: string; geofenceRadiusMeters?: number };
   };
 };
 
@@ -170,7 +170,7 @@ export function ApprovalsConsole() {
                       <td>{ex.attendance.farm.name}</td>
                       <td>
                         <span className="mono-label" style={{ color: "#92400e", background: "#fffbeb", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
-                          {ex.distanceMeters}m outside 500m
+                          {ex.distanceMeters}m (radius: {ex.attendance.farm.geofenceRadiusMeters ?? 500}m)
                         </span>
                       </td>
                       <td style={{ maxWidth: 260 }}>&ldquo;{ex.reason}&rdquo;</td>

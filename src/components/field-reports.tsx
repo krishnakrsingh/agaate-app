@@ -17,6 +17,7 @@ const incidentTypes = [
   "Labour Shortage",
   "Excellent Crop Health",
   "High Fruit Setting",
+  "Other / Custom Incident",
 ];
 
 const cropStages = [
@@ -204,6 +205,8 @@ export function FieldReports({
 
       const photos = form.getAll("photos");
       const mediaIds = await uploadPhotos(selectedFarmId, "INCIDENT_PHOTO", photos);
+      const customType = form.get("customType") ? String(form.get("customType")).trim() : "";
+      const effectiveType = customType || incidentTypeInput || String(form.get("type"));
 
       const response = await fetch("/api/incidents", {
         method: "POST",
@@ -213,7 +216,7 @@ export function FieldReports({
           level: incidentLevel,
           plotId: incidentLevel !== "FARM" ? selectedPlotId : null,
           cropCycleId: incidentLevel === "CROP" ? selectedCropCycleId : null,
-          type: incidentTypeInput || form.get("type"),
+          type: effectiveType,
           description: form.get("description"),
           severity: form.get("severity"),
           impactPercent: form.get("impactPercent") ? Number(form.get("impactPercent")) : null,
@@ -606,6 +609,17 @@ export function FieldReports({
                 </select>
               </div>
             </div>
+
+            {incidentTypeInput === "Other / Custom Incident" && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Specify Custom Incident Type</label>
+                <input
+                  name="customType"
+                  placeholder="e.g., Pump starter burnt out, Frost damage, Rodent attack…"
+                  required
+                />
+              </div>
+            )}
 
             <div className="form-group" style={{ margin: 0 }}>
               <label>Incident Description</label>

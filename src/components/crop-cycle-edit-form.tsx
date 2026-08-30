@@ -39,6 +39,9 @@ export function CropCycleEditForm({
   const [pending, setPending] = useState(false);
   const [mulchEnabled, setMulchEnabled] = useState(false);
   const [bedPrepEnabled, setBedPrepEnabled] = useState(false);
+  const [extraMilestones, setExtraMilestones] = useState<
+    { tempId: string; name: string; targetDate: string; remarks: string }[]
+  >([]);
 
   useEffect(() => {
     fetch(`/api/plots/${plotId}/crop-cycles/${cycleId}`)
@@ -53,6 +56,24 @@ export function CropCycleEditForm({
       })
       .catch((e) => setError(e.message));
   }, [plotId, cycleId]);
+
+  function addExtra(name = "") {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    setExtraMilestones((prev) => [
+      ...prev,
+      { tempId: Math.random().toString(36).slice(2, 9), name, targetDate: todayStr, remarks: "" },
+    ]);
+  }
+
+  function removeExtra(tempId: string) {
+    setExtraMilestones((prev) => prev.filter((m) => m.tempId !== tempId));
+  }
+
+  function updateExtra(tempId: string, field: "name" | "targetDate" | "remarks", val: string) {
+    setExtraMilestones((prev) =>
+      prev.map((m) => (m.tempId === tempId ? { ...m, [field]: val } : m))
+    );
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,7 +91,7 @@ export function CropCycleEditForm({
       newEstablishment === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing";
 
     const milestoneIds = cycle.milestones.map((m) => m.id);
-    const milestones = milestoneIds
+    const existingMilestones = milestoneIds
       .map((id, index) => {
         let name = String(f.get(`milestoneName${index}`));
         if (name === "TP / Sowing Readiness" || name === "Mulching & TP / Sowing Readiness")
@@ -86,6 +107,16 @@ export function CropCycleEditForm({
       })
       .filter((m) => !m.remove)
       .map(({ remove, ...m }) => m);
+
+    const newMilestones = extraMilestones
+      .filter((m) => m.name.trim() && m.targetDate)
+      .map((m) => ({
+        name: m.name.trim(),
+        targetDate: m.targetDate,
+        remarks: m.remarks.trim() || null,
+      }));
+
+    const allMilestones = [...existingMilestones, ...newMilestones];
 
     try {
       const response = await fetch(`/api/plots/${plotId}/crop-cycles/${cycleId}`, {
@@ -114,7 +145,7 @@ export function CropCycleEditForm({
           expectedPlantsPerAcre: f.get("expectedPlantsPerAcre")
             ? Number(f.get("expectedPlantsPerAcre"))
             : null,
-          milestones,
+          milestones: allMilestones,
         }),
       });
       setPending(false);
@@ -147,7 +178,7 @@ export function CropCycleEditForm({
         <div>
           <h2>Edit Crop Cycle & Milestones</h2>
           <p className="muted" style={{ fontSize: "0.88rem" }}>
-            Update variety assignments, mulch settings, and target dates.
+            Update variety assignments, mulch settings, and milestone targets.
           </p>
         </div>
       </div>
@@ -293,7 +324,31 @@ export function CropCycleEditForm({
       </fieldset>
 
       <fieldset>
-        <legend>Milestones Schedule</legend>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <legend style={{ margin: 0, padding: 0 }}>Milestones & Support Activities</legend>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {["Crop Cover", "Bamboo Stacking", "Trellising", "Net Support", "Rope Support"].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: 11, padding: "3px 8px" }}
+                onClick={() => addExtra(preset)}
+              >
+                + {preset}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: 11, padding: "3px 8px" }}
+              onClick={() => addExtra("")}
+            >
+              + Custom Milestone
+            </button>
+          </div>
+        </div>
+
         <div style={{ display: "grid", gap: 12 }}>
           {cycle.milestones.map((m, index) => (
             <div
@@ -331,6 +386,61 @@ export function CropCycleEditForm({
                   <input name={`removeMilestone${index}`} type="checkbox" />
                   <span>Remove this milestone on save</span>
                 </label>
+              </div>
+            </div>
+          ))}
+
+          {/* Newly Added Milestones / Support Activities */}
+          {extraMilestones.map((extra, i) => (
+            <div
+              key={extra.tempId}
+              className="two-column"
+              style={{
+                padding: "12px 14px",
+                background: "var(--primary-50)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--primary-300)",
+              }}
+            >
+              <div className="form-group">
+                <label>New Milestone / Activity Name</label>
+                <input
+                  value={extra.name}
+                  onChange={(e) => updateExtra(extra.tempId, "name", e.target.value)}
+                  placeholder="e.g., Bamboo Stacking or Custom Activity"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Target Date</label>
+                <input
+                  type="date"
+                  value={extra.targetDate}
+                  onChange={(e) => updateExtra(extra.tempId, "targetDate", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group wide">
+                <label>Remarks / Instructions</label>
+                <input
+                  value={extra.remarks}
+                  onChange={(e) => updateExtra(extra.tempId, "remarks", e.target.value)}
+                  placeholder="Optional guidance or remarks"
+                />
+              </div>
+
+              <div className="wide" style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ color: "var(--danger-red)" }}
+                  onClick={() => removeExtra(extra.tempId)}
+                >
+                  <Icons.X size={12} />
+                  <span>Cancel New Milestone</span>
+                </button>
               </div>
             </div>
           ))}

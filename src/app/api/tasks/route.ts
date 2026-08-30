@@ -17,10 +17,9 @@ export async function GET(request: NextRequest) {
     if (farmId) await requireFarmAccess(farmId);
     const requestedDate = day ? parseUtcDate(day) : utcDateOnly(new Date());
 
-    // Daily monitoring is a persisted task source. Generate one task per active crop cycle for each assigned officer on first access to My Day.
-    if (actor.role === "FARM_OFFICER" && !farmId) {
+    if (actor.role === "FARM_OFFICER") {
       const farms = await prisma.farm.findMany({
-        where: { status: "ACTIVE", access: { some: { userId: actor.id } } },
+        where: { status: "ACTIVE", access: { some: { userId: actor.id } }, ...(farmId ? { id: farmId } : {}) },
         select: { id: true },
       });
       const cycles = await prisma.cropCycle.findMany({

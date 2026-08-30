@@ -81,6 +81,7 @@ export function TaskBoard() {
           instructions: f.get("instructions") || null,
           priority: f.get("priority"),
           dueDate: f.get("dueDate"),
+          status: f.get("status") || undefined,
         }),
       });
 
@@ -367,6 +368,17 @@ export function TaskBoard() {
                       </div>
 
                       <div className="form-group" style={{ margin: 0 }}>
+                        <label>Activity Status</label>
+                        <select name="status" defaultValue={task.status}>
+                          <option value="ASSIGNED">Assigned</option>
+                          <option value="AVAILABLE">Available</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="BLOCKED">Blocked</option>
+                          <option value="CANCELLED">Cancelled</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
                         <label>Agronomist Guidance / Instructions</label>
                         <input name="instructions" defaultValue={task.instructions || ""} />
                       </div>

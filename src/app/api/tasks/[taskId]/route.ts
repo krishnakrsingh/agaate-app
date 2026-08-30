@@ -15,7 +15,7 @@ if(actor.role==="FARM_OFFICER"){
   if(input.status&&!['IN_PROGRESS','BLOCKED','CANCELLED'].includes(input.status)) throw new HttpError(403,"Farm Officers can only start, block, or cancel their assigned tasks.");
 } else requireRole(actor.role,["SUPER_ADMIN","FARM_ADMIN","AGRONOMIST"]);
 if(input.status==="COMPLETED") return NextResponse.json({error:"Use the execution completion endpoint to complete an activity."},{status:409});
-if(input.status&&!canTransitionTask(task.status,input.status)) return NextResponse.json({error:`${input.status} is not a valid transition from ${task.status}.`},{status:409});
+if(actor.role==="FARM_OFFICER" && input.status && !canTransitionTask(task.status,input.status)) return NextResponse.json({error:`${input.status} is not a valid transition from ${task.status}.`},{status:409});
 if(input.assignedOfficerId){
   const officer=await prisma.user.findUnique({where:{id:input.assignedOfficerId},select:{role:true,active:true,farmAccess:{where:{farmId:task.farmId}}}});
   if(!officer||officer.role!=="FARM_OFFICER"||!officer.active||!officer.farmAccess.length) throw new Error("The assigned user must be an active Farm Officer assigned to this farm.");
