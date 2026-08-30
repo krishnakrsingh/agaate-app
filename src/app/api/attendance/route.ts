@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       if (existing.endAt) throw new Error("Day has already been ended.");
       const endStatus = outside
         ? "EXCEPTION_PENDING"
-        : existing.status === "OPEN"
+        : existing.status === "OPEN" || existing.status === "EXCEPTION_APPROVED"
         ? "COMPLETED"
         : existing.status;
       return tx.attendance.update({

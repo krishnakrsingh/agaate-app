@@ -28,18 +28,27 @@ const categories = [
 export interface TaskFormProps {
   initialDate?: string;
   initialFarmId?: string;
+  initialPlotId?: string;
+  initialCropCycleId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function TaskForm({ initialDate, initialFarmId, onSuccess, onCancel }: TaskFormProps = {}) {
+export function TaskForm({
+  initialDate,
+  initialFarmId,
+  initialPlotId,
+  initialCropCycleId,
+  onSuccess,
+  onCancel,
+}: TaskFormProps = {}) {
   const router = useRouter();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [access, setAccess] = useState<Access[]>([]);
   const [farmId, setFarmId] = useState(initialFarmId || "");
-  const [plotId, setPlotId] = useState("");
-  const [cropCycleId, setCropCycleId] = useState("");
+  const [plotId, setPlotId] = useState(initialPlotId || "");
+  const [cropCycleId, setCropCycleId] = useState(initialCropCycleId || "");
   const [category, setCategory] = useState<string>("FERTIGATION");
   const [priority, setPriority] = useState<string>("MEDIUM");
   const [planDate, setPlanDate] = useState(() => initialDate || new Date().toISOString().slice(0, 10));
@@ -74,9 +83,11 @@ export function TaskForm({ initialDate, initialFarmId, onSuccess, onCancel }: Ta
           )
         );
         setPlots(f.plots ?? []);
+        if (initialPlotId) setPlotId(initialPlotId);
+        if (initialCropCycleId) setCropCycleId(initialCropCycleId);
       })
       .catch(() => setError("Unable to load farm planning data."));
-  }, [farmId]);
+  }, [farmId, initialPlotId, initialCropCycleId]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

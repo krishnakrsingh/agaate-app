@@ -22,15 +22,29 @@ export async function GET(request: NextRequest) {
         where: { status: "ACTIVE", access: { some: { userId: actor.id } }, ...(farmId ? { id: farmId } : {}) },
         select: { id: true },
       });
+      const farmIds = farms.map((f) => f.id);
       const cycles = await prisma.cropCycle.findMany({
-        where: { status: "ACTIVE", plot: { farmId: { in: farms.map((f) => f.id) }, deletedAt: null } },
+        where: { status: "ACTIVE", plot: { farmId: { in: farmIds }, deletedAt: null } },
         select: { id: true, cropName: true, plotId: true, plot: { select: { farmId: true } } },
       });
       for (const cycle of cycles) {
         const exists = await prisma.task.findFirst({
-          where: { origin: "DAILY_MONITORING", assignedOfficerId: actor.id, cropCycleId: cycle.id, dueDate: requestedDate },
+          where: {
+            origin: "DAILY_MONITORING",
+            cropCycleId: cycle.id,
+            dueDate: requestedDate,
+            OR: [{ assignedOfficerId: actor.id }, { assignedOfficerId: null }],
+          },
         });
         if (!exists) {
+          const nextDay = new Date(requestedDate);
+          nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+          const alreadyMonitored = await prisma.cropMonitoring.findFirst({
+            where: {
+              cropCycleId: cycle.id,
+              createdAt: { gte: requestedDate, lt: nextDay },
+            },
+          });
           await prisma.task.create({
             data: {
               farmId: cycle.plot.farmId,
@@ -41,7 +55,7 @@ export async function GET(request: NextRequest) {
               title: `Daily monitoring · ${cycle.cropName}`,
               description: "Record crop health, stage, remarks, and at least one photo.",
               dueDate: requestedDate,
-              status: "ASSIGNED",
+              status: alreadyMonitored ? "COMPLETED" : "ASSIGNED",
               assignedOfficerId: actor.id,
               createdById: actor.id,
             },

@@ -189,14 +189,22 @@ export default async function CropCycleDetailPage({
               )}
 
               {["SUPER_ADMIN", "AGRONOMIST"].includes(session.role) && (
-                <Link href="/tasks/new" className="btn btn-primary" style={{ minHeight: 40 }}>
+                <Link
+                  href={`/tasks/new?farmId=${cycle.plot.farmId}&plotId=${cycle.plotId}&cropCycleId=${cycle.id}`}
+                  className="btn btn-primary"
+                  style={{ minHeight: 40 }}
+                >
                   <Icons.Calendar size={16} />
                   <span>Plan Activity</span>
                 </Link>
               )}
 
               {["SUPER_ADMIN", "FARM_OFFICER"].includes(session.role) && (
-                <Link href="/officer/reports" className="btn btn-outline" style={{ minHeight: 40 }}>
+                <Link
+                  href={`/officer/reports?farmId=${cycle.plot.farmId}&plotId=${cycle.plotId}&cropCycleId=${cycle.id}`}
+                  className="btn btn-outline"
+                  style={{ minHeight: 40 }}
+                >
                   <Icons.Camera size={16} />
                   <span>Record Signal</span>
                 </Link>

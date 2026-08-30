@@ -110,8 +110,8 @@ export function TaskCompletionForm({
   }
 
   const titleLower = taskTitle.toLowerCase();
-  const bedActivity = titleLower.includes("bed") || titleLower.includes("raised") || titleLower.includes("land");
-  const plantActivity = titleLower.includes("transplant") || titleLower.includes("sowing") || titleLower.includes("plant");
+  const bedActivity = titleLower.includes("bed") || titleLower.includes("land preparation");
+  const plantActivity = titleLower.includes("transplant") || titleLower.includes("direct sowing") || (titleLower.includes("sowing") && !titleLower.includes("protection") && !titleLower.includes("spray"));
 
   return (
     <form
@@ -149,8 +149,7 @@ export function TaskCompletionForm({
             type="number"
             min="0"
             step="1"
-            placeholder="Count of finished beds"
-            required
+            placeholder="Count of finished beds (leave blank if not applicable)"
           />
         </div>
       )}
@@ -164,7 +163,6 @@ export function TaskCompletionForm({
             min="0"
             step="1"
             placeholder="Total count of transplanted seedlings / sown seeds"
-            required
           />
         </div>
       )}

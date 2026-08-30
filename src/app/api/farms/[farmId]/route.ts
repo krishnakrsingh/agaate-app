@@ -4,6 +4,91 @@ import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-const patchSchema=z.object({name:z.string().min(2).max(120).optional(),ownerName:z.string().min(2).max(120).optional(),location:z.string().min(2).max(180).optional(),address:z.string().max(500).nullable().optional(),latitude:z.coerce.number().gte(-90).lte(90).optional(),longitude:z.coerce.number().gte(-180).lte(180).optional(),totalArea:z.coerce.number().positive().optional(),cultivableArea:z.coerce.number().positive().optional(),waterSource:z.string().min(2).max(180).optional(),geofenceRadiusMeters:z.coerce.number().int().min(50).max(10000).optional(),status:z.enum(["SETUP","ACTIVE","INACTIVE","COMPLETED"]).optional()});
-export async function GET(_:NextRequest,{params}:{params:Promise<{farmId:string}>}) {try {const {farmId}=await params; await requireFarmAccess(farmId);const farm=await prisma.farm.findUniqueOrThrow({where:{id:farmId},include:{access:{include:{user:{select:{id:true,name:true,role:true,email:true}}}},plots:{where:{deletedAt:null},include:{irrigation:true,cropCycles:{include:{varieties:true,milestones:true}}}}}});return NextResponse.json(farm);}catch(error){return apiError(error);}}
-export async function PATCH(request:NextRequest,{params}:{params:Promise<{farmId:string}>}) {try {const {farmId}=await params;const actor=await requireFarmAccess(farmId,true);const input=patchSchema.parse(await request.json());const current=await prisma.farm.findUniqueOrThrow({where:{id:farmId},select:{status:true,totalArea:true,cultivableArea:true}});const total=input.totalArea??Number(current.totalArea);const cultivable=input.cultivableArea??Number(current.cultivableArea);if(cultivable>total)throw new Error("Cultivable area cannot exceed total area.");const allocated=await prisma.plot.aggregate({where:{farmId,deletedAt:null},_sum:{area:true}});if(Number(allocated._sum.area??0)>cultivable)throw new Error("Cultivable area cannot be reduced below the area already allocated to plots.");const farm=await prisma.farm.update({where:{id:farmId},data:input});await audit(actor.id,input.status?"STATUS_CHANGE":"UPDATE","Farm",farmId,input);return NextResponse.json(farm);}catch(error){return apiError(error);}}
+
+const patchSchema = z.object({
+  name: z.string().min(2).max(120).optional(),
+  ownerName: z.string().min(2).max(120).optional(),
+  location: z.string().min(2).max(180).optional(),
+  address: z.string().max(500).nullable().optional(),
+  latitude: z.coerce.number().gte(-90).lte(90).optional(),
+  longitude: z.coerce.number().gte(-180).lte(180).optional(),
+  totalArea: z.coerce.number().positive().optional(),
+  cultivableArea: z.coerce.number().positive().optional(),
+  waterSource: z.string().min(2).max(180).optional(),
+  geofenceRadiusMeters: z.coerce.number().int().min(50).max(10000).optional(),
+  status: z.enum(["SETUP", "ACTIVE", "INACTIVE", "COMPLETED"]).optional(),
+});
+
+export async function GET(
+  _: NextRequest,
+  { params }: { params: Promise<{ farmId: string }> }
+) {
+  try {
+    const { farmId } = await params;
+    await requireFarmAccess(farmId);
+    const farm = await prisma.farm.findUniqueOrThrow({
+      where: { id: farmId },
+      include: {
+        access: {
+          include: {
+            user: { select: { id: true, name: true, role: true, email: true } },
+          },
+        },
+        plots: {
+          where: { deletedAt: null },
+          include: {
+            irrigation: true,
+            cropCycles: { include: { varieties: true, milestones: true } },
+          },
+        },
+      },
+    });
+    return NextResponse.json(farm);
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ farmId: string }> }
+) {
+  try {
+    const { farmId } = await params;
+    const actor = await requireFarmAccess(farmId, true);
+    const input = patchSchema.parse(await request.json());
+    const current = await prisma.farm.findUniqueOrThrow({
+      where: { id: farmId },
+      select: { status: true, totalArea: true, cultivableArea: true },
+    });
+
+    const total = input.totalArea ?? Number(current.totalArea);
+    const cultivable = input.cultivableArea ?? Number(current.cultivableArea);
+
+    if (cultivable > total) {
+      throw new Error("Cultivable area cannot exceed total area.");
+    }
+
+    const allocated = await prisma.plot.aggregate({
+      where: { farmId, deletedAt: null },
+      _sum: { area: true },
+    });
+
+    const totalAllocated = Math.round(Number(allocated._sum.area ?? 0) * 100) / 100;
+    const roundedCultivable = Math.round(cultivable * 100) / 100;
+
+    if (totalAllocated > roundedCultivable) {
+      throw new Error("Cultivable area cannot be reduced below the area already allocated to plots.");
+    }
+
+    const farm = await prisma.farm.update({
+      where: { id: farmId },
+      data: input,
+    });
+
+    await audit(actor.id, input.status ? "STATUS_CHANGE" : "UPDATE", "Farm", farmId, input);
+    return NextResponse.json(farm);
+  } catch (error) {
+    return apiError(error);
+  }
+}

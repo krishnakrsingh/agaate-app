@@ -6,8 +6,18 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTaskPage() {
+export default async function NewTaskPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    farmId?: string;
+    plotId?: string;
+    cropCycleId?: string;
+    date?: string;
+  }>;
+}) {
   const session = await requireSession();
+  const params = searchParams ? await searchParams : undefined;
 
   if (!["SUPER_ADMIN", "AGRONOMIST"].includes(session.role)) {
     return (
@@ -42,7 +52,12 @@ export default async function NewTaskPage() {
           </div>
         </div>
 
-        <TaskForm />
+        <TaskForm
+          initialFarmId={params?.farmId}
+          initialPlotId={params?.plotId}
+          initialCropCycleId={params?.cropCycleId}
+          initialDate={params?.date}
+        />
       </main>
     </>
   );

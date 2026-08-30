@@ -4,4 +4,59 @@ import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-export async function PATCH(request:NextRequest,{params}:{params:Promise<{exceptionId:string}>}){try{const {exceptionId}=await params;const actor=await currentActor();const exception=await prisma.attendanceException.findUniqueOrThrow({where:{id:exceptionId},include:{attendance:true}});await requireFarmAccess(exception.attendance.farmId,true);if(!["FARM_ADMIN","SUPER_ADMIN"].includes(actor.role))throw new Error("Only an administrator can review attendance exceptions.");const {status}=z.object({status:z.enum(["APPROVED","REJECTED"])}).parse(await request.json());if(exception.status!=="PENDING")return NextResponse.json({error:"This exception has already been reviewed."},{status:409});const updated=await prisma.$transaction(async tx=>{const item=await tx.attendanceException.update({where:{id:exceptionId},data:{status,reviewedById:actor.id,reviewedAt:new Date()}});await tx.attendance.update({where:{id:exception.attendanceId},data:{status:status==="APPROVED"?"EXCEPTION_APPROVED":"EXCEPTION_REJECTED"}});return item;});await audit(actor.id,`ATTENDANCE_EXCEPTION_${status}`,"AttendanceException",exceptionId);return NextResponse.json(updated);}catch(error){return apiError(error);}}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ exceptionId: string }> }
+) {
+  try {
+    const { exceptionId } = await params;
+    const actor = await currentActor();
+    const exception = await prisma.attendanceException.findUniqueOrThrow({
+      where: { id: exceptionId },
+      include: { attendance: true },
+    });
+
+    await requireFarmAccess(exception.attendance.farmId, true);
+    if (!["FARM_ADMIN", "SUPER_ADMIN"].includes(actor.role)) {
+      throw new Error("Only an administrator can review attendance exceptions.");
+    }
+
+    const { status } = z
+      .object({ status: z.enum(["APPROVED", "REJECTED"]) })
+      .parse(await request.json());
+
+    if (exception.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "This exception has already been reviewed." },
+        { status: 409 }
+      );
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const item = await tx.attendanceException.update({
+        where: { id: exceptionId },
+        data: { status, reviewedById: actor.id, reviewedAt: new Date() },
+      });
+
+      const newAttendanceStatus =
+        status === "APPROVED"
+          ? exception.attendance.endAt
+            ? "COMPLETED"
+            : "EXCEPTION_APPROVED"
+          : "EXCEPTION_REJECTED";
+
+      await tx.attendance.update({
+        where: { id: exception.attendanceId },
+        data: { status: newAttendanceStatus },
+      });
+
+      return item;
+    });
+
+    await audit(actor.id, `ATTENDANCE_EXCEPTION_${status}`, "AttendanceException", exceptionId);
+    return NextResponse.json(updated);
+  } catch (error) {
+    return apiError(error);
+  }
+}
