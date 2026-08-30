@@ -22,6 +22,8 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [pending, setPending] = useState(false);
+  const [lat, setLat] = useState(plot.latitude);
+  const [lng, setLng] = useState(plot.longitude);
 
   const initialSelected = new Set(plot.irrigation.map((i) => i.type));
   const [selected, setSelected] = useState<Set<string>>(initialSelected);
@@ -36,10 +38,8 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const form = document.querySelector("form[data-plot-edit]") as HTMLFormElement | null;
-        if (!form) return;
-        (form.elements.namedItem("latitude") as HTMLInputElement).value = String(position.coords.latitude);
-        (form.elements.namedItem("longitude") as HTMLInputElement).value = String(position.coords.longitude);
+        setLat(String(position.coords.latitude));
+        setLng(String(position.coords.longitude));
         setSuccess("Captured current device coordinates.");
       },
       (reason) =>
@@ -176,12 +176,30 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
               Capture GPS
             </button>
           </div>
-          <input name="latitude" type="number" min="-90" max="90" step="any" defaultValue={plot.latitude} required />
+          <input
+            name="latitude"
+            type="number"
+            min="-90"
+            max="90"
+            step="any"
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            required
+          />
         </div>
 
         <div className="form-group">
           <label>Longitude</label>
-          <input name="longitude" type="number" min="-180" max="180" step="any" defaultValue={plot.longitude} required />
+          <input
+            name="longitude"
+            type="number"
+            min="-180"
+            max="180"
+            step="any"
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+            required
+          />
         </div>
 
         <div className="form-group">

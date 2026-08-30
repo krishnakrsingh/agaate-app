@@ -31,7 +31,8 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
     e.preventDefault();
     setPending(true);
     setMessage("");
-    const f = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const f = new FormData(formEl);
 
     try {
       const res = await fetch(`/api/incidents/${incidentId}/follow-ups`, {
@@ -50,7 +51,7 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
         return;
       }
 
-      (e.currentTarget as HTMLFormElement).reset();
+      formEl?.reset();
       setMessage("Follow-up action recorded.");
       setShowForm(false);
       void load();

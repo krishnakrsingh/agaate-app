@@ -178,19 +178,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
     if (!selfie || !(selfie instanceof File) || !selfie.size) {
       setPending(false);
-      setMessage("A live identity selfie photo is mandatory.");
-      return;
-    }
-
-    // Stage 4: server will enforce recent WebAuthn/face+liveness if enrolled — check client-side to give honest feedback before network
-    if (needsWebAuthn && !webauthnVerified) {
-      setPending(false);
-      setMessage("Device verification required within 5 minutes. Please verify with Face ID / Fingerprint above before clocking in.");
-      return;
-    }
-    if (needsFace && !livenessVerified) {
-      setPending(false);
-      setMessage("Face and liveness verification required within 5 minutes. Please complete the liveness challenge above.");
+      setMessage("A live identity selfie photo is mandatory (BRD §17).");
       return;
     }
 
@@ -349,20 +337,13 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               Capture an end-of-day selfie to verify departure time and location.
             </p>
 
-            {needsWebAuthn && !webauthnVerified && (
-              <div className="form-group">
-                <label>Device Verification Required</label>
-                <WebAuthnVerify label="Verify Device for End Shift" onVerified={() => setWebauthnVerified(true)} />
-              </div>
-            )}
-            {needsWebAuthn && webauthnVerified && <div className="hint" style={{ fontSize: "0.82rem" }}><span>✓ Device verified</span></div>}
-            {needsFace && !livenessVerified && (
-              <div className="form-group">
-                <label>Liveness & Face Required</label>
-                <LivenessChallenge onVerified={() => setLivenessVerified(true)} />
-              </div>
-            )}
-            {needsFace && livenessVerified && <div className="hint" style={{ fontSize: "0.82rem" }}><span>✓ Face & liveness verified</span></div>}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, color: "var(--danger-red)" }}>
+              <Icons.AlertCircle size={16} />
+              <strong style={{ fontSize: "0.95rem" }}>End Today&apos;s Field Shift</strong>
+            </div>
+            <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0 0 10px" }}>
+              Capture an end-of-day selfie to verify departure time and location (BRD §17).
+            </p>
 
             <div className="form-group">
               <label>End-of-Day Field Selfie Evidence</label>
@@ -570,38 +551,10 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           </select>
         </div>
 
-        {/* Stage 4: Device verification (WebAuthn) — server authoritative */}
-        {needsWebAuthn ? (
-          <div className="form-group">
-            <label>Step 1 — Device Verification (WebAuthn)</label>
-            {webauthnVerified ? (
-              <div className="hint" style={{ fontSize: "0.85rem" }}><Icons.CheckCircle size={14} /><span>✓ Device verification complete (Face ID / Fingerprint verified, server confirmed)</span></div>
-            ) : (
-              <WebAuthnVerify label="Verify Device with Face ID / Fingerprint" onVerified={() => setWebauthnVerified(true)} />
-            )}
-          </div>
-        ) : (
-          <div className="hint" style={{ fontSize: "0.78rem" }}>No passkey registered — device verification not required yet. Register at /settings/biometric for stronger attendance.</div>
-        )}
-
-        {/* Stage 3+4: Liveness + Face (server verifies embedding + challenge) */}
-        {needsFace ? (
-          <div className="form-group">
-            <label>Step 2 — Face & Liveness Verification</label>
-            {livenessVerified ? (
-              <div className="hint" style={{ fontSize: "0.85rem" }}><Icons.CheckCircle size={14} /><span>✓ Face & liveness verified (server-checked embedding vs encrypted reference, challenge single-use)</span></div>
-            ) : (
-              <LivenessChallenge onVerified={() => setLivenessVerified(true)} />
-            )}
-          </div>
-        ) : (
-          <div className="hint" style={{ fontSize: "0.78rem" }}>No face enrollment — face/liveness not required yet. Enroll at /settings/biometric.</div>
-        )}
-
-        {/* Live Selfie Box — evidence (S3) independent of biometric embedding */}
+        {/* Live Selfie Box — evidence (S3) */}
         <div className="form-group">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <label style={{ margin: 0 }}>Step 3 — Field Selfie Evidence (S3 verified)</label>
+            <label style={{ margin: 0 }}>Live Field Selfie Evidence (BRD §17)</label>
             {selfiePreview && (
               <span
                 style={{

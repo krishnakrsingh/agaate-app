@@ -2,9 +2,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icons } from "./icons";
+import { useToast } from "./ui/toast";
 
 export function ActivateFarmButton({ farmId }: { farmId: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -18,14 +20,18 @@ export function ActivateFarmButton({ farmId }: { farmId: string }) {
 
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
-        setMessage(body.error ?? "Failed to activate farm. Ensure at least one plot and crop cycle with all 4 milestones is planned.");
+        const err = body.error ?? "Failed to activate farm. Ensure at least one plot and crop cycle with all 4 milestones is planned.";
+        setMessage(err);
+        toast.error(err);
         return;
       }
 
+      toast.success("Farm activated successfully! You can now assign officers and dispatch daily tasks.");
       router.refresh();
     } catch {
       setPending(false);
       setMessage("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     }
   }
 

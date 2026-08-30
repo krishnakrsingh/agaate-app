@@ -19,6 +19,7 @@ type LocationRequest = {
   reason: string;
   farmId: string;
   status: string;
+  farm?: { id: string; name: string; location?: string };
 };
 
 type Attendance = {
@@ -219,7 +220,7 @@ export function ApprovalsConsole() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                 <div>
                   <div className="eyebrow" style={{ color: "var(--sky-blue)" }}>
-                    PROPOSED NEW COORDINATES
+                    PROPOSED NEW COORDINATES &bull; {x.farm?.name || x.farmId}
                   </div>
                   <strong style={{ fontSize: "1.15rem", display: "block", margin: "2px 0 4px" }}>
                     Lat: {x.proposedLatitude}, Long: {x.proposedLongitude}
@@ -227,7 +228,9 @@ export function ApprovalsConsole() {
                   <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: "4px 0" }}>
                     <strong>Reason:</strong> {x.reason}
                   </p>
-                  <small className="muted">Farm ID: {x.farmId}</small>
+                  <small className="muted">
+                    Farm: <strong>{x.farm?.name ?? x.farmId}</strong> {x.farm?.location ? `(${x.farm.location})` : ""}
+                  </small>
                 </div>
 
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

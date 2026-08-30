@@ -194,7 +194,7 @@ export function TaskBoard() {
       >
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           {/* Search Input */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", flex: "1 1 160px", minWidth: 0, maxWidth: 260 }}>
             <input
               type="text"
               placeholder="Search activities, farms, officers…"
@@ -202,10 +202,11 @@ export function TaskBoard() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 padding: "8px 12px 8px 32px",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--border-strong)",
-                fontSize: "0.88rem",
-                width: 240,
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid var(--hairline)",
+                fontSize: "14px",
+                width: "100%",
+                maxWidth: "100%",
                 background: "white",
               }}
             />

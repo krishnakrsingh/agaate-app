@@ -65,14 +65,32 @@ async function uploadPhotos(
   return ids;
 }
 
-export function FieldReports() {
+export interface FieldReportsProps {
+  initialFarmId?: string;
+  initialPlotId?: string;
+  initialCropCycleId?: string;
+  initialTab?: "monitoring" | "incident";
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  hideTabs?: boolean;
+}
+
+export function FieldReports({
+  initialFarmId,
+  initialPlotId,
+  initialCropCycleId,
+  initialTab = "monitoring",
+  onSuccess,
+  onCancel,
+  hideTabs = false,
+}: FieldReportsProps = {}) {
   const [farms, setFarms] = useState<Pick<Farm, "id" | "name">[]>([]);
   const [farm, setFarm] = useState<Farm | null>(null);
-  const [selectedFarmId, setSelectedFarmId] = useState("");
-  const [selectedPlotId, setSelectedPlotId] = useState("");
-  const [selectedCropCycleId, setSelectedCropCycleId] = useState("");
+  const [selectedFarmId, setSelectedFarmId] = useState(initialFarmId || "");
+  const [selectedPlotId, setSelectedPlotId] = useState(initialPlotId || "");
+  const [selectedCropCycleId, setSelectedCropCycleId] = useState(initialCropCycleId || "");
 
-  const [activeFormTab, setActiveFormTab] = useState<"monitoring" | "incident">("monitoring");
+  const [activeFormTab, setActiveFormTab] = useState<"monitoring" | "incident">(initialTab);
   const [healthStatus, setHealthStatus] = useState<"GOOD" | "POOR">("GOOD");
   const [incidentLevel, setIncidentLevel] = useState<"FARM" | "PLOT" | "CROP">("CROP");
   const [incidentTypeInput, setIncidentTypeInput] = useState("");
@@ -88,17 +106,16 @@ export function FieldReports() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((list: Pick<Farm, "id" | "name">[]) => {
         setFarms(list);
-        if (list.length > 0) {
-          handleFarmSelect(list[0].id);
+        const targetFarmId = initialFarmId || (list.length > 0 ? list[0].id : "");
+        if (targetFarmId) {
+          handleFarmSelect(targetFarmId, initialPlotId, initialCropCycleId);
         }
       })
       .catch(() => setMessage("Unable to load assigned farms."));
-  }, []);
+  }, [initialFarmId, initialPlotId, initialCropCycleId]);
 
-  async function handleFarmSelect(id: string) {
+  async function handleFarmSelect(id: string, presetPlotId?: string, presetCropId?: string) {
     setSelectedFarmId(id);
-    setSelectedPlotId("");
-    setSelectedCropCycleId("");
     setFarm(null);
     if (!id) return;
     try {
@@ -106,12 +123,11 @@ export function FieldReports() {
       if (r.ok) {
         const data = await r.json();
         setFarm(data);
-        if (data.plots?.length > 0) {
-          setSelectedPlotId(data.plots[0].id);
-          if (data.plots[0].cropCycles?.length > 0) {
-            setSelectedCropCycleId(data.plots[0].cropCycles[0].id);
-          }
-        }
+        const effectivePlotId = presetPlotId || (data.plots?.length > 0 ? data.plots[0].id : "");
+        setSelectedPlotId(effectivePlotId);
+        const activePlot = data.plots?.find((p: Plot) => p.id === effectivePlotId);
+        const effectiveCropId = presetCropId || (activePlot?.cropCycles?.length > 0 ? activePlot.cropCycles[0].id : "");
+        setSelectedCropCycleId(effectiveCropId);
       } else {
         setMessage("Unable to load farm plots.");
       }
@@ -157,6 +173,7 @@ export function FieldReports() {
       formEl?.reset();
       setMonitoringPhotos([]);
       setMessage("Daily crop monitoring update recorded & synchronized with agronomy.");
+      if (onSuccess) onSuccess();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Monitoring update failed.");
     } finally {
@@ -198,6 +215,7 @@ export function FieldReports() {
       setIncidentPhotos([]);
       setIncidentTypeInput("");
       setMessage("Incident recorded & transmitted to Farm Admin and Agronomist.");
+      if (onSuccess) onSuccess();
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Incident report failed.");
     } finally {
@@ -208,31 +226,42 @@ export function FieldReports() {
   return (
     <section>
       {/* Form Tabs */}
-      <div className="tabs-nav">
-        <button
-          type="button"
-          className={`tab-btn ${activeFormTab === "monitoring" ? "active" : ""}`}
-          onClick={() => {
-            setActiveFormTab("monitoring");
-            setMessage("");
-          }}
-        >
-          <Icons.Sprout size={16} />
-          <span>Daily Crop Monitoring (BRD §24)</span>
-        </button>
+      {!hideTabs && (
+        <div className="tabs-nav">
+          <button
+            type="button"
+            className={`tab-btn ${activeFormTab === "monitoring" ? "active" : ""}`}
+            onClick={() => {
+              setActiveFormTab("monitoring");
+              setMessage("");
+            }}
+          >
+            <Icons.Sprout size={16} />
+            <span>Daily Crop Monitoring (BRD §24)</span>
+          </button>
 
-        <button
-          type="button"
-          className={`tab-btn ${activeFormTab === "incident" ? "active" : ""}`}
-          onClick={() => {
-            setActiveFormTab("incident");
-            setMessage("");
-          }}
-        >
-          <Icons.AlertTriangle size={16} />
-          <span>Report Field Incident (BRD §26)</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            className={`tab-btn ${activeFormTab === "incident" ? "active" : ""}`}
+            onClick={() => {
+              setActiveFormTab("incident");
+              setMessage("");
+            }}
+          >
+            <Icons.AlertTriangle size={16} />
+            <span>Report Field Incident (BRD §26)</span>
+          </button>
+        </div>
+      )}
+
+      {onCancel && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={onCancel}>
+            <Icons.X size={14} />
+            <span>Close</span>
+          </button>
+        </div>
+      )}
 
       {message && (
         <div

@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "./icons";
+import { useToast } from "./ui/toast";
 
 type Farm = { id: string; name: string };
 type Manual = {
@@ -13,6 +14,7 @@ type Manual = {
 } | null;
 
 export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) {
+  const toast = useToast();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [farmId, setFarmId] = useState(fixedFarmId ?? "");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -92,15 +94,19 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
       const body = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setMessage(body.error ?? "Unable to save manual weather.");
+        const err = body.error ?? "Unable to save manual weather.";
+        setMessage(err);
+        toast.error(err);
         return;
       }
 
+      toast.success("Manual weather recorded for agronomy decision-making.");
       setMessage("Manual weather recorded for agronomy decision-making.");
       load();
     } catch {
       setPending(false);
       setMessage("Network error.");
+      toast.error("Network error.");
     }
   }
 

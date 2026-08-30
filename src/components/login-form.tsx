@@ -84,46 +84,45 @@ export function LoginForm() {
   }
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      {/* Quick Demo Switcher */}
-      <div
-        style={{
-          background: "var(--slate-50)",
-          border: "1px solid var(--border-subtle)",
-          borderRadius: "var(--radius-lg)",
-          padding: "16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <Icons.Sparkles size={14} style={{ color: "var(--harvest-amber)" }} />
-          <span style={{ fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
-            Select Hierarchy Persona to Test
+    <div style={{ display: "grid", gap: 24 }}>
+      {/* Quick Demo Switcher — Cohere capability cards, flat hairline, 8px */}
+      <div style={{
+        background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={{ width: 6, height: 6, borderRadius: 9999, background: "var(--coral)" }} />
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.28, textTransform: "uppercase", color: "var(--slate-cohere)" }}>
+            Select hierarchy persona
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {DEMO_ACCOUNTS.map((acc) => (
-            <button
-              key={acc.role}
-              type="button"
-              onClick={() => quickFill(acc.email, acc.password)}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "10px 12px",
-                background: email === acc.email ? "white" : "var(--slate-100)",
-                border: `2px solid ${email === acc.email ? acc.color : "var(--border-subtle)"}`,
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <strong style={{ fontSize: "0.88rem", color: "var(--text-main)" }}>{acc.role}</strong>
-              <small style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{acc.badge}</small>
-            </button>
-          ))}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
+          {DEMO_ACCOUNTS.map((acc) => {
+            const active = email === acc.email;
+            return (
+              <button
+                key={acc.role}
+                type="button"
+                onClick={() => quickFill(acc.email, acc.password)}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4,
+                  padding: "12px 14px",
+                  background: active ? "var(--cohere-primary)" : "var(--canvas)",
+                  color: active ? "white" : "var(--ink)",
+                  border: `1px solid ${active ? "var(--cohere-primary)" : "var(--hairline)"}`,
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer", textAlign: "left", transition: "all 150ms ease",
+                  minWidth: 0,
+                }}
+              >
+                <strong style={{ fontSize: 13, fontWeight: 500, color: active ? "white" : "var(--ink)", lineHeight: 1.2 }}>{acc.role}</strong>
+                <small style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.7)" : "var(--slate-cohere)", fontFamily: "var(--font-mono)" }}>{acc.badge}</small>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 10, fontSize: 12, color: "var(--slate-cohere)", fontFamily: "var(--font-mono)" }}>
+          One tap fills credentials • no registration
         </div>
       </div>
 

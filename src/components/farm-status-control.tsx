@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
+import { useToast } from "./ui/toast";
 
 export function FarmStatusControl({
   farmId,
@@ -11,6 +12,7 @@ export function FarmStatusControl({
   status: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [next, setNext] = useState(status);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -29,14 +31,18 @@ export function FarmStatusControl({
 
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
-        setError(body.error ?? "Status update failed.");
+        const err = body.error ?? "Status update failed.";
+        setError(err);
+        toast.error(err);
         return;
       }
 
+      toast.success(`Farm status updated to ${next}.`);
       router.refresh();
     } catch {
       setPending(false);
       setError("Network error.");
+      toast.error("Network error.");
     }
   }
 

@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 export default async function TasksPage() {
   const session = await requireSession();
 
-  if (!["SUPER_ADMIN", "AGRONOMIST"].includes(session.role)) {
+  if (!["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"].includes(session.role)) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
           <Breadcrumbs items={[{ label: "Activities" }]} />
           <h1>Access Restricted</h1>
-          <p className="error">Only Agronomists and Super Admins can manage planned activities.</p>
+          <p className="error">You do not have permission to view planned activities.</p>
         </main>
       </>
     );

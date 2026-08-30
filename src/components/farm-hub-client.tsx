@@ -122,27 +122,28 @@ export function FarmHubClient({
       <div
         className="card"
         style={{
-          border: "1px solid var(--border-subtle)",
-          padding: "24px",
+          border: "1px solid var(--hairline)",
+          padding: 32,
           marginBottom: 0,
-          background: "var(--bg-card)",
+          background: "var(--canvas)",
+          borderRadius: "var(--radius-sm)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0, flex: "1 1 420px" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
               <span className={`status ${farm.status.toLowerCase()}`}>
-                ● {farm.status}
+                {farm.status}
               </span>
-              <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
-                <Icons.MapPin size={14} />
-                <span>{farm.location}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--slate-cohere)", display: "inline-flex", gap: 4, alignItems: "center" }}>
+                <Icons.MapPin size={11} />
+                <span>{farm.location} • {farm.geofenceRadiusMeters}m geofence • {farm.plots.length} plots</span>
               </span>
             </div>
 
-            <h1 style={{ fontSize: "1.8rem", margin: "4px 0 6px" }}>{farm.name}</h1>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.92rem", margin: 0 }}>
-              Owner: <strong>{farm.ownerName}</strong> &bull; Total Area: <strong>{farm.totalArea} acres</strong> ({farm.cultivableArea} cultivable) &bull; Water: {farm.waterSource}
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 4vw, 42px)", lineHeight: 1, letterSpacing: "-0.84px", fontWeight: 400, color: "var(--ink)", margin: "0 0 8px" }}>{farm.name}</h1>
+            <p style={{ color: "var(--body-muted)", fontSize: 15, lineHeight: 1.5, margin: 0 }}>
+              <span style={{ color: "var(--ink)", fontWeight: 500 }}>{farm.ownerName}</span> • {farm.totalArea} acres • {farm.cultivableArea} cultivable • Water: {farm.waterSource}
             </p>
           </div>
 
@@ -157,43 +158,29 @@ export function FarmHubClient({
           </div>
         </div>
 
-        {/* Onboarding Pipeline Banner for SETUP Farms */}
+        {/* Onboarding — Cohere dark feature band */}
         {isSetup && (
-          <div
-            style={{
-              marginTop: 18,
-              paddingTop: 16,
-              borderTop: "1px solid var(--border-subtle)",
-              display: "grid",
-              gap: 10,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.85rem", color: "var(--harvest-dark)", fontWeight: 700, textTransform: "uppercase" }}>
-              <Icons.Sparkles size={14} style={{ color: "var(--harvest-amber)" }} />
-              <span>Farm Activation Onboarding Pipeline (BRD §4 & §5)</span>
+          <div style={{
+            marginTop: 20, background: "var(--deep-green)", color: "white", borderRadius: "var(--radius-sm)",
+            padding: 16, display: "grid", gap: 10,
+          }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 0.24, textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>
+              <Icons.Sparkles size={12} /><span>Activation pipeline • 3 steps to operational</span>
             </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-              <div style={{ padding: "10px 14px", background: hasPlots ? "var(--primary-50)" : "var(--slate-100)", borderRadius: "var(--radius-sm)", border: `1px solid ${hasPlots ? "var(--primary-200)" : "var(--border-subtle)"}` }}>
-                <div style={{ fontSize: "0.85rem", color: hasPlots ? "var(--primary-800)" : "var(--slate-600)", display: "flex", alignItems: "center", gap: 6 }}>
-                  {hasPlots ? <Icons.CheckCircle size={14} /> : <Icons.AlertCircle size={14} />}
-                  <strong>1. Add Plot ({farm.plots.length})</strong>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 8 }}>
+              {[
+                { ok: hasPlots, label: `1. Add Plot (${farm.plots.length})` },
+                { ok: hasActiveCycles, label: "2. Plan Crop Cycle" },
+                { ok: hasMilestones, label: "3. 4 Milestones" },
+              ].map((s) => (
+                <div key={s.label} style={{
+                  padding: "8px 12px", borderRadius: "var(--radius-xs)", border: "1px solid rgba(255,255,255,0.14)",
+                  background: s.ok ? "rgba(255,255,255,0.10)" : "transparent", display: "flex", gap: 6, alignItems: "center",
+                  fontSize: 12, fontWeight: 500, color: s.ok ? "white" : "rgba(255,255,255,0.6)",
+                }}>
+                  {s.ok ? <Icons.CheckCircle size={12} /> : <Icons.AlertCircle size={12} />}<span>{s.label}</span>
                 </div>
-              </div>
-
-              <div style={{ padding: "10px 14px", background: hasActiveCycles ? "var(--primary-50)" : "var(--slate-100)", borderRadius: "var(--radius-sm)", border: `1px solid ${hasActiveCycles ? "var(--primary-200)" : "var(--border-subtle)"}` }}>
-                <div style={{ fontSize: "0.85rem", color: hasActiveCycles ? "var(--primary-800)" : "var(--slate-600)", display: "flex", alignItems: "center", gap: 6 }}>
-                  {hasActiveCycles ? <Icons.CheckCircle size={14} /> : <Icons.AlertCircle size={14} />}
-                  <strong>2. Plan Crop Cycle</strong>
-                </div>
-              </div>
-
-              <div style={{ padding: "10px 14px", background: hasMilestones ? "var(--primary-50)" : "var(--slate-100)", borderRadius: "var(--radius-sm)", border: `1px solid ${hasMilestones ? "var(--primary-200)" : "var(--border-subtle)"}` }}>
-                <div style={{ fontSize: "0.85rem", color: hasMilestones ? "var(--primary-800)" : "var(--slate-600)", display: "flex", alignItems: "center", gap: 6 }}>
-                  {hasMilestones ? <Icons.CheckCircle size={14} /> : <Icons.AlertCircle size={14} />}
-                  <strong>3. 4 Standard Milestones</strong>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         )}

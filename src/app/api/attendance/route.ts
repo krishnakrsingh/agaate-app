@@ -114,8 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     const hasActiveFace = faceEnrollment && faceEnrollment.status === "ACTIVE" && !faceEnrollment.revokedAt;
-    if (hasActiveFace) {
-      // Recent face match is either direct FACE_VERIFY_MATCH or LIVENESS_VERIFY_PASS (which includes face match)
+    if (hasActiveFace || strictBiometric) {
       const recentFace = await prisma.auditLog.findFirst({
         where: {
           actorId: actor.id,
@@ -133,10 +132,9 @@ export async function POST(request: NextRequest) {
       faceVerified = true;
       faceDistance = (recentFace.metadata as any)?.distance ?? null;
       faceSimilarityPercent = (recentFace.metadata as any)?.similarityPercent ?? null;
-      faceModelId = (recentFace.metadata as any)?.modelId ?? faceEnrollment.modelId;
-      faceThresholdVersion = (recentFace.metadata as any)?.thresholdVersion ?? faceEnrollment.thresholdVersion;
+      faceModelId = (recentFace.metadata as any)?.modelId ?? faceEnrollment?.modelId ?? null;
+      faceThresholdVersion = (recentFace.metadata as any)?.thresholdVersion ?? faceEnrollment?.thresholdVersion ?? null;
 
-      // Liveness required when face enrolled — check recent liveness pass
       const recentLiveness = await prisma.auditLog.findFirst({
         where: { actorId: actor.id, action: "LIVENESS_VERIFY_PASS", createdAt: { gte: fiveMinutesAgo } },
         orderBy: { createdAt: "desc" },

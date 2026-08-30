@@ -22,6 +22,8 @@ export function FarmEditForm({ farm }: { farm: Farm }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [pending, setPending] = useState(false);
+  const [lat, setLat] = useState(farm.latitude);
+  const [lng, setLng] = useState(farm.longitude);
 
   function capture() {
     if (!navigator.geolocation) {
@@ -30,10 +32,8 @@ export function FarmEditForm({ farm }: { farm: Farm }) {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const lat = document.querySelector("[name=latitude]") as HTMLInputElement;
-        const lon = document.querySelector("[name=longitude]") as HTMLInputElement;
-        if (lat) lat.value = String(pos.coords.latitude);
-        if (lon) lon.value = String(pos.coords.longitude);
+        setLat(String(pos.coords.latitude));
+        setLng(String(pos.coords.longitude));
         setSuccess("Current device GPS coordinates captured.");
       },
       () => setError("Location capture failed. Please enter coordinates manually."),
@@ -139,12 +139,26 @@ export function FarmEditForm({ farm }: { farm: Farm }) {
               Capture GPS
             </button>
           </div>
-          <input name="latitude" type="number" step="any" defaultValue={farm.latitude} required />
+          <input
+            name="latitude"
+            type="number"
+            step="any"
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            required
+          />
         </div>
 
         <div className="form-group">
           <label>Longitude</label>
-          <input name="longitude" type="number" step="any" defaultValue={farm.longitude} required />
+          <input
+            name="longitude"
+            type="number"
+            step="any"
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+            required
+          />
         </div>
 
         <div className="form-group">

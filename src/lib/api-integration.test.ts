@@ -516,9 +516,27 @@ describe.sequential("HTTP API Integration Test Suite", () => {
         updateTaskHandler(req, { params: Promise.resolve({ taskId: testTaskId }) })
       );
       const data = await res.json();
-
       expect(res.status).toBe(200);
       expect(data.status).toBe("IN_PROGRESS");
+    });
+
+    it("allows Farm Admin managing the farm to update task instructions and priority", async () => {
+      const req = createJsonRequest(
+        `http://localhost:3000/api/tasks/${testTaskId}`,
+        "PATCH",
+        {
+          priority: "HIGH",
+          instructions: "Ensure drip lines are flushed after fertigation cycle.",
+        },
+        farmAdminCookie
+      );
+      const res = await withAuth(farmAdminCookie, () =>
+        updateTaskHandler(req, { params: Promise.resolve({ taskId: testTaskId }) })
+      );
+      const data = await res.json();
+      expect(res.status).toBe(200);
+      expect(data.priority).toBe("HIGH");
+      expect(data.instructions).toBe("Ensure drip lines are flushed after fertigation cycle.");
     });
 
     it("completes task with materials ledger and labour hours tracking (POST /complete)", async () => {

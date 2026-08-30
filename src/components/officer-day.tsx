@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import { TaskCompletionForm } from "@/components/task-completion-form";
+import { FieldReports } from "@/components/field-reports";
 import { Icons } from "./icons";
 import { StatusBadge, PriorityBadge } from "./ui/badge";
 import { CardSkeleton } from "./ui/skeleton";
@@ -18,8 +18,8 @@ type Task = {
   priority: string;
   category: string;
   farm: { id: string; name: string };
-  plot?: { name: string } | null;
-  cropCycle?: { cropName: string } | null;
+  plot?: { id?: string; name: string } | null;
+  cropCycle?: { id?: string; cropName: string } | null;
 };
 
 export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
@@ -27,6 +27,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState("");
   const [completionId, setCompletionId] = useState<string | null>(null);
+  const [monitoringTaskId, setMonitoringTaskId] = useState<string | null>(null);
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [originFilter, setOriginFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
 
@@ -101,12 +103,17 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
             </h3>
           </div>
 
-          {/* Quick Action Shortcuts */}
+          {/* Quick Action Shortcuts (BRD §22 & §26) */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <Link href="/officer/reports" className="btn btn-sm btn-primary" style={{ minHeight: 38 }}>
-              <Icons.Camera size={14} />
-              <span>Record Crop Signal</span>
-            </Link>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => setShowIncidentModal(!showIncidentModal)}
+              style={{ minHeight: 38, background: "var(--danger-red, #dc2626)", borderColor: "var(--danger-red, #dc2626)" }}
+            >
+              <Icons.AlertTriangle size={14} />
+              <span>{showIncidentModal ? "Close Incident Form" : "Report Incident"}</span>
+            </button>
 
             <button
               type="button"
@@ -139,6 +146,21 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           <span><strong>{tasks.length - completedCount - inProgressCount}</strong> Remaining</span>
         </div>
       </div>
+
+      {/* Incident Quick Reporting Modal/Drawer (BRD §26) */}
+      {showIncidentModal && (
+        <div style={{ marginBottom: 20 }}>
+          <FieldReports
+            initialTab="incident"
+            hideTabs={true}
+            onSuccess={() => {
+              setShowIncidentModal(false);
+              toast.success("Incident transmitted to Agronomist & Farm Admin!");
+            }}
+            onCancel={() => setShowIncidentModal(false)}
+          />
+        </div>
+      )}
 
       {error && (
         <div className="error" role="alert">
@@ -195,6 +217,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
         <div style={{ display: "grid", gap: 14 }}>
           {filteredTasks.map((task) => {
             const isCompleted = task.status === "COMPLETED";
+            const isMonitoringActive = monitoringTaskId === task.id;
 
             return (
               <article
@@ -238,13 +261,18 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                   {/* Primary Action Button (Target >= 48px on Mobile) */}
                   <div className="actions" style={{ margin: 0 }}>
                     {task.origin === "DAILY_MONITORING" && !isCompleted && (
-                      <Link className="btn btn-primary" href="/officer/reports" style={{ minHeight: 44 }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setMonitoringTaskId(isMonitoringActive ? null : task.id)}
+                        style={{ minHeight: 44 }}
+                      >
                         <Icons.Camera size={16} />
-                        <span>Submit Monitoring</span>
-                      </Link>
+                        <span>{isMonitoringActive ? "Close Monitoring" : "Submit Monitoring"}</span>
+                      </button>
                     )}
 
-                    {["ASSIGNED", "AVAILABLE", "BLOCKED"].includes(task.status) && (
+                    {["ASSIGNED", "AVAILABLE", "BLOCKED"].includes(task.status) && task.origin !== "DAILY_MONITORING" && (
                       <button
                         type="button"
                         className="btn btn-primary"
@@ -281,6 +309,26 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                   )}
                 </div>
 
+                {/* Inline Daily Monitoring Form Pre-filled (BRD §24 & §25) */}
+                {isMonitoringActive && (
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--border-strong)" }}>
+                    <FieldReports
+                      initialFarmId={task.farm.id}
+                      initialPlotId={task.plot?.id}
+                      initialCropCycleId={task.cropCycle?.id}
+                      initialTab="monitoring"
+                      hideTabs={true}
+                      onSuccess={() => {
+                        setMonitoringTaskId(null);
+                        toast.success("Daily monitoring recorded & synced!");
+                        void load();
+                      }}
+                      onCancel={() => setMonitoringTaskId(null)}
+                    />
+                  </div>
+                )}
+
+                {/* Inline Activity Completion Form (BRD §28 & §29) */}
                 {completionId === task.id && (
                   <TaskCompletionForm
                     taskId={task.id}
