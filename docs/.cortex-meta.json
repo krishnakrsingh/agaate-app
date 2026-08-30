@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "repo": "agaateapp",
+  "detail_level": "standard",
+  "generated_at": "2026-08-30T14:38:23.107136+00:00",
+  "scope": {
+    "include": [],
+    "exclude": []
+  },
+  "pages": {},
+  "tasks": {
+    "total": 0,
+    "by_priority": {}
+  },
+  "sprint_log": {
+    "latest_entry": null,
+    "total_entries": 0
+  },
+  "last_run": {}
+}

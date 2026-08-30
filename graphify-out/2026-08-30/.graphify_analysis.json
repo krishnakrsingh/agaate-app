@@ -954,17 +954,6 @@
   ],
   "surprises": [
     {
-      "source": "AdminApprovalsPage()",
-      "target": "requireSession()",
-      "source_files": [
-        "src/app/admin/approvals/page.tsx",
-        "src/lib/auth.ts"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "bridges separate communities; peripheral node `AdminApprovalsPage()` unexpectedly reaches hub `requireSession()`"
-    },
-    {
       "source": "OfficerDayPage()",
       "target": "requireSession()",
       "source_files": [
@@ -974,6 +963,17 @@
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "bridges separate communities; peripheral node `OfficerDayPage()` unexpectedly reaches hub `requireSession()`"
+    },
+    {
+      "source": "AdminApprovalsPage()",
+      "target": "requireSession()",
+      "source_files": [
+        "src/app/admin/approvals/page.tsx",
+        "src/lib/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `AdminApprovalsPage()` unexpectedly reaches hub `requireSession()`"
     },
     {
       "source": "DailyReportPage()",
@@ -1009,8 +1009,41 @@
       "why": "bridges separate communities"
     }
   ],
-  "tokens": {
-    "input": 0,
-    "output": 0
-  }
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `requireFarmAccess()` connect `apiError` to `farm-hub-client.tsx`, `requireSession`, `edit/page.tsx`, `business.ts`?",
+      "why": "High betweenness centrality (0.047) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Icons` connect `icons.tsx` to `farm-hub-client.tsx`, `requireSession`, `auth.ts`, `day/page.tsx`, `field-reports.tsx`, `approvals/page.tsx`, `crop-cycle-form.tsx`, `daily/page.tsx`, `dashboard-client.tsx`, `edit/page.tsx`, `admin-console.tsx`, `plot-edit-form.tsx`, `task-form.tsx`?",
+      "why": "High betweenness centrality (0.028) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `prisma` connect `apiError` to `farm-hub-client.tsx`, `requireSession`, `business.ts`, `auth.ts`, `edit/page.tsx`?",
+      "why": "High betweenness centrality (0.026) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `AccessResponse`, `Person`, `CropCycle` to the rest of the system?",
+      "why": "281 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `apiError` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07871064467766117 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `farm-hub-client.tsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05426356589147287 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `requireSession` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13709677419354838 - nodes in this community are weakly interconnected."
+    }
+  ]
 }

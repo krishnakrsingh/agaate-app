@@ -2,6 +2,18 @@
 
 Production-oriented Next.js application for multi-farm planning, agronomy activities, and field execution. Business state is stored in PostgreSQL; evidence is stored in S3-compatible object storage.
 
+## Documentation Suite
+
+Comprehensive architecture, specifications, design briefs, and user flows are organized in the [`docs/`](file:///c:/Users/krish/Downloads/agaateapp/docs) directory:
+
+- **[01. Product Requirements Document (PRD)](file:///c:/Users/krish/Downloads/agaateapp/docs/01_PRD.md)** — Complete 34-section BRD mapping, 4 user roles, and 22 feature specs.
+- **[02. Technical Design Document (TDD)](file:///c:/Users/krish/Downloads/agaateapp/docs/02_TDD.md)** — System architecture, 44 API routes, security, biometric crypto, and S3 pipeline.
+- **[03. User Flows & Diagrams](file:///c:/Users/krish/Downloads/agaateapp/docs/03_USER_FLOWS.md)** — 11 Mermaid-rendered end-to-end interactive workflows.
+- **[04. Design Brief & UI Spec](file:///c:/Users/krish/Downloads/agaateapp/docs/04_DESIGN_BRIEF.md)** — Design tokens, color palette, mobile-first field UI, and component library.
+- **[05. Data Model Reference](file:///c:/Users/krish/Downloads/agaateapp/docs/05_DATA_MODEL.md)** — Prisma schema, 20 models, 14 enums, ER diagram, and DB constraints.
+- **[06. Engineering & Ops Plan](file:///c:/Users/krish/Downloads/agaateapp/docs/06_ENGINEERING_PLAN.md)** — Implementation audit, tech debt, production checklist, and AI roadmap.
+- **[Interactive HTML Documentation Portal](file:///c:/Users/krish/Downloads/agaateapp/docs/index.html)** — Standalone HTML web portal containing all documents with live search, theme toggle, and rendered diagrams. Regenerate anytime with `npm run build:docs`.
+
 ## Run locally
 
 1. Copy `.env.example` to `.env` and replace every `change-me` value. Add `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` (12+ characters), and optionally `INITIAL_ADMIN_NAME`.

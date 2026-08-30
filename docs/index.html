@@ -1,0 +1,3552 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agaate Farm Management PWA — Technical & Product Documentation Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CDN Dependencies: Marked, Highlight.js, Mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-sidebar: #064e3b;
+      --bg-sidebar-hover: #04382a;
+      --bg-sidebar-active: #0f766e;
+      --sidebar-text: #e2e8f0;
+      --sidebar-text-dim: #94a3b8;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --brand-primary: #064e3b;
+      --brand-accent: #10b981;
+      --brand-accent-glow: rgba(16, 185, 129, 0.2);
+      
+      --border-color: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      
+      --code-bg: #0f172a;
+      --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --card-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    }
+
+    html.dark {
+      --bg-primary: #090d16;
+      --bg-surface: #0f172a;
+      --bg-sidebar: #041f17;
+      --bg-sidebar-hover: #083327;
+      --bg-sidebar-active: #065f46;
+      --sidebar-text: #f1f5f9;
+      --sidebar-text-dim: #94a3b8;
+      
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+      --text-dim: #64748b;
+      
+      --brand-primary: #10b981;
+      --brand-accent: #34d399;
+      --brand-accent-glow: rgba(52, 211, 153, 0.25);
+      
+      --border-color: #1e293b;
+      --border-subtle: #141e33;
+      
+      --code-bg: #030712;
+      --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+      --card-shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.65;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    html.dark ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 320px;
+      min-width: 320px;
+      background: var(--bg-sidebar);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 40;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .brand-badge {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      background: #10b981;
+      color: #042f2e;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-sub {
+      font-size: 0.8rem;
+      color: var(--sidebar-text-dim);
+      margin-top: 4px;
+    }
+
+    .search-box {
+      margin: 16px 20px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.875rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: #10b981;
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 0 2px var(--brand-accent-glow);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--sidebar-text-dim);
+      pointer-events: none;
+    }
+
+    .doc-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px 20px;
+    }
+
+    .nav-group-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sidebar-text-dim);
+      padding: 12px 12px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 0.885rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-sidebar-hover);
+      color: #fff;
+      transform: translateX(2px);
+    }
+
+    .nav-item.active {
+      background: var(--bg-sidebar-active);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .nav-item-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .nav-item-content {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--sidebar-text-dim);
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .top-bar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 30;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb span.current {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: var(--bg-primary);
+      border-color: var(--text-dim);
+    }
+
+    .action-btn.primary {
+      background: #064e3b;
+      color: #fff;
+      border-color: #064e3b;
+    }
+    .action-btn.primary:hover {
+      background: #04382a;
+    }
+    html.dark .action-btn.primary {
+      background: #10b981;
+      color: #042f2e;
+      border-color: #10b981;
+    }
+
+    /* CONTENT LAYOUT */
+    .content-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .article-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 48px 80px;
+      scroll-behavior: smooth;
+    }
+
+    .article-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* RIGHT TOC */
+    .toc-sidebar {
+      width: 260px;
+      min-width: 260px;
+      border-left: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      padding: 28px 20px;
+      overflow-y: auto;
+      display: block;
+    }
+
+    .toc-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .toc-list {
+      list-style: none;
+    }
+
+    .toc-item {
+      margin-bottom: 6px;
+    }
+
+    .toc-link {
+      display: block;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.835rem;
+      line-height: 1.4;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toc-link:hover {
+      color: var(--brand-primary);
+      background: var(--bg-primary);
+    }
+
+    .toc-link.indent-3 {
+      padding-left: 18px;
+      font-size: 0.785rem;
+    }
+
+    /* MARKDOWN RENDER STYLES */
+    .markdown-body {
+      color: var(--text-main);
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+
+    .markdown-body h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-top: 0;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    .markdown-body h2 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .markdown-body h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .markdown-body h4 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    .markdown-body p {
+      margin-bottom: 16px;
+      color: var(--text-muted);
+    }
+
+    .markdown-body strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+      margin-bottom: 20px;
+      padding-left: 24px;
+      color: var(--text-muted);
+    }
+
+    .markdown-body li {
+      margin-bottom: 6px;
+    }
+
+    .markdown-body blockquote {
+      margin: 20px 0;
+      padding: 16px 20px;
+      background: var(--bg-surface);
+      border-left: 4px solid var(--brand-accent);
+      border-radius: 0 8px 8px 0;
+      color: var(--text-main);
+      box-shadow: var(--card-shadow);
+    }
+
+    .markdown-body blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .markdown-body hr {
+      border: 0;
+      height: 1px;
+      background: var(--border-color);
+      margin: 36px 0;
+    }
+
+    /* Tables */
+    .markdown-body table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 24px 0 32px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow);
+      background: var(--bg-surface);
+    }
+
+    .markdown-body th {
+      background: var(--bg-primary);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .markdown-body td {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .markdown-body tr:last-child td {
+      border-bottom: none;
+    }
+
+    .markdown-body tr:hover td {
+      background: var(--bg-primary);
+    }
+
+    /* Code blocks & inline code */
+    .markdown-body code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.06);
+      color: #0f766e;
+      font-weight: 500;
+    }
+    html.dark .markdown-body code {
+      background: rgba(255, 255, 255, 0.1);
+      color: #34d399;
+    }
+
+    .markdown-body pre {
+      position: relative;
+      margin: 20px 0 28px;
+      padding: 20px;
+      background: var(--code-bg);
+      border-radius: 10px;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--card-shadow-lg);
+    }
+
+    .markdown-body pre code {
+      padding: 0;
+      background: transparent;
+      color: #f8fafc;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .copy-code-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+    }
+
+    .markdown-body pre:hover .copy-code-btn {
+      opacity: 1;
+    }
+
+    .copy-code-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* MERMAID DIAGRAMS */
+    .mermaid {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0 32px;
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      box-shadow: var(--card-shadow);
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--brand-primary);
+    }
+
+    .stat-lbl {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    @media (max-width: 1024px) {
+      .toc-sidebar {
+        display: none;
+      }
+      .article-wrapper {
+        padding: 24px 20px 60px;
+      }
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      .mobile-menu-btn {
+        display: block;
+      }
+      .top-bar {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-title">
+        <span>🌾 Agaate</span>
+        <span class="brand-badge">PWA MVP</span>
+      </div>
+      <div class="brand-sub">Farm Operations & Agronomy Portal</div>
+    </div>
+
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="docSearch" placeholder="Search across documents..." onkeyup="filterDocs(this.value)">
+    </div>
+
+    <nav class="doc-nav">
+      <div class="nav-group-title">Documentation Suite</div>
+      
+        <a class="nav-item active" onclick="switchDoc('prd')" id="nav-prd">
+          <span class="nav-item-icon">📋</span>
+          <span class="nav-item-content">01. Product Requirements (PRD)</span>
+          <span class="nav-badge">Product</span>
+        </a>
+      
+        <a class="nav-item " onclick="switchDoc('tdd')" id="nav-tdd">
+          <span class="nav-item-icon">🏗️</span>
+          <span class="nav-item-content">02. Technical Design (TDD)</span>
+          <span class="nav-badge">Architecture</span>
+        </a>
+      
+        <a class="nav-item " onclick="switchDoc('userflows')" id="nav-userflows">
+          <span class="nav-item-icon">🔀</span>
+          <span class="nav-item-content">03. User Flows & Diagrams</span>
+          <span class="nav-badge">UX / Workflows</span>
+        </a>
+      
+        <a class="nav-item " onclick="switchDoc('designbrief')" id="nav-designbrief">
+          <span class="nav-item-icon">🎨</span>
+          <span class="nav-item-content">04. Design Brief & UI Spec</span>
+          <span class="nav-badge">Design System</span>
+        </a>
+      
+        <a class="nav-item " onclick="switchDoc('datamodel')" id="nav-datamodel">
+          <span class="nav-item-icon">🗄️</span>
+          <span class="nav-item-content">05. Data Model Reference</span>
+          <span class="nav-badge">Database</span>
+        </a>
+      
+        <a class="nav-item " onclick="switchDoc('engplan')" id="nav-engplan">
+          <span class="nav-item-icon">🛠️</span>
+          <span class="nav-item-content">06. Engineering & Ops Plan</span>
+          <span class="nav-badge">Engineering</span>
+        </a>
+      
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>Version 1.0.0</span>
+      <span>Agaate Ops &copy; 2026</span>
+    </div>
+  </aside>
+
+  <!-- MAIN DOCUMENT DISPLAY -->
+  <main id="main-content">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="breadcrumb">
+          <span>Docs</span>
+          <span>/</span>
+          <span class="current" id="currentDocBreadcrumb">Product Requirements (PRD)</span>
+        </div>
+      </div>
+
+      <div class="top-bar-actions">
+        <button class="action-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+          <span id="themeIcon">🌙</span>
+          <span id="themeLabel">Theme</span>
+        </button>
+        <button class="action-btn" onclick="window.print()" title="Print Current Document">
+          <span>🖨️</span>
+          <span>Print / PDF</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="content-container">
+      <div class="article-wrapper" id="articleWrapper">
+        <div class="article-inner">
+          
+          <!-- Key Metrics Header Banner -->
+          <div class="stats-bar">
+            <div class="stat-card">
+              <div class="stat-val">4</div>
+              <div class="stat-lbl">User Roles</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">44</div>
+              <div class="stat-lbl">API Endpoints</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">20</div>
+              <div class="stat-lbl">Data Models</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val">100%</div>
+              <div class="stat-lbl">BRD MVP Parity</div>
+            </div>
+          </div>
+
+          <!-- Document Render Target -->
+          <article class="markdown-body" id="docContent">
+            <!-- Rendered by JS -->
+          </article>
+        </div>
+      </div>
+
+      <!-- ON-THIS-PAGE TABLE OF CONTENTS -->
+      <aside class="toc-sidebar">
+        <div class="toc-title">On This Page</div>
+        <ul class="toc-list" id="tocList">
+          <!-- Dynamic TOC items -->
+        </ul>
+      </aside>
+    </div>
+  </main>
+
+  <!-- EMBEDDED MARKDOWN CONTENT (Zero network latency, 100% offline file:/// compatibility) -->
+  
+    <script type="text/markdown" id="raw-prd">
+# Agaate Farm Management PWA — Product Requirements Document (PRD)
+
+**Version:** 1.0  
+**Date:** 2026-08-30  
+**Product Owner:** Agaate  
+**Platform:** Progressive Web Application (PWA)  
+**Status:** MVP — Farm Operations & Agronomy Management
+
+---
+
+## 1. Executive Summary
+
+Agaate Farm Management PWA is a centralized platform to manage **multiple farms simultaneously**, with role-based access for Super Admins, Farm Admins, Agronomists, and Farm Officers. The system enables end-to-end farm lifecycle management from setup through daily execution, monitoring, and intelligence gathering.
+
+### Core Product Philosophy
+
+> **Setup → Plan → Assign → Execute → Capture → Monitor → Improve**
+
+### MVP Key Differentiator
+
+The platform creates a **continuous operational and agronomy feedback loop**:
+
+```
+Farm Setup → Crop Planning → Agronomist Planning → Daily Execution →
+Visual Monitoring → Incident Detection → Agronomy Action → Data Capture
+```
+
+Over time, Agaate builds structured intelligence around farm operations, crop stages, labour efficiency, material utilization, crop health, incidents, agronomy actions, and location-based farm performance — the foundation for a future **Farm Intelligence & AI Agronomy Engine**.
+
+---
+
+## 2. Platform Hierarchy
+
+```
+AGAATE — SUPER ADMIN
+│
+├── FARM A
+│   ├── Admin(s)
+│   ├── Farm Officer(s)
+│   ├── Plot 1 → Crop Cycle
+│   ├── Plot 2 → Crop Cycle
+│   └── Plot 3 → Crop Cycle
+│
+├── FARM B
+│   ├── Admin(s)
+│   ├── Farm Officer(s)
+│   └── Multiple Plots
+│
+└── FARM C
+    └── Multiple Plots
+
+CENTRAL AGAATE AGRONOMIST
+└── Visibility Across All Farms
+```
+
+### Core Data Structure
+
+```
+Farm → Plot → Crop → Variety → Crop Cycle → Activities → Execution → Incidents
+```
+
+---
+
+## 3. User Roles & Permissions
+
+### 3.1 Super Admin (Agaate)
+
+The highest authority on the platform with **unrestricted access**. Can perform actions of all other roles.
+
+| Capability | Description |
+|---|---|
+| Farm Management | Add, edit, view all farms |
+| User Management | Add/edit Farm Admins and Farm Officers |
+| Data Visibility | View all plots, crop cycles, activities, attendance, location logs |
+| Approvals | Approve location change requests, attendance exceptions |
+| Agronomy | Create agronomy plans, view incidents |
+
+### 3.2 Farm Admin
+
+One Farm Admin can be assigned to **multiple farms**.
+
+| Capability | Description |
+|---|---|
+| Farm Setup | Add farm details, plots, lat/long, irrigation config |
+| Crop Planning | Add crop cycles, infrastructure details, milestones |
+| Officer Management | Assign and manage Farm Officers |
+| Monitoring | Review attendance exceptions, approve/reject location requests |
+| Progress Tracking | Monitor daily work progress |
+
+### 3.3 Agronomist (Central Agaate Team)
+
+Operates **centrally across all farms**.
+
+| Capability | Description |
+|---|---|
+| Cross-Farm Visibility | View progress of all farms, plots, crops |
+| Crop Health | View crop photos, health status (Good/Poor) |
+| 7-Day Planning | Create rolling 7-day agronomy plans |
+| Activity Planning | Fertilization, crop protection, cultural practices |
+| Incident Review | Review incidents, add follow-up actions |
+
+**Core Agronomist View:**
+```
+All Farms → All Plots → Active Crops → 7-Day Plan → Activity Status
+```
+
+### 3.4 Farm Officer
+
+Simple, action-based interface for field execution.
+
+**Daily Flow:**
+```
+Start Day → Execute Tasks → Capture Data → Upload Photos → Report Incidents → End Day
+```
+
+Multiple officers per farm supported for shift-based operations, multiple locations, and simultaneous activities. All logins and actions are recorded individually for complete traceability.
+
+---
+
+## 4. Feature Specifications
+
+### F1: Farm Creation & Management
+
+**Farm Entity Fields:**
+
+| Field | Type | Required |
+|---|---|---|
+| Farm Name | String | ✅ |
+| Client / Owner Name | String | ✅ |
+| Location | String | ✅ |
+| Address | String | ❌ |
+| Latitude | Decimal(10,7) | ✅ |
+| Longitude | Decimal(10,7) | ✅ |
+| Total Area | Decimal(12,2) | ✅ |
+| Cultivable Area | Decimal(12,2) | ✅ |
+| Water Source | String | ✅ |
+| Status | Enum | ✅ |
+| Geofence Radius | Int (meters) | ✅ (default 500m) |
+
+**Farm Statuses:** `SETUP` → `ACTIVE` → `INACTIVE` / `COMPLETED`
+
+**Farm Activation Criteria:**
+- Farm is created
+- Plots are added
+- Crops are planned
+- Milestones are configured
+
+### F2: Plot Management
+
+Each farm can have multiple plots. Farm Admin adds plot-level details.
+
+| Field | Type | Required |
+|---|---|---|
+| Plot Name / Number | String | ✅ |
+| Plot Area | Decimal(12,2) | ✅ |
+| Latitude | Decimal(10,7) | ✅ |
+| Longitude | Decimal(10,7) | ✅ |
+| Soil Type | String | ❌ |
+| Status | Enum | ✅ |
+
+**Plot Location Capture:**
+- **Manual Entry:** Admin enters lat/long directly
+- **Auto Capture:** App captures current GPS coordinates when admin is physically present
+
+**Plot Statuses:** `SETUP`, `ACTIVE`, `INACTIVE`, `ARCHIVED`
+
+### F3: Plot Irrigation Configuration
+
+Each plot supports **multiple irrigation types** simultaneously.
+
+**Irrigation Options:** Drip, Rain Pipe, Sprinkler, Flood, Other
+
+### F4: Crop Cycle Management
+
+Created at the Plot level.
+
+| Field | Type | Required |
+|---|---|---|
+| Crop Name | String | ✅ |
+| Start Date | Date | ✅ |
+| Expected First Harvest Date | Date | ❌ |
+| Establishment Type | Enum | ✅ |
+
+**Establishment Types:** `NURSERY_TRANSPLANTATION`, `DIRECT_SOWING`
+
+**Crop Cycle Statuses:** `PLANNED`, `ACTIVE`, `COMPLETED`, `CANCELLED`
+
+### F5: Multiple Variety Selection
+
+A single Crop Cycle can contain multiple varieties (e.g., Watermelon → Variety A, B, C).
+
+### F6: Crop Infrastructure Planning
+
+#### Bed Preparation
+- Enable/disable bed preparation per crop cycle
+- Fields: Bed Width, Bed Centre-to-Centre Distance, Expected Beds per Acre
+- **Auto-calculation:** `Expected Total Beds = Beds per Acre × Plot Area`
+- Farm Officer captures actual beds during execution → system shows Expected vs Actual
+
+#### Mulching Configuration
+- Enable/disable mulching
+- **Hole Patterns:** Single Line or Double Line (Zigzag)
+- Field: Plant-to-Plant Distance
+
+#### Plant Population Planning
+- Expected Plants per Acre
+- **Auto-calculation:** `Expected Plant Count = Plants per Acre × Plot Area`
+- Farm Officer captures actual plants → system shows Expected vs Actual + Variance
+
+### F7: Crop Milestone Planning
+
+**Standard Milestones** (auto-generated based on crop config):
+
+| # | Milestone | Dynamic Name Logic |
+|---|---|---|
+| 1 | Land Preparation | Always "Land Preparation" |
+| 2 | Mulching & TP/Sowing Readiness | Name depends on mulching selection |
+| 3 | Transplantation / Direct Sowing | Name depends on establishment type |
+| 4 | First Harvest | Always "First Harvest" |
+
+**Milestone Statuses:** `PENDING`, `IN_PROGRESS`, `COMPLETED`, `SKIPPED`
+
+### F8: Additional Crop Support Activities
+
+Admin can select one or multiple during crop planning:
+- Crop Cover, Bamboo Stacking, Trellising, Net Support, Rope Support, Other
+- Each with optional Target Date and Remarks
+
+### F9: Farm Officer Assignment
+
+Multiple officers per farm, each with:
+- Individual Login
+- Individual Attendance Logs
+- Individual Activity Logs
+- Individual Incident Reports
+
+### F10: Attendance & Location Validation
+
+**Start Day Flow:**
+1. Take Selfie (with liveness detection)
+2. Capture Current Location
+3. WebAuthn device verification (optional)
+4. System records: Date, Time, Selfie, Lat/Long
+
+**End Day Flow:** Same as Start Day
+
+**Location Matching Logic:**
+
+| Scenario | Action |
+|---|---|
+| Location matches farm | Attendance marked successfully |
+| Location mismatch | Exception created → Officer provides reason → Admin approval required |
+| Farm location needs change | Officer raises Location Change Request → Admin approves/rejects |
+
+### F11: Biometric Verification
+
+- **Face Recognition:** Face enrollment, encrypted embedding storage, cosine similarity matching
+- **Liveness Detection:** Challenge-based (smile, blink, turn head) to prevent photo attacks
+- **WebAuthn / Passkeys:** Device-bound credential verification
+- Configurable strict/transitional mode via `REQUIRE_BIOMETRIC_FOR_ATTENDANCE`
+
+### F12: Agronomist Dashboard
+
+**Dashboard KPIs:**
+- Total Active Farms / Plots
+- Active Crop Cycles
+- Activities: Planned / Completed / Pending / Delayed
+- Incidents count
+- Poor Crop Health Updates
+
+**Drill-down:** All Farms → Select Farm → View Plots → View Crops → View Activity History → View Photos & Incidents
+
+### F13: 7-Day Agronomy Plan
+
+Rolling 7-day activity plan created by Agronomist.
+
+**Activity Categories:**
+
+| Category | Sub-types |
+|---|---|
+| Fertilization | Fertigation, Foliar Nutrition, Soil Application |
+| Crop Protection | Preventive Spray, Pest Control, Disease Control |
+| Other Agronomy | Crop Monitoring, Irrigation Recommendation, Cultural Practices, Crop-specific |
+
+**Activity Creation Fields:** Date, Farm, Plot, Crop, Activity Type, Description, Instructions, Priority, Assigned Officer
+
+Activities automatically appear in the Farm Officer's Daily Task List.
+
+### F14: Weather Information
+
+- **Auto Weather:** Integration via Open-Meteo API based on farm/plot location
+- **Manual Entry:** Temperature, Rain Forecast, Humidity, Wind, Remarks
+
+### F15: Farm Officer Daily Work Screen ("My Day")
+
+```
+START DAY
+  ↓
+TODAY'S TASKS
+  ├── Agronomist Allocated Tasks
+  ├── System Generated Tasks
+  └── Daily Crop Monitoring
+  ↓
+REPORT INCIDENT
+  ↓
+END DAY
+```
+
+### F16: Daily Tasks (Three Sources)
+
+| Source | Description |
+|---|---|
+| Agronomist Allocated | Tasks directly created by the Agronomist |
+| System Generated | Based on milestones, planned activities, target dates, pending follow-ups |
+| Daily Crop Monitoring | Farm Officer updates crop condition at plot/crop level |
+
+### F17: Daily Crop Monitoring
+
+Mandatory daily crop picture upload with health classification.
+
+**Good Crop Update:** Photo + Remarks (optional)
+
+**Poor Crop Update:** Photo + Impact Percentage + Crop Stage + Remarks
+
+**Crop Stages:** Germination, Establishment, Vegetative, Flowering, Fruiting, Harvesting
+
+### F18: Incident Reporting
+
+Report at Farm, Plot, or Crop level.
+
+| Level | Example Incidents |
+|---|---|
+| Farm | Motor Issue, Water Issue, Electricity, Labour, Infrastructure, External |
+| Crop | Disease, Pest, Nutrient Deficiency, Growth Issue, Water Stress |
+| Positive | Excellent Health, Good Growth, Best Practice, High Flowering, Good Fruit Setting |
+
+**Incident Fields:** Type, Level, Description, Photos, Severity/Impact
+
+**Incident Flow:** Officer → Report → Central Database → Agronomist/Admin Visibility → Action/Follow-up
+
+**Incident Statuses:** `OPEN`, `ACKNOWLEDGED`, `RESOLVED`, `CLOSED`
+
+### F19: Daily Labour Tracking
+
+For each activity: Activity Name, Number of Labourers, Hours Used.
+
+**Auto-calculation:** `Labour Hours = Labourers × Hours`
+
+### F20: Activity Completion Flow
+
+```
+Task Generated (Agronomist Assigned / System Generated)
+  → Farm Officer
+    → Start Activity
+      → Complete Activity
+        → Add Material Used
+          → Add Labour Hours
+            → Upload Photos
+              → Add Remarks
+                → Mark Completed
+                  → Auto Progress Update
+```
+
+### F21: Automatic Reporting
+
+No manual daily reports — system auto-generates from actions.
+
+**Daily Auto Report includes:**
+- Attendance (start/end time, location)
+- Work (tasks assigned/completed/pending)
+- Resources (materials used, labour hours)
+- Monitoring (good/poor crop updates, incidents, photos)
+
+### F22: Progress Visibility
+
+Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
+
+| Role | Visibility |
+|---|---|
+| Super Admin | Everything |
+| Farm Admin | Assigned farms |
+| Agronomist | All farms and crop progress |
+| Farm Officer | Assigned farms and daily tasks only |
+
+---
+
+## 5. Non-Functional Requirements
+
+| Requirement | Specification |
+|---|---|
+| Platform | PWA (installable, works offline for basic features) |
+| Authentication | JWT sessions (8h expiry), bcrypt password hashing |
+| Biometric Security | Encrypted face embeddings (AES-256-GCM), WebAuthn passkeys, liveness challenges |
+| Storage | S3-compatible (MinIO for local dev) for media assets |
+| Database | PostgreSQL 16 via Prisma ORM |
+| Geolocation | Haversine distance calculation, configurable geofence radius |
+| Audit Trail | Complete audit logging for all entity changes |
+| Rate Limiting | In-memory rate limiting for API endpoints |
+| Performance | Server-side rendering with Next.js, pagination for lists |
+| Security | HttpOnly cookies, CORS, input validation (Zod), no `X-Powered-By` |
+
+---
+
+## 6. Success Metrics
+
+| Metric | Target |
+|---|---|
+| Daily active officers completing Start/End Day | >90% of assigned officers |
+| Task completion rate | >80% within due dates |
+| Daily crop photo uploads | 100% of active plots monitored |
+| Incident response time | <24h from report to acknowledgement |
+| System auto-report generation | 100% automated, zero manual reports |
+
+---
+
+## 7. Out of Scope (MVP)
+
+- AI/ML-based crop disease detection
+- Harvest yield tracking and market integration
+- Financial/accounting modules
+- Multi-language support
+- Native mobile apps (iOS/Android)
+- Offline-first with sync (basic PWA caching only)
+- Variety-wise area tracking per crop cycle
+
+    </script>
+  
+
+    <script type="text/markdown" id="raw-tdd">
+# Agaate Farm Management PWA — Technical Design Document (TDD)
+
+**Version:** 1.0  
+**Date:** 2026-08-30  
+**Status:** Active Implementation
+
+---
+
+## 1. System Architecture Overview
+
+### 1.1 Tech Stack
+
+| Layer | Technology | Version |
+|---|---|---|
+| **Frontend** | Next.js (App Router) + React | 16.3.3 / 19.2.8 |
+| **Language** | TypeScript | 5.8.3 |
+| **Styling** | Vanilla CSS (globals.css design system) | — |
+| **Database** | PostgreSQL | 16 (Alpine) |
+| **ORM** | Prisma | 6.8.2 |
+| **Authentication** | JWT (jose), bcryptjs, WebAuthn | — |
+| **Biometrics** | TensorFlow.js + face-api (vladmandic) | 4.22 / 1.7.15 |
+| **Object Storage** | S3-compatible (MinIO for dev) | — |
+| **Validation** | Zod | 3.24.4 |
+| **Testing** | Vitest (unit), Playwright (E2E) | 3.2.1 / 1.62.1 |
+| **Container** | Docker Compose (PostgreSQL + MinIO) | — |
+
+### 1.2 Architecture Pattern
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    PWA (Browser)                         │
+│  ┌──────────┐  ┌──────────┐  ┌───────────────────────┐  │
+│  │ React    │  │ Service  │  │ TensorFlow.js         │  │
+│  │ Pages    │  │ Worker   │  │ Face Recognition      │  │
+│  └────┬─────┘  └──────────┘  │ (Client-side only)    │  │
+│       │                      └───────────────────────┘  │
+└───────┼─────────────────────────────────────────────────┘
+        │ HTTPS
+┌───────┼─────────────────────────────────────────────────┐
+│       ▼ Next.js 16 Server                                │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐               │
+│  │ Server   │  │ API      │  │ Server   │               │
+│  │ Comps    │  │ Routes   │  │ Actions  │               │
+│  │ (RSC)    │  │ (/api/*) │  │          │               │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘               │
+│       │              │             │                     │
+│  ┌────▼──────────────▼─────────────▼─────┐               │
+│  │     Shared Server Libraries           │               │
+│  │  auth.ts │ access.ts │ business.ts    │               │
+│  │  api.ts  │ audit.ts  │ storage.ts     │               │
+│  └────┬──────────────────────┬───────────┘               │
+│       │                      │                           │
+│  ┌────▼─────┐          ┌─────▼────┐                      │
+│  │ Prisma   │          │ S3/MinIO │                      │
+│  │ Client   │          │ Client   │                      │
+│  └────┬─────┘          └─────┬────┘                      │
+└───────┼──────────────────────┼──────────────────────────┘
+        │                      │
+   ┌────▼─────┐          ┌─────▼────┐
+   │PostgreSQL│          │  MinIO   │
+   │  16      │          │  S3      │
+   └──────────┘          └──────────┘
+```
+
+### 1.3 Key Architectural Decisions
+
+| Decision | Rationale |
+|---|---|
+| **Server Components by default** | Minimize client JS bundle; data fetching at server |
+| **API Routes for mutations** | Client components call REST endpoints for all writes |
+| **No UI component library** | Vanilla CSS design system for full control, zero bundle overhead |
+| **Client-side face recognition** | Privacy: raw face images never leave the device; only encrypted embeddings are stored |
+| **S3-compatible storage** | Presigned URLs for direct browser uploads; MinIO for local dev parity |
+| **JWT in HttpOnly cookies** | Secure, stateless auth with 8h expiry |
+| **Prisma with raw enums** | Strong typing via generated client; schema-as-code for migrations |
+
+---
+
+## 2. Directory Structure
+
+```
+agaateapp/
+├── docs/                          # Project documentation
+├── prisma/
+│   ├── schema.prisma              # Database schema (512 lines, 20+ models)
+│   ├── migrations/                # Prisma migration history
+│   └── seed.ts                    # Comprehensive seed data
+├── public/                        # Static assets, PWA manifest
+├── scripts/
+│   └── fetch-face-models.mjs      # Downloads face-api model weights
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx             # Root layout (PWA meta, service worker)
+│   │   ├── globals.css            # Design system (~24KB)
+│   │   ├── manifest.ts            # PWA manifest generator
+│   │   ├── page.tsx               # Root redirect
+│   │   ├── login/                 # Login page
+│   │   ├── dashboard/             # Role-aware dashboard
+│   │   ├── admin/
+│   │   │   ├── approvals/         # Attendance exception + location change approvals
+│   │   │   └── users/             # User management (CRUD)
+│   │   ├── farms/
+│   │   │   ├── new/               # Farm creation form
+│   │   │   └── [farmId]/          # Farm detail / hub page
+│   │   ├── plots/
+│   │   │   └── [plotId]/          # Plot detail + crop cycle management
+│   │   │       └── crop-cycles/
+│   │   │           ├── new/       # Crop cycle creation wizard
+│   │   │           └── [cycleId]/edit/
+│   │   ├── tasks/
+│   │   │   ├── page.tsx           # Task board (filterable)
+│   │   │   └── new/               # Task creation form
+│   │   ├── officer/
+│   │   │   ├── day/               # Farm Officer "My Day" screen
+│   │   │   └── reports/           # Officer field reports
+│   │   ├── reports/
+│   │   │   └── daily/             # Auto-generated daily reports
+│   │   ├── settings/
+│   │   │   ├── biometric/         # Face enrollment management
+│   │   │   └── passkeys/          # WebAuthn credential management
+│   │   └── api/                   # 44 API route handlers (see §4)
+│   ├── components/                # 34 React components + UI primitives
+│   │   ├── ui/                    # Reusable UI components
+│   │   ├── biometric/             # Biometric-related components
+│   │   └── webauthn/              # WebAuthn-related components
+│   └── lib/                       # Server-side utilities
+│       ├── auth.ts                # Session management (JWT)
+│       ├── access.ts              # RBAC + farm access control
+│       ├── business.ts            # Domain logic (geo, infrastructure, milestones)
+│       ├── api.ts                 # Error handling, pagination
+│       ├── audit.ts               # Audit logging
+│       ├── prisma.ts              # Prisma client singleton
+│       ├── storage.ts             # S3 presigned URL helpers
+│       ├── rate-limit.ts          # In-memory rate limiter
+│       ├── face-*.ts              # Face recognition utilities
+│       └── webauthn.ts            # WebAuthn server helpers
+├── tests/                         # Test files
+├── docker-compose.yml             # PostgreSQL + MinIO
+├── package.json                   # Dependencies & scripts
+├── tsconfig.json                  # TypeScript configuration
+├── vitest.config.ts               # Vitest configuration
+└── playwright.config.ts           # E2E test configuration
+```
+
+---
+
+## 3. Database Design
+
+### 3.1 Entity-Relationship Overview
+
+```mermaid
+erDiagram
+    User ||--o{ FarmAccess : has
+    User ||--o{ Task : "assigned/created"
+    User ||--o{ Attendance : records
+    User ||--o{ CropMonitoring : performs
+    User ||--o{ Incident : reports
+    User ||--o| FaceEnrollment : has
+    User ||--o{ PasskeyCredential : has
+
+    Farm ||--o{ FarmAccess : grants
+    Farm ||--o{ Plot : contains
+    Farm ||--o{ Task : has
+    Farm ||--o{ Attendance : tracks
+    Farm ||--o{ Incident : has
+    Farm ||--o{ AgronomyPlan : has
+    Farm ||--o{ LocationChangeRequest : has
+
+    Plot ||--o{ IrrigationConfiguration : has
+    Plot ||--o{ CropCycle : has
+
+    CropCycle ||--o{ CropVariety : has
+    CropCycle ||--o{ Milestone : has
+
+    AgronomyPlan ||--o{ Task : generates
+
+    Task ||--o| TaskExecution : has
+    TaskExecution ||--o{ MaterialUsage : tracks
+    TaskExecution ||--o{ LabourUsage : tracks
+    TaskExecution ||--o{ MediaAsset : has
+
+    Incident ||--o{ IncidentFollowUp : has
+    Incident ||--o{ MediaAsset : has
+
+    CropMonitoring ||--o{ MediaAsset : has
+
+    Attendance ||--o| AttendanceException : may_have
+```
+
+### 3.2 Core Models (20 models)
+
+| Model | Purpose | Key Fields |
+|---|---|---|
+| `User` | All platform users | name, email, passwordHash, role, active |
+| `Farm` | Farm entity | name, ownerName, location, lat/long, area, status, geofenceRadius |
+| `FarmAccess` | M:N User↔Farm with canManage flag | userId, farmId, canManage |
+| `Plot` | Sub-division of farm | name, area, lat/long, soilType, status, deletedAt (soft delete) |
+| `IrrigationConfiguration` | Multiple irrigation types per plot | plotId, type, details |
+| `CropCycle` | Crop lifecycle per plot | cropName, dates, establishmentType, infrastructure fields |
+| `CropVariety` | Varieties within a crop cycle | name, cropCycleId |
+| `Milestone` | Crop planning milestones | name, targetDate, status, remarks |
+| `AgronomyPlan` | 7-day plans per farm | farmId, planDate, notes, manual weather data |
+| `Task` | Work items from all sources | origin, category, title, priority, dueDate, status |
+| `TaskExecution` | Officer's execution of a task | startedAt, completedAt, remarks |
+| `MaterialUsage` | Materials consumed per task | materialName, quantity, unit |
+| `LabourUsage` | Labour tracking per task | labourers, hours, labourHours |
+| `Attendance` | Daily start/end with biometric data | date, time, selfie, location, biometric flags |
+| `AttendanceException` | Location mismatch exceptions | distanceMeters, reason, approvalStatus |
+| `LocationChangeRequest` | Farm location update requests | proposedLat/Long, reason, approvalStatus |
+| `CropMonitoring` | Daily crop health reports | status (Good/Poor), stage, impactPercent |
+| `Incident` | Farm/plot/crop level incidents | level, type, severity, impactPercent, status |
+| `IncidentFollowUp` | Follow-up actions on incidents | action, remarks |
+| `MediaAsset` | All uploaded files | storageKey, kind, mimeType, sizeBytes |
+
+### 3.3 Authentication Models
+
+| Model | Purpose |
+|---|---|
+| `PasskeyCredential` | WebAuthn device credentials |
+| `WebAuthnChallenge` | Challenge-response for WebAuthn flows |
+| `FaceEnrollment` | Encrypted face embedding storage |
+| `LivenessChallenge` | Anti-spoofing challenge tracking |
+| `AuditLog` | Complete action audit trail |
+
+### 3.4 Enum Types (14 enums)
+
+`Role`, `FarmStatus`, `PlotStatus`, `EstablishmentType`, `CropCycleStatus`, `MilestoneStatus`, `TaskOrigin`, `TaskStatus`, `AttendanceStatus`, `ApprovalStatus`, `HealthStatus`, `IncidentLevel`, `IncidentStatus`, `MediaKind`
+
+### 3.5 Index Strategy
+
+| Table | Index | Purpose |
+|---|---|---|
+| FarmAccess | `(userId, farmId)` unique | Prevent duplicate access |
+| FarmAccess | `(farmId)` | Farm member lookups |
+| Plot | `(farmId, name)` unique | Prevent duplicate names |
+| Plot | `(farmId, status)` | Active plot queries |
+| CropCycle | `(plotId, status)` | Active cycle queries |
+| Milestone | `(cropCycleId, targetDate)` | Timeline queries |
+| Task | `(assignedOfficerId, dueDate, status)` | Officer task board |
+| Task | `(farmId, dueDate)` | Farm-level task queries |
+| Attendance | `(userId, farmId, attendanceDate)` unique | One attendance per day |
+| IncidentFollowUp | `(incidentId, createdAt)` | Chronological follow-ups |
+
+---
+
+## 4. API Design
+
+### 4.1 API Route Inventory (44 endpoints)
+
+#### Authentication & Security
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Email/password login → JWT cookie |
+| POST | `/api/auth/logout` | Clear session cookie |
+| GET/POST | `/api/webauthn/register/options` | WebAuthn registration options |
+| POST | `/api/webauthn/register/verify` | Verify WebAuthn registration |
+| GET/POST | `/api/webauthn/auth/options` | WebAuthn auth options |
+| POST | `/api/webauthn/auth/verify` | Verify WebAuthn authentication |
+| GET | `/api/webauthn/credentials` | List user passkeys |
+| POST | `/api/biometric/enroll` | Enroll face embedding |
+| GET | `/api/biometric/status` | Check enrollment status |
+| POST | `/api/biometric/verify` | Verify face match |
+| POST | `/api/liveness/challenge` | Generate liveness challenge |
+| POST | `/api/liveness/verify` | Verify liveness response |
+
+#### Farm Management
+| Method | Path | Description |
+|---|---|---|
+| GET/POST | `/api/farms` | List / create farms |
+| GET/PATCH | `/api/farms/[farmId]` | Get / update farm |
+| POST | `/api/farms/[farmId]/activate` | Activate farm |
+| GET/POST/DELETE | `/api/farms/[farmId]/access` | Manage farm access |
+| GET/POST | `/api/farms/[farmId]/plots` | List / create plots |
+| GET/PATCH | `/api/plots/[plotId]` | Get / update plot |
+| GET/POST | `/api/plots/[plotId]/crop-cycles` | List / create crop cycles |
+| GET/PATCH | `/api/plots/[plotId]/crop-cycles/[cycleId]` | Get / update crop cycle |
+
+#### Task & Activity Management
+| Method | Path | Description |
+|---|---|---|
+| GET/POST | `/api/tasks` | List / create tasks |
+| GET/PATCH | `/api/tasks/[taskId]` | Get / update task |
+| POST | `/api/tasks/[taskId]/complete` | Complete task with execution data |
+
+#### Attendance & Location
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/attendance` | Start/end day |
+| GET | `/api/attendance/list` | List attendance records |
+| GET/POST | `/api/attendance-exceptions` | List / create exceptions |
+| PATCH | `/api/attendance-exceptions/[exceptionId]` | Approve/reject exception |
+| GET/POST | `/api/location-change-requests` | List / create requests |
+| PATCH | `/api/location-change-requests/[requestId]` | Approve/reject request |
+
+#### Monitoring & Incidents
+| Method | Path | Description |
+|---|---|---|
+| GET/POST | `/api/monitoring` | List / create crop monitoring entries |
+| GET/POST | `/api/incidents` | List / create incidents |
+| GET/PATCH | `/api/incidents/[incidentId]` | Get / update incident |
+| POST | `/api/incidents/[incidentId]/follow-ups` | Add follow-up action |
+
+#### Media & Reporting
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/uploads/presign` | Get presigned upload URL |
+| POST | `/api/uploads/[mediaId]/complete` | Confirm upload completion |
+| GET | `/api/media/[mediaId]/url` | Get presigned download URL |
+| GET | `/api/reports/daily` | Auto-generated daily report |
+
+#### Dashboard & Users
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/dashboard` | Aggregate dashboard metrics |
+| GET/POST | `/api/users` | List / create users |
+| GET/PATCH | `/api/users/[userId]` | Get / update user |
+| GET | `/api/weather` | Auto weather from Open-Meteo |
+| POST | `/api/weather/manual` | Save manual weather entry |
+| GET | `/api/audit-logs` | Query audit logs |
+
+### 4.2 Error Handling Pattern
+
+All API routes use a centralized `apiError()` handler that normalizes:
+- `HttpError` → appropriate status code
+- `ZodError` → 422 with flattened validation details
+- Auth errors → 401
+- Prisma conflicts → 409
+- Provider errors → 503
+- Unknown errors → 500
+
+### 4.3 Access Control Pattern
+
+```typescript
+// Platform-wide roles (see all farms)
+const platformRoles = ["SUPER_ADMIN", "AGRONOMIST"];
+
+// Farm-scoped access
+requireFarmAccess(farmId, manage=false);  // read
+requireFarmAccess(farmId, manage=true);   // write
+
+// Role check
+requireRole(userRole, ["SUPER_ADMIN", "FARM_ADMIN"]);
+```
+
+---
+
+## 5. Authentication & Security
+
+### 5.1 Session Management
+- JWT tokens signed with HS256 via `jose`
+- Stored in HttpOnly, SameSite=Lax cookies
+- 8-hour expiration
+- Session payload: `{ userId, role, name }`
+
+### 5.2 Biometric Pipeline
+
+```
+1. Face Enrollment
+   Browser → TF.js face detection → embedding extraction
+   → AES-256-GCM encryption (server-side key)
+   → Store encrypted embedding in DB
+
+2. Face Verification (Attendance)
+   Browser → TF.js face detection → embedding extraction
+   → Send to server → decrypt stored embedding
+   → Cosine similarity comparison
+   → Pass if similarity ≥ threshold (configurable)
+
+3. Liveness Detection
+   Server generates random challenge (smile/blink/turn)
+   → Browser presents challenge → captures response
+   → Server verifies challenge was consumed
+```
+
+### 5.3 Security Measures
+- Rate limiting on auth endpoints
+- Input validation on all API routes (Zod schemas)
+- No `X-Powered-By` header
+- `server-only` imports prevent accidental client bundling
+- Audit logging for all entity mutations
+- Soft deletes where appropriate (Plot.deletedAt)
+
+---
+
+## 6. Infrastructure
+
+### 6.1 Local Development
+
+```yaml
+# docker-compose.yml
+services:
+  postgres:     # PostgreSQL 16 Alpine, port 5432
+  minio:        # S3-compatible storage, ports 9000/9001
+  minio-setup:  # Auto-creates 'agaate-evidence' bucket
+```
+
+### 6.2 Environment Configuration
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `APP_SESSION_SECRET` | JWT signing key (≥32 chars) |
+| `S3_*` | Object storage configuration |
+| `WEATHER_PROVIDER_URL` | Open-Meteo API endpoint |
+| `WEBAUTHN_*` | WebAuthn relying party config |
+| `BIOMETRIC_ENCRYPTION_KEY` | AES-256 key for face embeddings |
+| `FACE_MATCH_THRESHOLD` | Cosine similarity threshold |
+| `REQUIRE_BIOMETRIC_FOR_ATTENDANCE` | Strict/transitional biometric mode |
+
+### 6.3 NPM Scripts
+
+| Script | Purpose |
+|---|---|
+| `dev` | Start Next.js dev server |
+| `build` | Production build |
+| `test` | Run Vitest unit tests |
+| `test:e2e` | Run Playwright E2E tests |
+| `db:generate` | Generate Prisma client |
+| `db:migrate` | Deploy database migrations |
+| `db:seed` | Seed database with sample data |
+| `fetch:face-models` | Download face-api model weights |
+
+---
+
+## 7. Testing Strategy
+
+### 7.1 Test Files
+
+| File | Type | Coverage |
+|---|---|---|
+| `business.test.ts` | Unit | Business logic (geo, variance, milestones) |
+| `api-integration.test.ts` | Integration | Full API route testing |
+| `domain-verification.test.ts` | Integration | Domain rule validation |
+| `auth-penetration.test.ts` | Security | Auth bypass attempts |
+| `face-embedding.test.ts` | Unit | Face recognition logic |
+| `liveness-attendance.test.ts` | Unit | Liveness flow logic |
+| `webauthn.test.ts` | Unit | WebAuthn server logic |
+| `stage5-e2e.test.ts` | E2E | Full user journey tests |
+
+### 7.2 Testing Tools
+- **Vitest:** Unit and integration tests with TypeScript support
+- **Playwright:** Browser-based E2E testing
+- Test session context via `AsyncLocalStorage` for API tests without real cookies
+
+---
+
+## 8. Performance Considerations
+
+| Area | Approach |
+|---|---|
+| Database queries | Composite indexes on hot paths, pagination (limit/offset/cursor) |
+| Server rendering | React Server Components minimize client JS |
+| Media uploads | Presigned URLs for direct browser→S3 uploads (bypass server) |
+| Face recognition | Client-side TF.js inference (no server GPU needed) |
+| Bundling | `serverExternalPackages` to keep Prisma/S3 out of client bundle |
+| Caching | `force-dynamic` on data pages, `no-store` headers on API responses |
+
+    </script>
+  
+
+    <script type="text/markdown" id="raw-userflows">
+# Agaate Farm Management PWA — User Flows
+
+**Version:** 1.0  
+**Date:** 2026-08-30
+
+---
+
+## 1. High-Level System Flow
+
+```mermaid
+flowchart TB
+    SA[Super Admin] -->|Creates/Manages| FARMS[Farms]
+    SA -->|Creates/Manages| USERS[Users]
+    
+    FA[Farm Admin] -->|Configures| PLOTS[Plots]
+    FA -->|Plans| CROPS[Crop Cycles]
+    FA -->|Assigns| OFFICERS[Farm Officers]
+    FA -->|Reviews| APPROVALS[Approvals]
+    
+    AG[Agronomist] -->|Views| ALL_FARMS[All Farms]
+    AG -->|Creates| PLANS[7-Day Plans]
+    AG -->|Reviews| INCIDENTS[Incidents]
+    
+    FO[Farm Officer] -->|Marks| ATTENDANCE[Attendance]
+    FO -->|Executes| TASKS[Daily Tasks]
+    FO -->|Uploads| PHOTOS[Crop Photos]
+    FO -->|Reports| INC[Incidents]
+    
+    PLANS -->|Generates| TASKS
+    CROPS -->|Generates| MILESTONES[Milestones]
+    MILESTONES -->|Generates| TASKS
+    
+    TASKS -->|Captures| EVIDENCE[Materials + Labour + Photos]
+    EVIDENCE -->|Feeds| REPORTS[Auto Reports]
+    REPORTS -->|Visible to| SA & FA & AG
+```
+
+---
+
+## 2. Authentication Flow
+
+```mermaid
+flowchart TD
+    START([User Opens App]) --> LOGIN[/Login Page/]
+    LOGIN -->|Enter Email + Password| VALIDATE{Credentials Valid?}
+    VALIDATE -->|No| ERROR[Show Error Message]
+    ERROR --> LOGIN
+    VALIDATE -->|Yes| JWT[Create JWT Session Cookie]
+    JWT --> ROLE{Check User Role}
+    
+    ROLE -->|SUPER_ADMIN| DASH_SA[Dashboard - Full View]
+    ROLE -->|FARM_ADMIN| DASH_FA[Dashboard - Assigned Farms]
+    ROLE -->|AGRONOMIST| DASH_AG[Dashboard - All Farms Read]
+    ROLE -->|FARM_OFFICER| DASH_FO[Officer Day Screen]
+    
+    DASH_SA & DASH_FA & DASH_AG & DASH_FO --> APP([In-App Navigation])
+    APP -->|Session Expired 8h| LOGIN
+    APP -->|Logout| CLEAR[Clear Cookie] --> LOGIN
+```
+
+---
+
+## 3. Super Admin: Farm & User Management
+
+### 3.1 Create Farm
+
+```mermaid
+flowchart TD
+    DASH([Dashboard]) -->|Click "New Farm"| FORM[/Farm Creation Form/]
+    FORM -->|Fill Details| FIELDS[Farm Name, Owner, Location\nLat/Long, Area, Water Source]
+    FIELDS -->|Submit| VALIDATE{Validation Pass?}
+    VALIDATE -->|No| ERRORS[Show Field Errors]
+    ERRORS --> FORM
+    VALIDATE -->|Yes| CREATE[POST /api/farms]
+    CREATE --> STATUS[Farm Created - Status: SETUP]
+    STATUS --> HUB[Farm Hub Page]
+```
+
+### 3.2 Create User
+
+```mermaid
+flowchart TD
+    ADMIN([Admin Console]) -->|Click "Add User"| FORM[/User Form/]
+    FORM -->|Fill| FIELDS[Name, Email, Password, Role]
+    FIELDS -->|Submit| CREATE[POST /api/users]
+    CREATE --> ASSIGN{Role = FARM_ADMIN\nor FARM_OFFICER?}
+    ASSIGN -->|Yes| ACCESS[Assign Farm Access]
+    ASSIGN -->|No| DONE([User Created])
+    ACCESS --> DONE
+```
+
+---
+
+## 4. Farm Admin: Farm Setup Flow
+
+### 4.1 Complete Farm Setup
+
+```mermaid
+flowchart TD
+    FARM_HUB([Farm Hub - SETUP Status]) --> ADD_PLOT[Add Plot]
+    
+    ADD_PLOT --> PLOT_FORM[/Plot Form/]
+    PLOT_FORM -->|Manual Entry| COORDS1[Enter Lat/Long Manually]
+    PLOT_FORM -->|Auto Capture| COORDS2[Get Current GPS Location]
+    COORDS1 & COORDS2 --> IRRIGATION[Configure Irrigation Types]
+    IRRIGATION -->|Select Multiple| TYPES[Drip, Rain Pipe, Sprinkler, etc.]
+    TYPES --> SAVE_PLOT[Save Plot - Status: SETUP]
+    
+    SAVE_PLOT --> ADD_CROP[Add Crop Cycle]
+    ADD_CROP --> CROP_FORM[/Crop Cycle Wizard/]
+    
+    CROP_FORM --> STEP1[Step 1: Basic Info\nCrop Name, Dates, Establishment Type]
+    STEP1 --> STEP2[Step 2: Varieties\nAdd Multiple Varieties]
+    STEP2 --> STEP3[Step 3: Infrastructure\nBeds, Mulching, Plant Population]
+    STEP3 --> STEP4[Step 4: Milestones\nAuto-generated + Custom]
+    STEP4 --> SAVE_CROP[Save Crop Cycle - Status: PLANNED]
+    
+    SAVE_CROP --> CHECK{All Plots Have\nCrop Cycles?}
+    CHECK -->|No| ADD_PLOT
+    CHECK -->|Yes| ACTIVATE[Activate Farm]
+    ACTIVATE --> ACTIVE([Farm Status: ACTIVE])
+```
+
+### 4.2 Plot Detail View
+
+```mermaid
+flowchart TD
+    PLOT([Plot Page]) --> TABS{View Tab}
+    
+    TABS -->|Overview| OVERVIEW[Plot Info\nArea, Location, Soil Type\nIrrigation Config]
+    TABS -->|Crop Cycles| CYCLES[Active/Planned/Completed\nCrop Cycles List]
+    TABS -->|Monitoring| MONITOR[Crop Health History\nPhotos, Stages, Impact]
+    
+    CYCLES -->|Click Cycle| DETAIL[Cycle Details\nVarieties, Infrastructure\nMilestones, Tasks]
+    DETAIL -->|Edit| EDIT_FORM[/Edit Crop Cycle Form/]
+```
+
+---
+
+## 5. Agronomist: Planning & Monitoring
+
+### 5.1 Dashboard Drill-Down
+
+```mermaid
+flowchart TD
+    DASH([Agronomist Dashboard]) -->|KPIs| METRICS[Active Farms, Plots\nCrop Cycles, Tasks\nDelayed, Incidents]
+    
+    DASH -->|Select Farm| FARM[Farm View]
+    FARM -->|Select Plot| PLOT[Plot View]
+    PLOT -->|Select Crop| CROP[Crop Cycle View]
+    CROP -->|View| HISTORY[Activity History\nPhotos & Incidents]
+```
+
+### 5.2 Create 7-Day Agronomy Plan
+
+```mermaid
+flowchart TD
+    DASH([Dashboard]) -->|Navigate| TASKS[Tasks Page]
+    TASKS -->|Click "New Task"| FORM[/Task Creation Form/]
+    
+    FORM --> SELECT_FARM[Select Farm]
+    SELECT_FARM --> SELECT_PLOT[Select Plot]
+    SELECT_PLOT --> SELECT_CROP[Select Crop Cycle]
+    SELECT_CROP --> WEATHER{Check Weather?}
+    
+    WEATHER -->|Auto| FETCH[Fetch from Open-Meteo API]
+    WEATHER -->|Manual| MANUAL[Enter Temperature, Humidity\nWind, Rain Forecast]
+    WEATHER -->|Skip| ACTIVITY
+    
+    FETCH & MANUAL --> ACTIVITY[Define Activity]
+    ACTIVITY --> DETAILS[Category, Title, Description\nInstructions, Priority, Due Date]
+    DETAILS --> ASSIGN[Assign Farm Officer]
+    ASSIGN --> CREATE[POST /api/tasks]
+    CREATE --> NOTIFY([Task Appears in\nOfficer's Daily List])
+```
+
+---
+
+## 6. Farm Officer: Daily Execution
+
+### 6.1 Complete Day Flow
+
+```mermaid
+flowchart TD
+    OPEN([Open App]) --> DAY[/My Day Screen/]
+    DAY --> START{Day Started?}
+    
+    START -->|No| START_DAY[Start Day Flow]
+    START_DAY --> SELFIE[Take Selfie]
+    SELFIE --> LIVENESS{Liveness Check\nSmile/Blink/Turn}
+    LIVENESS -->|Pass| LOCATION[Capture GPS Location]
+    LIVENESS -->|Fail| RETRY[Retry Liveness]
+    RETRY --> SELFIE
+    
+    LOCATION --> GEO_CHECK{Location Within\nFarm Geofence?}
+    GEO_CHECK -->|Yes| MARKED[✅ Attendance Marked]
+    GEO_CHECK -->|No| EXCEPTION[Location Exception]
+    EXCEPTION --> REASON[Enter Reason for\nLocation Mismatch]
+    REASON --> PENDING[⏳ Sent to Admin\nfor Approval]
+    
+    MARKED & PENDING --> TASK_LIST[Today's Tasks]
+    
+    TASK_LIST --> TASKS{Task Sources}
+    TASKS -->|Agronomist| AGR_TASKS[Agronomist Assigned Tasks]
+    TASKS -->|System| SYS_TASKS[Milestone/Schedule Tasks]
+    TASKS -->|Monitoring| MON_TASKS[Daily Crop Monitoring]
+    
+    AGR_TASKS & SYS_TASKS --> EXECUTE[Execute Task]
+    EXECUTE --> TASK_FLOW[Start → Work → Complete]
+    TASK_FLOW --> CAPTURE[Add Materials Used\nAdd Labour Hours\nUpload Photos\nAdd Remarks]
+    CAPTURE --> COMPLETE[Mark Completed ✅]
+    
+    MON_TASKS --> MONITORING[Crop Monitoring]
+    MONITORING --> HEALTH{Crop Health?}
+    HEALTH -->|Good| GOOD[Upload Photo\nOptional Remarks]
+    HEALTH -->|Poor| POOR[Upload Photo\nImpact %, Crop Stage\nRemarks]
+    
+    COMPLETE & GOOD & POOR --> MORE{More Tasks?}
+    MORE -->|Yes| TASK_LIST
+    MORE -->|No| INCIDENT{Any Incidents?}
+    
+    INCIDENT -->|Yes| REPORT[Report Incident]
+    REPORT --> INC_FORM[Type, Level, Description\nPhotos, Severity]
+    INC_FORM --> SUBMIT_INC[Submit Incident]
+    INCIDENT -->|No| END_DAY
+    
+    SUBMIT_INC --> END_DAY[End Day Flow]
+    END_DAY --> END_SELFIE[Take Selfie]
+    END_SELFIE --> END_LOCATION[Capture Location]
+    END_LOCATION --> DAY_COMPLETE([Day Completed ✅\nAuto Report Generated])
+```
+
+### 6.2 Task Execution Detail
+
+```mermaid
+flowchart TD
+    TASK([Select Task]) --> VIEW[View Task Details\nTitle, Description\nInstructions, Priority]
+    VIEW --> START[Start Activity]
+    START --> WORK[Perform Field Work]
+    WORK --> COMPLETE[Mark as Complete]
+    
+    COMPLETE --> MATERIALS[/Add Materials Used/]
+    MATERIALS --> MAT_FIELDS[Material Name\nQuantity\nUnit]
+    MAT_FIELDS -->|Add More?| MATERIALS
+    MAT_FIELDS -->|Done| LABOUR
+    
+    LABOUR --> LAB_FIELDS[/Add Labour Usage/]
+    LAB_FIELDS --> LAB_DATA[Number of Labourers\nHours Worked]
+    LAB_DATA -->|System Calculates| CALC[Labour Hours = Labourers × Hours]
+    CALC -->|Add More?| LABOUR
+    CALC -->|Done| PHOTOS
+    
+    PHOTOS --> UPLOAD[Upload Activity Photos]
+    UPLOAD --> REMARKS[/Add Remarks/]
+    REMARKS --> SUBMIT[Submit Completion]
+    SUBMIT --> UPDATE([Progress Auto-Updated])
+```
+
+---
+
+## 7. Approval Flows
+
+### 7.1 Attendance Exception
+
+```mermaid
+flowchart TD
+    OFFICER[Officer Marks Attendance\nOutside Geofence] --> EXCEPTION[Exception Created\nStatus: PENDING]
+    EXCEPTION --> REASON[Officer Provides Reason\nand Current Location]
+    REASON --> ADMIN[Appears in Admin\nApprovals Console]
+    
+    ADMIN --> REVIEW{Admin Decision}
+    REVIEW -->|Approve| APPROVED[Status: APPROVED\n✅ Attendance Valid]
+    REVIEW -->|Reject| REJECTED[Status: REJECTED\n❌ Attendance Invalid]
+    
+    APPROVED & REJECTED --> LOG([Audit Log Created])
+```
+
+### 7.2 Location Change Request
+
+```mermaid
+flowchart TD
+    OFFICER[Officer on Site\nFarm Location is Wrong] --> REQUEST[Raise Location\nChange Request]
+    REQUEST --> FORM[Proposed Lat/Long\n+ Reason]
+    FORM --> SUBMIT[POST /api/location-change-requests]
+    SUBMIT --> PENDING[Status: PENDING]
+    PENDING --> ADMIN[Admin Reviews]
+    
+    ADMIN --> DECISION{Decision}
+    DECISION -->|Approve| UPDATE[Farm Location Updated\nStatus: APPROVED]
+    DECISION -->|Reject| REJECT[Status: REJECTED\nNo Change]
+    
+    UPDATE & REJECT --> LOG([Audit Log Created])
+```
+
+---
+
+## 8. Incident Management Flow
+
+```mermaid
+flowchart TD
+    OFFICER[Farm Officer] -->|Report| INCIDENT[Create Incident]
+    INCIDENT --> LEVEL{Incident Level}
+    
+    LEVEL -->|Farm| FARM_INC[Motor, Water, Electricity\nLabour, Infrastructure]
+    LEVEL -->|Crop| CROP_INC[Disease, Pest\nNutrient Deficiency]
+    LEVEL -->|Positive| POS_INC[Excellent Health\nGood Growth, Best Practice]
+    
+    FARM_INC & CROP_INC & POS_INC --> DETAILS[Add Description\nPhotos, Severity]
+    DETAILS --> SUBMIT[Submit → Status: OPEN]
+    
+    SUBMIT --> VISIBLE[Visible to\nAgronomist + Admin]
+    VISIBLE --> ACKNOWLEDGE[Agronomist Acknowledges\nStatus: ACKNOWLEDGED]
+    ACKNOWLEDGE --> FOLLOWUP[Add Follow-Up Actions]
+    FOLLOWUP --> MORE{More Follow-Ups?}
+    MORE -->|Yes| FOLLOWUP
+    MORE -->|No| RESOLVE[Status: RESOLVED]
+    RESOLVE --> CLOSE([Status: CLOSED])
+```
+
+---
+
+## 9. Auto Reporting Flow
+
+```mermaid
+flowchart TD
+    ACTIONS[Daily Actions by All Officers] --> COLLECT{System Collects}
+    
+    COLLECT --> ATT[Attendance Data\nStart/End Time & Location]
+    COLLECT --> TASKS[Task Completion Data\nAssigned/Completed/Pending]
+    COLLECT --> RESOURCES[Resource Data\nMaterials + Labour Hours]
+    COLLECT --> MONITORING[Monitoring Data\nCrop Health + Photos]
+    COLLECT --> INCIDENTS[Incident Data\nNew Reports + Follow-Ups]
+    
+    ATT & TASKS & RESOURCES & MONITORING & INCIDENTS --> REPORT[/Auto-Generated\nDaily Report/]
+    
+    REPORT --> VIEWERS{Accessible By}
+    VIEWERS --> SA[Super Admin\nAll Farms]
+    VIEWERS --> FA[Farm Admin\nAssigned Farms]
+    VIEWERS --> AG[Agronomist\nAll Farms - Crop Focus]
+```
+
+---
+
+## 10. Biometric Enrollment Flow
+
+```mermaid
+flowchart TD
+    SETTINGS([Settings > Biometric]) --> STATUS{Already Enrolled?}
+    
+    STATUS -->|No| CONSENT[Accept Consent\nGive Permission]
+    CONSENT --> CAPTURE[Capture Face Photos\nMultiple Angles]
+    CAPTURE --> PROCESS[TF.js Extracts\nFace Embeddings]
+    PROCESS --> ENCRYPT[Server Encrypts\nAES-256-GCM]
+    ENCRYPT --> STORE[Store Encrypted\nEmbedding in DB]
+    STORE --> DONE([✅ Enrolled])
+    
+    STATUS -->|Yes| MANAGE[View Enrollment\nQuality Score\nLast Verified]
+    MANAGE -->|Re-enroll| CONSENT
+    MANAGE -->|Revoke| REVOKE[Deactivate\nEnrollment]
+```
+
+---
+
+## 11. Page Navigation Map
+
+```
+/ (Root) → Redirect to /dashboard or /login
+
+/login                              ← All unauthenticated users
+/dashboard                          ← All authenticated users (role-aware)
+
+/farms/new                          ← Super Admin, Farm Admin
+/farms/[farmId]                     ← Farm Hub (role-aware)
+
+/plots/[plotId]                     ← Plot Detail
+/plots/[plotId]/crop-cycles/new     ← Create Crop Cycle
+/plots/[plotId]/crop-cycles/[id]/edit ← Edit Crop Cycle
+
+/tasks                              ← Task Board (all roles, filtered)
+/tasks/new                          ← Create Task (Agronomist, Admin)
+
+/officer/day                        ← Farm Officer "My Day"
+/officer/reports                    ← Officer Field Reports
+
+/reports/daily                      ← Auto-generated Daily Reports
+
+/admin/users                        ← User Management (Super Admin)
+/admin/approvals                    ← Approval Console (Admin)
+
+/settings/biometric                 ← Face Enrollment
+/settings/passkeys                  ← WebAuthn Credentials
+```
+
+    </script>
+  
+
+    <script type="text/markdown" id="raw-designbrief">
+# Agaate Farm Management PWA — Design Brief
+
+**Version:** 1.0  
+**Date:** 2026-08-30
+
+---
+
+## 1. Design Philosophy
+
+### 1.1 Core Principles
+
+| Principle | Application |
+|---|---|
+| **Field-First** | Designed for Farm Officers working outdoors with varying connectivity and lighting conditions |
+| **Role-Optimized** | Each role gets a purpose-built interface — not one generic dashboard for all |
+| **Action-Oriented** | Every screen should answer: "What should I do next?" |
+| **Data-Dense for Admins** | Agronomists and Admins need overview + drill-down, not simplified cards |
+| **Simple for Officers** | Farm Officers get a linear, step-by-step flow with minimal decisions |
+
+### 1.2 Design Tone
+
+- **Professional** — enterprise agricultural management, not consumer social
+- **Functional** — clarity over decoration; every visual element earns its space
+- **Trustworthy** — consistent patterns, predictable interactions
+- **Efficient** — minimize taps and scrolling for field users
+
+---
+
+## 2. Brand Identity
+
+### 2.1 Color Palette
+
+| Token | Value | Usage |
+|---|---|---|
+| **Primary** | `#064e3b` (Emerald 900) | Navbar, headers, primary actions |
+| **Primary Light** | `#10b981` (Emerald 500) | Active states, success indicators |
+| **Surface** | `#f8fafc` (Slate 50) | Page background |
+| **Card** | `#ffffff` | Card backgrounds |
+| **Text Primary** | `#1e293b` (Slate 800) | Headings, body text |
+| **Text Secondary** | `#64748b` (Slate 500) | Labels, secondary info |
+| **Border** | `#e2e8f0` (Slate 200) | Card borders, dividers |
+| **Danger** | `#dc2626` (Red 600) | Errors, destructive actions |
+| **Warning** | `#f59e0b` (Amber 500) | Warnings, pending states |
+| **Info** | `#3b82f6` (Blue 500) | Informational elements |
+
+### 2.2 Typography
+
+| Element | Specification |
+|---|---|
+| **Font Family** | System font stack (no external font loading) |
+| **Base Size** | 16px (1rem) |
+| **Headings** | Bold, 1.5rem–2rem, slate-800 |
+| **Body** | Regular, 1rem, slate-700 |
+| **Labels** | Medium, 0.875rem, slate-500 |
+| **Monospace** | System monospace (for data values) |
+
+### 2.3 Spacing System
+
+| Token | Value | Usage |
+|---|---|---|
+| `xs` | 4px | Tight inline spacing |
+| `sm` | 8px | Between related elements |
+| `md` | 16px | Section padding |
+| `lg` | 24px | Card padding |
+| `xl` | 32px | Section gaps |
+| `2xl` | 48px | Page-level spacing |
+
+---
+
+## 3. Layout System
+
+### 3.1 Shell Layout
+
+```
+┌──────────────────────────────────────────┐
+│  NAVBAR (sticky top)                      │
+│  Logo  |  Nav Links  |  User Menu        │
+├──────────────────────────────────────────┤
+│                                          │
+│  MAIN CONTENT (.shell)                   │
+│  max-width: 1200px                       │
+│  padding: 24px                           │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │  Page Header                       │  │
+│  │  Title + Breadcrumbs + Actions     │  │
+│  ├────────────────────────────────────┤  │
+│  │                                    │  │
+│  │  Content Area                      │  │
+│  │  (Cards, Forms, Tables, Lists)     │  │
+│  │                                    │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+└──────────────────────────────────────────┘
+```
+
+### 3.2 Responsive Breakpoints
+
+| Breakpoint | Width | Layout |
+|---|---|---|
+| **Mobile** | < 640px | Single column, stacked cards |
+| **Tablet** | 640–1024px | 2-column grid where applicable |
+| **Desktop** | > 1024px | Full layout, side-by-side panels |
+
+### 3.3 Navigation
+
+**Navbar (all roles):**
+- Logo/app name (left)
+- Role-specific nav links (center)
+- User name + logout (right)
+- Mobile: hamburger menu with slide-out nav
+
+**Role-Specific Nav Items:**
+
+| Role | Nav Items |
+|---|---|
+| Super Admin | Dashboard, Farms, Tasks, Reports, Users, Approvals |
+| Farm Admin | Dashboard, Farms, Tasks, Reports, Approvals |
+| Agronomist | Dashboard, Tasks, Reports |
+| Farm Officer | My Day, Reports |
+
+---
+
+## 4. Component Library
+
+### 4.1 Core Components
+
+#### Cards
+- White background with subtle border (`1px solid #e2e8f0`)
+- Border radius: 12px
+- Padding: 24px
+- Subtle shadow on hover for interactive cards
+- Status indicator stripe (left border color) for state-aware cards
+
+#### Buttons
+
+| Variant | Style | Usage |
+|---|---|---|
+| **Primary** | Filled emerald-900, white text | Primary actions (Save, Submit, Create) |
+| **Secondary** | Outlined, emerald border | Secondary actions (Cancel, Back) |
+| **Danger** | Filled red-600, white text | Destructive actions (Delete, Reject) |
+| **Ghost** | No border/fill, text only | Tertiary actions (links, filters) |
+| **Icon** | Square, icon only | Compact actions (edit, delete, menu) |
+
+All buttons: `border-radius: 8px`, `padding: 10px 20px`, `font-weight: 600`
+
+#### Form Inputs
+- Full-width by default
+- Label above input (medium weight, slate-500)
+- Input: 1px border, 8px radius, 12px padding
+- Focus state: emerald-500 border + subtle glow
+- Error state: red-600 border + error message below
+- Required indicator: red asterisk after label
+
+#### Status Badges
+
+| Status | Color | Example |
+|---|---|---|
+| Active / Good | Green bg + text | Farm Active, Crop Good |
+| Setup / Planned | Blue bg + text | Farm Setup, Cycle Planned |
+| Pending | Amber bg + text | Exception Pending, Task Assigned |
+| Completed | Gray bg + text | Task Completed, Cycle Completed |
+| Error / Poor | Red bg + text | Crop Poor, Exception Rejected |
+| Blocked | Orange bg + text | Task Blocked |
+
+#### Toast Notifications
+- Position: top-right, stacked
+- Auto-dismiss after 5 seconds
+- Variants: success (green), error (red), info (blue), warning (amber)
+
+### 4.2 Data Display
+
+#### Metric Cards (Dashboard)
+```
+┌─────────────────────────┐
+│  📊 Label               │
+│  42                     │  ← Large number
+│  ▲ 12% from last week   │  ← Optional trend
+└─────────────────────────┘
+```
+
+#### Tables
+- Sticky header
+- Alternating row backgrounds (subtle)
+- Hover highlight
+- Responsive: horizontal scroll on mobile
+- Sortable column headers
+
+#### Empty States
+- Centered illustration/icon
+- Clear message: "No farms created yet"
+- CTA button: "Create Your First Farm"
+
+---
+
+## 5. Screen-by-Screen Design Specifications
+
+### 5.1 Login Page
+
+```
+┌──────────────────────────────┐
+│                              │
+│      🌾 Agaate               │
+│      Farm Management         │
+│                              │
+│  ┌────────────────────────┐  │
+│  │ Email                  │  │
+│  └────────────────────────┘  │
+│  ┌────────────────────────┐  │
+│  │ Password               │  │
+│  └────────────────────────┘  │
+│                              │
+│  [       Sign In          ]  │
+│                              │
+└──────────────────────────────┘
+```
+- Centered card on emerald gradient background
+- No registration — admin-created accounts only
+- Error messages inline below fields
+
+### 5.2 Dashboard
+
+**Layout:** Metric cards row (top) → Farm cards grid (below)
+
+- Metrics: Total Farms, Active Farms, Active Plots, Total Tasks, Delayed, Incidents
+- Farm Cards: Name, location, status badge, owner, plot count, area
+- Quick actions per farm card: View, Edit (role-dependent)
+- Search/filter bar for farms
+
+### 5.3 Farm Hub (Farm Detail Page)
+
+**Sections (tabbed or scrollable):**
+1. **Overview** — Farm details, status, location map placeholder
+2. **Plots** — Grid of plot cards with crop cycle indicators
+3. **Team** — Assigned users with roles
+4. **Activity** — Recent task activity feed
+
+**Actions:** Edit Farm, Add Plot, Manage Access, Activate Farm
+
+### 5.4 Farm Officer "My Day" Screen
+
+**Mobile-optimized, linear layout:**
+
+```
+┌──────────────────────────────┐
+│  Good Morning, Ramesh 👋      │
+│  Farm: Sunrise Agri          │
+│  Date: 30 Aug 2026           │
+├──────────────────────────────┤
+│                              │
+│  [ 📸 START DAY ]            │  ← Big, tappable button
+│                              │
+├──────────────────────────────┤
+│  TODAY'S TASKS (5)           │
+│  ┌──────────────────────┐    │
+│  │ 🟢 Fertigation       │    │
+│  │ Plot 2 - Tomato      │    │
+│  │ Priority: HIGH       │    │
+│  └──────────────────────┘    │
+│  ┌──────────────────────┐    │
+│  │ 🔵 Crop Monitoring   │    │
+│  │ Plot 1 - Watermelon  │    │
+│  └──────────────────────┘    │
+├──────────────────────────────┤
+│  CROP HEALTH UPDATE          │
+│  ┌──────────────────────┐    │
+│  │ Upload Crop Photo     │    │
+│  │ [Good] [Poor]         │    │
+│  └──────────────────────┘    │
+├──────────────────────────────┤
+│  [⚠️ REPORT INCIDENT]        │
+├──────────────────────────────┤
+│  [ 📸 END DAY ]              │
+└──────────────────────────────┘
+```
+
+### 5.5 Task Board
+
+**Layout:** Filterable table/list view
+
+- Filters: Farm, Status, Priority, Date Range, Assigned Officer
+- Columns: Title, Farm/Plot, Category, Priority, Due Date, Status, Assigned To
+- Click row → Task Detail view
+- Bulk actions for Agronomist/Admin
+
+### 5.6 Crop Cycle Creation Wizard
+
+**Multi-step form:**
+
+```
+Step 1          Step 2          Step 3          Step 4
+[Basic Info] → [Varieties] → [Infrastructure] → [Review]
+                                                  ↓
+                                              [Save]
+```
+
+Each step validates before proceeding. Progress indicator at top. Back/Next navigation.
+
+### 5.7 Approval Console
+
+**Split view:**
+- Left: List of pending approvals (exceptions + location changes)
+- Right: Detail view with evidence (location, reason, distance)
+- Actions: Approve / Reject with visual confirmation
+
+---
+
+## 6. Interaction Patterns
+
+### 6.1 Loading States
+- Skeleton screens for page loads (not spinners)
+- Button loading: text changes to "Saving..." + disabled state
+- Inline loading for async data fetches
+
+### 6.2 Confirmation Dialogs
+- Used for: destructive actions, status changes, approvals
+- Modal overlay with clear action buttons
+- Never use browser `confirm()` dialogs
+
+### 6.3 Form Patterns
+- Inline validation on blur
+- Server validation on submit
+- Disable submit button until required fields filled
+- Auto-save not implemented (explicit save only)
+
+### 6.4 Photo Upload
+- Camera capture (preferred on mobile) or file selection
+- Preview before upload
+- Progress indicator during upload
+- Presigned URL → direct to S3 (no server relay)
+
+---
+
+## 7. PWA Considerations
+
+### 7.1 Manifest
+- App name: "Agaate Farm Operations"
+- Theme color: `#064e3b`
+- Display: standalone
+- Installable on Android/iOS home screen
+
+### 7.2 Mobile Optimizations
+- Touch targets: minimum 44×44px
+- No hover-dependent interactions
+- Large, thumb-friendly action buttons
+- Bottom-sheet modals instead of dropdowns on mobile
+
+### 7.3 Offline Behavior
+- Service worker registered for basic asset caching
+- Graceful error messages when offline: "You're offline. Please reconnect."
+- No offline data queue (MVP limitation)
+
+---
+
+## 8. Accessibility
+
+| Requirement | Implementation |
+|---|---|
+| Color contrast | WCAG AA minimum (4.5:1 for text) |
+| Keyboard navigation | All interactive elements focusable |
+| Screen readers | Semantic HTML, ARIA labels where needed |
+| Focus indicators | Visible focus rings on keyboard navigation |
+| Form labels | All inputs have associated `<label>` elements |
+| Error messages | Associated with inputs via `aria-describedby` |
+
+---
+
+## 9. Icon System
+
+Custom SVG icons defined in `icons.tsx` — no external icon library dependency.
+
+**Icon Categories:**
+- Navigation (home, farms, tasks, reports, users)
+- Actions (add, edit, delete, save, upload, camera)
+- Status (check, warning, error, info, clock)
+- Domain (plant, sun, water, weather, location)
+
+All icons: 24×24 default size, `currentColor` fill, configurable via props.
+
+    </script>
+  
+
+    <script type="text/markdown" id="raw-datamodel">
+# Agaate Farm Management PWA — Data Model Reference
+
+**Version:** 1.0  
+**Date:** 2026-08-30  
+**ORM:** Prisma 6.8.2  
+**Database:** PostgreSQL 16  
+**Schema:** [prisma/schema.prisma](file:///c:/Users/krish/Downloads/agaateapp/prisma/schema.prisma)
+
+---
+
+## 1. Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    User ||--o{ FarmAccess : "has access"
+    User ||--o{ Task : "assigned to"
+    User ||--o{ Task : "created by"
+    User ||--o{ AgronomyPlan : "created by"
+    User ||--o{ TaskExecution : "executes"
+    User ||--o{ Attendance : "records"
+    User ||--o{ CropMonitoring : "performs"
+    User ||--o{ Incident : "reports"
+    User ||--o{ IncidentFollowUp : "authors"
+    User ||--o{ AuditLog : "triggers"
+    User ||--o{ PasskeyCredential : "registers"
+    User ||--o{ WebAuthnChallenge : "has"
+    User ||--o{ LivenessChallenge : "has"
+    User ||--o| FaceEnrollment : "enrolls"
+
+    Farm ||--o{ FarmAccess : "grants"
+    Farm ||--o{ Plot : "contains"
+    Farm ||--o{ Task : "has"
+    Farm ||--o{ Attendance : "tracks"
+    Farm ||--o{ Incident : "has"
+    Farm ||--o{ CropMonitoring : "has"
+    Farm ||--o{ LocationChangeRequest : "has"
+    Farm ||--o{ AgronomyPlan : "has"
+
+    Plot ||--o{ IrrigationConfiguration : "configured with"
+    Plot ||--o{ CropCycle : "grows"
+    Plot ||--o{ Task : "has"
+    Plot ||--o{ CropMonitoring : "monitored"
+    Plot ||--o{ Incident : "has"
+
+    CropCycle ||--o{ CropVariety : "contains"
+    CropCycle ||--o{ Milestone : "has"
+    CropCycle ||--o{ Task : "has"
+    CropCycle ||--o{ CropMonitoring : "monitored"
+    CropCycle ||--o{ Incident : "has"
+
+    AgronomyPlan ||--o{ Task : "generates"
+
+    Task ||--o| TaskExecution : "executed via"
+
+    TaskExecution ||--o{ MaterialUsage : "uses"
+    TaskExecution ||--o{ LabourUsage : "tracks"
+    TaskExecution ||--o{ MediaAsset : "has"
+
+    CropMonitoring ||--o{ MediaAsset : "has"
+
+    Incident ||--o{ MediaAsset : "has"
+    Incident ||--o{ IncidentFollowUp : "has"
+
+    Attendance ||--o| AttendanceException : "may have"
+```
+
+---
+
+## 2. Enumerations
+
+### 2.1 User & Access
+
+```sql
+enum Role {
+  SUPER_ADMIN      -- Unrestricted platform access
+  FARM_ADMIN       -- Manages assigned farms
+  AGRONOMIST       -- Central agronomy team, reads all farms
+  FARM_OFFICER     -- Field execution role
+}
+```
+
+### 2.2 Farm & Plot
+
+```sql
+enum FarmStatus {
+  SETUP            -- Initial creation, plots/crops not configured
+  ACTIVE           -- Operational, officers assigned, tasks flowing
+  INACTIVE         -- Temporarily paused
+  COMPLETED        -- Operations concluded
+}
+
+enum PlotStatus {
+  SETUP            -- Created but not yet configured
+  ACTIVE           -- In use with active crop cycles
+  INACTIVE         -- Temporarily unused
+  ARCHIVED         -- Soft-deleted, hidden from active views
+}
+```
+
+### 2.3 Crop & Agronomy
+
+```sql
+enum EstablishmentType {
+  NURSERY_TRANSPLANTATION    -- Seedlings transplanted from nursery
+  DIRECT_SOWING              -- Seeds sown directly in field
+}
+
+enum CropCycleStatus {
+  PLANNED          -- Configured, not yet started
+  ACTIVE           -- Currently growing
+  COMPLETED        -- Harvest completed
+  CANCELLED        -- Cancelled before completion
+}
+
+enum MilestoneStatus {
+  PENDING          -- Not yet started
+  IN_PROGRESS      -- Work underway
+  COMPLETED        -- Achieved
+  SKIPPED          -- Intentionally bypassed
+}
+```
+
+### 2.4 Task Workflow
+
+```sql
+enum TaskOrigin {
+  AGRONOMIST           -- Created by agronomist in 7-day plan
+  SYSTEM               -- Auto-generated from milestones/schedules
+  DAILY_MONITORING     -- Daily crop monitoring tasks
+}
+
+enum TaskStatus {
+  DRAFT            -- Created but not yet assigned
+  ASSIGNED         -- Assigned to specific officer
+  AVAILABLE        -- Available for any officer to pick up
+  IN_PROGRESS      -- Officer has started work
+  COMPLETED        -- Work finished, evidence captured
+  CANCELLED        -- Cancelled before completion
+  BLOCKED          -- Cannot proceed (dependency/issue)
+}
+```
+
+**Task State Machine:**
+
+```
+DRAFT ──→ ASSIGNED ──→ IN_PROGRESS ──→ COMPLETED
+  │          │               │
+  ├──→ AVAILABLE ──→ IN_PROGRESS
+  │                        │
+  └──→ CANCELLED    BLOCKED ──→ IN_PROGRESS
+                      │
+                      └──→ CANCELLED
+```
+
+### 2.5 Attendance & Approvals
+
+```sql
+enum AttendanceStatus {
+  OPEN                   -- Day started, not yet ended
+  COMPLETED              -- Day ended normally
+  EXCEPTION_PENDING      -- Location mismatch, awaiting approval
+  EXCEPTION_APPROVED     -- Exception approved by admin
+  EXCEPTION_REJECTED     -- Exception rejected by admin
+}
+
+enum ApprovalStatus {
+  PENDING          -- Awaiting review
+  APPROVED         -- Approved by authorized user
+  REJECTED         -- Rejected by authorized user
+}
+```
+
+### 2.6 Monitoring & Incidents
+
+```sql
+enum HealthStatus {
+  GOOD             -- Crop is healthy
+  POOR             -- Crop showing problems
+}
+
+enum IncidentLevel {
+  FARM             -- Farm-wide issue (motor, water, electricity)
+  PLOT             -- Plot-specific issue
+  CROP             -- Crop-specific issue (disease, pest)
+}
+
+enum IncidentStatus {
+  OPEN             -- Newly reported
+  ACKNOWLEDGED     -- Agronomist/Admin has seen it
+  RESOLVED         -- Issue addressed
+  CLOSED           -- Fully resolved and closed
+}
+
+enum MediaKind {
+  SELFIE               -- Attendance selfie
+  CROP_PHOTO           -- Daily crop monitoring photo
+  INCIDENT_PHOTO       -- Incident evidence photo
+  ACTIVITY_EVIDENCE    -- Task completion evidence
+}
+```
+
+---
+
+## 3. Model Specifications
+
+### 3.1 User
+
+```prisma
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            Role
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  farmAccess          FarmAccess[]
+  assignedTasks       Task[]              @relation("AssignedOfficer")
+  createdTasks        Task[]              @relation("TaskCreator")
+  createdPlans        AgronomyPlan[]      @relation("PlanCreator")
+  executions          TaskExecution[]
+  attendance          Attendance[]
+  monitoring          CropMonitoring[]
+  reportedIncidents   Incident[]          @relation("IncidentReporter")
+  incidentFollowUps   IncidentFollowUp[]  @relation("FollowUpAuthor")
+  auditLogs           AuditLog[]          @relation("AuditActor")
+  passkeys            PasskeyCredential[]
+  faceEnrollment      FaceEnrollment?
+  webauthnChallenges  WebAuthnChallenge[]
+  livenessChallenges  LivenessChallenge[]
+}
+```
+
+**Notes:**
+- `email` is the unique login identifier
+- `passwordHash` uses bcrypt with 12 salt rounds
+- `active` flag enables soft-disable without deletion
+- `role` determines RBAC permissions globally
+
+---
+
+### 3.2 Farm
+
+```prisma
+model Farm {
+  id                    String      @id @default(cuid())
+  name                  String
+  ownerName             String
+  location              String
+  address               String?
+  latitude              Decimal     @db.Decimal(10, 7)
+  longitude             Decimal     @db.Decimal(10, 7)
+  totalArea             Decimal     @db.Decimal(12, 2)
+  cultivableArea        Decimal     @db.Decimal(12, 2)
+  waterSource           String
+  status                FarmStatus  @default(SETUP)
+  geofenceRadiusMeters  Int         @default(500)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+```
+
+**Notes:**
+- `geofenceRadiusMeters` used for attendance location matching (Haversine formula)
+- `totalArea` and `cultivableArea` in acres
+- Coordinates stored with 7 decimal places (~1cm precision)
+
+---
+
+### 3.3 FarmAccess
+
+```prisma
+model FarmAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  farmId    String
+  canManage Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, farmId])
+  @@index([farmId])
+}
+```
+
+**Notes:**
+- M:N junction table between User and Farm
+- `canManage = true` for Farm Admins (write access)
+- `canManage = false` for Farm Officers (execute access)
+- SUPER_ADMIN and AGRONOMIST bypass this table entirely (platform-wide access)
+
+---
+
+### 3.4 Plot
+
+```prisma
+model Plot {
+  id        String      @id @default(cuid())
+  farmId    String
+  name      String
+  area      Decimal     @db.Decimal(12, 2)
+  latitude  Decimal     @db.Decimal(10, 7)
+  longitude Decimal     @db.Decimal(10, 7)
+  soilType  String?
+  status    PlotStatus  @default(SETUP)
+  deletedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([farmId, name])
+  @@index([farmId, status])
+}
+```
+
+**Notes:**
+- `deletedAt` enables soft deletion (ARCHIVED status)
+- Plot names must be unique within a farm
+- Area in acres, used for infrastructure calculations
+
+---
+
+### 3.5 CropCycle
+
+```prisma
+model CropCycle {
+  id                       String            @id @default(cuid())
+  plotId                   String
+  cropName                 String
+  startDate                DateTime          @db.Date
+  expectedFirstHarvestDate DateTime?         @db.Date
+  establishmentType        EstablishmentType
+  status                   CropCycleStatus   @default(PLANNED)
+
+  // Infrastructure - Bed Preparation
+  bedPreparationEnabled    Boolean           @default(false)
+  bedWidthCm               Decimal?          @db.Decimal(8, 2)
+  bedCenterDistanceCm      Decimal?          @db.Decimal(8, 2)
+  expectedBedsPerAcre      Decimal?          @db.Decimal(12, 2)
+  expectedTotalBeds        Decimal?          @db.Decimal(12, 2)
+  actualBedsCreated        Decimal?          @db.Decimal(12, 2)
+
+  // Infrastructure - Mulching
+  mulchEnabled             Boolean           @default(false)
+  mulchHolePattern         String?
+  plantDistanceCm          Decimal?          @db.Decimal(8, 2)
+
+  // Infrastructure - Plant Population
+  expectedPlantsPerAcre    Decimal?          @db.Decimal(12, 2)
+  expectedPlants           Decimal?          @db.Decimal(12, 2)
+  actualPlants             Decimal?          @db.Decimal(12, 2)
+
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  @@index([plotId, status])
+}
+```
+
+**Auto-Calculations (business.ts):**
+- `expectedTotalBeds = expectedBedsPerAcre × plot.area`
+- `expectedPlants = expectedPlantsPerAcre × plot.area`
+- `variance = actual - expected` (with percentage)
+
+---
+
+### 3.6 AgronomyPlan
+
+```prisma
+model AgronomyPlan {
+  id                    String    @id @default(cuid())
+  farmId                String
+  planDate              DateTime  @db.Date
+  notes                 String?
+
+  // Manual weather data (alternative to API fetch)
+  manualTemperature     Decimal?  @db.Decimal(5, 2)
+  manualHumidity        Decimal?  @db.Decimal(5, 2)
+  manualWindSpeed       Decimal?  @db.Decimal(5, 2)
+  manualRainForecast    Decimal?  @db.Decimal(5, 2)
+  manualWeatherRemarks  String?
+
+  createdById           String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt @default(now())
+
+  @@unique([farmId, planDate])
+}
+```
+
+**Notes:**
+- One plan per farm per day (upsert pattern)
+- Weather data can come from API (Open-Meteo) or manual entry
+- Tasks are linked to plans via `Task.planId`
+
+---
+
+### 3.7 Task
+
+```prisma
+model Task {
+  id                String      @id @default(cuid())
+  farmId            String
+  plotId            String?
+  cropCycleId       String?
+  milestoneId       String?
+  planId            String?
+  origin            TaskOrigin
+  category          String
+  title             String
+  description       String
+  instructions      String?
+  priority          String      @default("MEDIUM")
+  dueDate           DateTime    @db.Date
+  status            TaskStatus  @default(DRAFT)
+  assignedOfficerId String?
+  createdById       String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([assignedOfficerId, dueDate, status])
+  @@index([farmId, dueDate])
+}
+```
+
+**Notes:**
+- `origin` tracks how the task was created (Agronomist, System, or Monitoring)
+- `category` examples: "FERTILIZATION", "CROP_PROTECTION", "CULTURAL_PRACTICES"
+- `priority` values: "LOW", "MEDIUM", "HIGH", "CRITICAL"
+- Status transitions enforced by `canTransitionTask()` in business.ts
+
+---
+
+### 3.8 TaskExecution
+
+```prisma
+model TaskExecution {
+  id          String      @id @default(cuid())
+  taskId      String      @unique
+  officerId   String
+  status      TaskStatus
+  startedAt   DateTime?
+  completedAt DateTime?
+  remarks     String?
+}
+```
+
+**Notes:**
+- One execution per task (1:1 via `@unique taskId`)
+- Links to `MaterialUsage[]`, `LabourUsage[]`, `MediaAsset[]`
+
+---
+
+### 3.9 Attendance
+
+```prisma
+model Attendance {
+  id                    String            @id @default(cuid())
+  userId                String
+  farmId                String
+  attendanceDate        DateTime          @db.Date
+  status                AttendanceStatus  @default(OPEN)
+  startAt               DateTime?
+  endAt                 DateTime?
+  startLatitude         Decimal?          @db.Decimal(10, 7)
+  startLongitude        Decimal?          @db.Decimal(10, 7)
+  endLatitude           Decimal?          @db.Decimal(10, 7)
+  endLongitude          Decimal?          @db.Decimal(10, 7)
+  startSelfieKey        String?
+  endSelfieKey          String?
+  exceptionReason       String?
+
+  // Biometric verification flags
+  webauthnVerified      Boolean           @default(false)
+  webauthnCredentialId  String?
+  faceVerified          Boolean           @default(false)
+  faceDistance           Decimal?          @db.Decimal(6, 3)
+  faceSimilarityPercent Int?
+  faceModelId           String?
+  faceThresholdVersion  String?
+  livenessVerified      Boolean           @default(false)
+  livenessChallengeId   String?
+
+  @@unique([userId, farmId, attendanceDate])
+}
+```
+
+**Notes:**
+- One attendance record per user per farm per day
+- Biometric fields track which verification methods were used
+- `faceDistance` is cosine distance, `faceSimilarityPercent` is human-readable
+
+---
+
+### 3.10 Biometric Models
+
+```prisma
+model FaceEnrollment {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  modelId             String              -- e.g., "face-api-vladmandic"
+  modelVersion        String              -- e.g., "0.2.0"
+  thresholdVersion    String?             -- threshold calibration version
+  encryptedEmbedding  String              -- AES-256-GCM encrypted
+  iv                  String              -- Initialization vector
+  authTag             String              -- GCM auth tag
+  status              String    @default("ACTIVE")
+  consentGivenAt      DateTime
+  consentIp           String?
+  enrollmentCount     Int
+  qualityScore        Decimal?  @db.Decimal(5, 2)
+}
+
+model PasskeyCredential {
+  id            String    @id @default(cuid())
+  userId        String
+  credentialId  String    @unique
+  publicKey     String
+  counter       BigInt    @default(0)
+  transports    String?
+  deviceType    String?
+  backedUp      Boolean   @default(false)
+  name          String?
+  revokedAt     DateTime?
+
+  @@index([userId])
+}
+
+model LivenessChallenge {
+  id          String    @id @default(cuid())
+  userId      String
+  challenge   String    @unique
+  instruction String               -- e.g., "smile", "blink", "turn_left"
+  expiresAt   DateTime
+  used        Boolean   @default(false)
+
+  @@index([userId, used])
+  @@index([expiresAt])
+}
+```
+
+---
+
+## 4. Key Relationships Summary
+
+```
+User ←M:N→ Farm          via FarmAccess (canManage flag)
+Farm ←1:N→ Plot
+Plot ←1:N→ CropCycle
+Plot ←1:N→ IrrigationConfiguration
+CropCycle ←1:N→ CropVariety
+CropCycle ←1:N→ Milestone
+Farm ←1:N→ AgronomyPlan
+AgronomyPlan ←1:N→ Task
+Task ←1:1→ TaskExecution
+TaskExecution ←1:N→ MaterialUsage
+TaskExecution ←1:N→ LabourUsage
+TaskExecution ←1:N→ MediaAsset
+CropMonitoring ←1:N→ MediaAsset
+Incident ←1:N→ MediaAsset
+Incident ←1:N→ IncidentFollowUp
+Attendance ←1:1→ AttendanceException
+User ←1:1→ FaceEnrollment
+User ←1:N→ PasskeyCredential
+```
+
+---
+
+## 5. Business Rules Encoded in Schema
+
+| Rule | Implementation |
+|---|---|
+| One attendance per user per farm per day | `@@unique([userId, farmId, attendanceDate])` |
+| Unique plot names within a farm | `@@unique([farmId, name])` |
+| One agronomy plan per farm per day | `@@unique([farmId, planDate])` |
+| One execution per task | `taskId String @unique` on TaskExecution |
+| No duplicate farm access | `@@unique([userId, farmId])` on FarmAccess |
+| No duplicate irrigation type per plot | `@@unique([plotId, type])` |
+| No duplicate variety name per cycle | `@@unique([cropCycleId, name])` |
+| Soft delete for plots | `deletedAt DateTime?` field |
+| Passkey revocation | `revokedAt DateTime?` field |
+| Cascading deletes | `onDelete: Cascade` on child references |
+
+---
+
+## 6. Seed Data Structure
+
+The seed script (`prisma/seed.ts`) creates:
+
+| Entity | Count | Details |
+|---|---|---|
+| Users | 4+ | Super Admin, Farm Admin, Agronomist, Farm Officer |
+| Farms | 2+ | With complete details and coordinates |
+| Farm Access | 4+ | Role-appropriate access grants |
+| Plots | 4+ | With irrigation configurations |
+| Crop Cycles | 2+ | With varieties and milestones |
+| Tasks | Multiple | From different origins |
+| Attendance | Sample | With biometric data |
+| Incidents | Sample | Farm and crop level |
+
+**Default Credentials:**
+- Email: `admin@agaate.local`
+- Password: `LocalAdminPassword-ChangeMe-123` (or `INITIAL_ADMIN_PASSWORD` env var)
+
+    </script>
+  
+
+    <script type="text/markdown" id="raw-engplan">
+# Agaate Farm Management PWA — Engineering Plan
+
+**Version:** 1.0  
+**Date:** 2026-08-30  
+**Status:** MVP Implementation
+
+---
+
+## 1. Current Implementation Status
+
+### 1.1 What's Built
+
+| Module | Status | Components |
+|---|---|---|
+| **Authentication** | ✅ Complete | Login/logout, JWT sessions, role-based redirects |
+| **User Management** | ✅ Complete | CRUD users, role assignment, activate/deactivate |
+| **Farm Management** | ✅ Complete | Create, edit, view, activate farms |
+| **Farm Access Control** | ✅ Complete | Assign users to farms, canManage flag |
+| **Plot Management** | ✅ Complete | Create, edit, soft-delete, GPS capture |
+| **Irrigation Config** | ✅ Complete | Multiple irrigation types per plot |
+| **Crop Cycles** | ✅ Complete | Full wizard: crop, varieties, infrastructure, milestones |
+| **Milestone Planning** | ✅ Complete | Auto-generated from crop config, status tracking |
+| **Task Management** | ✅ Complete | Create, assign, status transitions, board view |
+| **Task Execution** | ✅ Complete | Materials, labour, photos, remarks |
+| **Agronomy Plans** | ✅ Complete | 7-day plans, manual weather |
+| **Attendance** | ✅ Complete | Start/end day, selfie, GPS, biometric verification |
+| **Attendance Exceptions** | ✅ Complete | Create, approve/reject |
+| **Location Change Requests** | ✅ Complete | Create, approve/reject |
+| **Crop Monitoring** | ✅ Complete | Good/Poor with photos, stage, impact |
+| **Incident Reporting** | ✅ Complete | Farm/Plot/Crop level, follow-ups |
+| **Daily Reports** | ✅ Complete | Auto-generated from captured data |
+| **Media Uploads** | ✅ Complete | Presigned URLs, S3/MinIO storage |
+| **Weather** | ✅ Complete | Open-Meteo API + manual entry |
+| **Dashboard** | ✅ Complete | Role-aware metrics, farm overview |
+| **Biometric: Face** | ✅ Complete | TF.js enrollment, encrypted storage, verification |
+| **Biometric: Liveness** | ✅ Complete | Challenge-based anti-spoofing |
+| **Biometric: WebAuthn** | ✅ Complete | Passkey registration, auth, revocation |
+| **Audit Logging** | ✅ Complete | Entity change tracking |
+| **PWA** | ✅ Complete | Manifest, service worker, installable |
+| **Approval Console** | ✅ Complete | Admin UI for exceptions and location changes |
+
+### 1.2 Tech Debt & Known Limitations
+
+| Item | Severity | Description |
+|---|---|---|
+| Rate limiting is in-memory | Medium | Resets on server restart; need Redis for production |
+| No offline data queue | Medium | PWA caches assets but can't queue mutations offline |
+| Face match threshold not empirically validated | High | Current 0.6 threshold needs real-world calibration |
+| No email/push notifications | Medium | Users must open app to see new tasks/approvals |
+| Single-server deployment | Medium | No horizontal scaling strategy yet |
+| Manual weather entry UX | Low | Could auto-fetch on plan creation |
+| No data export | Low | No CSV/Excel export for reports |
+| No pagination on all list endpoints | Low | Some endpoints return all records |
+
+---
+
+## 2. Architecture Inventory
+
+### 2.1 Page Inventory (17 pages)
+
+| Route | Role(s) | Purpose |
+|---|---|---|
+| `/` | All | Redirect to dashboard/login |
+| `/login` | Unauthenticated | Login form |
+| `/dashboard` | All authenticated | Role-aware metrics + farm overview |
+| `/farms/new` | SA, FA | Farm creation form |
+| `/farms/[farmId]` | SA, FA, AG | Farm hub/detail page |
+| `/plots/[plotId]` | SA, FA, AG | Plot detail page |
+| `/plots/[plotId]/crop-cycles/new` | SA, FA | Crop cycle creation wizard |
+| `/plots/[plotId]/crop-cycles/[id]/edit` | SA, FA | Edit crop cycle |
+| `/tasks` | All | Task board (filterable) |
+| `/tasks/new` | SA, FA, AG | Task creation form |
+| `/officer/day` | FO | "My Day" daily execution screen |
+| `/officer/reports` | FO | Field reports |
+| `/reports/daily` | SA, FA, AG | Auto-generated daily reports |
+| `/admin/users` | SA | User management console |
+| `/admin/approvals` | SA, FA | Approval console |
+| `/settings/biometric` | FO | Face enrollment |
+| `/settings/passkeys` | All | WebAuthn credential management |
+
+### 2.2 API Inventory (44 endpoints)
+
+| Area | Count | Key Endpoints |
+|---|---|---|
+| Auth & Security | 12 | login, logout, webauthn (5), biometric (3), liveness (2) |
+| Farm Management | 7 | farms CRUD, activate, access, plots |
+| Plot & Crops | 4 | plot CRUD, crop cycles CRUD |
+| Tasks | 3 | tasks CRUD, complete |
+| Attendance | 5 | attendance, exceptions, location changes |
+| Monitoring | 2 | crop monitoring CRUD |
+| Incidents | 3 | incidents CRUD, follow-ups |
+| Media | 3 | presign, complete, download URL |
+| Reporting | 1 | daily report |
+| Dashboard | 1 | aggregate metrics |
+| Users | 2 | users CRUD |
+| Weather | 2 | auto fetch, manual entry |
+| Audit | 1 | audit log query |
+
+### 2.3 Component Inventory (34+ components)
+
+| Category | Components |
+|---|---|
+| **Layout** | Navbar, Breadcrumbs, ServiceWorker |
+| **Forms** | FarmForm, FarmEditForm, PlotForm, PlotEditForm, CropCycleForm, CropCycleEditForm, TaskForm, TaskCompletionForm, AttendanceForm, ManualWeatherForm, LocationRequestForm, LoginForm |
+| **Displays** | DashboardClient, FarmHubClient, TaskBoard, OfficerDay, DailyReport, FieldReports, WeatherCard, EvidenceGallery |
+| **Admin** | AdminConsole, ApprovalsConsole, FarmAccessManager, FarmStatusControl, ActivateFarmButton, IncidentStatusControl, IncidentFollowup |
+| **Biometric** | BiometricFaceScanner, LivenessChallenge |
+| **UI Primitives** | Icons, Toast, (in ui/ folder) |
+| **Auth** | LogoutButton, (in webauthn/ folder) |
+
+---
+
+## 3. Development Workflow
+
+### 3.1 Local Setup
+
+```bash
+# 1. Start infrastructure
+docker compose up -d
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with appropriate values
+
+# 4. Setup database
+npx prisma generate
+npx prisma migrate deploy
+npm run db:seed
+
+# 5. Download face recognition models
+npm run fetch:face-models
+
+# 6. Start dev server
+npm run dev
+```
+
+### 3.2 Testing
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Watch mode
+npm run test:watch
+```
+
+### 3.3 Database Changes
+
+```bash
+# After schema changes
+npx prisma migrate dev --name <migration_name>
+npx prisma generate
+
+# Deploy migrations (production)
+npx prisma migrate deploy
+```
+
+---
+
+## 4. Deployment Strategy (Production Readiness)
+
+### 4.1 Pre-Production Checklist
+
+| Item | Status | Action Required |
+|---|---|---|
+| Environment variables | ⚠️ | Generate production secrets, configure real S3 |
+| Face match threshold | ⚠️ | Calibrate with real user data |
+| Database migrations | ✅ | Prisma migrate deploy |
+| Rate limiting | ⚠️ | Switch to Redis-backed rate limiting |
+| HTTPS | ⚠️ | Configure SSL certificate |
+| WebAuthn RP ID | ⚠️ | Set to production domain |
+| Session secure flag | ⚠️ | Set `APP_SESSION_SECURE=true` |
+| Error monitoring | ❌ | Add Sentry or equivalent |
+| Log aggregation | ❌ | Set up structured logging + aggregation |
+| Database backups | ❌ | Configure automated PostgreSQL backups |
+
+### 4.2 Recommended Infrastructure
+
+```
+┌───────────────┐     ┌──────────────┐     ┌──────────┐
+│  Cloudflare   │────▶│  Next.js     │────▶│PostgreSQL│
+│  CDN + SSL    │     │  App Server  │     │  (RDS)   │
+└───────────────┘     │  (Vercel/    │     └──────────┘
+                      │   EC2/ECS)   │
+                      └──────┬───────┘     ┌──────────┐
+                             │────────────▶│   S3     │
+                             │             │ (Bucket) │
+                             │             └──────────┘
+                             │
+                             │             ┌──────────┐
+                             └────────────▶│  Redis   │
+                                           │ (Rate    │
+                                           │  Limit)  │
+                                           └──────────┘
+```
+
+### 4.3 Environment-Specific Config
+
+| Variable | Development | Production |
+|---|---|---|
+| `DATABASE_URL` | `localhost:5432` | RDS endpoint |
+| `S3_ENDPOINT` | `localhost:9000` (MinIO) | `s3.amazonaws.com` |
+| `S3_FORCE_PATH_STYLE` | `true` | `false` |
+| `APP_SESSION_SECURE` | (not set) | `true` |
+| `WEBAUTHN_RP_ID` | `localhost` | `app.agaate.com` |
+| `WEBAUTHN_ORIGIN` | `http://localhost:3000` | `https://app.agaate.com` |
+| `REQUIRE_BIOMETRIC_FOR_ATTENDANCE` | `false` | `true` |
+
+---
+
+## 5. Future Roadmap
+
+### Phase 2: Data Intelligence
+
+| Feature | Description | Effort |
+|---|---|---|
+| Report Export | CSV/Excel export for all reports | S |
+| Push Notifications | Task assignments, approval requests | M |
+| Email Alerts | Daily digest, incident notifications | M |
+| Analytics Dashboard | Charts: labour trends, crop health, incident patterns | L |
+| Offline Queue | Queue mutations offline, sync when online | L |
+
+### Phase 3: AI & Automation
+
+| Feature | Description | Effort |
+|---|---|---|
+| Crop Disease Detection | ML model on crop photos for auto-diagnosis | XL |
+| Smart Scheduling | AI-assisted task scheduling based on weather + crop stage | L |
+| Yield Prediction | Historical data-based yield forecasting | L |
+| Multi-Language | Hindi, Marathi, Telugu support | M |
+| Native Mobile Apps | React Native wrappers for iOS/Android | XL |
+
+### Phase 4: Scale & Enterprise
+
+| Feature | Description | Effort |
+|---|---|---|
+| Multi-Tenant | Separate Agaate instances per enterprise client | XL |
+| Financial Module | Cost tracking, P&L per farm/crop | L |
+| Market Integration | Market price feeds, harvest-to-market tracking | L |
+| IoT Sensors | Soil moisture, weather station data ingestion | XL |
+| GIS Integration | Map-based plot visualization and management | L |
+
+---
+
+## 6. Code Quality Standards
+
+### 6.1 Conventions
+
+| Area | Convention |
+|---|---|
+| File naming | `kebab-case.tsx` for components, `camelCase.ts` for libs |
+| Component naming | PascalCase, named exports |
+| API routes | REST conventions, centralized error handling via `apiError()` |
+| Database | Prisma schema as source of truth, no raw SQL |
+| Validation | Zod schemas for all API input |
+| Auth | `requireSession()` / `requireActiveUser()` at route entry |
+| Access control | `requireFarmAccess()` / `requireRole()` after auth |
+| Error boundaries | `error.tsx` at app root |
+
+### 6.2 Security Practices
+
+| Practice | Implementation |
+|---|---|
+| No secrets in code | All secrets via environment variables |
+| Input validation | Zod on every API endpoint |
+| SQL injection | Prisma parameterized queries (ORM) |
+| XSS | React auto-escaping + no `dangerouslySetInnerHTML` |
+| CSRF | SameSite=Lax cookies |
+| Auth bypass | `server-only` import guard on auth modules |
+| Audit trail | AuditLog model for all mutations |
+| Biometric data | AES-256-GCM encrypted, never stored raw |
+
+### 6.3 Testing Standards
+
+| Level | Coverage Expectation | Tools |
+|---|---|---|
+| Unit | Business logic, domain rules | Vitest |
+| Integration | API routes, auth flows | Vitest + test context |
+| Security | Auth bypass, role escalation | Vitest |
+| E2E | Critical user journeys | Playwright |
+
+---
+
+## 7. Monitoring & Observability (Recommended)
+
+| Layer | Tool | Purpose |
+|---|---|---|
+| Error Tracking | Sentry | Runtime errors, unhandled exceptions |
+| APM | New Relic / Datadog | Request latency, DB query performance |
+| Logging | Structured JSON logs | Searchable audit trail |
+| Uptime | UptimeRobot / Pingdom | Availability monitoring |
+| Database | pg_stat_statements | Slow query identification |
+| Storage | S3 metrics | Upload/download patterns |
+
+    </script>
+  
+
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
+      securityLevel: 'loose',
+      flowchart: { curve: 'basis', htmlLabels: true }
+    });
+
+    // Configure Marked
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      },
+      breaks: true,
+      gfm: true
+    });
+
+    let activeDocId = "prd";
+
+    function renderDoc(docId) {
+      activeDocId = docId;
+      const rawEl = document.getElementById('raw-' + docId);
+      if (!rawEl) return;
+
+      const rawMarkdown = rawEl.textContent.trim();
+      const contentEl = document.getElementById('docContent');
+      
+      // Parse markdown to HTML
+      let html = marked.parse(rawMarkdown);
+      
+      // Convert mermaid code blocks to pre.mermaid elements for Mermaid rendering
+      html = html.replace(/<pre><code class="language-mermaid">([sS]*?)</code></pre>/g, function(match, code) {
+        // Decode HTML entities
+        const decoded = code
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"');
+        return '<div class="mermaid">' + decoded + '</div>';
+      });
+
+      contentEl.innerHTML = html;
+
+      // Add Copy Code Buttons to all pre blocks
+      document.querySelectorAll('#docContent pre').forEach(pre => {
+        if (pre.classList.contains('mermaid')) return;
+        const btn = document.createElement('button');
+        btn.className = 'copy-code-btn';
+        btn.textContent = 'Copy';
+        btn.onclick = () => {
+          const code = pre.querySelector('code')?.innerText || pre.innerText;
+          navigator.clipboard.writeText(code);
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy', 2000);
+        };
+        pre.appendChild(btn);
+      });
+
+      // Render Mermaid Diagrams
+      try {
+        mermaid.run({
+          nodes: document.querySelectorAll('.mermaid')
+        });
+      } catch (e) {
+        console.error('Mermaid render error:', e);
+      }
+
+      // Generate Table of Contents
+      generateToc();
+
+      // Scroll to top
+      document.getElementById('articleWrapper').scrollTop = 0;
+    }
+
+    function generateToc() {
+      const tocList = document.getElementById('tocList');
+      tocList.innerHTML = '';
+      
+      const headings = document.querySelectorAll('#docContent h2, #docContent h3');
+      headings.forEach((heading, idx) => {
+        const id = 'heading-' + idx;
+        heading.id = id;
+
+        const li = document.createElement('li');
+        li.className = 'toc-item';
+        
+        const a = document.createElement('a');
+        a.href = '#' + id;
+        a.className = 'toc-link' + (heading.tagName === 'H3' ? ' indent-3' : '');
+        a.textContent = heading.innerText.replace(/^[0-9.]+s*/, '');
+        a.onclick = (e) => {
+          e.preventDefault();
+          heading.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+    }
+
+    function switchDoc(docId) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const activeNav = document.getElementById('nav-' + docId);
+      if (activeNav) activeNav.classList.add('active');
+
+      const docObj = [{"id":"prd","title":"01. Product Requirements (PRD)"},{"id":"tdd","title":"02. Technical Design (TDD)"},{"id":"userflows","title":"03. User Flows & Diagrams"},{"id":"designbrief","title":"04. Design Brief & UI Spec"},{"id":"datamodel","title":"05. Data Model Reference"},{"id":"engplan","title":"06. Engineering & Ops Plan"}];
+      const found = docObj.find(d => d.id === docId);
+      if (found) {
+        document.getElementById('currentDocBreadcrumb').textContent = found.title;
+      }
+
+      renderDoc(docId);
+      
+      // Close mobile sidebar if open
+      document.getElementById('sidebar').classList.remove('open');
+    }
+
+    function filterDocs(query) {
+      const q = query.toLowerCase().trim();
+      document.querySelectorAll('.nav-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(q)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('themeLabel').textContent = isDark ? 'Light' : 'Dark';
+      
+      mermaid.initialize({
+        theme: isDark ? 'dark' : 'default'
+      });
+      renderDoc(activeDocId);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // Initial render
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDoc(activeDocId);
+    });
+  </script>
+</body>
+</html>
