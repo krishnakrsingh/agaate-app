@@ -1,0 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { accessibleFarmWhere, currentActor, requireRole } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
+import { apiError, noStore, paginationParams } from "@/lib/api";
+const farmSchema = z.object({ name:z.string().min(2).max(120), ownerName:z.string().min(2).max(120), location:z.string().min(2).max(180), address:z.string().max(500).optional().nullable(), latitude:z.coerce.number().gte(-90).lte(90), longitude:z.coerce.number().gte(-180).lte(180), totalArea:z.coerce.number().positive(), cultivableArea:z.coerce.number().positive(), waterSource:z.string().min(2).max(180), geofenceRadiusMeters:z.coerce.number().int().min(50).max(10000).optional() }).refine(v=>v.cultivableArea<=v.totalArea,{message:"Cultivable area cannot exceed total area.",path:["cultivableArea"]});
+export async function GET(request: NextRequest) { try { const where=await accessibleFarmWhere(); const { limit, offset } = paginationParams(request.nextUrl.searchParams); const farms=await prisma.farm.findMany({where,include:{_count:{select:{plots:true,access:true}},plots:{where:{deletedAt:null},select:{id:true,status:true,cropCycles:{where:{status:{in:["PLANNED","ACTIVE"]}},select:{id:true}}}}},orderBy:{createdAt:"desc"},take:limit,skip:offset}); return NextResponse.json(farms,{headers:noStore}); } catch(error) {return apiError(error);} }
+export async function POST(request:NextRequest) { try { const actor=await currentActor(); requireRole(actor.role,["SUPER_ADMIN","FARM_ADMIN"]); const input=farmSchema.parse(await request.json()); const farm=await prisma.farm.create({data:{...input,geofenceRadiusMeters:input.geofenceRadiusMeters??DEFAULT_GEOFENCE_RADIUS_METERS,access:{create:{userId:actor.id,canManage:true}}}}); await audit(actor.id,"CREATE","Farm",farm.id,{name:farm.name}); return NextResponse.json(farm,{status:201}); }catch(error){return apiError(error);} }

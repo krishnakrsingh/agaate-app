@@ -1,0 +1,511 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  FARM_ADMIN
+  AGRONOMIST
+  FARM_OFFICER
+}
+enum FarmStatus {
+ SETUP
+ ACTIVE
+ INACTIVE
+ COMPLETED
+}
+enum PlotStatus {
+ SETUP
+ ACTIVE
+ INACTIVE
+ ARCHIVED
+}
+enum EstablishmentType {
+ NURSERY_TRANSPLANTATION
+ DIRECT_SOWING
+}
+enum CropCycleStatus {
+ PLANNED
+ ACTIVE
+ COMPLETED
+ CANCELLED
+}
+enum MilestoneStatus {
+ PENDING
+ IN_PROGRESS
+ COMPLETED
+ SKIPPED
+}
+enum TaskOrigin {
+ AGRONOMIST
+ SYSTEM
+ DAILY_MONITORING
+}
+enum TaskStatus {
+ DRAFT
+ ASSIGNED
+ AVAILABLE
+ IN_PROGRESS
+ COMPLETED
+ CANCELLED
+ BLOCKED
+}
+enum AttendanceStatus {
+ OPEN
+ COMPLETED
+ EXCEPTION_PENDING
+ EXCEPTION_APPROVED
+ EXCEPTION_REJECTED
+}
+enum ApprovalStatus {
+ PENDING
+ APPROVED
+ REJECTED
+}
+enum HealthStatus {
+ GOOD
+ POOR
+}
+enum IncidentLevel {
+ FARM
+ PLOT
+ CROP
+}
+enum IncidentStatus {
+ OPEN
+ ACKNOWLEDGED
+ RESOLVED
+ CLOSED
+}
+enum MediaKind {
+ SELFIE
+ CROP_PHOTO
+ INCIDENT_PHOTO
+ ACTIVITY_EVIDENCE
+}
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  role Role
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farmAccess FarmAccess[]
+  assignedTasks Task[] @relation("AssignedOfficer")
+  createdTasks Task[] @relation("TaskCreator")
+  createdPlans AgronomyPlan[] @relation("PlanCreator")
+  executions TaskExecution[]
+  attendance Attendance[]
+  monitoring CropMonitoring[]
+  reportedIncidents Incident[] @relation("IncidentReporter")
+  incidentFollowUps IncidentFollowUp[] @relation("FollowUpAuthor")
+  auditLogs AuditLog[] @relation("AuditActor")
+  passkeys PasskeyCredential[]
+  faceEnrollment FaceEnrollment?
+  webauthnChallenges WebAuthnChallenge[]
+  livenessChallenges LivenessChallenge[]
+}
+
+model Farm {
+  id String @id @default(cuid())
+  name String
+  ownerName String
+  location String
+  address String?
+  latitude Decimal @db.Decimal(10, 7)
+  longitude Decimal @db.Decimal(10, 7)
+  totalArea Decimal @db.Decimal(12, 2)
+  cultivableArea Decimal @db.Decimal(12, 2)
+  waterSource String
+  status FarmStatus @default(SETUP)
+  geofenceRadiusMeters Int @default(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  access FarmAccess[]
+  plots Plot[]
+  tasks Task[]
+  attendance Attendance[]
+  incidents Incident[]
+  monitoring CropMonitoring[]
+  locationChangeRequests LocationChangeRequest[]
+  agronomyPlans AgronomyPlan[]
+}
+
+model FarmAccess {
+  id String @id @default(cuid())
+  userId String
+  farmId String
+  canManage Boolean @default(false)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  @@unique([userId, farmId])
+  @@index([farmId])
+}
+
+model Plot {
+  id String @id @default(cuid())
+  farmId String
+  name String
+  area Decimal @db.Decimal(12, 2)
+  latitude Decimal @db.Decimal(10, 7)
+  longitude Decimal @db.Decimal(10, 7)
+  soilType String?
+  status PlotStatus @default(SETUP)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farm Farm @relation(fields: [farmId], references: [id])
+  irrigation IrrigationConfiguration[]
+  cropCycles CropCycle[]
+  tasks Task[]
+  monitoring CropMonitoring[]
+  incidents Incident[]
+  @@unique([farmId, name])
+  @@index([farmId, status])
+}
+
+model IrrigationConfiguration {
+  id String @id @default(cuid())
+  plotId String
+  type String
+  details String?
+  plot Plot @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  @@unique([plotId, type])
+}
+
+model CropCycle {
+  id String @id @default(cuid())
+  plotId String
+  cropName String
+  startDate DateTime @db.Date
+  expectedFirstHarvestDate DateTime? @db.Date
+  establishmentType EstablishmentType
+  status CropCycleStatus @default(PLANNED)
+  bedPreparationEnabled Boolean @default(false)
+  bedWidthCm Decimal? @db.Decimal(8, 2)
+  bedCenterDistanceCm Decimal? @db.Decimal(8, 2)
+  expectedBedsPerAcre Decimal? @db.Decimal(12, 2)
+  expectedTotalBeds Decimal? @db.Decimal(12, 2)
+  actualBedsCreated Decimal? @db.Decimal(12, 2)
+  mulchEnabled Boolean @default(false)
+  mulchHolePattern String?
+  plantDistanceCm Decimal? @db.Decimal(8, 2)
+  expectedPlantsPerAcre Decimal? @db.Decimal(12, 2)
+  expectedPlants Decimal? @db.Decimal(12, 2)
+  actualPlants Decimal? @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plot Plot @relation(fields: [plotId], references: [id])
+  varieties CropVariety[]
+  milestones Milestone[]
+  tasks Task[]
+  monitoring CropMonitoring[]
+  incidents Incident[]
+  @@index([plotId, status])
+}
+
+model CropVariety {
+  id String @id @default(cuid())
+  cropCycleId String
+  name String
+  cropCycle CropCycle @relation(fields: [cropCycleId], references: [id], onDelete: Cascade)
+  @@unique([cropCycleId, name])
+}
+
+model Milestone {
+  id String @id @default(cuid())
+  cropCycleId String
+  name String
+  targetDate DateTime @db.Date
+  status MilestoneStatus @default(PENDING)
+  remarks String?
+  completedAt DateTime?
+  cropCycle CropCycle @relation(fields: [cropCycleId], references: [id], onDelete: Cascade)
+  tasks Task[]
+  @@index([cropCycleId, targetDate])
+}
+
+model AgronomyPlan {
+  id String @id @default(cuid())
+  farmId String
+  planDate DateTime @db.Date
+  notes String?
+  manualTemperature Decimal? @db.Decimal(5, 2)
+  manualHumidity Decimal? @db.Decimal(5, 2)
+  manualWindSpeed Decimal? @db.Decimal(5, 2)
+  manualRainForecast Decimal? @db.Decimal(5, 2)
+  manualWeatherRemarks String?
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  farm Farm @relation(fields: [farmId], references: [id])
+  createdBy User @relation("PlanCreator", fields: [createdById], references: [id])
+  tasks Task[]
+  @@unique([farmId, planDate])
+}
+
+model Task {
+  id String @id @default(cuid())
+  farmId String
+  plotId String?
+  cropCycleId String?
+  milestoneId String?
+  planId String?
+  origin TaskOrigin
+  category String
+  title String
+  description String
+  instructions String?
+  priority String @default("MEDIUM")
+  dueDate DateTime @db.Date
+  status TaskStatus @default(DRAFT)
+  assignedOfficerId String?
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farm Farm @relation(fields: [farmId], references: [id])
+  plot Plot? @relation(fields: [plotId], references: [id])
+  cropCycle CropCycle? @relation(fields: [cropCycleId], references: [id])
+  milestone Milestone? @relation(fields: [milestoneId], references: [id])
+  plan AgronomyPlan? @relation(fields: [planId], references: [id])
+  assignedOfficer User? @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
+  createdBy User @relation("TaskCreator", fields: [createdById], references: [id])
+  executions TaskExecution[]
+  @@index([assignedOfficerId, dueDate, status])
+  @@index([farmId, dueDate])
+}
+
+model TaskExecution {
+  id String @id @default(cuid())
+  taskId String @unique
+  officerId String
+  status TaskStatus
+  startedAt DateTime?
+  completedAt DateTime?
+  remarks String?
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  officer User @relation(fields: [officerId], references: [id])
+  materials MaterialUsage[]
+  labour LabourUsage[]
+  media MediaAsset[]
+}
+model MaterialUsage {
+  id String @id @default(cuid())
+  executionId String
+  materialName String
+  quantity Decimal @db.Decimal(12, 2)
+  unit String
+  execution TaskExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+}
+model LabourUsage {
+  id String @id @default(cuid())
+  executionId String
+  labourers Int
+  hours Decimal @db.Decimal(8, 2)
+  labourHours Decimal @db.Decimal(12, 2)
+  execution TaskExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+}
+model Attendance {
+  id String @id @default(cuid())
+  userId String
+  farmId String
+  attendanceDate DateTime @db.Date
+  status AttendanceStatus @default(OPEN)
+  startAt DateTime?
+  endAt DateTime?
+  startLatitude Decimal? @db.Decimal(10, 7)
+  startLongitude Decimal? @db.Decimal(10, 7)
+  endLatitude Decimal? @db.Decimal(10, 7)
+  endLongitude Decimal? @db.Decimal(10, 7)
+  startSelfieKey String?
+  endSelfieKey String?
+  exceptionReason String?
+  webauthnVerified Boolean @default(false)
+  webauthnCredentialId String?
+  faceVerified Boolean @default(false)
+  faceDistance Decimal? @db.Decimal(6, 3)
+  faceSimilarityPercent Int?
+  faceModelId String?
+  faceThresholdVersion String?
+  livenessVerified Boolean @default(false)
+  livenessChallengeId String?
+  user User @relation(fields: [userId], references: [id])
+  farm Farm @relation(fields: [farmId], references: [id])
+  exception AttendanceException?
+  @@unique([userId, farmId, attendanceDate])
+}
+model AttendanceException {
+  id String @id @default(cuid())
+  attendanceId String @unique
+  distanceMeters Decimal @db.Decimal(12, 2)
+  reason String
+  status ApprovalStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt DateTime?
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+}
+model LocationChangeRequest {
+  id String @id @default(cuid())
+  farmId String
+  requesterId String
+  proposedLatitude Decimal @db.Decimal(10, 7)
+  proposedLongitude Decimal @db.Decimal(10, 7)
+  reason String
+  status ApprovalStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  farm Farm @relation(fields: [farmId], references: [id])
+}
+model CropMonitoring {
+  id String @id @default(cuid())
+  farmId String
+  plotId String
+  cropCycleId String
+  officerId String
+  status HealthStatus
+  stage String
+  impactPercent Decimal? @db.Decimal(5, 2)
+  remarks String?
+  createdAt DateTime @default(now())
+  farm Farm @relation(fields: [farmId], references: [id])
+  plot Plot @relation(fields: [plotId], references: [id])
+  cropCycle CropCycle @relation(fields: [cropCycleId], references: [id])
+  officer User @relation(fields: [officerId], references: [id])
+  media MediaAsset[]
+}
+model Incident {
+  id String @id @default(cuid())
+  farmId String
+  plotId String?
+  cropCycleId String?
+  reporterId String
+  level IncidentLevel
+  type String
+  description String
+  severity String?
+  impactPercent Decimal? @db.Decimal(5, 2)
+  status IncidentStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farm Farm @relation(fields: [farmId], references: [id])
+  plot Plot? @relation(fields: [plotId], references: [id])
+  cropCycle CropCycle? @relation(fields: [cropCycleId], references: [id])
+  reporter User @relation("IncidentReporter", fields: [reporterId], references: [id])
+  media MediaAsset[]
+  followUps IncidentFollowUp[]
+}
+
+model IncidentFollowUp {
+  id String @id @default(cuid())
+  incidentId String
+  authorId String
+  action String
+  remarks String?
+  createdAt DateTime @default(now())
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  author User @relation("FollowUpAuthor", fields: [authorId], references: [id])
+  @@index([incidentId, createdAt])
+}
+model MediaAsset {
+  id String @id @default(cuid())
+  storageKey String @unique
+  kind MediaKind
+  mimeType String
+  sizeBytes Int
+  farmId String?
+  executionId String?
+  monitoringId String?
+  incidentId String?
+  uploadedById String
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  execution TaskExecution? @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  monitoring CropMonitoring? @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
+  incident Incident? @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+model PasskeyCredential {
+  id String @id @default(cuid())
+  userId String
+  credentialId String @unique
+  publicKey String
+  counter BigInt @default(0)
+  transports String?
+  deviceType String?
+  backedUp Boolean @default(false)
+  name String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+  revokedAt DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WebAuthnChallenge {
+  id String @id @default(cuid())
+  userId String
+  challenge String @unique
+  type String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+model FaceEnrollment {
+  id String @id @default(cuid())
+  userId String @unique
+  modelId String
+  modelVersion String
+  thresholdVersion String?
+  encryptedEmbedding String
+  iv String
+  authTag String
+  status String @default("ACTIVE")
+  consentGivenAt DateTime
+  consentIp String?
+  enrollmentCount Int
+  qualityScore Decimal? @db.Decimal(5, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  revokedAt DateTime?
+  lastVerifiedAt DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LivenessChallenge {
+  id String @id @default(cuid())
+  userId String
+  challenge String @unique
+  instruction String
+  expiresAt DateTime
+  used Boolean @default(false)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, used])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  actorId String?
+  action String
+  entityType String
+  entityId String
+  metadata Json?
+  createdAt DateTime @default(now())
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+}

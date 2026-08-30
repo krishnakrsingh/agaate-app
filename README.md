@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agaate Farm Management PWA
 
-## Getting Started
+Production-oriented Next.js application for multi-farm planning, agronomy activities, and field execution. Business state is stored in PostgreSQL; evidence is stored in S3-compatible object storage.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Copy `.env.example` to `.env` and replace every `change-me` value. Add `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` (12+ characters), and optionally `INITIAL_ADMIN_NAME`.
+2. Start the development infrastructure: `docker compose up -d postgres minio`.
+3. Create the S3/MinIO bucket named by `S3_BUCKET`, grant the configured credentials access to it, and allow browser `PUT` requests for the app origin with `Content-Type` exposed. The upload flow uses short-lived signed URLs and verifies each object server-side.
+4. Install dependencies with `npm install`, then run `npm run db:generate`, `npm run db:migrate`, and `npm run db:seed`.
+5. Start the app: `npm run dev`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For production, set managed PostgreSQL and S3 credentials in the deployment environment, run `npm run db:migrate` as a release step, then run `npm run build` and `npm start`. Do not use the development Docker passwords or default session secret in production.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Security and persistence
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Signed, HTTP-only sessions are issued only after a BCrypt password check.
+- Every protected route verifies the active database user, role, and farm-level access server-side.
+- Farm access is modeled separately from roles, supporting one admin/officer across many farms.
+- API mutations use Zod validation, database transactions where multiple records change together, lifecycle transitions, and audit records. Crop planning edits replace varieties safely, retain required milestones, and synchronize pending system tasks.
+- Browser uploads receive short-lived S3 URLs; a server-side completion call verifies the object exists and matches its declared type/size. Database records persist media metadata and object keys, never base64 payloads.
+- Weather is fetched from the configured real provider and reports a service error when unavailable; it never fabricates weather data.
 
-## Learn More
+## Current coverage
 
-To learn more about Next.js, take a look at the following resources:
+The implementation includes real schema-backed APIs and UI for users/access, farm and plot CRUD, irrigation, crop cycles/varieties/milestones/support activities, activation, planned/system/daily-monitoring tasks, executions/materials/labour, attendance/geofence exceptions, location change approvals, secure evidence uploads, monitoring, incidents and follow-up status, filtered dashboards, daily reports, audit records, live weather, and PWA installability.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run `npm test` for calculation rules. Integration and end-to-end tests require an isolated PostgreSQL/S3 environment and configured secrets; they should be run in the deployment pipeline against those services.

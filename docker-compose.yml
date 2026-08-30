@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: agaate
+      POSTGRES_USER: agaate
+      POSTGRES_PASSWORD: local-development-only
+    ports: ["5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: change-me
+      MINIO_ROOT_PASSWORD: change-me-too
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["minio_data:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || wget -qO- http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+  minio-setup:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      for i in 1 2 3 4 5 6; do
+        /usr/bin/mc alias set local http://minio:9000 change-me change-me-too &&
+        /usr/bin/mc mb local/agaate-evidence --ignore-existing &&
+        /usr/bin/mc anonymous set private local/agaate-evidence &&
+        echo 'MinIO bucket agaate-evidence ready' && exit 0;
+        echo 'MinIO not ready, retrying...' && sleep 2;
+      done;
+      exit 1;
+      "
+volumes:
+  postgres_data:
+  minio_data:
