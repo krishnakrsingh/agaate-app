@@ -1,19 +1,137 @@
 /* ==========================================================================
    AGAATE FARM OPERATIONS — SPOTIFY DESIGN SYSTEM
-   Dark, Immersive Content-First Intelligence Architecture
+   Adaptive Theme: Default Light & Immersive Dark
    Reference: DESIGN.md inspired by Spotify
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-:root {
-  /* Primary Brand & Spotify Green Accent */
+/* ==========================================================================
+   1. Theme Variables — Default Light Theme
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Primary Brand & Spotify Green Accent (Light Theme) */
+  --spotify-green: #1db954;
+  --spotify-green-hover: #169c46;
+  --spotify-green-border: #16823b;
+  --spotify-green-tint: rgba(29, 185, 84, 0.12);
+
+  /* Surfaces (Light Theme) */
+  --near-black: #f8f9fa;         /* Deepest background surface (Level 0) */
+  --dark-surface: #ffffff;       /* Cards, sidebar, containers (Level 1) */
+  --mid-dark: #f1f3f5;           /* Button backgrounds, inputs, interactive surfaces */
+  --dark-card: #ffffff;          /* Elevated card surface */
+  --mid-card: #f8f9fa;           /* Alternate card surface */
+  --surface-hover: #ebecee;      /* Hover state */
+  --surface-active: #dee2e6;
+
+  /* Typography Colors (Light Theme) */
+  --text-base: #121212;          /* Primary dark text */
+  --text-secondary: #656c75;     /* Muted secondary labels */
+  --text-near-white: #2b2b2b;    /* Slightly darker secondary text */
+  --text-light: #000000;         /* Deepest black for maximum emphasis */
+
+  /* Semantic Status Colors (Light Theme) */
+  --negative-red: #d32f2f;       /* Error / blocked / poor health states */
+  --negative-red-tint: rgba(211, 47, 47, 0.10);
+  --warning-orange: #b45309;     /* Warning / delayed alert states */
+  --warning-orange-tint: rgba(180, 83, 9, 0.10);
+  --announcement-blue: #0284c7;  /* Info / in-progress states */
+  --announcement-blue-tint: rgba(2, 132, 199, 0.10);
+
+  /* Borders & Dividers (Light Theme) */
+  --border-gray: #d1d5db;
+  --border-light: #e5e7eb;
+  --border-subtle: #e5e7eb;
+  --border-card: #e5e7eb;
+  --separator: #e5e7eb;
+
+  /* Elevation Shadows (Light Theme) */
+  --shadow-heavy: rgba(0, 0, 0, 0.12) 0px 8px 24px;
+  --shadow-medium: rgba(0, 0, 0, 0.08) 0px 4px 12px;
+  --shadow-subtle: rgba(0, 0, 0, 0.04) 0px 2px 4px;
+  --input-inset-border: rgb(255, 255, 255) 0px 1px 0px, rgb(209, 213, 219) 0px 0px 0px 1px inset;
+  --input-inset-border-focus: rgb(255, 255, 255) 0px 1px 0px, #1db954 0px 0px 0px 2px inset;
+
+  /* Aliases for Codebase Compatibility */
+  --primary: var(--spotify-green);
+  --primary-hover: var(--spotify-green-hover);
+  --on-primary: #ffffff;
+  --on-dark: #ffffff;
+  --canvas: var(--near-black);
+  --bg-app: var(--near-black);
+  --bg-card: var(--dark-surface);
+  --ink: var(--text-base);
+  --body-muted: var(--text-secondary);
+  --muted: var(--text-secondary);
+  --slate: var(--text-secondary);
+  --hairline: var(--border-subtle);
+  --soft-stone: var(--mid-dark);
+  --error: var(--negative-red);
+  --coral: var(--warning-orange);
+  --pale-green: var(--spotify-green-tint);
+  --pale-blue: var(--announcement-blue-tint);
+  --action-blue: var(--announcement-blue);
+  --white: #ffffff;
+
+  /* Background Elements & Gradients */
+  --navbar-bg: rgba(255, 255, 255, 0.94);
+  --announcement-bg: #121212;
+  --announcement-text: #ffffff;
+  --auth-panel-bg: linear-gradient(145deg, #eaf6ee 0%, #ffffff 70%);
+  --dark-band-bg: linear-gradient(180deg, #edf9f1 0%, #ffffff 100%);
+  --dark-band-border: rgba(29, 185, 84, 0.25);
+  --table-hover-bg: #f1f3f5;
+  --tab-active-bg: #121212;
+  --tab-active-color: #ffffff;
+
+  /* Typography Stack */
+  --font-display: 'SpotifyMixUITitle', 'SpotifyMixUI', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'SpotifyMixUI', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-brand: var(--font-display);
+
+  /* Radius Scale */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 500px;
+  --radius-full: 9999px;
+  --radius-circle: 50%;
+
+  /* Spacing */
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-xxl: 32px;
+  --space-section: 64px;
+
+  /* Transitions */
+  --transition-fast: 120ms cubic-bezier(0.2, 0, 0, 1);
+  --transition-normal: 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ==========================================================================
+   2. Theme Variables — Immersive Dark Theme
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Primary Brand & Spotify Green Accent (Dark Theme) */
   --spotify-green: #1ed760;
   --spotify-green-hover: #1fdf64;
   --spotify-green-border: #1db954;
   --spotify-green-tint: rgba(30, 215, 96, 0.12);
 
-  /* Dark Core Surfaces (DESIGN.md Section 2 & 6) */
+  /* Surfaces (Dark Theme per DESIGN.md Section 2 & 6) */
   --near-black: #121212;         /* Deepest background surface (Level 0) */
   --dark-surface: #181818;       /* Cards, sidebar, containers (Level 1) */
   --mid-dark: #1f1f1f;           /* Button backgrounds, inputs, interactive surfaces */
@@ -22,13 +140,13 @@
   --surface-hover: #282828;      /* Hover lighten state */
   --surface-active: #333333;
 
-  /* Typography Colors (DESIGN.md Section 2) */
+  /* Typography Colors (Dark Theme) */
   --text-base: #ffffff;          /* Primary white text */
   --text-secondary: #b3b3b3;     /* Silver secondary text, muted labels, inactive nav */
   --text-near-white: #cbcbcb;    /* Slightly brighter secondary text */
   --text-light: #fdfdfd;         /* Near-pure white for maximum emphasis */
 
-  /* Semantic Status Colors (DESIGN.md Section 2) */
+  /* Semantic Status Colors (Dark Theme) */
   --negative-red: #f3727f;       /* Error / blocked / poor health states */
   --negative-red-tint: rgba(243, 114, 127, 0.15);
   --warning-orange: #ffa42b;     /* Warning / delayed alert states */
@@ -36,14 +154,14 @@
   --announcement-blue: #539df5;  /* Info / in-progress states */
   --announcement-blue-tint: rgba(83, 157, 245, 0.15);
 
-  /* Borders & Dividers (DESIGN.md Section 2) */
+  /* Borders & Dividers (Dark Theme) */
   --border-gray: #4d4d4d;
   --border-light: #7c7c7c;
   --border-subtle: #282828;
   --border-card: #222222;
   --separator: #333333;
 
-  /* Elevation Shadows (DESIGN.md Section 2 & 6) */
+  /* Elevation Shadows (Dark Theme) */
   --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
   --shadow-medium: rgba(0, 0, 0, 0.3) 0px 8px 8px;
   --shadow-subtle: rgba(0, 0, 0, 0.2) 0px 4px 6px;
@@ -71,38 +189,21 @@
   --action-blue: var(--announcement-blue);
   --white: #ffffff;
 
-  /* Typography Stack (DESIGN.md Section 3) */
-  --font-display: 'SpotifyMixUITitle', 'SpotifyMixUI', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'SpotifyMixUI', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-brand: var(--font-display);
-
-  /* Radius Scale (DESIGN.md Section 5) */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 500px;
-  --radius-full: 9999px;
-  --radius-circle: 50%;
-
-  /* Spacing */
-  --space-xxs: 2px;
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-xxl: 32px;
-  --space-section: 64px;
-
-  /* Transitions */
-  --transition-fast: 120ms cubic-bezier(0.2, 0, 0, 1);
-  --transition-normal: 200ms cubic-bezier(0.2, 0, 0, 1);
+  /* Background Elements & Gradients */
+  --navbar-bg: rgba(18, 18, 18, 0.95);
+  --announcement-bg: #000000;
+  --announcement-text: var(--text-secondary);
+  --auth-panel-bg: linear-gradient(145deg, #122b1c 0%, #121212 70%);
+  --dark-band-bg: linear-gradient(180deg, #182c20 0%, #121212 100%);
+  --dark-band-border: rgba(30, 215, 96, 0.2);
+  --table-hover-bg: var(--mid-dark);
+  --tab-active-bg: #ffffff;
+  --tab-active-color: #000000;
 }
 
-/* Reset & Dark Baseline */
+/* ==========================================================================
+   3. Reset & Base Model
+   ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -117,7 +218,6 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--near-black);
-  color-scheme: dark;
 }
 
 body {
@@ -130,6 +230,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 img, video, canvas, svg {
@@ -266,10 +367,10 @@ p {
   box-shadow: 0 0 8px rgba(30, 215, 96, 0.6);
 }
 
-/* Announcement Bar (DESIGN.md: Achromatic black bar with subtle link) */
+/* Announcement Bar */
 .announcement-bar {
-  background: #000000;
-  color: var(--text-secondary);
+  background: var(--announcement-bg);
+  color: var(--announcement-text);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -278,7 +379,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-subtle);
   text-align: center;
 }
 
@@ -289,16 +390,17 @@ p {
   font-weight: 600;
 }
 
-/* App Navbar (DESIGN.md Section 4 Navigation: Dark sidebar / header) */
+/* App Navbar */
 .app-navbar {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(18, 18, 18, 0.95);
+  background: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: var(--text-base);
   border-bottom: 1px solid var(--border-subtle);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .navbar-inner {
@@ -403,7 +505,7 @@ p {
   border-radius: var(--radius-circle);
   background: var(--surface-hover);
   color: var(--spotify-green);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
   display: grid;
   place-items: center;
   font-size: 11px;
@@ -439,21 +541,21 @@ p {
   transform: none !important;
 }
 
-/* Primary Pill Button: Spotify Green #1ed760 with bold black text */
+/* Primary Pill Button */
 .btn-primary {
   background: var(--spotify-green);
-  color: #000000;
+  color: var(--on-primary);
   border-color: var(--spotify-green);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--spotify-green-hover);
-  color: #000000;
+  color: var(--on-primary);
   transform: scale(1.03);
   text-decoration: none;
 }
 
-/* Secondary Pill Button: Mid Dark #1f1f1f with white text */
+/* Secondary Pill Button */
 .btn-secondary {
   background: var(--mid-dark);
   color: var(--text-base);
@@ -468,30 +570,29 @@ p {
   text-decoration: none;
 }
 
-/* Outlined Pill Button: Transparent with light border #7c7c7c */
+/* Outlined Pill Button */
 .btn-outline {
   background: transparent;
   color: var(--text-base);
-  border-color: var(--border-light);
+  border-color: var(--border-gray);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
   border-color: var(--text-base);
   color: var(--text-light);
   transform: scale(1.02);
 }
 
-/* Danger Pill Button: Negative Red */
+/* Danger Pill Button */
 .btn-danger {
   background: var(--negative-red);
-  color: #000000;
+  color: #ffffff;
   border-color: var(--negative-red);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #ff8591;
-  color: #000000;
+  opacity: 0.9;
   transform: scale(1.03);
 }
 
@@ -512,7 +613,7 @@ p {
   text-underline-offset: 4px;
 }
 
-/* Circular Action / Play Button (DESIGN.md 50% radius) */
+/* Circular Action / Play Button */
 .btn-circle {
   width: 44px;
   height: 44px;
@@ -545,7 +646,7 @@ p {
   min-height: 48px;
 }
 
-/* Cards & Containers (DESIGN.md Section 4: #181818, 8px radius, subtle hover lift) */
+/* Cards & Containers */
 .card {
   background: var(--dark-surface);
   border: 1px solid var(--border-card);
@@ -556,7 +657,7 @@ p {
 }
 
 .card:hover {
-  background: #1e1e1e;
+  background: var(--surface-hover);
   box-shadow: var(--shadow-medium);
 }
 
@@ -568,10 +669,10 @@ p {
 }
 
 .dark-feature-band {
-  background: linear-gradient(180deg, #182c20 0%, #121212 100%);
+  background: var(--dark-band-bg);
   color: var(--text-base);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(30, 215, 96, 0.2);
+  border: 1px solid var(--dark-band-border);
   padding: var(--space-xxl);
   display: grid;
   gap: var(--space-xl);
@@ -623,7 +724,7 @@ p {
 }
 
 .metric-card:hover {
-  background: #202020;
+  background: var(--surface-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-medium);
 }
@@ -651,7 +752,7 @@ p {
   color: var(--text-secondary);
 }
 
-/* Forms & Inputs (DESIGN.md Section 4 & 6: #1f1f1f background, Inset Border) */
+/* Forms & Inputs */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -692,10 +793,10 @@ select:focus,
 textarea:focus {
   outline: none;
   box-shadow: var(--input-inset-border-focus);
-  background: #242424;
+  background: var(--mid-card);
 }
 
-/* Pill Search Input (DESIGN.md: 500px radius pill) */
+/* Pill Search Input */
 .input-search, input.pill-search {
   border-radius: var(--radius-pill);
   padding: 12px 24px 12px 42px;
@@ -770,7 +871,7 @@ textarea {
   margin-bottom: var(--space-lg);
 }
 
-/* Tabs & Filter Pills (DESIGN.md: Dark pill filters) */
+/* Tabs & Filter Pills */
 .tabs-nav {
   display: flex;
   align-items: center;
@@ -803,12 +904,12 @@ textarea {
 }
 
 .tab-btn.active {
-  background: var(--text-base);
-  color: #000000;
+  background: var(--tab-active-bg);
+  color: var(--tab-active-color);
   font-weight: 800;
 }
 
-/* Status Badges & Pills (DESIGN.md Section 2: Spotify Green, Red, Orange, Blue) */
+/* Status Badges & Pills */
 .role-badge {
   display: inline-flex;
   align-items: center;
@@ -875,7 +976,7 @@ textarea {
   border-color: rgba(255, 164, 43, 0.3);
 }
 
-/* Data Table Pattern (DESIGN.md: Dark rule-separated rows) */
+/* Data Table Pattern */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -901,10 +1002,10 @@ textarea {
 }
 
 .data-table tr:hover td {
-  background: var(--mid-dark);
+  background: var(--table-hover-bg);
 }
 
-/* Auth Split View (DESIGN.md: Immersive Dark Atmosphere) */
+/* Auth Split View */
 .auth-shell {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -913,7 +1014,7 @@ textarea {
 }
 
 .auth-panel {
-  background: linear-gradient(145deg, #122b1c 0%, #121212 70%);
+  background: var(--auth-panel-bg);
   color: var(--text-base);
   padding: 64px 48px;
   display: flex;
@@ -968,7 +1069,7 @@ textarea {
   flex-shrink: 0;
 }
 
-/* Mobile Bottom Dock (DESIGN.md Section 8) */
+/* Mobile Bottom Dock */
 .mobile-nav {
   display: none;
   position: fixed;
@@ -976,7 +1077,7 @@ textarea {
   left: 0;
   right: 0;
   height: 64px;
-  background: rgba(18, 18, 18, 0.96);
+  background: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--border-subtle);
@@ -985,7 +1086,7 @@ textarea {
 
 .mobile-nav-inner {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   height: 100%;
 }
 
@@ -1000,6 +1101,9 @@ textarea {
   font-weight: 600;
   text-decoration: none;
   transition: color var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .mobile-nav-item:hover, .mobile-nav-item.active {
@@ -1032,7 +1136,7 @@ textarea {
   display: block;
 }
 
-/* Toast Notification System (DESIGN.md: Dark Surface #181818, Heavy Shadow) */
+/* Toast Notification System */
 .toast-container {
   position: fixed;
   bottom: 24px;

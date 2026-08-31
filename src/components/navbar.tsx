@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icons } from "./icons";
 import { LogoutButton } from "./logout-button";
+import { ThemeToggle } from "./theme-toggle";
 
 export function Navbar({ role, userName }: { role: string; userName?: string }) {
   const pathname = usePathname();
@@ -86,6 +87,9 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
               )}
             </div>
 
+            {/* Theme Toggle Button */}
+            <ThemeToggle />
+
             {/* Menu Drawer Toggle */}
             <div style={{ position: "relative" }}>
               <button
@@ -155,6 +159,8 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
                     </Link>
                   ))}
 
+                  <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
+                  <ThemeToggle variant="menu-item" />
                   <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
                   <div style={{ padding: "4px 6px" }}>
                     <LogoutButton variant="menu" />
