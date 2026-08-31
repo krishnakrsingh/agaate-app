@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { LoginForm } from "@/components/login-form";
 import { Icons } from "@/components/icons";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -47,8 +48,8 @@ export default async function LoginPage() {
               <Icons.MapPin size={16} />
             </div>
             <div>
-              <strong style={{ color: "white", display: "block", fontSize: 14 }}>Geofenced Attendance & Live Presence</strong>
-              <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.7)" }}>Front-camera live stream capture with 500m Haversine radar</span>
+              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>Geofenced Attendance & Live Presence</strong>
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Front-camera live stream capture with 500m Haversine radar</span>
             </div>
           </div>
 
@@ -57,8 +58,8 @@ export default async function LoginPage() {
               <Icons.Calendar size={16} />
             </div>
             <div>
-              <strong style={{ color: "white", display: "block", fontSize: 14 }}>7-Day Rolling Agronomy Dispatch</strong>
-              <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.7)" }}>Fertigation, spraying, nutrition, and automatic milestone engine</span>
+              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>7-Day Rolling Agronomy Dispatch</strong>
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Fertigation, spraying, nutrition, and automatic milestone engine</span>
             </div>
           </div>
 
@@ -67,19 +68,22 @@ export default async function LoginPage() {
               <Icons.FileText size={16} />
             </div>
             <div>
-              <strong style={{ color: "white", display: "block", fontSize: 14 }}>Automated Daily Operations Intelligence</strong>
-              <span style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.7)" }}>Verified field attendance, task execution, and material consumption</span>
+              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>Automated Daily Operations Intelligence</strong>
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Verified field attendance, task execution, and material consumption</span>
             </div>
           </div>
         </div>
 
-        <div style={{ fontSize: 12, color: "rgba(255, 255, 255, 0.6)" }}>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
           Agaate Precision Agriculture &bull; AES-256 Encrypted &bull; FIDO2 WebAuthn Passkeys
         </div>
       </section>
 
-      {/* Right Canvas White Form Card */}
-      <section className="auth-form-side">
+      {/* Right Form Card Side */}
+      <section className="auth-form-side" style={{ position: "relative" }}>
+        <div style={{ position: "absolute", top: 24, right: 24 }}>
+          <ThemeToggle />
+        </div>
         <div style={{ width: "100%", maxWidth: 440 }}>
           <LoginForm />
         </div>
