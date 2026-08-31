@@ -140,11 +140,7 @@ export function DashboardClient({
           </div>
 
           {/* Side Telemetry Card (Spotify Audio Device Aesthetic) */}
-          <div style={{
-            flex: "0 1 380px", minWidth: 280, background: "var(--dark-surface)", border: "1px solid var(--border-card)",
-            borderRadius: "var(--radius-sm)", padding: 24, display: "grid", gap: 14, alignContent: "start",
-            boxShadow: "var(--shadow-medium)"
-          }}>
+          <div className="hero-telemetry-card">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ width: 34, height: 34, borderRadius: "var(--radius-circle)", background: "var(--spotify-green)", color: "#000000", display: "grid", placeItems: "center" }}>
                 <Icons.Sprout size={16} />
@@ -315,8 +311,8 @@ export function DashboardClient({
             <h2 style={{ margin: "4px 0 0", color: "var(--text-light)" }}>Estate Portfolio</h2>
           </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ position: "relative", minWidth: 260 }}>
+          <div className="dashboard-filter-bar">
+            <div style={{ position: "relative", minWidth: 240, flex: "1 1 auto" }}>
               <input
                 type="text"
                 placeholder="Search estates, location, owner…"
@@ -330,7 +326,7 @@ export function DashboardClient({
               </span>
             </div>
 
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {["ALL", "ACTIVE", "SETUP", "INACTIVE"].map((st) => (
                 <button
                   key={st}
@@ -356,18 +352,7 @@ export function DashboardClient({
               <Link
                 key={farm.id}
                 href={`/farms/${farm.id}`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.2fr 1fr 1.5fr 1fr auto",
-                  alignItems: "center",
-                  gap: 16,
-                  padding: "16px 20px",
-                  borderRadius: "var(--radius-sm)",
-                  background: "var(--dark-surface)",
-                  border: "1px solid var(--border-card)",
-                  transition: "all var(--transition-fast)",
-                }}
-                className="card"
+                className="estate-card-grid card"
               >
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>

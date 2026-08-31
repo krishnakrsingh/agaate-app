@@ -94,7 +94,7 @@ export function LoginForm() {
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 8 }}>
           {DEMO_ACCOUNTS.map((acc) => {
             const isSelected = email === acc.email;
             return (

@@ -76,6 +76,7 @@
   --pale-blue: var(--announcement-blue-tint);
   --action-blue: var(--announcement-blue);
   --white: #ffffff;
+  --deep-green: #15803d;
 
   /* Background Elements & Gradients */
   --navbar-bg: rgba(255, 255, 255, 0.94);
@@ -188,6 +189,7 @@
   --pale-blue: var(--announcement-blue-tint);
   --action-blue: var(--announcement-blue);
   --white: #ffffff;
+  --deep-green: #166534;
 
   /* Background Elements & Gradients */
   --navbar-bg: rgba(18, 18, 18, 0.95);
@@ -816,7 +818,7 @@ textarea {
 
 .form-grid, .two-column {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--space-lg);
 }
 
@@ -1069,6 +1071,47 @@ textarea {
   flex-shrink: 0;
 }
 
+/* Dashboard Responsive Patterns */
+.hero-telemetry-card {
+  flex: 0 1 380px;
+  min-width: 280px;
+  background: var(--dark-surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  box-shadow: var(--shadow-medium);
+}
+
+.dashboard-filter-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.estate-card-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1.5fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--dark-surface);
+  border: 1px solid var(--border-card);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+/* Responsive Table Wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Mobile Bottom Dock */
 .mobile-nav {
   display: none;
@@ -1076,7 +1119,7 @@ textarea {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 62px;
   background: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -1086,8 +1129,11 @@ textarea {
 
 .mobile-nav-inner {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .mobile-nav-item {
@@ -1104,6 +1150,10 @@ textarea {
   background: none;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
 }
 
 .mobile-nav-item:hover, .mobile-nav-item.active {
@@ -1198,6 +1248,14 @@ textarea {
   color: var(--announcement-blue);
 }
 
+/* Responsive Breakpoint Matrix */
+@media (max-width: 1024px) {
+  .estate-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
 @media (max-width: 768px) {
   .toast-container {
     bottom: 76px;
@@ -1211,6 +1269,9 @@ textarea {
   .auth-panel {
     display: none;
   }
+  .auth-form-side {
+    padding: 36px 16px;
+  }
   .desktop-nav {
     display: none !important;
   }
@@ -1221,6 +1282,78 @@ textarea {
     display: block;
   }
   .shell, .shell-narrow, .shell-wide {
-    padding-bottom: 90px;
+    padding: 16px 14px 90px;
+  }
+  .card {
+    padding: 18px 16px;
+  }
+  .hero-telemetry-card {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+    padding: 16px;
+  }
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .metric-value {
+    font-size: 26px;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar-inner {
+    padding: 0 12px;
+    height: 56px;
+  }
+  .navbar-brand span {
+    font-size: 15px;
+  }
+  .user-profile-badge {
+    padding: 3px;
+    background: transparent;
+    border-color: transparent;
+  }
+  .user-profile-badge .user-badge-text {
+    display: none !important;
+  }
+  .navbar-actions {
+    gap: 6px;
+  }
+  .estate-card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+  }
+  .dashboard-filter-bar {
+    width: 100%;
+  }
+  .dashboard-filter-bar > div:first-child {
+    width: 100%;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .shell, .shell-narrow, .shell-wide {
+    padding: 12px 10px 84px;
+  }
+  .card {
+    padding: 14px 12px;
+  }
+  .btn {
+    padding: 8px 18px;
+    font-size: 13px;
   }
 }

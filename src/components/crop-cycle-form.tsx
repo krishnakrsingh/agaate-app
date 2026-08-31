@@ -297,7 +297,7 @@ export function CropCycleForm({
         <div style={{ display: "grid", gap: 16 }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Select Establishment Method (BRD §7)</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12, marginTop: 8 }}>
               <button
                 type="button"
                 onClick={() => setEstablishmentType("NURSERY_TRANSPLANTATION")}
@@ -687,7 +687,7 @@ export function CropCycleForm({
               </div>
             </div>
 
-            <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
               <div>
                 <span className="mono-label">Bed Infrastructure</span>
                 <div style={{ fontSize: 13, color: "var(--ink)", marginTop: 2 }}>

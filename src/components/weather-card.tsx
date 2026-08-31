@@ -75,7 +75,7 @@ export function WeatherCard({ farmId }: { farmId: string }) {
               <span className="mono-label">Ambient Air</span>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 80px), 1fr))", gap: 8 }}>
               <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--hairline)" }}>
                 <div style={{ fontSize: 11, color: "var(--slate)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icons.Droplet size={11} />

@@ -363,7 +363,7 @@ export function FieldReports({
             {/* Health Classification */}
             <div className="form-group" style={{ margin: 0 }}>
               <label>Crop Health Status</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: 10 }}>
                 <button
                   type="button"
                   onClick={() => setHealthStatus("GOOD")}
@@ -499,7 +499,7 @@ export function FieldReports({
             {/* Scope Level */}
             <div className="form-group" style={{ margin: 0 }}>
               <label>Incident Level</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 80px), 1fr))", gap: 8 }}>
                 {(["FARM", "PLOT", "CROP"] as const).map((lvl) => (
                   <button
                     key={lvl}

@@ -173,7 +173,7 @@ export function TaskCompletionForm({
           <Icons.Layers size={13} />
           <span>Material Utilization (Optional)</span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: 10 }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label style={{ fontSize: 12 }}>Material Name</label>
             <input name="materialName" placeholder="e.g., NPK 19:19:19" />

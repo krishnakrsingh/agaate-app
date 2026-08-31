@@ -76,15 +76,17 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
           <div className="navbar-actions">
             <div className="user-profile-badge" title={`Signed in as ${userName}`}>
               <div className="user-avatar">{userName ? userName.charAt(0).toUpperCase() : "U"}</div>
-              <span className="mono-label" style={{ color: "var(--ink)", fontWeight: 600 }}>
-                {roleLabel}
-              </span>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--spotify-green)", boxShadow: "0 0 6px rgba(30, 215, 96, 0.6)" }} />
-              {userName && (
-                <span style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {userName}
+              <span className="user-badge-text" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span className="mono-label" style={{ color: "var(--ink)", fontWeight: 600 }}>
+                  {roleLabel}
                 </span>
-              )}
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--spotify-green)", boxShadow: "0 0 6px rgba(30, 215, 96, 0.6)" }} />
+                {userName && (
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {userName}
+                  </span>
+                )}
+              </span>
             </div>
 
             {/* Theme Toggle Button */}

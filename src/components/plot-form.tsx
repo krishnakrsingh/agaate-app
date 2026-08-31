@@ -176,7 +176,7 @@ export function PlotForm({ farmId }: { farmId: string }) {
                 key={type}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "130px 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))",
                   gap: 12,
                   alignItems: "center",
                   padding: "8px 12px",

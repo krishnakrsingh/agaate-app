@@ -235,7 +235,7 @@ export function TaskForm({
 
         <div className="form-group" style={{ margin: 0 }}>
           <label>Priority Level</label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 70px), 1fr))", gap: 6 }}>
             {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => (
               <button
                 key={p}
