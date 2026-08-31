@@ -1032,7 +1032,75 @@ textarea {
   display: block;
 }
 
+/* Toast Notification System (DESIGN.md: Dark Surface #181818, Heavy Shadow) */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background: var(--dark-surface);
+  color: var(--text-base);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: var(--shadow-heavy);
+  font-size: 14px;
+  font-weight: 500;
+  animation: toastSlideIn 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.toast.success {
+  border-left: 4px solid var(--spotify-green);
+}
+.toast.success svg {
+  color: var(--spotify-green);
+}
+
+.toast.error {
+  border-left: 4px solid var(--negative-red);
+}
+.toast.error svg {
+  color: var(--negative-red);
+}
+
+.toast.info {
+  border-left: 4px solid var(--announcement-blue);
+}
+.toast.info svg {
+  color: var(--announcement-blue);
+}
+
 @media (max-width: 768px) {
+  .toast-container {
+    bottom: 76px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+  }
   .auth-shell {
     grid-template-columns: 1fr;
   }
