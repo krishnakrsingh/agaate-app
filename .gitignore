@@ -23,3 +23,6 @@ npm-debug.log*
 # graphify cache
 /graphify-out/cache/
 
+# auto-commit loop
+auto-commit-loop.ps1
+
