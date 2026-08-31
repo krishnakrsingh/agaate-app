@@ -78,9 +78,9 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
               <span className="mono-label" style={{ color: "var(--ink)", fontWeight: 600 }}>
                 {roleLabel}
               </span>
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--coral)" }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--spotify-green)", boxShadow: "0 0 6px rgba(30, 215, 96, 0.6)" }} />
               {userName && (
-                <span style={{ fontSize: 13, color: "var(--body-muted)", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {userName}
                 </span>
               )}
@@ -94,12 +94,12 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
                 aria-expanded={menuOpen}
                 aria-label="Open menu"
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: "var(--radius-sm)",
-                  background: menuOpen ? "var(--soft-stone)" : "var(--canvas)",
-                  color: "var(--ink)",
-                  border: "1px solid var(--hairline)",
+                  width: 36,
+                  height: 36,
+                  borderRadius: "var(--radius-circle)",
+                  background: menuOpen ? "var(--surface-hover)" : "var(--mid-dark)",
+                  color: "var(--text-base)",
+                  border: "1px solid var(--border-subtle)",
                   display: "grid",
                   placeItems: "center",
                   cursor: "pointer",
@@ -116,22 +116,22 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
                     position: "absolute",
                     right: 0,
                     top: "calc(100% + 8px)",
-                    background: "var(--canvas)",
-                    border: "1px solid var(--hairline)",
+                    background: "var(--dark-surface)",
+                    border: "1px solid var(--border-card)",
                     borderRadius: "var(--radius-sm)",
                     padding: 8,
                     minWidth: 230,
-                    boxShadow: "var(--shadow-lg)",
+                    boxShadow: "var(--shadow-heavy)",
                     zIndex: 50,
                     display: "grid",
                     gap: 2,
                   }}
                 >
-                  <div style={{ padding: "8px 12px 10px", borderBottom: "1px solid var(--hairline)" }}>
-                    <div className="mono-label" style={{ color: "var(--ink)" }}>
+                  <div style={{ padding: "8px 12px 10px", borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div className="mono-label" style={{ color: "var(--text-base)" }}>
                       {roleLabel}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--body-muted)", marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
                       {userName}
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
                     </Link>
                   ))}
 
-                  <div style={{ height: 1, background: "var(--hairline)", margin: "4px 0" }} />
+                  <div style={{ height: 1, background: "var(--border-subtle)", margin: "4px 0" }} />
                   <div style={{ padding: "4px 6px" }}>
                     <LogoutButton variant="menu" />
                   </div>

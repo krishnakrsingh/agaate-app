@@ -81,15 +81,15 @@ export function LoginForm() {
       {/* Demo Account Persona Selector */}
       <div
         style={{
-          background: "var(--soft-stone)",
-          border: "1px solid var(--hairline)",
+          background: "var(--dark-surface)",
+          border: "1px solid var(--border-card)",
           borderRadius: "var(--radius-sm)",
           padding: 16,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)" }} />
-          <span className="mono-label" style={{ color: "var(--ink)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--spotify-green)", boxShadow: "0 0 6px rgba(30, 215, 96, 0.6)" }} />
+          <span className="mono-label" style={{ color: "var(--text-base)" }}>
             Select Persona to Test
           </span>
         </div>
@@ -103,17 +103,17 @@ export function LoginForm() {
                 type="button"
                 onClick={() => quickFill(acc.email, acc.password)}
                 style={{
-                  background: isSelected ? "var(--primary)" : "var(--canvas)",
-                  color: isSelected ? "var(--on-primary)" : "var(--ink)",
-                  border: `1px solid ${isSelected ? "var(--primary)" : "var(--hairline)"}`,
+                  background: isSelected ? "var(--surface-hover)" : "var(--mid-dark)",
+                  color: isSelected ? "var(--text-light)" : "var(--text-secondary)",
+                  border: `1px solid ${isSelected ? "var(--spotify-green)" : "var(--border-subtle)"}`,
                   borderRadius: "var(--radius-xs)",
-                  padding: "8px 10px",
+                  padding: "10px 12px",
                   textAlign: "left",
                   cursor: "pointer",
                   transition: "all var(--transition-fast)",
                 }}
               >
-                <div style={{ fontSize: 12, fontWeight: 600 }}>{acc.role}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--spotify-green)" : "var(--text-base)" }}>{acc.role}</div>
                 <div style={{ fontSize: 11, opacity: 0.8 }}>{acc.badge}</div>
               </button>
             );
@@ -122,10 +122,10 @@ export function LoginForm() {
       </div>
 
       {/* Main Authentication Card */}
-      <div className="card" style={{ padding: 28 }}>
-        <div style={{ marginBottom: 20 }}>
-          <h2 style={{ margin: "0 0 4px", fontSize: 24 }}>Sign in to Agaate</h2>
-          <p style={{ margin: 0, fontSize: 14, color: "var(--body-muted)" }}>
+      <div className="card" style={{ padding: 32 }}>
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ margin: "0 0 6px", fontSize: 22, color: "var(--text-light)" }}>Sign in to Agaate</h2>
+          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
             Enter your credentials to access precision agriculture operations.
           </p>
         </div>

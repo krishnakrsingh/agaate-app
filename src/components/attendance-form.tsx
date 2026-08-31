@@ -450,8 +450,8 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             {/* Real-time Geofence Proximity Radar */}
             <div
               style={{
-                background: proximityInfo?.isWithin ? "var(--pale-green)" : coords ? "#fffbeb" : "var(--soft-stone)",
-                border: `1px solid ${proximityInfo?.isWithin ? "#bbf7d0" : coords ? "#fde68a" : "var(--hairline)"}`,
+                background: proximityInfo?.isWithin ? "var(--spotify-green-tint)" : coords ? "var(--warning-orange-tint)" : "var(--mid-dark)",
+                border: `1px solid ${proximityInfo?.isWithin ? "rgba(30, 215, 96, 0.4)" : coords ? "rgba(255, 164, 43, 0.4)" : "var(--border-subtle)"}`,
                 borderRadius: "var(--radius-sm)",
                 padding: 16,
                 display: "grid",
@@ -460,8 +460,8 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icons.MapPin size={16} style={{ color: proximityInfo?.isWithin ? "#166534" : "#b45309" }} />
-                  <span className="mono-label" style={{ color: "var(--ink)" }}>
+                  <Icons.MapPin size={16} style={{ color: proximityInfo?.isWithin ? "var(--spotify-green)" : coords ? "var(--warning-orange)" : "var(--text-secondary)" }} />
+                  <span className="mono-label" style={{ color: "var(--text-base)" }}>
                     GPS Geofence Proximity Radar
                   </span>
                 </div>

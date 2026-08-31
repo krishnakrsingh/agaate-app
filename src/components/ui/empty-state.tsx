@@ -14,25 +14,26 @@ export function EmptyState({
   return (
     <div
       style={{
-        padding: "40px 20px",
+        padding: "48px 24px",
         textAlign: "center",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--soft-stone)",
-        border: "1px solid var(--hairline)",
+        background: "var(--dark-surface)",
+        border: "1px solid var(--border-card)",
         borderRadius: "var(--radius-sm)",
+        boxShadow: "var(--shadow-subtle)",
       }}
     >
-      {icon && <div style={{ color: "var(--slate)", marginBottom: 10 }}>{icon}</div>}
-      <strong style={{ fontSize: 15, color: "var(--ink)" }}>{title}</strong>
+      {icon && <div style={{ color: "var(--text-secondary)", marginBottom: 12 }}>{icon}</div>}
+      <strong style={{ fontSize: 16, color: "var(--text-light)" }}>{title}</strong>
       {description && (
-        <p style={{ color: "var(--body-muted)", fontSize: 13, margin: "4px 0 12px", maxWidth: 420 }}>
+        <p style={{ color: "var(--text-secondary)", fontSize: 13, margin: "6px 0 16px", maxWidth: 420 }}>
           {description}
         </p>
       )}
-      {action && <div style={{ marginTop: 4 }}>{action}</div>}
+      {action && <div style={{ marginTop: 6 }}>{action}</div>}
     </div>
   );
 }

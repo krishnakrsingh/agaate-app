@@ -14,11 +14,10 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
         style={{
           width: "100%",
           justifyContent: "center",
-          color: "var(--error)",
-          borderColor: "rgba(179, 0, 0, 0.2)",
-          background: "#fff5f5",
+          color: "var(--negative-red)",
+          borderColor: "rgba(243, 114, 127, 0.3)",
+          background: "var(--negative-red-tint)",
           minHeight: 36,
-          fontWeight: 500,
         }}
       >
         <Icons.LogOut size={14} />
@@ -30,18 +29,12 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
   return (
     <button
       type="button"
-      className="btn btn-primary btn-sm"
+      className="btn btn-outline btn-sm"
       onClick={async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         window.location.href = "/login";
       }}
       title="Sign out of console"
-      style={{
-        padding: "6px 14px",
-        fontSize: "13px",
-        minHeight: "32px",
-        borderRadius: "var(--radius-pill)",
-      }}
     >
       <Icons.LogOut size={13} />
       <span>Sign out</span>

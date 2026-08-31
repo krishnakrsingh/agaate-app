@@ -370,17 +370,17 @@ export function FieldReports({
                   style={{
                     padding: "12px 14px",
                     borderRadius: "var(--radius-xs)",
-                    background: healthStatus === "GOOD" ? "var(--pale-green)" : "var(--canvas)",
-                    border: `1px solid ${healthStatus === "GOOD" ? "#bbf7d0" : "var(--hairline)"}`,
+                    background: healthStatus === "GOOD" ? "var(--spotify-green-tint)" : "var(--mid-dark)",
+                    border: `1px solid ${healthStatus === "GOOD" ? "rgba(30, 215, 96, 0.5)" : "var(--border-subtle)"}`,
                     textAlign: "left",
                     cursor: "pointer",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icons.CheckCircle size={15} style={{ color: "#166534" }} />
-                    <strong style={{ color: "#166534", fontSize: 13 }}>Good Crop Health</strong>
+                    <Icons.CheckCircle size={15} style={{ color: "var(--spotify-green)" }} />
+                    <strong style={{ color: "var(--spotify-green)", fontSize: 13 }}>Good Crop Health</strong>
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--body-muted)", marginTop: 2 }}>Vigorous growth, healthy canopy</div>
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>Vigorous growth, healthy canopy</div>
                 </button>
 
                 <button
@@ -389,17 +389,17 @@ export function FieldReports({
                   style={{
                     padding: "12px 14px",
                     borderRadius: "var(--radius-xs)",
-                    background: healthStatus === "POOR" ? "#fff5f5" : "var(--canvas)",
-                    border: `1px solid ${healthStatus === "POOR" ? "#fed7d7" : "var(--hairline)"}`,
+                    background: healthStatus === "POOR" ? "var(--negative-red-tint)" : "var(--mid-dark)",
+                    border: `1px solid ${healthStatus === "POOR" ? "rgba(243, 114, 127, 0.5)" : "var(--border-subtle)"}`,
                     textAlign: "left",
                     cursor: "pointer",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icons.AlertTriangle size={15} style={{ color: "var(--error)" }} />
-                    <strong style={{ color: "var(--error)", fontSize: 13 }}>Poor Crop Health</strong>
+                    <Icons.AlertTriangle size={15} style={{ color: "var(--negative-red)" }} />
+                    <strong style={{ color: "var(--negative-red)", fontSize: 13 }}>Poor Crop Health</strong>
                   </div>
-                  <div style={{ fontSize: 11, color: "var(--body-muted)", marginTop: 2 }}>Yellowing, wilting, stress</div>
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>Yellowing, wilting, stress</div>
                 </button>
               </div>
             </div>

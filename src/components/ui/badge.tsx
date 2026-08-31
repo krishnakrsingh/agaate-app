@@ -21,11 +21,25 @@ export function PriorityBadge({ priority }: { priority: string }) {
       className="mono-label"
       style={{
         fontSize: 10,
-        padding: "2px 8px",
-        borderRadius: "var(--radius-xs)",
-        background: isUrgent ? "#fff5f5" : isHigh ? "var(--soft-stone)" : "var(--canvas)",
-        color: isUrgent ? "var(--error)" : isHigh ? "var(--ink)" : "var(--slate)",
-        border: `1px solid ${isUrgent ? "#fed7d7" : "var(--hairline)"}`,
+        padding: "3px 10px",
+        borderRadius: "var(--radius-full)",
+        background: isUrgent
+          ? "var(--negative-red-tint)"
+          : isHigh
+          ? "var(--warning-orange-tint)"
+          : "var(--mid-dark)",
+        color: isUrgent
+          ? "var(--negative-red)"
+          : isHigh
+          ? "var(--warning-orange)"
+          : "var(--text-secondary)",
+        border: `1px solid ${
+          isUrgent
+            ? "rgba(243, 114, 127, 0.3)"
+            : isHigh
+            ? "rgba(255, 164, 43, 0.3)"
+            : "var(--border-subtle)"
+        }`,
       }}
     >
       {priority}

@@ -10,32 +10,32 @@ export default async function LoginPage() {
 
   return (
     <main className="auth-shell">
-      {/* Left Deep Green Feature Band */}
+      {/* Left Dark Immersive Feature Panel */}
       <section className="auth-panel">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
-            <div className="brand-icon" style={{ background: "white", color: "var(--deep-green)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 40 }}>
+            <div className="brand-icon">
               <Icons.Sprout size={18} />
             </div>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em", color: "white" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20, letterSpacing: "0.5px", color: "var(--text-base)" }}>
               AGAATE
             </span>
           </div>
 
           <div style={{ maxWidth: 520 }}>
             <div style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--coral)" }} />
-              <span className="mono-label" style={{ color: "rgba(255, 255, 255, 0.8)" }}>
+              <span className="eyebrow-dot" />
+              <span className="mono-label" style={{ color: "var(--text-secondary)" }}>
                 ENTERPRISE AGRI OPERATING SYSTEM
               </span>
             </div>
             <h1 style={{
-              color: "white", fontSize: "clamp(32px, 4vw, 54px)",
-              lineHeight: 1.05, fontWeight: 400, margin: "0 0 16px"
+              color: "var(--text-light)", fontSize: "clamp(30px, 3.5vw, 48px)",
+              lineHeight: 1.15, fontWeight: 800, margin: "0 0 16px"
             }}>
-              Controlled intelligence from soil to harvest<span style={{ color: "var(--coral)" }}>.</span>
+              Controlled intelligence from soil to harvest<span style={{ color: "var(--spotify-green)" }}>.</span>
             </h1>
-            <p style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: 16, lineHeight: 1.45, maxWidth: 480 }}>
+            <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.5, maxWidth: 480 }}>
               Operate multi-farm portfolios with precision agronomy, geofenced presence verification, and automated daily intelligence reports.
             </p>
           </div>

@@ -169,7 +169,7 @@ export function ApprovalsConsole() {
                       </td>
                       <td>{ex.attendance.farm.name}</td>
                       <td>
-                        <span className="mono-label" style={{ color: "#92400e", background: "#fffbeb", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
+                        <span className="mono-label" style={{ color: "var(--warning-orange)", background: "var(--warning-orange-tint)", border: "1px solid rgba(255, 164, 43, 0.3)", padding: "3px 10px", borderRadius: "var(--radius-full)" }}>
                           {ex.distanceMeters}m (radius: {ex.attendance.farm.geofenceRadiusMeters ?? 500}m)
                         </span>
                       </td>
