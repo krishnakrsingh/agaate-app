@@ -12,6 +12,7 @@ import { FarmStatusControl } from "./farm-status-control";
 import { IncidentFollowUp } from "./incident-followup";
 import { IncidentStatusControl } from "./incident-status-control";
 import { EvidenceGallery } from "./evidence-gallery";
+import { StatusBadge, PriorityBadge } from "./ui/badge";
 
 type Milestone = {
   id: string;
@@ -117,24 +118,22 @@ export function FarmHubClient({
   );
 
   return (
-    <div style={{ display: "grid", gap: 24 }}>
-      {/* Farm Command Header */}
-      <div className="card" style={{ padding: 28 }}>
+    <div style={{ display: "grid", gap: 20 }}>
+      {/* ── COMMAND HEADER ── */}
+      <div className="card" style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ minWidth: 0, flex: "1 1 420px" }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
-              <span className={`status-badge ${farm.status === "ACTIVE" ? "badge-active" : "badge-setup"}`}>
-                {farm.status}
-              </span>
-              <span style={{ fontSize: "0.82rem", color: "var(--slate-500)", display: "inline-flex", gap: 4, alignItems: "center" }}>
-                <Icons.MapPin size={12} />
+          <div style={{ minWidth: 0, flex: "1 1 440px" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+              <StatusBadge status={farm.status} />
+              <span className="mono-label" style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+                <Icons.MapPin size={13} />
                 <span>{farm.location} &bull; {farm.geofenceRadiusMeters}m geofence &bull; {farm.plots.length} plots</span>
               </span>
             </div>
 
-            <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)", margin: "0 0 8px" }}>{farm.name}</h1>
-            <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", margin: 0 }}>
-              <strong>{farm.ownerName}</strong> &bull; {farm.totalArea} acres total &bull; {farm.cultivableArea} cultivable &bull; Water: {farm.waterSource}
+            <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.1rem)", margin: "0 0 6px" }}>{farm.name}</h1>
+            <p className="muted" style={{ margin: 0 }}>
+              <strong>{farm.ownerName}</strong> &bull; {farm.totalArea} acres total ({farm.cultivableArea} cultivable) &bull; Water: {farm.waterSource}
             </p>
           </div>
 
@@ -149,27 +148,41 @@ export function FarmHubClient({
           </div>
         </div>
 
-        {/* Onboarding Activation Pipeline */}
+        {/* ── ONBOARDING ACTIVATION PIPELINE (WHEN IN SETUP) ── */}
         {isSetup && (
           <div style={{
-            marginTop: 20, background: "var(--deep-green)", color: "white", borderRadius: "var(--radius-sm)",
-            padding: 16, display: "grid", gap: 10,
+            marginTop: 18,
+            background: "var(--primary-light)",
+            border: "1px solid var(--primary-border)",
+            borderRadius: "var(--radius-md)",
+            padding: 16,
+            display: "grid",
+            gap: 10,
           }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: "11px", fontWeight: 600, letterSpacing: "0.28px", textTransform: "uppercase", color: "rgba(255, 255, 255, 0.8)" }}>
-              <Icons.Sparkles size={14} /><span>Farm Activation Pipeline &bull; 3 Prerequisites Required (BRD §4)</span>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--primary)" }}>
+              <Icons.Sparkles size={15} />
+              <span>Farm Activation Pipeline &bull; 3 Prerequisites Required (BRD §4)</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
               {[
                 { ok: hasPlots, label: `1. Add Plot (${farm.plots.length})` },
                 { ok: hasActiveCycles, label: "2. Plan Crop Cycle" },
                 { ok: hasMilestones, label: "3. Auto Milestones (4)" },
               ].map((s) => (
                 <div key={s.label} style={{
-                  padding: "8px 12px", borderRadius: "var(--radius-xs)", border: "1px solid rgba(255,255,255,0.2)",
-                  background: s.ok ? "rgba(255, 255, 255, 0.15)" : "rgba(0,0,0,0.2)", display: "flex", gap: 6, alignItems: "center",
-                  fontSize: 13, fontWeight: 500, color: s.ok ? "#ffffff" : "rgba(255,255,255,0.7)",
+                  padding: "10px 14px",
+                  borderRadius: "var(--radius-sm)",
+                  border: `1px solid ${s.ok ? "var(--success-border)" : "var(--border)"}`,
+                  background: s.ok ? "var(--success-light)" : "var(--card)",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  color: s.ok ? "var(--success-text)" : "var(--text-muted)",
                 }}>
-                  {s.ok ? <Icons.CheckCircle size={14} /> : <Icons.AlertCircle size={14} />}<span>{s.label}</span>
+                  {s.ok ? <Icons.CheckCircle size={16} style={{ color: "var(--success)" }} /> : <Icons.AlertCircle size={16} />}
+                  <span>{s.label}</span>
                 </div>
               ))}
             </div>
@@ -177,14 +190,14 @@ export function FarmHubClient({
         )}
       </div>
 
-      {/* Modern Navigation Tabs */}
-      <div className="tabs-nav" style={{ marginBottom: 0 }}>
+      {/* ── SEGMENTED NAVIGATION TABS ── */}
+      <div className="tabs-nav">
         <button
           type="button"
           className={`tab-btn ${activeTab === "plots" ? "active" : ""}`}
           onClick={() => setActiveTab("plots")}
         >
-          <Icons.Layers size={16} />
+          <Icons.Layers size={15} />
           <span>Plots & Crops ({farm.plots.length})</span>
         </button>
 
@@ -193,7 +206,7 @@ export function FarmHubClient({
           className={`tab-btn ${activeTab === "weather" ? "active" : ""}`}
           onClick={() => setActiveTab("weather")}
         >
-          <Icons.Sun size={16} />
+          <Icons.Sun size={15} />
           <span>Agronomy & Weather</span>
         </button>
 
@@ -202,7 +215,7 @@ export function FarmHubClient({
           className={`tab-btn ${activeTab === "team" ? "active" : ""}`}
           onClick={() => setActiveTab("team")}
         >
-          <Icons.Users size={16} />
+          <Icons.Users size={15} />
           <span>Team & Access</span>
         </button>
 
@@ -211,7 +224,7 @@ export function FarmHubClient({
           className={`tab-btn ${activeTab === "signals" ? "active" : ""}`}
           onClick={() => setActiveTab("signals")}
         >
-          <Icons.Activity size={16} />
+          <Icons.Activity size={15} />
           <span>Signals & Incidents ({farm.incidents.length + farm.monitoring.length})</span>
         </button>
 
@@ -221,19 +234,19 @@ export function FarmHubClient({
             className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
             onClick={() => setActiveTab("settings")}
           >
-            <Icons.Settings size={16} />
+            <Icons.Settings size={15} />
             <span>Farm Settings</span>
           </button>
         )}
       </div>
 
-      {/* TAB 1: PLOTS & CROPS */}
+      {/* ── TAB 1: PLOTS & CROPS ── */}
       {activeTab === "plots" && (
         <section style={{ display: "grid", gap: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
             <div>
-              <h2 style={{ fontSize: "1.25rem", margin: 0 }}>Managed Plots & Crop Cycles</h2>
-              <p className="muted" style={{ fontSize: "0.85rem", margin: "2px 0 0" }}>
+              <h2 style={{ fontSize: "1.2rem", margin: 0 }}>Managed Plots & Crop Cycles</h2>
+              <p className="muted" style={{ margin: "2px 0 0" }}>
                 Total acreage: <strong>{farm.plots.reduce((acc, p) => acc + Number(p.area), 0).toFixed(2)} acres</strong>
               </p>
             </div>
@@ -241,10 +254,10 @@ export function FarmHubClient({
             {canManage && (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={() => setShowAddPlot(!showAddPlot)}
               >
-                {showAddPlot ? <Icons.X size={16} /> : <Icons.Plus size={16} />}
+                {showAddPlot ? <Icons.X size={15} /> : <Icons.Plus size={15} />}
                 <span>{showAddPlot ? "Close Form" : "Create New Plot"}</span>
               </button>
             )}
@@ -255,20 +268,20 @@ export function FarmHubClient({
           {/* Plots Grid */}
           <div style={{ display: "grid", gap: 16 }}>
             {farm.plots.map((plot) => (
-              <article className="card" key={plot.id} style={{ margin: 0 }}>
+              <article className="card" key={plot.id} style={{ margin: 0, padding: 22 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                   <div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                      <h3 style={{ margin: 0, fontSize: "1.2rem" }}>{plot.name}</h3>
-                      <span className={`status ${plot.status.toLowerCase()}`}>{plot.status}</span>
-                      <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--primary-800)" }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.15rem" }}>{plot.name}</h3>
+                      <StatusBadge status={plot.status} />
+                      <span className="mono-label" style={{ fontWeight: 700, color: "var(--primary)" }}>
                         {plot.area} Acres
                       </span>
                     </div>
 
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                       <span className="muted" style={{ fontSize: "0.82rem" }}>
-                        Soil: {plot.soilType || "Not specified"} &bull; GPS: ({plot.latitude}, {plot.longitude})
+                        Soil: <strong>{plot.soilType || "Not specified"}</strong> &bull; GPS: ({plot.latitude}, {plot.longitude})
                       </span>
                     </div>
 
@@ -280,9 +293,9 @@ export function FarmHubClient({
                           style={{
                             padding: "3px 8px",
                             borderRadius: "var(--radius-sm)",
-                            background: "var(--sky-light)",
-                            color: "var(--sky-blue)",
-                            border: "1px solid var(--sky-border)",
+                            background: "var(--info-light)",
+                            color: "var(--info-text)",
+                            border: "1px solid var(--info-border)",
                             fontSize: "0.78rem",
                             fontWeight: 600,
                           }}
@@ -311,25 +324,27 @@ export function FarmHubClient({
                 </div>
 
                 {/* Crop Cycles within Plot */}
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-subtle)", display: "grid", gap: 12 }}>
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gap: 12 }}>
                   {plot.cropCycles.map((cycle) => (
                     <div
                       key={cycle.id}
                       style={{
                         padding: "16px",
-                        background: "var(--slate-50)",
+                        background: "var(--card-muted)",
                         borderRadius: "var(--radius-md)",
-                        border: "1px solid var(--border-subtle)",
+                        border: "1px solid var(--border)",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
                         <div>
-                          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                            <strong style={{ fontSize: "1.1rem", color: "var(--primary-900)" }}>
-                              🌱 {cycle.cropName}
-                            </strong>
-                            <span className={`status ${cycle.status.toLowerCase()}`}>{cycle.status}</span>
-                            <span className="role-badge agronomist" style={{ fontSize: "0.68rem" }}>
+                          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            <Link href={`/plots/${plot.id}/crop-cycles/${cycle.id}`} style={{ textDecoration: "none" }}>
+                              <strong style={{ fontSize: "1.05rem", color: "var(--text-main)" }}>
+                                🌱 {cycle.cropName}
+                              </strong>
+                            </Link>
+                            <StatusBadge status={cycle.status} />
+                            <span className="mono-label" style={{ background: "var(--card)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
                               {cycle.establishmentType.replaceAll("_", " ")}
                             </span>
                           </div>
@@ -339,19 +354,26 @@ export function FarmHubClient({
                           </p>
                         </div>
 
-                        {canManage && (
-                          <Link href={`/plots/${plot.id}/crop-cycles/${cycle.id}/edit`} className="btn btn-sm btn-secondary">
-                            <Icons.Edit size={13} />
-                            <span>Edit Milestones</span>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <Link href={`/plots/${plot.id}/crop-cycles/${cycle.id}`} className="btn btn-sm btn-outline">
+                            <span>Inspect Cycle</span>
+                            <Icons.ArrowRight size={12} />
                           </Link>
-                        )}
+
+                          {canManage && (
+                            <Link href={`/plots/${plot.id}/crop-cycles/${cycle.id}/edit`} className="btn btn-sm btn-secondary">
+                              <Icons.Edit size={13} />
+                              <span>Edit Milestones</span>
+                            </Link>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Bed & Plant Variance Telemetry */}
+                      {/* Bed & Plant Population Telemetry */}
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginTop: 12 }}>
                         {cycle.bedPreparationEnabled && (
-                          <div style={{ padding: "8px 10px", background: "white", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}>
-                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>
+                          <div style={{ padding: "8px 12px", background: "var(--card)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                            <span className="mono-label" style={{ display: "block" }}>
                               Beds (Expected / Actual)
                             </span>
                             <strong style={{ fontSize: "0.95rem" }}>
@@ -360,8 +382,8 @@ export function FarmHubClient({
                           </div>
                         )}
 
-                        <div style={{ padding: "8px 10px", background: "white", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}>
-                          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>
+                        <div style={{ padding: "8px 12px", background: "var(--card)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                          <span className="mono-label" style={{ display: "block" }}>
                             Plants (Target / Actual)
                           </span>
                           <strong style={{ fontSize: "0.95rem" }}>
@@ -370,9 +392,9 @@ export function FarmHubClient({
                         </div>
 
                         {cycle.mulchEnabled && (
-                          <div style={{ padding: "8px 10px", background: "white", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-subtle)" }}>
-                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>
-                              Mulching Setup
+                          <div style={{ padding: "8px 12px", background: "var(--card)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                            <span className="mono-label" style={{ display: "block" }}>
+                              Mulching Configuration
                             </span>
                             <strong style={{ fontSize: "0.85rem" }}>
                               {cycle.mulchHolePattern?.replaceAll("_", " ")} ({cycle.plantDistanceCm}cm)
@@ -383,28 +405,26 @@ export function FarmHubClient({
 
                       {/* Milestone Roadmap */}
                       <div style={{ marginTop: 14 }}>
-                        <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", display: "block", marginBottom: 6 }}>
+                        <span className="mono-label" style={{ display: "block", marginBottom: 6, fontWeight: 700 }}>
                           Standard Milestone Schedule
                         </span>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
                           {cycle.milestones.map((m) => (
                             <div
                               key={m.id}
                               style={{
                                 padding: "8px 10px",
-                                background: m.status === "COMPLETED" ? "var(--primary-50)" : "white",
-                                border: `1px solid ${m.status === "COMPLETED" ? "var(--primary-200)" : "var(--border-subtle)"}`,
+                                background: m.status === "COMPLETED" ? "var(--success-light)" : "var(--card)",
+                                border: `1px solid ${m.status === "COMPLETED" ? "var(--success-border)" : "var(--border)"}`,
                                 borderRadius: "var(--radius-sm)",
                                 fontSize: "0.82rem",
                               }}
                             >
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <strong>{m.name}</strong>
-                                <span className={`status ${m.status.toLowerCase()}`} style={{ fontSize: "0.65rem", padding: "1px 5px" }}>
-                                  {m.status}
-                                </span>
+                                <StatusBadge status={m.status} />
                               </div>
-                              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginTop: 2 }}>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginTop: 3 }}>
                                 Target: {new Date(m.targetDate).toLocaleDateString()}
                               </span>
                             </div>
@@ -415,12 +435,12 @@ export function FarmHubClient({
                   ))}
 
                   {!plot.cropCycles.length && (
-                    <div className="empty" style={{ padding: 14 }}>
-                      <p style={{ margin: 0, fontSize: "0.85rem" }}>
+                    <div style={{ padding: "16px", textAlign: "center", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+                      <p className="muted" style={{ margin: "0 0 8px", fontSize: "0.88rem" }}>
                         No active crop cycle planned for this plot.
                       </p>
                       {canManage && (
-                        <Link href={`/plots/${plot.id}/crop-cycles/new`} className="btn btn-sm btn-primary" style={{ marginTop: 8 }}>
+                        <Link href={`/plots/${plot.id}/crop-cycles/new`} className="btn btn-sm btn-primary">
                           <Icons.Plus size={14} />
                           <span>Plan First Crop Cycle</span>
                         </Link>
@@ -432,12 +452,14 @@ export function FarmHubClient({
             ))}
 
             {!farm.plots.length && (
-              <div className="empty">
-                <div className="empty-icon">
-                  <Icons.Layers size={24} />
+              <div style={{ padding: "40px 20px", textAlign: "center", background: "var(--card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "var(--radius-sm)", background: "var(--card-muted)", margin: "0 auto 12px", display: "grid", placeItems: "center" }}>
+                  <Icons.Layers size={22} style={{ color: "var(--text-muted)" }} />
                 </div>
                 <h3>No Plots Defined</h3>
-                <p>Create plots with boundary coordinates and irrigation infrastructure to begin crop planning.</p>
+                <p className="muted" style={{ maxWidth: 400, margin: "4px auto 16px" }}>
+                  Create plots with boundary coordinates and irrigation infrastructure to begin crop planning.
+                </p>
                 {canManage && (
                   <button type="button" className="btn btn-primary" onClick={() => setShowAddPlot(true)}>
                     <Icons.Plus size={16} />
@@ -450,7 +472,7 @@ export function FarmHubClient({
         </section>
       )}
 
-      {/* TAB 2: AGRONOMY & WEATHER */}
+      {/* ── TAB 2: AGRONOMY & WEATHER ── */}
       {activeTab === "weather" && (
         <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, alignItems: "start" }}>
           <WeatherCard farmId={farm.id} />
@@ -458,22 +480,22 @@ export function FarmHubClient({
         </section>
       )}
 
-      {/* TAB 3: TEAM & ACCESS */}
+      {/* ── TAB 3: TEAM & ACCESS ── */}
       {activeTab === "team" && (
         <section>
           <FarmAccessManager farmId={farm.id} />
         </section>
       )}
 
-      {/* TAB 4: FIELD SIGNALS & INCIDENTS */}
+      {/* ── TAB 4: FIELD SIGNALS & INCIDENTS ── */}
       {activeTab === "signals" && (
         <section style={{ display: "grid", gap: 16 }}>
           {/* Crop Monitoring */}
           <article className="card" style={{ margin: 0 }}>
             <div className="card-header">
               <div>
-                <h3>Daily Crop Health Telemetry</h3>
-                <p className="muted" style={{ fontSize: "0.85rem" }}>
+                <h3 style={{ margin: 0 }}>Daily Crop Health Telemetry</h3>
+                <p className="muted" style={{ margin: "2px 0 0" }}>
                   Verified field observation logs submitted by assigned Farm Officers.
                 </p>
               </div>
@@ -485,14 +507,14 @@ export function FarmHubClient({
                   key={m.id}
                   style={{
                     padding: "12px 14px",
-                    background: m.status === "POOR" ? "var(--danger-light)" : "var(--primary-50)",
-                    border: `1px solid ${m.status === "POOR" ? "var(--danger-border)" : "var(--primary-200)"}`,
+                    background: m.status === "POOR" ? "var(--danger-light)" : "var(--success-light)",
+                    border: `1px solid ${m.status === "POOR" ? "var(--danger-border)" : "var(--success-border)"}`,
                     borderRadius: "var(--radius-md)",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <strong style={{ color: m.status === "POOR" ? "var(--danger-red)" : "var(--primary-800)" }}>
+                      <strong style={{ color: m.status === "POOR" ? "var(--danger-text)" : "var(--success-text)" }}>
                         {m.status === "GOOD" ? "🟢 Good Health" : "🔴 Poor Health"} &bull; Stage: {m.stage}
                       </strong>
                       {m.impactPercent && (
@@ -516,8 +538,8 @@ export function FarmHubClient({
               ))}
 
               {!farm.monitoring.length && (
-                <div className="empty" style={{ padding: 16 }}>
-                  <p style={{ margin: 0 }}>No daily monitoring reports submitted yet.</p>
+                <div style={{ padding: 16, textAlign: "center", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+                  <p className="muted" style={{ margin: 0 }}>No daily monitoring reports submitted yet.</p>
                 </div>
               )}
             </div>
@@ -527,8 +549,8 @@ export function FarmHubClient({
           <article className="card" style={{ margin: 0 }}>
             <div className="card-header">
               <div>
-                <h3>Field Incidents & Corrective Actions</h3>
-                <p className="muted" style={{ fontSize: "0.85rem" }}>
+                <h3 style={{ margin: 0 }}>Field Incidents & Corrective Actions</h3>
+                <p className="muted" style={{ margin: "2px 0 0" }}>
                   Pests, infrastructure issues, and Agronomist treatment instructions.
                 </p>
               </div>
@@ -540,8 +562,8 @@ export function FarmHubClient({
                   key={inc.id}
                   style={{
                     padding: "14px",
-                    background: "white",
-                    border: "1px solid var(--border-strong)",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "var(--radius-md)",
                   }}
                 >
@@ -549,8 +571,8 @@ export function FarmHubClient({
                     <div>
                       <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
                         <strong style={{ fontSize: "1.05rem" }}>{inc.type}</strong>
-                        <span className={`priority-tag ${(inc.severity ?? "MEDIUM").toLowerCase()}`}>{inc.severity ?? "MEDIUM"}</span>
-                        <span style={{ fontSize: "0.72rem", background: "var(--slate-100)", padding: "2px 6px", borderRadius: 4 }}>
+                        <PriorityBadge priority={inc.severity ?? "MEDIUM"} />
+                        <span className="mono-label" style={{ background: "var(--card-muted)", padding: "2px 6px", borderRadius: 4 }}>
                           {inc.level} Level
                         </span>
                       </div>
@@ -573,8 +595,8 @@ export function FarmHubClient({
               ))}
 
               {!farm.incidents.length && (
-                <div className="empty" style={{ padding: 16 }}>
-                  <p style={{ margin: 0 }}>No incidents reported on this farm.</p>
+                <div style={{ padding: 16, textAlign: "center", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+                  <p className="muted" style={{ margin: 0 }}>No incidents reported on this farm.</p>
                 </div>
               )}
             </div>
@@ -582,7 +604,7 @@ export function FarmHubClient({
         </section>
       )}
 
-      {/* TAB 5: FARM SETTINGS */}
+      {/* ── TAB 5: FARM SETTINGS ── */}
       {activeTab === "settings" && canManage && (
         <section>
           <FarmEditForm farm={farm} />

@@ -104,7 +104,10 @@ export function PlotForm({ farmId }: { farmId: string }) {
     <article className="card" style={{ padding: 24 }}>
       <div className="card-header">
         <div>
-          <div className="eyebrow">PLOT REGISTRATION</div>
+          <div className="eyebrow">
+            <span className="eyebrow-dot"></span>
+            PLOT REGISTRATION
+          </div>
           <h3 style={{ margin: "2px 0 0" }}>Create Plot on this Farm</h3>
         </div>
       </div>
@@ -126,17 +129,9 @@ export function PlotForm({ farmId }: { farmId: string }) {
               <label>Latitude</label>
               <button
                 type="button"
+                className="btn btn-ghost btn-sm"
                 onClick={capture}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--action-blue)",
-                  fontSize: 11,
-                  padding: 0,
-                  cursor: "pointer",
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                }}
+                style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
               >
                 + Capture GPS
               </button>
@@ -176,24 +171,24 @@ export function PlotForm({ farmId }: { farmId: string }) {
         </div>
 
         {/* Irrigation Setup */}
-        <div style={{ background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 16, display: "grid", gap: 10 }}>
-          <div className="mono-label">Irrigation Setup (Select all that apply)</div>
+        <div style={{ background: "var(--card-muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 16, display: "grid", gap: 10 }}>
+          <div className="mono-label" style={{ fontWeight: 700 }}>Irrigation Setup (Select all that apply)</div>
           <div style={{ display: "grid", gap: 8 }}>
             {irrigationOptions.map((type) => (
               <div
                 key={type}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))",
                   gap: 12,
                   alignItems: "center",
                   padding: "8px 12px",
-                  background: "var(--canvas)",
-                  borderRadius: "var(--radius-xs)",
-                  border: `1px solid ${selected.has(type) ? "var(--ink)" : "var(--hairline)"}`,
+                  background: "var(--card)",
+                  borderRadius: "var(--radius-sm)",
+                  border: `1px solid ${selected.has(type) ? "var(--primary)" : "var(--border)"}`,
                 }}
               >
-                <label className="check" style={{ margin: 0, fontSize: 13 }}>
+                <label className="check" style={{ margin: 0, fontSize: "0.88rem" }}>
                   <input
                     type="checkbox"
                     checked={selected.has(type)}
@@ -203,10 +198,10 @@ export function PlotForm({ farmId }: { farmId: string }) {
                 </label>
                 <input
                   name={`irrigation_details_${type}`}
-                  placeholder={type === "Other" ? "Required: Specify irrigation details" : "Optional details (flow rate, spacing, etc.)"}
+                  placeholder={type === "Other" ? "Required: Specify details" : "Optional details (spacing, flow)"}
                   disabled={!selected.has(type)}
                   maxLength={300}
-                  style={{ minHeight: 34, padding: "4px 10px", fontSize: 13 }}
+                  style={{ padding: "5px 10px", fontSize: "0.85rem" }}
                 />
               </div>
             ))}

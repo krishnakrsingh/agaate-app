@@ -80,10 +80,10 @@ export function LocationRequestForm() {
   }
 
   return (
-    <article className="card" style={{ marginTop: 24 }}>
+    <article className="card" style={{ marginTop: 24, padding: 22 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Need to Update Farm Coordinates?</h3>
+          <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Need to Update Farm Coordinates?</h3>
           <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>
             Submit a farm boundary relocation request if the original geofence was misconfigured.
           </p>
@@ -101,97 +101,93 @@ export function LocationRequestForm() {
 
       {show && (
         <form
-          className="form two-column"
           onSubmit={submit}
-          style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border-subtle)" }}
+          style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gap: 14 }}
         >
-          <div className="form-group">
-            <label>Target Farm</label>
-            <select
-              name="farmId"
-              value={farmId}
-              onChange={(e) => setFarmId(e.target.value)}
-              required
-            >
-              <option value="">Select farm…</option>
-              {farms.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Reason for Relocation</label>
-            <input
-              name="reason"
-              minLength={5}
-              placeholder="e.g., Farm entrance gate relocated to North side"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label>Proposed Latitude</label>
-              <button
-                type="button"
-                onClick={capture}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--primary-700)",
-                  fontSize: "0.78rem",
-                  padding: 0,
-                  boxShadow: "none",
-                  cursor: "pointer",
-                }}
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Target Farm</label>
+              <select
+                name="farmId"
+                value={farmId}
+                onChange={(e) => setFarmId(e.target.value)}
+                required
               >
-                Capture GPS
-              </button>
+                <option value="">Select farm…</option>
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <input
-              name="proposedLatitude"
-              type="number"
-              step="any"
-              min="-90"
-              max="90"
-              placeholder="e.g., 12.9716"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              required
-            />
-          </div>
 
-          <div className="form-group">
-            <label>Proposed Longitude</label>
-            <input
-              name="proposedLongitude"
-              type="number"
-              step="any"
-              min="-180"
-              max="180"
-              placeholder="e.g., 77.5946"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              required
-            />
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Reason for Relocation</label>
+              <input
+                name="reason"
+                minLength={5}
+                placeholder="e.g., Farm entrance gate relocated to North side"
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label>Proposed Latitude</label>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={capture}
+                  style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
+                >
+                  + Capture GPS
+                </button>
+              </div>
+              <input
+                name="proposedLatitude"
+                type="number"
+                step="any"
+                min="-90"
+                max="90"
+                placeholder="e.g., 12.9716"
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Proposed Longitude</label>
+              <input
+                name="proposedLongitude"
+                type="number"
+                step="any"
+                min="-180"
+                max="180"
+                placeholder="e.g., 77.5946"
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
           {message && (
             <div
-              className={message.includes("submitted") || message.includes("captured") ? "hint wide" : "error wide"}
+              className={message.includes("submitted") || message.includes("captured") ? "success-banner" : "error"}
               role="status"
             >
               <span>{message}</span>
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary wide" disabled={pending}>
-            <Icons.Check size={16} />
-            <span>{pending ? "Submitting…" : "Submit Location Request"}</span>
-          </button>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button type="submit" className="btn btn-primary" disabled={pending}>
+              <Icons.Check size={15} />
+              <span>{pending ? "Submitting…" : "Submit Location Request"}</span>
+            </button>
+          </div>
         </form>
       )}
     </article>

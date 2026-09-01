@@ -65,7 +65,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
     void loadAttendance();
   }, [loadAttendance]);
 
-  // Update shift timer elapsed time
+  // Live timer for active shifts
   useEffect(() => {
     if (!currentAttendance?.startAt || currentAttendance?.endAt) return;
     const startMs = new Date(currentAttendance.startAt).getTime();
@@ -85,7 +85,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
   const selectedFarm = farms.find((f) => f.id === selectedFarmId);
 
-  // Acquire high accuracy GPS
+  // Acquire high accuracy GPS fix
   const acquireLocation = useCallback(async (): Promise<{ lat: number; lng: number }> => {
     setAcquiringGps(true);
     setGpsError("");
@@ -109,8 +109,8 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           setAcquiringGps(false);
           const msg =
             err.code === 1
-              ? "Location permission was denied. Please allow GPS location access in browser settings."
-              : "Unable to acquire accurate GPS fix. Please step into an open area and retry.";
+              ? "Location permission denied. Please enable GPS in browser settings."
+              : "Unable to acquire accurate GPS fix. Please move to an open area.";
           setGpsError(msg);
           reject(new Error(msg));
         },
@@ -147,7 +147,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       return;
     }
     if (!capturedSelfieFile) {
-      toast.error("A live presence selfie photo is required to clock in.");
+      toast.error("A live presence selfie is required to clock in.");
       setShowScanner(true);
       return;
     }
@@ -298,80 +298,90 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
   const isShiftCompleted = Boolean(currentAttendance?.endAt);
 
   return (
-    <div style={{ display: "grid", gap: 16, marginBottom: 20 }}>
-      {/* Active Shift Card (Deep Green Cohere Band) */}
+    <div style={{ display: "grid", gap: 16 }}>
+      {/* ── ACTIVE SHIFT HEADER CARD ── */}
       {isShiftActive && (
         <article
           style={{
-            background: "var(--deep-green)",
-            color: "var(--on-dark)",
-            borderRadius: "var(--radius-sm)",
+            background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)",
+            color: "#ffffff",
+            borderRadius: "var(--radius-md)",
             padding: 24,
+            boxShadow: "var(--shadow-md)",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
             <div>
-              <div className="mono-label" style={{ color: "rgba(255, 255, 255, 0.7)", display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80" }} />
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255, 255, 255, 0.85)" }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
                 <span>SHIFT ACTIVE &bull; {currentAttendance?.farm.name}</span>
               </div>
-              <h2 style={{ color: "white", margin: "8px 0 2px" }}>
+              <h2 style={{ color: "#ffffff", fontSize: "2rem", margin: "8px 0 4px", fontWeight: 800 }}>
                 {shiftElapsed || "0h 0m 0s"}
               </h2>
-              <p style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: 13, margin: 0 }}>
-                Started at {new Date(currentAttendance!.startAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} &bull; GPS Verified
+              <p style={{ color: "rgba(255, 255, 255, 0.85)", fontSize: "0.88rem", margin: 0 }}>
+                Clocked in at {new Date(currentAttendance!.startAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} &bull; Live Presence & GPS Verified
               </p>
             </div>
 
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn"
               onClick={() => {
                 setShowEndDrawer(true);
                 setShowScanner(true);
               }}
-              style={{ background: "white", color: "var(--primary)", borderColor: "white" }}
+              style={{
+                background: "#ffffff",
+                color: "var(--primary-hover)",
+                border: "none",
+                fontWeight: 700,
+                padding: "10px 20px",
+              }}
             >
-              <Icons.Clock size={14} />
+              <Icons.Clock size={16} />
               <span>End Shift</span>
             </button>
           </div>
         </article>
       )}
 
-      {/* Shift Completed Card */}
+      {/* ── SHIFT COMPLETED CARD ── */}
       {isShiftCompleted && (
-        <article style={{ background: "var(--pale-green)", border: "1px solid #bbf7d0", borderRadius: "var(--radius-sm)", padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 34, height: 34, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
-              <Icons.CheckCircle size={18} />
+        <article style={{ background: "var(--success-light)", border: "1px solid var(--success-border)", borderRadius: "var(--radius-md)", padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "var(--radius-sm)", background: "var(--success)", color: "#ffffff", display: "grid", placeItems: "center" }}>
+              <Icons.CheckCircle size={22} />
             </div>
             <div>
-              <strong style={{ fontSize: 15, color: "#166534" }}>Shift Completed Today</strong>
-              <p style={{ margin: "2px 0 0", fontSize: 13, color: "#15803d" }}>
-                {currentAttendance?.farm.name} &bull; {new Date(currentAttendance!.startAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} to {new Date(currentAttendance!.endAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <strong style={{ fontSize: "1.05rem", color: "var(--success-text)", display: "block" }}>Today&apos;s Shift Completed</strong>
+              <p style={{ margin: "2px 0 0", fontSize: "0.88rem", color: "var(--success-text)" }}>
+                {currentAttendance?.farm.name} &bull; {new Date(currentAttendance!.startAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} to {new Date(currentAttendance!.endAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} &bull; Verified
               </p>
             </div>
           </div>
         </article>
       )}
 
-      {/* Start Shift Form */}
+      {/* ── START SHIFT CARD (WHEN NOT CLOCKED IN) ── */}
       {!isShiftActive && !isShiftCompleted && (
-        <article className="card">
+        <article className="card" style={{ padding: 24 }}>
           <div className="card-header">
             <div>
               <div className="eyebrow">
                 <span className="eyebrow-dot"></span>
-                FIELD ATTENDANCE &bull; BRD §17
+                FIELD PRESENCE &bull; BRD §17
               </div>
-              <h2 style={{ margin: "4px 0 0" }}>Start Day Shift</h2>
+              <h2 style={{ margin: "2px 0 0" }}>Start Day Shift</h2>
+              <p className="muted" style={{ margin: "4px 0 0" }}>
+                Verify your presence on-site with live camera selfie and GPS geofence radar.
+              </p>
             </div>
           </div>
 
-          <form onSubmit={handleClockIn} style={{ display: "grid", gap: 16 }}>
+          <form onSubmit={handleClockIn} style={{ display: "grid", gap: 18 }}>
             {/* Assigned Farm Select */}
-            <div className="form-group">
+            <div className="form-group" style={{ margin: 0 }}>
               <label htmlFor="farm-select">Assigned Farm Location</label>
               <select
                 id="farm-select"
@@ -392,12 +402,13 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             </div>
 
             {/* Live Presence Selfie Section */}
-            <div className="form-group">
+            <div className="form-group" style={{ margin: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <label style={{ margin: 0 }}>Live Front-Camera Presence Selfie</label>
                 {selfiePreview && (
-                  <span className="mono-label" style={{ color: "#166534", background: "var(--pale-green)", padding: "2px 8px", borderRadius: "var(--radius-pill)" }}>
-                    ✓ Presence Verified
+                  <span className="status-badge badge-active">
+                    <Icons.Check size={12} />
+                    <span>Presence Verified</span>
                   </span>
                 )}
               </div>
@@ -414,18 +425,18 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                   />
                 </div>
               ) : selfiePreview ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 16, background: "var(--soft-stone)", border: "1px solid var(--hairline)", padding: 14, borderRadius: "var(--radius-sm)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, background: "var(--card-muted)", border: "1px solid var(--border)", padding: 12, borderRadius: "var(--radius-sm)" }}>
                   <img
                     src={selfiePreview}
                     alt="Selfie preview"
-                    style={{ width: 56, height: 56, borderRadius: "var(--radius-full)", objectFit: "cover", border: "2px solid var(--primary)" }}
+                    style={{ width: 52, height: 52, borderRadius: "var(--radius-full)", objectFit: "cover", border: "2px solid var(--primary)" }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>
-                      Live Selfie Attached
+                    <div style={{ fontWeight: 600, color: "var(--text-main)", fontSize: "0.92rem" }}>
+                      Live Snapshot Captured
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--body-muted)" }}>
-                      High-resolution frame captured from front camera
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      High-resolution front frame attached
                     </div>
                   </div>
                   <button
@@ -441,7 +452,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setShowScanner(true)}
-                  style={{ minHeight: 44, width: "100%", justifyContent: "center" }}
+                  style={{ width: "100%", minHeight: 44, justifyContent: "center" }}
                 >
                   <Icons.Camera size={16} />
                   <span>Launch Live Camera & Take Selfie</span>
@@ -452,8 +463,8 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             {/* Real-time Geofence Proximity Radar */}
             <div
               style={{
-                background: proximityInfo?.isWithin ? "var(--spotify-green-tint)" : coords ? "var(--warning-orange-tint)" : "var(--mid-dark)",
-                border: `1px solid ${proximityInfo?.isWithin ? "rgba(30, 215, 96, 0.4)" : coords ? "rgba(255, 164, 43, 0.4)" : "var(--border-subtle)"}`,
+                background: proximityInfo?.isWithin ? "var(--success-light)" : coords ? "var(--warning-light)" : "var(--card-muted)",
+                border: `1px solid ${proximityInfo?.isWithin ? "var(--success-border)" : coords ? "var(--warning-border)" : "var(--border)"}`,
                 borderRadius: "var(--radius-sm)",
                 padding: 16,
                 display: "grid",
@@ -462,18 +473,18 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icons.MapPin size={16} style={{ color: proximityInfo?.isWithin ? "var(--spotify-green)" : coords ? "var(--warning-orange)" : "var(--text-secondary)" }} />
-                  <span className="mono-label" style={{ color: "var(--text-base)" }}>
+                  <Icons.MapPin size={16} style={{ color: proximityInfo?.isWithin ? "var(--success-text)" : coords ? "var(--warning-text)" : "var(--text-muted)" }} />
+                  <span className="mono-label" style={{ color: "var(--text-main)", fontWeight: 700 }}>
                     GPS Geofence Proximity Radar
                   </span>
                 </div>
 
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn btn-ghost btn-sm"
                   onClick={() => acquireLocation()}
                   disabled={acquiringGps}
-                  style={{ fontSize: 12, padding: 0 }}
+                  style={{ fontSize: "0.78rem", padding: "2px 8px" }}
                 >
                   <span>{acquiringGps ? "Acquiring GPS…" : "Refresh Location"}</span>
                 </button>
@@ -482,39 +493,39 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               {coords ? (
                 <div>
                   {proximityInfo ? (
-                    <div style={{ fontSize: 14 }}>
+                    <div style={{ fontSize: "0.88rem" }}>
                       {proximityInfo.isWithin ? (
-                        <div style={{ color: "#166534", fontWeight: 600 }}>
+                        <div style={{ color: "var(--success-text)", fontWeight: 600 }}>
                           ✓ Within Geofence ({proximityInfo.distance}m from Farm HQ &bull; Max {proximityInfo.maxRadius}m)
                         </div>
                       ) : (
-                        <div style={{ color: "#b45309", fontWeight: 600 }}>
+                        <div style={{ color: "var(--warning-text)", fontWeight: 600 }}>
                           ⚠️ Outside Geofence ({proximityInfo.distance}m from Farm HQ &bull; Max {proximityInfo.maxRadius}m)
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div style={{ fontSize: 13, color: "var(--body-muted)" }}>
-                      GPS Coords: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                    <div style={{ fontSize: "0.84rem", color: "var(--text-muted)" }}>
+                      GPS Fix: ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
                     </div>
                   )}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: "var(--muted)" }}>
-                  GPS position will be checked automatically upon clock-in.
+                <div style={{ fontSize: "0.84rem", color: "var(--text-muted)" }}>
+                  Location will be checked automatically upon clock-in.
                 </div>
               )}
 
-              {/* Exception Reason when outside geofence */}
+              {/* Mandatory exception reason when outside geofence */}
               {proximityInfo && !proximityInfo.isWithin && (
                 <div style={{ marginTop: 6 }}>
-                  <label htmlFor="start-reason" style={{ fontSize: 12, color: "#92400e" }}>
-                    Exception Reason (Mandatory when outside 500m)
+                  <label htmlFor="start-reason" style={{ fontSize: "0.8rem", color: "var(--warning-text)", fontWeight: 600 }}>
+                    Exception Reason (Mandatory when outside {proximityInfo.maxRadius}m)
                   </label>
                   <input
                     id="start-reason"
                     type="text"
-                    placeholder="e.g., Attending agro machinery workshop / remote nursery"
+                    placeholder="e.g., Attending agro machinery workshop / off-site nursery"
                     value={exceptionReason}
                     onChange={(e) => setExceptionReason(e.target.value)}
                     required
@@ -530,7 +541,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               type="submit"
               className="btn btn-primary btn-lg"
               disabled={pending || !selectedFarmId || !capturedSelfieFile}
-              style={{ width: "100%", marginTop: 4 }}
+              style={{ width: "100%" }}
             >
               <span>{pending ? "Clocking In…" : "Start Day & Clock In"}</span>
               <Icons.ArrowRight size={16} />
@@ -539,40 +550,27 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
         </article>
       )}
 
-      {/* End Shift Drawer Modal */}
+      {/* ── END SHIFT MODAL DRAWER ── */}
       {showEndDrawer && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(2px)",
-            zIndex: 100,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <div className="card" style={{ maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="card-header">
               <h3 style={{ margin: 0 }}>End Day Shift</h3>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => {
                   setShowEndDrawer(false);
                   setShowScanner(false);
                 }}
-                style={{ padding: 0 }}
               >
-                ✕
+                <Icons.X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleClockOut} style={{ display: "grid", gap: 14 }}>
-              <p style={{ margin: 0, fontSize: 14, color: "var(--body-muted)" }}>
-                Clocking out of <strong>{currentAttendance?.farm.name}</strong>. Please capture a live front-camera selfie to verify presence.
+            <form onSubmit={handleClockOut} style={{ display: "grid", gap: 16 }}>
+              <p className="muted" style={{ margin: 0 }}>
+                Clocking out of <strong>{currentAttendance?.farm.name}</strong>. Please capture a live front-camera selfie to verify end of shift.
               </p>
 
               {showScanner ? (
@@ -585,9 +583,9 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                   onCancel={() => setShowScanner(false)}
                 />
               ) : selfiePreview ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--soft-stone)", padding: 12, borderRadius: "var(--radius-xs)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--card-muted)", padding: 12, borderRadius: "var(--radius-sm)" }}>
                   <img src={selfiePreview} alt="Selfie preview" style={{ width: 48, height: 48, borderRadius: "var(--radius-full)", objectFit: "cover" }} />
-                  <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+                  <div style={{ flex: 1, fontSize: "0.88rem", fontWeight: 600, color: "var(--text-main)" }}>
                     Live Snapshot Attached
                   </div>
                   <button type="button" className="btn btn-sm btn-secondary" onClick={() => setShowScanner(true)}>
@@ -601,8 +599,8 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 </button>
               )}
 
-              <div className="form-group">
-                <label htmlFor="end-reason" style={{ fontSize: 13 }}>Optional Remarks / Shift Summary</label>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label htmlFor="end-reason">Optional Remarks / Shift Summary</label>
                 <input
                   id="end-reason"
                   type="text"

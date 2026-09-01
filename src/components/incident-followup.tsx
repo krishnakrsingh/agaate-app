@@ -65,15 +65,15 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
     <div
       style={{
         marginTop: 12,
-        padding: 12,
-        background: "var(--slate-50)",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid var(--border-subtle)",
+        padding: 14,
+        background: "var(--card-muted)",
+        borderRadius: "var(--radius-sm)",
+        border: "1px solid var(--border)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <strong style={{ fontSize: "0.85rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: 6 }}>
-          <Icons.Activity size={14} style={{ color: "var(--primary-600)" }} />
+          <Icons.Activity size={14} style={{ color: "var(--primary)" }} />
           <span>Follow-up Actions ({items.length})</span>
         </strong>
 
@@ -94,20 +94,20 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
               key={f.id}
               style={{
                 padding: "8px 10px",
-                background: "white",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border-subtle)",
+                background: "var(--card)",
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid var(--border)",
                 fontSize: "0.85rem",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <strong style={{ color: "var(--primary-800)" }}>{f.action}</strong>
+                <strong style={{ color: "var(--primary)" }}>{f.action}</strong>
                 <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
                   {new Date(f.createdAt).toLocaleDateString()}
                 </span>
               </div>
               {f.remarks && (
-                <p style={{ margin: "2px 0 4px", fontSize: "0.82rem", color: "var(--slate-600)" }}>
+                <p style={{ margin: "2px 0 4px", fontSize: "0.82rem", color: "var(--text-muted)" }}>
                   {f.remarks}
                 </p>
               )}
@@ -124,8 +124,8 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
       )}
 
       {showForm && (
-        <form className="form" onSubmit={submit} style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border-subtle)" }}>
-          <div className="form-group">
+        <form onSubmit={submit} style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)", display: "grid", gap: 10 }}>
+          <div className="form-group" style={{ margin: 0 }}>
             <label style={{ fontSize: "0.8rem" }}>Action taken / scheduled</label>
             <input
               name="action"
@@ -137,7 +137,7 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group" style={{ margin: 0 }}>
             <label style={{ fontSize: "0.8rem" }}>Remarks</label>
             <textarea
               name="remarks"
@@ -149,7 +149,7 @@ export function IncidentFollowUp({ incidentId }: { incidentId: string }) {
           </div>
 
           {message && (
-            <div className={message.includes("recorded") ? "hint" : "error"} style={{ padding: "6px 10px", fontSize: "0.8rem", margin: "4px 0" }}>
+            <div className={message.includes("recorded") ? "success-banner" : "error"} style={{ padding: "6px 10px", fontSize: "0.8rem", margin: "4px 0" }}>
               <span>{message}</span>
             </div>
           )}

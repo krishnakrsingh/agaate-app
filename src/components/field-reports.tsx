@@ -179,15 +179,15 @@ export function FieldReports({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "Monitoring submission failed.");
+        throw new Error(body.error ?? "Failed to save daily monitoring report.");
       }
 
-      formEl?.reset();
+      formEl.reset();
       setMonitoringPhotos([]);
-      setMessage("Daily crop monitoring recorded & synchronized.");
+      setMessage("✓ Daily crop monitoring report recorded successfully!");
       if (onSuccess) onSuccess();
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Monitoring report failed.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Monitoring report submission failed.");
     } finally {
       setPending(false);
     }
@@ -202,128 +202,285 @@ export function FieldReports({
 
     try {
       if (!selectedFarmId) throw new Error("Please select a farm.");
-      if (incidentLevel === "PLOT" && !selectedPlotId) throw new Error("Please select a plot.");
-      if (incidentLevel === "CROP" && !selectedCropCycleId) throw new Error("Please select a crop.");
 
       const photos = form.getAll("photos");
       const mediaIds = await uploadPhotos(selectedFarmId, "INCIDENT_PHOTO", photos);
-      const customType = form.get("customType") ? String(form.get("customType")).trim() : "";
-      const effectiveType = customType || incidentTypeInput || String(form.get("type"));
+
+      const impactVal = form.get("impactPercent");
+      const impactPercent = impactVal ? Number(impactVal) : null;
 
       const response = await fetch("/api/incidents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           farmId: selectedFarmId,
+          plotId: selectedPlotId || null,
+          cropCycleId: selectedCropCycleId || null,
+          type: incidentTypeInput || form.get("type"),
           level: incidentLevel,
-          plotId: incidentLevel !== "FARM" ? selectedPlotId : null,
-          cropCycleId: incidentLevel === "CROP" ? selectedCropCycleId : null,
-          type: effectiveType,
+          severity: form.get("severity") || null,
           description: form.get("description"),
-          severity: form.get("severity"),
-          impactPercent: form.get("impactPercent") ? Number(form.get("impactPercent")) : null,
+          impactPercent,
           mediaIds,
         }),
       });
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error ?? "Incident report failed.");
+        throw new Error(body.error ?? "Failed to log field incident.");
       }
 
-      formEl?.reset();
+      formEl.reset();
       setIncidentPhotos([]);
       setIncidentTypeInput("");
-      setMessage("Incident recorded & transmitted to Farm Admin and Agronomist.");
+      setMessage("✓ Field incident logged and routed to Agronomist!");
       if (onSuccess) onSuccess();
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Incident report failed.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Incident report submission failed.");
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <section>
-      {/* Form Tabs */}
+    <article className="card" style={{ padding: 24, display: "grid", gap: 18 }}>
+      {/* Header with Switcher Tabs */}
       {!hideTabs && (
-        <div className="tabs-nav" style={{ marginBottom: 16 }}>
+        <div className="tabs-nav">
           <button
             type="button"
             className={`tab-btn ${activeFormTab === "monitoring" ? "active" : ""}`}
-            onClick={() => {
-              setActiveFormTab("monitoring");
-              setMessage("");
-            }}
+            onClick={() => setActiveFormTab("monitoring")}
           >
-            <Icons.Sprout size={14} />
-            <span>Daily Crop Monitoring</span>
+            <Icons.Camera size={14} />
+            <span>Daily Crop Monitoring (BRD §22)</span>
           </button>
-
           <button
             type="button"
             className={`tab-btn ${activeFormTab === "incident" ? "active" : ""}`}
-            onClick={() => {
-              setActiveFormTab("incident");
-              setMessage("");
-            }}
+            onClick={() => setActiveFormTab("incident")}
           >
             <Icons.AlertTriangle size={14} />
-            <span>Report Field Incident</span>
-          </button>
-        </div>
-      )}
-
-      {onCancel && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={onCancel}>
-            <Icons.X size={13} />
-            <span>Close</span>
+            <span>Field Incidents (BRD §24)</span>
           </button>
         </div>
       )}
 
       {message && (
-        <div
-          className={
-            message.includes("recorded") || message.includes("transmitted") || message.includes("synchronized")
-              ? "success-banner"
-              : "error"
-          }
-          role="status"
-        >
+        <div className={message.startsWith("✓") ? "success-banner" : "error"} role="alert">
           <span>{message}</span>
         </div>
       )}
 
-      {/* FORM 1: DAILY CROP MONITORING */}
+      {/* ── FORM 1: DAILY CROP HEALTH MONITORING ── */}
       {activeFormTab === "monitoring" && (
-        <article className="card" style={{ padding: 24 }}>
-          <div className="card-header">
-            <div>
-              <div className="eyebrow">MONITORING TELEMETRY</div>
-              <h3 style={{ margin: "2px 0 0" }}>Daily Crop Health & Stage Capture</h3>
+        <form onSubmit={handleMonitoringSubmit} style={{ display: "grid", gap: 16 }}>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Target Farm Location</label>
+              <select
+                value={selectedFarmId}
+                onChange={(e) => handleFarmSelect(e.target.value)}
+                required
+              >
+                <option value="">Select farm…</option>
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Plot</label>
+              <select
+                value={selectedPlotId}
+                onChange={(e) => {
+                  setSelectedPlotId(e.target.value);
+                  setSelectedCropCycleId("");
+                }}
+                required
+                disabled={!selectedFarmId}
+              >
+                <option value="">Select plot…</option>
+                {farm?.plots.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Active Crop Cycle</label>
+              <select
+                value={selectedCropCycleId}
+                onChange={(e) => setSelectedCropCycleId(e.target.value)}
+                required
+                disabled={!selectedPlotId || !availableCrops.length}
+              >
+                <option value="">Select crop…</option>
+                {availableCrops.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.cropName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Growth Stage</label>
+              <select name="stage" required>
+                {cropStages.map((stage) => (
+                  <option key={stage} value={stage}>
+                    {stage}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          <form onSubmit={handleMonitoringSubmit} style={{ display: "grid", gap: 16 }}>
-            <div className="two-column">
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Assigned Farm</label>
-                <select
-                  value={selectedFarmId}
-                  onChange={(e) => handleFarmSelect(e.target.value)}
-                  required
-                >
-                  <option value="">Select farm…</option>
-                  {farms.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          {/* Good vs Poor Toggle */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Crop Health Status</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => setHealthStatus("GOOD")}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: "var(--radius-sm)",
+                  background: healthStatus === "GOOD" ? "var(--success-light)" : "var(--card-muted)",
+                  color: healthStatus === "GOOD" ? "var(--success-text)" : "var(--text-muted)",
+                  border: `1px solid ${healthStatus === "GOOD" ? "var(--success-border)" : "var(--border)"}`,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🟢 Good / Normal Health
+              </button>
+              <button
+                type="button"
+                onClick={() => setHealthStatus("POOR")}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: "var(--radius-sm)",
+                  background: healthStatus === "POOR" ? "var(--danger-light)" : "var(--card-muted)",
+                  color: healthStatus === "POOR" ? "var(--danger-text)" : "var(--text-muted)",
+                  border: `1px solid ${healthStatus === "POOR" ? "var(--danger-border)" : "var(--border)"}`,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                🔴 Poor Health / Issues Detected
+              </button>
+            </div>
+          </div>
 
+          {healthStatus === "POOR" && (
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Estimated Area / Crop Impact (%)</label>
+              <input
+                name="impactPercent"
+                type="number"
+                min="1"
+                max="100"
+                placeholder="e.g. 15"
+                required={healthStatus === "POOR"}
+              />
+            </div>
+          )}
+
+          {/* Photo Evidence Upload */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Daily Crop Photo (Mandatory)</label>
+            <input
+              type="file"
+              name="photos"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              required
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                setMonitoringPhotos(files.map((f) => URL.createObjectURL(f)));
+              }}
+            />
+            {monitoringPhotos.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                {monitoringPhotos.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`Preview ${i + 1}`}
+                    style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--border)" }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Visual Field Notes & Observations</label>
+            <textarea
+              name="remarks"
+              maxLength={2000}
+              placeholder="Describe canopy cover, leaf color, weed pressure, or moisture level…"
+              rows={2}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            {onCancel && (
+              <button type="button" className="btn btn-secondary" onClick={onCancel}>
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={pending || !selectedCropCycleId}
+            >
+              {pending ? "Saving Observation…" : "Submit Daily Monitoring"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── FORM 2: FIELD INCIDENT REPORTING ── */}
+      {activeFormTab === "incident" && (
+        <form onSubmit={handleIncidentSubmit} style={{ display: "grid", gap: 16 }}>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Target Farm</label>
+              <select
+                value={selectedFarmId}
+                onChange={(e) => handleFarmSelect(e.target.value)}
+                required
+              >
+                <option value="">Select farm…</option>
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Incident Scope Level</label>
+              <select
+                value={incidentLevel}
+                onChange={(e) => setIncidentLevel(e.target.value as any)}
+                required
+              >
+                <option value="FARM">Farm Level (e.g. Pump, Weather, Power)</option>
+                <option value="PLOT">Plot Level (e.g. Irrigation, Drainage)</option>
+                <option value="CROP">Crop Level (e.g. Pest, Disease, Foliage)</option>
+              </select>
+            </div>
+
+            {incidentLevel !== "FARM" && (
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Plot</label>
                 <select
@@ -332,8 +489,7 @@ export function FieldReports({
                     setSelectedPlotId(e.target.value);
                     setSelectedCropCycleId("");
                   }}
-                  disabled={!farm}
-                  required
+                  required={incidentLevel === "PLOT" || incidentLevel === "CROP"}
                 >
                   <option value="">Select plot…</option>
                   {farm?.plots.map((p) => (
@@ -343,14 +499,16 @@ export function FieldReports({
                   ))}
                 </select>
               </div>
+            )}
 
-              <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-                <label>Active Crop Cycle</label>
+            {incidentLevel === "CROP" && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Crop Cycle</label>
                 <select
                   value={selectedCropCycleId}
                   onChange={(e) => setSelectedCropCycleId(e.target.value)}
-                  disabled={!selectedPlotId}
-                  required
+                  required={incidentLevel === "CROP"}
+                  disabled={!selectedPlotId || !availableCrops.length}
                 >
                   <option value="">Select crop…</option>
                   {availableCrops.map((c) => (
@@ -360,319 +518,104 @@ export function FieldReports({
                   ))}
                 </select>
               </div>
-            </div>
-
-            {/* Health Classification */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Crop Health Status</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => setHealthStatus("GOOD")}
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: "var(--radius-xs)",
-                    background: healthStatus === "GOOD" ? "var(--spotify-green-tint)" : "var(--mid-dark)",
-                    border: `1px solid ${healthStatus === "GOOD" ? "rgba(30, 215, 96, 0.5)" : "var(--border-subtle)"}`,
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icons.CheckCircle size={15} style={{ color: "var(--spotify-green)" }} />
-                    <strong style={{ color: "var(--spotify-green)", fontSize: 13 }}>Good Crop Health</strong>
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>Vigorous growth, healthy canopy</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setHealthStatus("POOR")}
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: "var(--radius-xs)",
-                    background: healthStatus === "POOR" ? "var(--negative-red-tint)" : "var(--mid-dark)",
-                    border: `1px solid ${healthStatus === "POOR" ? "rgba(243, 114, 127, 0.5)" : "var(--border-subtle)"}`,
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icons.AlertTriangle size={15} style={{ color: "var(--negative-red)" }} />
-                    <strong style={{ color: "var(--negative-red)", fontSize: 13 }}>Poor Crop Health</strong>
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>Yellowing, wilting, stress</div>
-                </button>
-              </div>
-            </div>
-
-            <div className="two-column">
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Crop Growth Stage</label>
-                <select name="stage" defaultValue="Vegetative" required>
-                  {cropStages.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {healthStatus === "POOR" && (
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Estimated Impact (%)</label>
-                  <input
-                    name="impactPercent"
-                    type="number"
-                    min="1"
-                    max="100"
-                    step="0.1"
-                    placeholder="25"
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Crop Photos (Mandatory)</label>
-              <input
-                name="photos"
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const urls = Array.from(e.target.files ?? []).map((file) =>
-                    URL.createObjectURL(file)
-                  );
-                  setMonitoringPhotos(urls);
-                }}
-                required
-              />
-
-              {monitoringPhotos.length > 0 && (
-                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                  {monitoringPhotos.map((src, i) => (
-                    <img
-                      src={src}
-                      alt="Preview"
-                      key={i}
-                      style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Remarks & Observations</label>
-              <textarea
-                name="remarks"
-                maxLength={2000}
-                placeholder="Describe field conditions, leaf coloration, pest presence…"
-                rows={2}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg"
-              disabled={pending || !selectedCropCycleId}
-              style={{ width: "100%" }}
-            >
-              <span>{pending ? "Submitting…" : "Record Daily Monitoring"}</span>
-              <Icons.ArrowRight size={14} />
-            </button>
-          </form>
-        </article>
-      )}
-
-      {/* FORM 2: FIELD INCIDENT */}
-      {activeFormTab === "incident" && (
-        <article className="card" style={{ padding: 24 }}>
-          <div className="card-header">
-            <div>
-              <div className="eyebrow" style={{ color: "var(--error)" }}>SIGNAL DISPATCH</div>
-              <h3 style={{ margin: "2px 0 0" }}>Report Field Incident</h3>
-            </div>
-          </div>
-
-          <form onSubmit={handleIncidentSubmit} style={{ display: "grid", gap: 16 }}>
-            {/* Scope Level */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Incident Level</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 80px), 1fr))", gap: 8 }}>
-                {(["FARM", "PLOT", "CROP"] as const).map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setIncidentLevel(lvl)}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "var(--radius-xs)",
-                      background: incidentLevel === lvl ? "var(--primary)" : "var(--soft-stone)",
-                      color: incidentLevel === lvl ? "var(--on-primary)" : "var(--ink)",
-                      border: `1px solid ${incidentLevel === lvl ? "var(--primary)" : "var(--hairline)"}`,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {lvl} Level
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="two-column">
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Farm</label>
-                <select
-                  value={selectedFarmId}
-                  onChange={(e) => handleFarmSelect(e.target.value)}
-                  required
-                >
-                  <option value="">Select farm…</option>
-                  {farms.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {incidentLevel !== "FARM" && (
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Plot</label>
-                  <select
-                    value={selectedPlotId}
-                    onChange={(e) => {
-                      setSelectedPlotId(e.target.value);
-                      setSelectedCropCycleId("");
-                    }}
-                    disabled={!farm}
-                    required
-                  >
-                    <option value="">Select plot…</option>
-                    {farm?.plots.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {incidentLevel === "CROP" && (
-                <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-                  <label>Crop Cycle</label>
-                  <select
-                    value={selectedCropCycleId}
-                    onChange={(e) => setSelectedCropCycleId(e.target.value)}
-                    disabled={!selectedPlotId}
-                    required
-                  >
-                    <option value="">Select crop…</option>
-                    {availableCrops.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cropName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="two-column">
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Incident Type</label>
-                <select
-                  name="type"
-                  value={incidentTypeInput}
-                  onChange={(e) => setIncidentTypeInput(e.target.value)}
-                  required
-                >
-                  <option value="">Select incident type…</option>
-                  {incidentTypes.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Severity Rating</label>
-                <select name="severity" defaultValue="MEDIUM" required>
-                  <option value="LOW">Low &bull; Minimal impact</option>
-                  <option value="MEDIUM">Medium &bull; Requires attention</option>
-                  <option value="HIGH">High &bull; Significant threat</option>
-                  <option value="CRITICAL">Critical &bull; Immediate emergency</option>
-                </select>
-              </div>
-            </div>
-
-            {incidentTypeInput === "Other / Custom Incident" && (
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Specify Custom Incident Type</label>
-                <input
-                  name="customType"
-                  placeholder="e.g., Pump starter burnt out, Frost damage, Rodent attack…"
-                  required
-                />
-              </div>
             )}
 
             <div className="form-group" style={{ margin: 0 }}>
-              <label>Incident Description</label>
-              <textarea
-                name="description"
-                placeholder="Explain the incident, affected bed count, root cause observations…"
-                rows={3}
-                required
-              />
+              <label>Severity Rating</label>
+              <select name="severity" defaultValue="MEDIUM" required>
+                <option value="LOW">Low (Monitor during routine rounds)</option>
+                <option value="MEDIUM">Medium (Requires attention within 48h)</option>
+                <option value="HIGH">High (Urgent agronomist prescription needed)</option>
+                <option value="CRITICAL">Critical (Immediate action to prevent crop loss)</option>
+              </select>
             </div>
+          </div>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Evidence Photos (Optional)</label>
-              <input
-                name="photos"
-                type="file"
-                multiple
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const urls = Array.from(e.target.files ?? []).map((file) =>
-                    URL.createObjectURL(file)
-                  );
-                  setIncidentPhotos(urls);
-                }}
-              />
-              {incidentPhotos.length > 0 && (
-                <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                  {incidentPhotos.map((src, i) => (
-                    <img
-                      src={src}
-                      alt="Incident preview"
-                      key={i}
-                      style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
-                    />
-                  ))}
-                </div>
-              )}
+          {/* Quick Incident Types */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Incident Type Preset (or type custom below)</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+              {incidentTypes.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setIncidentTypeInput(type)}
+                  className="btn btn-sm btn-ghost"
+                  style={{
+                    background: incidentTypeInput === type ? "var(--primary-light)" : "var(--card-muted)",
+                    color: incidentTypeInput === type ? "var(--primary)" : "var(--text-main)",
+                    border: `1px solid ${incidentTypeInput === type ? "var(--primary)" : "var(--border)"}`,
+                    fontSize: "0.78rem",
+                  }}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
+            <input
+              name="type"
+              placeholder="e.g. Aphid infestation, Drip lateral puncture"
+              value={incidentTypeInput}
+              onChange={(e) => setIncidentTypeInput(e.target.value)}
+              required
+              style={{ marginTop: 8 }}
+            />
+          </div>
 
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Incident Description & Scope</label>
+            <textarea
+              name="description"
+              maxLength={2000}
+              placeholder="Describe symptoms, affected rows, or mechanical breakdown details…"
+              rows={3}
+              required
+            />
+          </div>
+
+          {/* Incident Photos */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Photo Evidence (Recommended)</label>
+            <input
+              type="file"
+              name="photos"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files ?? []);
+                setIncidentPhotos(files.map((f) => URL.createObjectURL(f)));
+              }}
+            />
+            {incidentPhotos.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                {incidentPhotos.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`Incident preview ${i + 1}`}
+                    style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--border)" }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+            {onCancel && (
+              <button type="button" className="btn btn-secondary" onClick={onCancel}>
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
-              className="btn btn-danger btn-lg"
-              disabled={pending}
-              style={{ width: "100%" }}
+              className="btn btn-primary"
+              disabled={pending || !selectedFarmId}
             >
-              <span>{pending ? "Transmitting…" : "Transmit Incident Report"}</span>
-              <Icons.AlertTriangle size={14} />
+              {pending ? "Logging Incident…" : "Submit Incident Report"}
             </button>
-          </form>
-        </article>
+          </div>
+        </form>
       )}
-    </section>
+    </article>
   );
 }

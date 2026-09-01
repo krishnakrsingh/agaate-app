@@ -9,12 +9,14 @@ export function TaskCompletionForm({
   taskTitle,
   milestoneName,
   onComplete,
+  onCancel,
 }: {
   taskId: string;
   farmId: string;
   taskTitle: string;
   milestoneName?: string | null;
   onComplete: () => void;
+  onCancel?: () => void;
 }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -96,7 +98,7 @@ export function TaskCompletionForm({
             : [],
           labour: labourers && hours ? [{ labourers: Number(labourers), hours: Number(hours) }] : [],
           ...(actualBedsCreated ? { actualBedsCreated: Number(actualBedsCreated) } : {}),
-          ...(actualPlants ? { actualPlants: Number(actualPlants) } : {})
+          ...(actualPlants ? { actualPlants: Number(actualPlants) } : {}),
         }),
       });
 
@@ -112,7 +114,7 @@ export function TaskCompletionForm({
     }
   }
 
-  // Structured domain check: use milestone name instead of title regex (brittle)
+  // Structured domain check: use milestone name instead of title regex
   const bedActivity = milestoneName === "Land Preparation";
   const plantActivity = milestoneName === "Transplantation" || milestoneName === "Direct Sowing";
 
@@ -120,22 +122,34 @@ export function TaskCompletionForm({
     <form
       onSubmit={submit}
       style={{
-        marginTop: 16,
+        marginTop: 14,
         padding: 20,
-        background: "var(--soft-stone)",
-        borderRadius: "var(--radius-sm)",
-        border: "1px solid var(--hairline)",
+        background: "var(--card-muted)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--border)",
         display: "grid",
         gap: 16,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Icons.CheckCircle size={16} />
-        <h4 style={{ margin: 0, fontSize: 15 }}>Record Activity Completion</h4>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icons.CheckCircle size={18} style={{ color: "var(--primary)" }} />
+          <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Record Activity Completion</h4>
+        </div>
+        {onCancel && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={onCancel}
+            style={{ padding: "2px 6px" }}
+          >
+            <Icons.X size={14} />
+          </button>
+        )}
       </div>
 
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Completion Remarks & Notes</label>
+        <label>Completion Remarks & Field Notes</label>
         <textarea
           name="remarks"
           maxLength={2000}
@@ -171,36 +185,36 @@ export function TaskCompletionForm({
       )}
 
       {/* Materials Used */}
-      <div style={{ background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+      <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 10 }}>
         <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Layers size={13} />
           <span>Material Utilization (Optional)</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))", gap: 10 }}>
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: 12 }}>Material Name</label>
+            <label style={{ fontSize: "0.78rem" }}>Material Name</label>
             <input name="materialName" placeholder="e.g., NPK 19:19:19" />
           </div>
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: 12 }}>Quantity</label>
+            <label style={{ fontSize: "0.78rem" }}>Quantity</label>
             <input name="quantity" type="number" min="0.01" step="0.01" placeholder="5" />
           </div>
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: 12 }}>Unit</label>
+            <label style={{ fontSize: "0.78rem" }}>Unit</label>
             <input name="unit" placeholder="kg, L, bags" />
           </div>
         </div>
       </div>
 
       {/* Labour Tracking */}
-      <div style={{ background: "var(--canvas)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+      <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 10 }}>
         <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Users size={13} />
           <span>Labour Tracking (Optional)</span>
         </div>
         <div className="two-column">
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: 12 }}>Number of Labourers</label>
+            <label style={{ fontSize: "0.78rem" }}>Number of Labourers</label>
             <input
               name="labourers"
               type="number"
@@ -212,7 +226,7 @@ export function TaskCompletionForm({
             />
           </div>
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: 12 }}>Hours Worked per Person</label>
+            <label style={{ fontSize: "0.78rem" }}>Hours Worked per Person</label>
             <input
               name="hours"
               type="number"
@@ -227,7 +241,7 @@ export function TaskCompletionForm({
         </div>
 
         {calculatedLabourHours && (
-          <div style={{ fontSize: 12, color: "#166534", fontWeight: 600 }}>
+          <div style={{ fontSize: "0.82rem", color: "var(--success-text)", fontWeight: 600 }}>
             Total Labour Utilization: {calculatedLabourHours} Man-Hours
           </div>
         )}
@@ -250,7 +264,7 @@ export function TaskCompletionForm({
                 key={i}
                 src={url}
                 alt={`Evidence preview ${i + 1}`}
-                style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--hairline)" }}
+                style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--border)" }}
               />
             ))}
           </div>
@@ -259,7 +273,12 @@ export function TaskCompletionForm({
 
       {error && <div className="error">{error}</div>}
 
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        {onCancel && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}>
+            Cancel
+          </button>
+        )}
         <button
           type="submit"
           className="btn btn-primary btn-sm"

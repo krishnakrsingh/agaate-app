@@ -37,7 +37,6 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const load = async () => {
     setLoading(true);
     try {
-      // Ensure daily monitoring tasks are generated via explicit mutation (not GET side-effect)
       await fetch("/api/tasks/generate-daily", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,72 +87,65 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
 
   return (
-    <section>
-      {/* Daily Progress Header */}
-      <div
-        className="card"
-        style={{
-          padding: 24,
-          marginBottom: 20,
-          background: "var(--canvas)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+    <section style={{ display: "grid", gap: 18 }}>
+      {/* Daily Shift Progress Card */}
+      <div className="card" style={{ padding: 22 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
           <div>
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
-              TODAY&apos;S FIELD SHIFT &bull; {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              TODAY&apos;S QUEUE &bull; {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
             </div>
-            <h3 style={{ margin: "2px 0 0" }}>
-              {completedCount} of {tasks.length} Activities Completed ({progressPercent}%)
+            <h3 style={{ margin: "2px 0 0", fontSize: "1.15rem" }}>
+              {completedCount} of {tasks.length} Operations Finished ({progressPercent}%)
             </h3>
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="btn btn-sm btn-danger"
               onClick={() => setShowIncidentModal(!showIncidentModal)}
-              style={{ background: "var(--coral)", borderColor: "var(--coral)", color: "white" }}
             >
-              <Icons.AlertTriangle size={13} />
-              <span>{showIncidentModal ? "Close Incident Form" : "Report Incident"}</span>
+              <Icons.AlertTriangle size={14} />
+              <span>{showIncidentModal ? "Close Incident" : "Report Incident"}</span>
             </button>
 
             <button
               type="button"
               className="btn btn-sm btn-secondary"
               onClick={load}
-              title="Refresh task list"
+              title="Refresh task queue"
             >
-              <span>Refresh Queue</span>
+              <Icons.Activity size={14} />
+              <span>Refresh</span>
             </button>
           </div>
         </div>
 
         {/* Tactile Progress Bar */}
-        <div style={{ width: "100%", height: 6, background: "var(--soft-stone)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+        <div style={{ width: "100%", height: 7, background: "var(--card-muted)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
           <div
             style={{
               width: `${progressPercent}%`,
               height: "100%",
               background: "var(--primary)",
               borderRadius: "var(--radius-full)",
-              transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+              transition: "width 0.3s ease",
             }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 13, color: "var(--body-muted)" }}>
-          <span><strong>{completedCount}</strong> Done</span>
-          <span><strong>{inProgressCount}</strong> In Progress</span>
-          <span><strong>{tasks.length - completedCount - inProgressCount}</strong> Remaining</span>
+        <div style={{ display: "flex", gap: 16, marginTop: 10, fontSize: "0.82rem", color: "var(--text-muted)" }}>
+          <span><strong style={{ color: "var(--text-main)" }}>{completedCount}</strong> Completed</span>
+          <span><strong style={{ color: "var(--primary)" }}>{inProgressCount}</strong> In Progress</span>
+          <span><strong style={{ color: "var(--text-main)" }}>{tasks.length - completedCount - inProgressCount}</strong> Remaining</span>
         </div>
       </div>
 
-      {/* Incident Quick Reporting Modal/Drawer */}
+      {/* Incident Quick Reporting Sheet */}
       {showIncidentModal && (
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 4 }}>
           <FieldReports
             initialTab="incident"
             hideTabs={true}
@@ -173,8 +165,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
         </div>
       )}
 
-      {/* Task Filter Tabs */}
-      <div className="tabs-nav" style={{ marginBottom: 20 }}>
+      {/* Filter Tabs */}
+      <div className="tabs-nav">
         <button
           type="button"
           className={`tab-btn ${originFilter === "ALL" ? "active" : ""}`}
@@ -216,43 +208,44 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
         </div>
       )}
 
-      {/* Tasks List */}
+      {/* Task Cards List */}
       {!loading && (
         <div style={{ display: "grid", gap: 14 }}>
           {filteredTasks.map((task) => {
             const isCompleted = task.status === "COMPLETED";
             const isMonitoringActive = monitoringTaskId === task.id;
+            const isCompletionActive = completionId === task.id;
 
             return (
               <article
                 className="card"
                 key={task.id}
                 style={{
-                  margin: 0,
-                  background: isCompleted ? "var(--soft-stone)" : "var(--canvas)",
+                  background: isCompleted ? "var(--card-muted)" : "var(--card)",
+                  opacity: isCompleted ? 0.9 : 1,
                   padding: 20,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-                  <div>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 300px" }}>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
                       <StatusBadge status={task.status} />
                       <PriorityBadge priority={task.priority} />
-                      <span className="mono-label" style={{ background: "var(--soft-stone)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
+                      <span className="mono-label" style={{ background: "var(--card-muted)", padding: "2px 7px", borderRadius: "var(--radius-xs)" }}>
                         {task.origin.replaceAll("_", " ")}
                       </span>
                     </div>
 
-                    <h3 style={{ margin: "2px 0 4px" }}>
+                    <h3 style={{ margin: "2px 0 4px", fontSize: "1.1rem" }}>
                       {task.title}
                     </h3>
-                    <p style={{ color: "var(--body-muted)", fontSize: 13, margin: 0 }}>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: 0 }}>
                       <strong>{task.farm.name}</strong> {task.plot ? `&bull; Plot ${task.plot.name}` : ""} {task.cropCycle ? `&bull; 🌱 ${task.cropCycle.cropName}` : ""}
                     </p>
                   </div>
 
                   {/* Primary Action Button */}
-                  <div style={{ margin: 0 }}>
+                  <div>
                     {task.origin === "DAILY_MONITORING" && !isCompleted && (
                       <button
                         type="button"
@@ -260,7 +253,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                         onClick={() => setMonitoringTaskId(isMonitoringActive ? null : task.id)}
                       >
                         <Icons.Camera size={14} />
-                        <span>{isMonitoringActive ? "Close Monitoring" : "Submit Monitoring"}</span>
+                        <span>{isMonitoringActive ? "Close Form" : "Submit Monitoring"}</span>
                       </button>
                     )}
 
@@ -279,29 +272,36 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                       <button
                         type="button"
                         className="btn btn-secondary btn-sm"
-                        onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
+                        onClick={() => setCompletionId(isCompletionActive ? null : task.id)}
                       >
                         <Icons.CheckCircle size={14} />
-                        <span>{completionId === task.id ? "Close Details" : "Record Completion"}</span>
+                        <span>{isCompletionActive ? "Close Form" : "Record Completion"}</span>
                       </button>
+                    )}
+
+                    {isCompleted && (
+                      <span className="status-badge badge-active">
+                        <Icons.Check size={12} />
+                        <span>Done</span>
+                      </span>
                     )}
                   </div>
                 </div>
 
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--hairline)" }}>
-                  <p style={{ fontSize: 14, color: "var(--ink)", margin: "0 0 4px" }}>
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                  <p style={{ fontSize: "0.9rem", color: "var(--text-main)", margin: 0 }}>
                     {task.description}
                   </p>
                   {task.instructions && (
-                    <p style={{ fontSize: 13, color: "var(--ink)", background: "var(--soft-stone)", border: "1px solid var(--hairline)", padding: "8px 12px", borderRadius: "var(--radius-xs)", margin: "8px 0 0" }}>
-                      <strong>Agronomist Guidance:</strong> {task.instructions}
-                    </p>
+                    <div style={{ fontSize: "0.84rem", color: "var(--text-main)", background: "var(--card-muted)", border: "1px solid var(--border)", padding: "8px 12px", borderRadius: "var(--radius-xs)", marginTop: 8 }}>
+                      <strong>Agronomist Technical Guidance:</strong> {task.instructions}
+                    </div>
                   )}
                 </div>
 
                 {/* Inline Daily Monitoring Form */}
                 {isMonitoringActive && (
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px dashed var(--hairline)" }}>
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px dashed var(--border)" }}>
                     <FieldReports
                       initialFarmId={task.farm.id}
                       initialPlotId={task.plot?.id}
@@ -319,7 +319,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                 )}
 
                 {/* Inline Activity Completion Form */}
-                {completionId === task.id && (
+                {isCompletionActive && (
                   <TaskCompletionForm
                     taskId={task.id}
                     farmId={task.farm.id}
@@ -330,6 +330,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                       toast.success("Activity completion recorded!");
                       void load();
                     }}
+                    onCancel={() => setCompletionId(null)}
                   />
                 )}
               </article>
@@ -339,8 +340,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           {!filteredTasks.length && (
             <EmptyState
               icon={<Icons.CheckCircle size={28} />}
-              title="No activities found"
-              description="No tasks assigned for today matching this category filter."
+              title="No activities in this queue"
+              description="No field operations assigned for today matching this category filter."
             />
           )}
         </div>

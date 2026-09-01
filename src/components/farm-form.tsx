@@ -71,10 +71,13 @@ export function FarmForm() {
   }
 
   return (
-    <article className="card" style={{ padding: 28 }}>
+    <article className="card" style={{ padding: 24 }}>
       <div className="card-header">
         <div>
-          <div className="eyebrow">ESTATE ONBOARDING</div>
+          <div className="eyebrow">
+            <span className="eyebrow-dot"></span>
+            ESTATE ONBOARDING
+          </div>
           <h2 style={{ margin: "2px 0 0" }}>Setup New Farm Property</h2>
         </div>
       </div>
@@ -111,17 +114,9 @@ export function FarmForm() {
               <label>Latitude</label>
               <button
                 type="button"
+                className="btn btn-ghost btn-sm"
                 onClick={capture}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--action-blue)",
-                  fontSize: 11,
-                  padding: 0,
-                  cursor: "pointer",
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                }}
+                style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
               >
                 + Capture GPS
               </button>
@@ -174,8 +169,8 @@ export function FarmForm() {
               max="10000"
               required
             />
-            <small className="muted" style={{ display: "block", marginTop: 4 }}>
-              Used for automatic selfie attendance validation. Default is 500m around coordinates.
+            <small className="muted" style={{ display: "block", marginTop: 4, fontSize: "0.8rem" }}>
+              Used for automatic presence attendance validation. Default is 500m around coordinates.
             </small>
           </div>
         </div>
@@ -195,9 +190,9 @@ export function FarmForm() {
         )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-          <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "12px 28px" }}>
-            <Icons.Plus size={16} />
-            <span>{pending ? "Creating farm record…" : "Create Setup Farm Record"}</span>
+          <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "10px 24px" }}>
+            <span>{pending ? "Creating Farm…" : "Save & Continue to Farm Hub"}</span>
+            <Icons.ArrowRight size={16} />
           </button>
         </div>
       </form>

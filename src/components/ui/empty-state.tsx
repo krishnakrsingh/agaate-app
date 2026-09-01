@@ -20,16 +20,31 @@ export function EmptyState({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--dark-surface)",
-        border: "1px solid var(--border-card)",
-        borderRadius: "var(--radius-sm)",
-        boxShadow: "var(--shadow-subtle)",
+        background: "var(--card-muted)",
+        border: "1px dashed var(--border-strong)",
+        borderRadius: "var(--radius-md)",
       }}
     >
-      {icon && <div style={{ color: "var(--text-secondary)", marginBottom: 12 }}>{icon}</div>}
-      <strong style={{ fontSize: 16, color: "var(--text-light)" }}>{title}</strong>
+      {icon && (
+        <div
+          style={{
+            color: "var(--text-muted)",
+            marginBottom: 12,
+            width: 48,
+            height: 48,
+            borderRadius: "var(--radius-full)",
+            background: "var(--card)",
+            display: "grid",
+            placeItems: "center",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {icon}
+        </div>
+      )}
+      <strong style={{ fontSize: "1.05rem", color: "var(--text-main)" }}>{title}</strong>
       {description && (
-        <p style={{ color: "var(--text-secondary)", fontSize: 13, margin: "6px 0 16px", maxWidth: 420 }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: "6px 0 16px", maxWidth: 420 }}>
           {description}
         </p>
       )}

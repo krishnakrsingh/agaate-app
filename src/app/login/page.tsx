@@ -11,77 +11,78 @@ export default async function LoginPage() {
 
   return (
     <main className="auth-shell">
-      {/* Left Dark Immersive Feature Panel */}
+      {/* Left Feature & Product Panel */}
       <section className="auth-panel">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 40 }}>
-            <div className="brand-icon">
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 36 }}>
+            <div className="app-brand-mark">
               <Icons.Sprout size={18} />
             </div>
-            <span style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20, letterSpacing: "0.5px", color: "var(--text-base)" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.2rem", letterSpacing: "0.05em", color: "var(--text-main)" }}>
               AGAATE
             </span>
           </div>
 
           <div style={{ maxWidth: 520 }}>
-            <div style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
+            <div className="eyebrow" style={{ marginBottom: 12 }}>
               <span className="eyebrow-dot" />
-              <span className="mono-label" style={{ color: "var(--text-secondary)" }}>
-                ENTERPRISE AGRI OPERATING SYSTEM
-              </span>
+              PRECISION AGRI OPERATIONS PLATFORM
             </div>
             <h1 style={{
-              color: "var(--text-light)", fontSize: "clamp(30px, 3.5vw, 48px)",
-              lineHeight: 1.15, fontWeight: 800, margin: "0 0 16px"
+              fontSize: "clamp(2rem, 3.5vw, 2.75rem)",
+              lineHeight: 1.15,
+              fontWeight: 800,
+              margin: "0 0 16px",
+              letterSpacing: "-0.02em",
             }}>
-              Controlled intelligence from soil to harvest<span style={{ color: "var(--spotify-green)" }}>.</span>
+              Controlled intelligence from soil to harvest<span style={{ color: "var(--primary)" }}>.</span>
             </h1>
-            <p style={{ color: "var(--text-secondary)", fontSize: 15, lineHeight: 1.5, maxWidth: 480 }}>
-              Operate multi-farm portfolios with precision agronomy, geofenced presence verification, and automated daily intelligence reports.
+            <p style={{ color: "var(--text-muted)", fontSize: "1rem", lineHeight: 1.55, maxWidth: 460 }}>
+              Operate multi-estate farm portfolios with verified field attendance, 7-day rolling agronomy dispatch, and automated daily intelligence reports.
             </p>
           </div>
         </div>
 
-        <div className="auth-features-list">
-          <div className="auth-feature-item">
-            <div className="auth-feature-icon">
-              <Icons.MapPin size={16} />
+        <div style={{ display: "grid", gap: 16, margin: "32px 0" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--primary-light)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+              <Icons.MapPin size={18} />
             </div>
             <div>
-              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>Geofenced Attendance & Live Presence</strong>
-              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Front-camera live stream capture with 500m Haversine radar</span>
+              <strong style={{ color: "var(--text-main)", display: "block", fontSize: "0.95rem" }}>Geofenced Attendance & Live Presence</strong>
+              <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Front-camera live stream capture with 500m geofence radar</span>
             </div>
           </div>
 
-          <div className="auth-feature-item">
-            <div className="auth-feature-icon">
-              <Icons.Calendar size={16} />
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--primary-light)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+              <Icons.Calendar size={18} />
             </div>
             <div>
-              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>7-Day Rolling Agronomy Dispatch</strong>
-              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Fertigation, spraying, nutrition, and automatic milestone engine</span>
+              <strong style={{ color: "var(--text-main)", display: "block", fontSize: "0.95rem" }}>7-Day Rolling Agronomy Dispatch</strong>
+              <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Fertigation, foliar spraying, nutrition, and automatic milestone engine</span>
             </div>
           </div>
 
-          <div className="auth-feature-item">
-            <div className="auth-feature-icon">
-              <Icons.FileText size={16} />
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--primary-light)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+              <Icons.FileText size={18} />
             </div>
             <div>
-              <strong style={{ color: "var(--text-base)", display: "block", fontSize: 14 }}>Automated Daily Operations Intelligence</strong>
-              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Verified field attendance, task execution, and material consumption</span>
+              <strong style={{ color: "var(--text-main)", display: "block", fontSize: "0.95rem" }}>Automated Daily Operations Intelligence</strong>
+              <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Verified field attendance, task execution, and material consumption</span>
             </div>
           </div>
         </div>
 
-        <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-          Agaate Precision Agriculture &bull; AES-256 Encrypted &bull; FIDO2 WebAuthn Passkeys
+        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+          Agaate Precision Agriculture &bull; Verified Production Baseline
         </div>
       </section>
 
-      {/* Right Form Card Side */}
+      {/* Right Form Side */}
       <section className="auth-form-side" style={{ position: "relative" }}>
-        <div style={{ position: "absolute", top: 24, right: 24 }}>
+        <div style={{ position: "absolute", top: 20, right: 20 }}>
           <ThemeToggle />
         </div>
         <div style={{ width: "100%", maxWidth: 440 }}>

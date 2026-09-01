@@ -112,15 +112,7 @@ export default async function CropCycleDetailPage({
         />
 
         {/* Command Header */}
-        <div
-          className="card"
-          style={{
-            border: "1px solid var(--border-subtle)",
-            padding: "24px",
-            marginBottom: 24,
-            background: "var(--bg-card)",
-          }}
-        >
+        <div className="card" style={{ padding: 24 }}>
           <div
             style={{
               display: "flex",
@@ -133,25 +125,15 @@ export default async function CropCycleDetailPage({
             <div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
                 <StatusBadge status={cycle.status} />
-                <span
-                  style={{
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    background: "var(--primary-50)",
-                    color: "var(--primary-800)",
-                    border: "1px solid var(--primary-200)",
-                  }}
-                >
+                <span className="mono-label" style={{ background: "var(--card-muted)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
                   {cycle.establishmentType.replaceAll("_", " ")}
                 </span>
-                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                <span className="muted" style={{ fontSize: "0.85rem" }}>
                   Plot: <strong>{cycle.plot.name}</strong> ({plotArea} acres) &bull; {cycle.plot.farm.name}
                 </span>
               </div>
 
-              <h1 style={{ fontSize: "1.85rem", margin: "4px 0 6px" }}>
+              <h1 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)", margin: "4px 0 6px" }}>
                 🌱 {cycle.cropName}
               </h1>
 
@@ -164,9 +146,9 @@ export default async function CropCycleDetailPage({
                       fontWeight: 600,
                       padding: "3px 10px",
                       borderRadius: "var(--radius-full)",
-                      background: "var(--slate-100)",
-                      color: "var(--slate-700)",
-                      border: "1px solid var(--border-subtle)",
+                      background: "var(--primary-light)",
+                      color: "var(--primary)",
+                      border: "1px solid var(--primary-border)",
                     }}
                   >
                     Variety: {v.name}
@@ -181,9 +163,8 @@ export default async function CropCycleDetailPage({
                 <Link
                   href={`/plots/${plotId}/crop-cycles/${cycleId}/edit`}
                   className="btn btn-secondary"
-                  style={{ minHeight: 40 }}
                 >
-                  <Icons.Edit size={16} />
+                  <Icons.Edit size={15} />
                   <span>Edit Crop Plan</span>
                 </Link>
               )}
@@ -192,9 +173,8 @@ export default async function CropCycleDetailPage({
                 <Link
                   href={`/tasks/new?farmId=${cycle.plot.farmId}&plotId=${cycle.plotId}&cropCycleId=${cycle.id}`}
                   className="btn btn-primary"
-                  style={{ minHeight: 40 }}
                 >
-                  <Icons.Calendar size={16} />
+                  <Icons.Calendar size={15} />
                   <span>Plan Activity</span>
                 </Link>
               )}
@@ -203,9 +183,8 @@ export default async function CropCycleDetailPage({
                 <Link
                   href={`/officer/reports?farmId=${cycle.plot.farmId}&plotId=${cycle.plotId}&cropCycleId=${cycle.id}`}
                   className="btn btn-outline"
-                  style={{ minHeight: 40 }}
                 >
-                  <Icons.Camera size={16} />
+                  <Icons.Camera size={15} />
                   <span>Record Signal</span>
                 </Link>
               )}
@@ -217,7 +196,7 @@ export default async function CropCycleDetailPage({
             style={{
               marginTop: 18,
               paddingTop: 16,
-              borderTop: "1px solid var(--border-subtle)",
+              borderTop: "1px solid var(--border)",
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: 12,
@@ -225,16 +204,12 @@ export default async function CropCycleDetailPage({
             }}
           >
             <div>
-              <span className="muted" style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase" }}>
-                Start Date
-              </span>
+              <span className="mono-label" style={{ display: "block" }}>Start Date</span>
               <strong>{new Date(cycle.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong>
             </div>
 
             <div>
-              <span className="muted" style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase" }}>
-                Expected First Harvest
-              </span>
+              <span className="mono-label" style={{ display: "block" }}>Expected First Harvest</span>
               <strong>
                 {cycle.expectedFirstHarvestDate
                   ? new Date(cycle.expectedFirstHarvestDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -243,32 +218,28 @@ export default async function CropCycleDetailPage({
             </div>
 
             <div>
-              <span className="muted" style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase" }}>
-                Milestones Configured
-              </span>
+              <span className="mono-label" style={{ display: "block" }}>Milestones Configured</span>
               <strong>{cycle.milestones.length} Milestones Scheduled</strong>
             </div>
 
             <div>
-              <span className="muted" style={{ display: "block", fontSize: "0.75rem", textTransform: "uppercase" }}>
-                Active Field Activities
-              </span>
+              <span className="mono-label" style={{ display: "block" }}>Active Activities</span>
               <strong>{cycle.tasks.filter((t) => t.status !== "COMPLETED").length} Pending / In Progress</strong>
             </div>
           </div>
         </div>
 
         {/* Infrastructure & Variance Metrics */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
           {/* Bed Infrastructure Card */}
-          <article className="card" style={{ margin: 0 }}>
+          <article className="card" style={{ margin: 0, padding: 22 }}>
             <div className="card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
-                  <Icons.Layers size={16} />
+                <div style={{ width: 34, height: 34, borderRadius: "var(--radius-xs)", background: "var(--primary-light)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+                  <Icons.Layers size={17} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 16 }}>Bed Infrastructure (BRD §9)</h3>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Bed Infrastructure (BRD §9)</h3>
                   <small className="muted">{cycle.bedPreparationEnabled ? "Raised Bed Formation" : "No Bed Config"}</small>
                 </div>
               </div>
@@ -279,47 +250,47 @@ export default async function CropCycleDetailPage({
 
             {cycle.bedPreparationEnabled ? (
               <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
-                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: "0.88rem" }}>
+                  <div style={{ padding: "10px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
                     <span className="mono-label" style={{ display: "block" }}>Bed Width</span>
                     <strong>{cycle.bedWidthCm ? `${cycle.bedWidthCm} cm` : "—"}</strong>
                   </div>
-                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                  <div style={{ padding: "10px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
                     <span className="mono-label" style={{ display: "block" }}>Centre-to-Centre</span>
                     <strong>{cycle.bedCenterDistanceCm ? `${cycle.bedCenterDistanceCm} cm` : "—"}</strong>
                   </div>
                 </div>
 
-                <div style={{ padding: 14, background: "var(--soft-stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--hairline)" }}>
+                <div style={{ padding: 14, background: "var(--card-muted)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Expected Total Beds:</span>
-                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.expectedTotalBeds?.toString() ?? "—"} beds</strong>
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>Expected Total Beds:</span>
+                    <strong style={{ fontSize: "0.95rem" }}>{cycle.expectedTotalBeds?.toString() ?? "—"} beds</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Actual Beds Formed:</span>
-                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.actualBedsCreated?.toString() ?? "Pending"}</strong>
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>Actual Beds Formed:</span>
+                    <strong style={{ fontSize: "0.95rem" }}>{cycle.actualBedsCreated?.toString() ?? "Pending"}</strong>
                   </div>
                   {bedVariance && (
-                    <div style={{ fontSize: 12, color: bedVariance.amount >= 0 ? "#166534" : "var(--error)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--hairline)" }}>
+                    <div style={{ fontSize: "0.82rem", color: bedVariance.amount >= 0 ? "var(--success-text)" : "var(--danger-text)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--border)" }}>
                       Variance: <strong>{bedVariance.amount > 0 ? `+${bedVariance.amount}` : bedVariance.amount} beds</strong> ({bedVariance.percentage?.toFixed(1)}%)
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="muted" style={{ fontSize: 13 }}>Bed preparation was not configured for this crop cycle.</p>
+              <p className="muted" style={{ fontSize: "0.85rem", margin: 0 }}>Bed preparation was not configured for this crop cycle.</p>
             )}
           </article>
 
           {/* Mulch & Population Card */}
-          <article className="card" style={{ margin: 0 }}>
+          <article className="card" style={{ margin: 0, padding: 22 }}>
             <div className="card-header">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--primary)", color: "white", display: "grid", placeItems: "center" }}>
-                  <Icons.Sprout size={16} />
+                <div style={{ width: 34, height: 34, borderRadius: "var(--radius-xs)", background: "var(--primary-light)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
+                  <Icons.Sprout size={17} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 16 }}>Mulching & Population (BRD §10-11)</h3>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Mulching & Population (BRD §10-11)</h3>
                   <small className="muted">{cycle.mulchEnabled ? cycle.mulchHolePattern?.replaceAll("_", " ") : "Direct Ground"}</small>
                 </div>
               </div>
@@ -330,51 +301,51 @@ export default async function CropCycleDetailPage({
 
             {cycle.mulchEnabled ? (
               <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 13 }}>
-                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: "0.88rem" }}>
+                  <div style={{ padding: "10px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
                     <span className="mono-label" style={{ display: "block" }}>Hole Pattern</span>
                     <strong>{cycle.mulchHolePattern?.replaceAll("_", " ") ?? "—"}</strong>
                   </div>
-                  <div style={{ padding: "10px", background: "var(--soft-stone)", borderRadius: "var(--radius-xs)" }}>
+                  <div style={{ padding: "10px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
                     <span className="mono-label" style={{ display: "block" }}>Plant Distance</span>
                     <strong>{cycle.plantDistanceCm ? `${cycle.plantDistanceCm} cm` : "—"}</strong>
                   </div>
                 </div>
 
-                <div style={{ padding: 14, background: "var(--soft-stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--hairline)" }}>
+                <div style={{ padding: 14, background: "var(--card-muted)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Expected Population:</span>
-                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.expectedPlants?.toString() ?? "—"} plants</strong>
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>Expected Population:</span>
+                    <strong style={{ fontSize: "0.95rem" }}>{cycle.expectedPlants?.toString() ?? "—"} plants</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "var(--body-muted)" }}>Actual Population:</span>
-                    <strong style={{ fontSize: 15, color: "var(--ink)" }}>{cycle.actualPlants?.toString() ?? "Pending"}</strong>
+                    <span className="muted" style={{ fontSize: "0.85rem" }}>Actual Population:</span>
+                    <strong style={{ fontSize: "0.95rem" }}>{cycle.actualPlants?.toString() ?? "Pending"}</strong>
                   </div>
                   {plantVariance && (
-                    <div style={{ fontSize: 12, color: plantVariance.amount >= 0 ? "#166534" : "var(--error)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--hairline)" }}>
+                    <div style={{ fontSize: "0.82rem", color: plantVariance.amount >= 0 ? "var(--success-text)" : "var(--danger-text)", marginTop: 6, paddingTop: 6, borderTop: "1px dashed var(--border)" }}>
                       Variance: <strong>{plantVariance.amount > 0 ? `+${plantVariance.amount}` : plantVariance.amount} plants</strong> ({plantVariance.percentage?.toFixed(1)}%)
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="muted" style={{ fontSize: 13 }}>Mulch film was not configured for this crop cycle.</p>
+              <p className="muted" style={{ fontSize: "0.85rem", margin: 0 }}>Mulch film was not configured for this crop cycle.</p>
             )}
           </article>
         </div>
 
         {/* 4 Standard Milestones Pipeline */}
-        <section className="card" style={{ marginBottom: 24 }}>
+        <section className="card" style={{ padding: 22 }}>
           <div className="card-header">
             <div>
-              <h3>Crop Cycle Milestone Schedule (BRD §12)</h3>
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
-                Target timeline dates for stage completion and milestone tasks.
+              <h3 style={{ margin: 0 }}>Crop Cycle Milestone Schedule (BRD §12)</h3>
+              <p className="muted" style={{ fontSize: "0.85rem", margin: "2px 0 0" }}>
+                Target timeline dates for stage completion and automated tasks.
               </p>
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
             {cycle.milestones.map((m, idx) => {
               const isDone = m.status === "COMPLETED";
 
@@ -383,23 +354,23 @@ export default async function CropCycleDetailPage({
                   key={m.id}
                   style={{
                     padding: "16px",
-                    background: isDone ? "var(--primary-50)" : "var(--slate-50)",
+                    background: isDone ? "var(--success-light)" : "var(--card-muted)",
                     borderRadius: "var(--radius-md)",
-                    border: `1px solid ${isDone ? "var(--primary-300)" : "var(--border-subtle)"}`,
+                    border: `1px solid ${isDone ? "var(--success-border)" : "var(--border)"}`,
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
                   }}
                 >
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span
                         style={{
                           width: 22,
                           height: 22,
                           borderRadius: "var(--radius-full)",
-                          background: isDone ? "var(--primary-600)" : "var(--slate-200)",
-                          color: isDone ? "white" : "var(--slate-700)",
+                          background: isDone ? "var(--success)" : "var(--border-strong)",
+                          color: "#ffffff",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -412,21 +383,21 @@ export default async function CropCycleDetailPage({
                       <StatusBadge status={m.status} />
                     </div>
 
-                    <strong style={{ fontSize: "1rem", display: "block", color: "var(--slate-900)" }}>
+                    <strong style={{ fontSize: "0.98rem", display: "block", color: "var(--text-main)" }}>
                       {m.name}
                     </strong>
                     <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", display: "block", marginTop: 4 }}>
                       Target: <strong>{new Date(m.targetDate).toLocaleDateString()}</strong>
                     </span>
                     {m.remarks && (
-                      <p style={{ fontSize: "0.78rem", color: "var(--slate-600)", margin: "6px 0 0" }}>
+                      <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "6px 0 0" }}>
                         {m.remarks}
                       </p>
                     )}
                   </div>
 
                   {m.completedAt && (
-                    <div style={{ marginTop: 10, paddingTop: 6, borderTop: "1px solid var(--border-subtle)", fontSize: "0.75rem", color: "var(--primary-800)" }}>
+                    <div style={{ marginTop: 10, paddingTop: 6, borderTop: "1px solid var(--border)", fontSize: "0.75rem", color: "var(--success-text)", fontWeight: 600 }}>
                       Completed on {new Date(m.completedAt).toLocaleDateString()}
                     </div>
                   )}
@@ -439,11 +410,11 @@ export default async function CropCycleDetailPage({
         {/* Two-Column Tasks & Signals View */}
         <div className="two-column" style={{ alignItems: "start" }}>
           {/* Associated Planned Tasks */}
-          <article className="card" style={{ margin: 0 }}>
+          <article className="card" style={{ margin: 0, padding: 22 }}>
             <div className="card-header">
               <div>
-                <h3>Cycle Field Activities ({cycle.tasks.length})</h3>
-                <p className="muted" style={{ fontSize: "0.82rem" }}>Dispatched agronomy and milestone tasks.</p>
+                <h3 style={{ margin: 0 }}>Cycle Field Activities ({cycle.tasks.length})</h3>
+                <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>Dispatched agronomy and milestone tasks.</p>
               </div>
             </div>
 
@@ -453,9 +424,9 @@ export default async function CropCycleDetailPage({
                   key={task.id}
                   style={{
                     padding: "12px 14px",
-                    background: task.status === "COMPLETED" ? "var(--slate-50)" : "white",
+                    background: task.status === "COMPLETED" ? "var(--card-muted)" : "var(--card)",
                     borderRadius: "var(--radius-sm)",
-                    border: "1px solid var(--border-subtle)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 6 }}>
@@ -478,17 +449,17 @@ export default async function CropCycleDetailPage({
               ))}
 
               {!cycle.tasks.length && (
-                <p className="muted" style={{ fontSize: "0.85rem" }}>No activities planned yet for this crop cycle.</p>
+                <p className="muted" style={{ fontSize: "0.85rem", margin: 0 }}>No activities planned yet for this crop cycle.</p>
               )}
             </div>
           </article>
 
           {/* Monitoring & Telemetry */}
-          <article className="card" style={{ margin: 0 }}>
+          <article className="card" style={{ margin: 0, padding: 22 }}>
             <div className="card-header">
               <div>
-                <h3>Visual Monitoring Logs ({cycle.monitoring.length})</h3>
-                <p className="muted" style={{ fontSize: "0.82rem" }}>Daily crop health classification and field photos.</p>
+                <h3 style={{ margin: 0 }}>Visual Monitoring Logs ({cycle.monitoring.length})</h3>
+                <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>Daily crop health classification and field photos.</p>
               </div>
             </div>
 
@@ -498,13 +469,13 @@ export default async function CropCycleDetailPage({
                   key={m.id}
                   style={{
                     padding: "12px 14px",
-                    background: m.status === "POOR" ? "var(--danger-light)" : "var(--primary-50)",
+                    background: m.status === "POOR" ? "var(--danger-light)" : "var(--success-light)",
                     borderRadius: "var(--radius-sm)",
-                    border: `1px solid ${m.status === "POOR" ? "var(--danger-border)" : "var(--primary-200)"}`,
+                    border: `1px solid ${m.status === "POOR" ? "var(--danger-border)" : "var(--success-border)"}`,
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <strong style={{ color: m.status === "POOR" ? "var(--danger-dark)" : "var(--primary-800)" }}>
+                    <strong style={{ color: m.status === "POOR" ? "var(--danger-text)" : "var(--success-text)" }}>
                       {m.status} Health &bull; {m.stage}
                     </strong>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -513,7 +484,7 @@ export default async function CropCycleDetailPage({
                   </div>
 
                   {m.impactPercent && (
-                    <div style={{ fontSize: "0.82rem", color: "var(--danger-dark)", marginTop: 2 }}>
+                    <div style={{ fontSize: "0.82rem", color: "var(--danger-text)", marginTop: 2 }}>
                       Estimated Impact: <strong>{m.impactPercent.toString()}%</strong>
                     </div>
                   )}
@@ -531,7 +502,7 @@ export default async function CropCycleDetailPage({
               ))}
 
               {!cycle.monitoring.length && (
-                <p className="muted" style={{ fontSize: "0.85rem" }}>No daily monitoring logs recorded yet.</p>
+                <p className="muted" style={{ fontSize: "0.85rem", margin: 0 }}>No daily monitoring logs recorded yet.</p>
               )}
             </div>
           </article>

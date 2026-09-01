@@ -83,20 +83,20 @@ export function LoginForm() {
       {/* Demo Account Persona Selector */}
       <div
         style={{
-          background: "var(--dark-surface)",
-          border: "1px solid var(--border-card)",
-          borderRadius: "var(--radius-sm)",
+          background: "var(--card-muted)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-md)",
           padding: 16,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--spotify-green)", boxShadow: "0 0 6px rgba(30, 215, 96, 0.6)" }} />
-          <span className="mono-label" style={{ color: "var(--text-base)" }}>
-            Select Persona to Test
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
+          <span className="mono-label" style={{ color: "var(--text-main)", fontWeight: 700 }}>
+            Quick Demo Persona Selector
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 8 }}>
           {DEMO_ACCOUNTS.map((acc) => {
             const isSelected = email === acc.email;
             return (
@@ -105,18 +105,18 @@ export function LoginForm() {
                 type="button"
                 onClick={() => quickFill(acc.email, acc.password)}
                 style={{
-                  background: isSelected ? "var(--surface-hover)" : "var(--mid-dark)",
-                  color: isSelected ? "var(--text-light)" : "var(--text-secondary)",
-                  border: `1px solid ${isSelected ? "var(--spotify-green)" : "var(--border-subtle)"}`,
-                  borderRadius: "var(--radius-xs)",
-                  padding: "10px 12px",
+                  background: isSelected ? "var(--primary-light)" : "var(--card)",
+                  color: isSelected ? "var(--primary)" : "var(--text-main)",
+                  border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
+                  borderRadius: "var(--radius-sm)",
+                  padding: "8px 10px",
                   textAlign: "left",
                   cursor: "pointer",
-                  transition: "all var(--transition-fast)",
+                  transition: "all 0.15s ease",
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, color: isSelected ? "var(--spotify-green)" : "var(--text-base)" }}>{acc.role}</div>
-                <div style={{ fontSize: 11, opacity: 0.8 }}>{acc.badge}</div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 700 }}>{acc.role}</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{acc.badge}</div>
               </button>
             );
           })}
@@ -124,16 +124,16 @@ export function LoginForm() {
       </div>
 
       {/* Main Authentication Card */}
-      <div className="card" style={{ padding: 32 }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ margin: "0 0 6px", fontSize: 22, color: "var(--text-light)" }}>Sign in to Agaate</h2>
-          <p style={{ margin: 0, fontSize: 14, color: "var(--text-secondary)" }}>
+      <div className="card" style={{ padding: 28 }}>
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ margin: "0 0 4px", fontSize: "1.4rem" }}>Sign in to Agaate</h2>
+          <p className="muted" style={{ margin: 0, fontSize: "0.88rem" }}>
             Enter your credentials to access precision agriculture operations.
           </p>
         </div>
 
         {error && (
-          <div className="error" role="alert">
+          <div className="error" role="alert" style={{ marginBottom: 14 }}>
             <Icons.AlertCircle size={15} />
             <span>{error}</span>
           </div>
@@ -141,7 +141,7 @@ export function LoginForm() {
 
         <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
           <div className="form-group" style={{ margin: 0 }}>
-            <label htmlFor="login-email">Email address</label>
+            <label htmlFor="login-email">Email Address</label>
             <input
               id="login-email"
               type="email"
@@ -160,7 +160,7 @@ export function LoginForm() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="btn btn-ghost"
-                style={{ fontSize: 12, padding: 0 }}
+                style={{ fontSize: "0.78rem", padding: 0 }}
               >
                 {showPassword ? "Hide password" : "Show password"}
               </button>
@@ -180,7 +180,7 @@ export function LoginForm() {
             type="submit"
             className="btn btn-primary btn-lg"
             disabled={pending || !email || !password}
-            style={{ width: "100%", marginTop: 8 }}
+            style={{ width: "100%", marginTop: 6 }}
           >
             <span>{pending ? "Authenticating…" : "Sign In to Console"}</span>
             <Icons.ArrowRight size={15} />

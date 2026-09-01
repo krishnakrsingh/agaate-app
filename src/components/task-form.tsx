@@ -136,7 +136,7 @@ export function TaskForm({
   const selectedPlot = plots.find((p) => p.id === plotId);
 
   return (
-    <form onSubmit={submit} className="card" style={{ padding: 28, display: "grid", gap: 20 }}>
+    <form onSubmit={submit} className="card" style={{ padding: 24, display: "grid", gap: 18 }}>
       {error && (
         <div className="error" role="alert">
           <Icons.AlertCircle size={16} />
@@ -244,12 +244,12 @@ export function TaskForm({
                 onClick={() => setPriority(p)}
                 style={{
                   padding: "8px 4px",
-                  borderRadius: "var(--radius-xs)",
-                  background: priority === p ? "var(--primary)" : "var(--soft-stone)",
-                  color: priority === p ? "var(--on-primary)" : "var(--ink)",
-                  border: `1px solid ${priority === p ? "var(--primary)" : "var(--hairline)"}`,
-                  fontSize: 11,
-                  fontWeight: 600,
+                  borderRadius: "var(--radius-sm)",
+                  background: priority === p ? "var(--primary)" : "var(--card-muted)",
+                  color: priority === p ? "var(--on-primary)" : "var(--text-main)",
+                  border: `1px solid ${priority === p ? "var(--primary)" : "var(--border)"}`,
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
                   fontFamily: "var(--font-mono)",
                   cursor: "pointer",
                 }}
@@ -275,12 +275,12 @@ export function TaskForm({
                 alignItems: "center",
                 gap: 8,
                 padding: "8px 12px",
-                borderRadius: "var(--radius-xs)",
-                background: category === cat.value ? "var(--primary)" : "var(--canvas)",
-                color: category === cat.value ? "var(--on-primary)" : "var(--ink)",
-                border: `1px solid ${category === cat.value ? "var(--primary)" : "var(--hairline)"}`,
-                fontSize: 13,
-                fontWeight: 500,
+                borderRadius: "var(--radius-sm)",
+                background: category === cat.value ? "var(--primary)" : "var(--card-muted)",
+                color: category === cat.value ? "var(--on-primary)" : "var(--text-main)",
+                border: `1px solid ${category === cat.value ? "var(--primary)" : "var(--border)"}`,
+                fontSize: "0.85rem",
+                fontWeight: 600,
                 textAlign: "left",
                 cursor: "pointer",
               }}
@@ -324,7 +324,10 @@ export function TaskForm({
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() => router.back()}
+          onClick={() => {
+            if (onCancel) onCancel();
+            else router.back();
+          }}
         >
           Cancel
         </button>

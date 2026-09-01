@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Icons } from "./icons";
 import { EmptyState } from "./ui/empty-state";
+import { StatusBadge } from "./ui/badge";
 
 type Farm = {
   id: string;
@@ -85,93 +86,56 @@ export function DashboardClient({
     });
   }, [farms, statusFilter, searchQuery]);
 
-  const roleHint =
-    role === "SUPER_ADMIN"
-      ? "Global multi-estate operations across land plots, agronomists, and field officers."
-      : role === "FARM_ADMIN"
-      ? "Manage assigned farms — plot layout, crop cycles, team assignments, and approvals."
-      : role === "AGRONOMIST"
-      ? "Central agronomy intelligence — 7-day planning, crop health monitoring, and prescriptions."
-      : "Field execution — live presence clock-in, task dispatch, and real-time incident reports.";
+  const totalAcreage = farms
+    .reduce((acc, f) => acc + Number(f.totalArea || 0), 0)
+    .toFixed(1);
 
   return (
-    <div style={{ display: "grid", gap: 0 }}>
-      {/* ── HERO SECTION — Spotify Content-First Dark Canvas ── */}
-      <section style={{ padding: "36px 0 28px", borderBottom: "1px solid var(--border-subtle)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 32, flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div style={{ flex: "1 1 560px", minWidth: 0, maxWidth: 760 }}>
-            <div style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-              <span className="mono-label" style={{
-                background: "var(--mid-dark)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-full)",
-                padding: "4px 12px", color: "var(--text-base)"
-              }}>
-                {role.replaceAll("_", " ")} &bull; {userName}
-              </span>
-              <span className="eyebrow-dot" />
-              <span className="mono-label" style={{ color: "var(--text-secondary)" }}>ENTERPRISE PRECISION AGRI OPS</span>
-            </div>
-
-            <h1 style={{ margin: "0 0 14px", color: "var(--text-light)" }}>
-              Controlled intelligence<br />from soil to harvest<span style={{ color: "var(--spotify-green)" }}>.</span>
-            </h1>
-
-            <p style={{ fontSize: 16, lineHeight: 1.5, color: "var(--text-secondary)", maxWidth: 640, margin: "0 0 24px" }}>
-              {roleHint} Geofenced presence attendance, 7-day rolling agronomy dispatch, and automated reports on an immersive, content-first canvas.
-            </p>
-
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-              {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) ? (
-                <Link href="/farms/new" className="btn btn-primary">
-                  <Icons.Plus size={15} /><span>Create New Farm</span>
-                </Link>
-              ) : role === "FARM_OFFICER" ? (
-                <Link href="/officer/day" className="btn btn-primary">
-                  <Icons.Sun size={15} /><span>Open My Day</span>
-                </Link>
-              ) : (
-                <Link href="/tasks/new" className="btn btn-primary">
-                  <Icons.Calendar size={15} /><span>Plan 7-Day Activity</span>
-                </Link>
-              )}
-              <Link href="/reports/daily" className="btn btn-ghost">
-                View daily report &rarr;
-              </Link>
-            </div>
+    <div style={{ display: "grid", gap: 24 }}>
+      {/* ── PAGE HEADER & OPERATIONS SUMMARY ── */}
+      <div className="page-header">
+        <div className="page-header-content">
+          <div className="eyebrow">
+            <span className="eyebrow-dot"></span>
+            PORTFOLIO OVERVIEW &bull; {role.replaceAll("_", " ")}
           </div>
-
-          {/* Side Telemetry Card (Spotify Audio Device Aesthetic) */}
-          <div className="hero-telemetry-card">
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: "var(--radius-circle)", background: "var(--spotify-green)", color: "#000000", display: "grid", placeItems: "center" }}>
-                <Icons.Sprout size={16} />
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-base)" }}>Agaate Platform Telemetry</div>
-                <div className="mono-label" style={{ fontSize: 11, color: "var(--text-secondary)" }}>PWA &bull; S3 Evidence &bull; Offline Sync</div>
-              </div>
-            </div>
-            <div style={{ height: 1, background: "var(--border-subtle)" }} />
-            <div style={{ display: "grid", gap: 10, fontSize: 13, color: "var(--text-base)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--text-secondary)" }}>HQ Geofence</span><strong>500 meters</strong></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--text-secondary)" }}>Weather Telemetry</span><strong style={{ color: "var(--spotify-green)" }}>Open-Meteo Live</strong></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--text-secondary)" }}>Security & Access</span><strong>Session Auth &bull; RBAC</strong></div>
-            </div>
-          </div>
+          <h1>Farm Operations Portfolio</h1>
+          <p className="muted">
+            Global monitoring of managed land estates, active crop cycles, and daily field execution telemetry.
+          </p>
         </div>
-      </section>
 
-      {/* ── TRUST LOGO STRIP ── */}
-      <div className="trust-logo-strip" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-        <span className="mono-label">
-          DEPLOYED ACROSS ESTATES &bull; MANDYA &bull; HOSUR &bull; NASHIK &bull; 3 STATES
-        </span>
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", opacity: 0.7, fontSize: 12, fontWeight: 700, letterSpacing: "1.2px", color: "var(--text-secondary)" }}>
-          <span>SOMNATH AGRO</span><span>NARAYANA SWAMY</span><span>PRIYANKA VENTURES</span><span>AGAATE PRECISION</span>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
+            <Link href="/farms/new" className="btn btn-primary">
+              <Icons.Plus size={16} />
+              <span>Create New Farm</span>
+            </Link>
+          )}
+
+          {role === "FARM_OFFICER" && (
+            <Link href="/officer/day" className="btn btn-primary">
+              <Icons.Sun size={16} />
+              <span>Open My Day</span>
+            </Link>
+          )}
+
+          {role === "AGRONOMIST" && (
+            <Link href="/tasks/new" className="btn btn-primary">
+              <Icons.Calendar size={16} />
+              <span>Plan Agronomy Activity</span>
+            </Link>
+          )}
+
+          <Link href="/reports/daily" className="btn btn-secondary">
+            <Icons.FileText size={15} />
+            <span>Daily Report</span>
+          </Link>
         </div>
       </div>
 
       {/* ── KPI METRIC CARDS ── */}
-      <section className="metric-grid" style={{ marginTop: 32 }}>
+      <section className="metric-grid">
         <div className="metric-card">
           <span className="metric-label">Managed Estates</span>
           <div className="metric-value">{metrics.totalFarms}</div>
@@ -179,88 +143,70 @@ export function DashboardClient({
         </div>
 
         <div className="metric-card">
-          <span className="metric-label">Plots & Crop Cycles</span>
-          <div className="metric-value">{metrics.totalPlots}</div>
-          <div className="metric-sub">{metrics.totalCrops} Active Crop Cycles</div>
+          <span className="metric-label">Total Acreage</span>
+          <div className="metric-value">{totalAcreage} <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>Acres</span></div>
+          <div className="metric-sub">{metrics.totalPlots} Land Plots Defined</div>
+        </div>
+
+        <div className="metric-card">
+          <span className="metric-label">Active Crop Cycles</span>
+          <div className="metric-value">{metrics.totalCrops}</div>
+          <div className="metric-sub">Controlled Varieties & Milestones</div>
         </div>
 
         <div className="metric-card">
           <span className="metric-label">Daily Operations</span>
           <div className="metric-value">{metrics.totalTasks}</div>
-          <div className="metric-sub">{metrics.completedTasks} Completed Today</div>
-        </div>
-
-        <div className="metric-card">
-          <span className="metric-label">Field Signals</span>
-          <div className="metric-value" style={{ color: metrics.pendingIncidents > 0 ? "var(--negative-red)" : "inherit" }}>
-            {metrics.pendingIncidents}
-          </div>
-          <div className="metric-sub">{metrics.delayedAlerts} Overdue &bull; {metrics.pendingIncidents} Incidents</div>
+          <div className="metric-sub">{metrics.completedTasks} Finished Today</div>
         </div>
       </section>
 
-      {/* ── DARK FEATURE BAND: FIELD INTELLIGENCE & HEALTH SIGNALS ── */}
+      {/* ── ATTENTION SIGNALS (POOR HEALTH / INCIDENTS) ── */}
       {(poorHealthAlerts.length > 0 || activeIncidents.length > 0) && (
-        <section className="dark-feature-band" style={{ marginBottom: 36 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
-            <div>
-              <div className="mono-label" style={{ color: "var(--text-secondary)", display: "flex", gap: 8, alignItems: "center" }}>
-                <span className="eyebrow-dot" />
-                <span>ACTIVE FIELD SIGNALS &bull; BRD §19 & §26</span>
-              </div>
-              <h2 style={{ color: "var(--text-light)", margin: "8px 0 0" }}>
-                Estates Requiring Agronomy Action
-              </h2>
+        <section
+          style={{
+            background: "var(--danger-light)",
+            border: "1px solid var(--danger-border)",
+            borderRadius: "var(--radius-md)",
+            padding: 18,
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Icons.AlertTriangle size={18} style={{ color: "var(--danger)" }} />
+              <strong style={{ color: "var(--danger-text)", fontSize: "0.95rem" }}>
+                Field Action Required &bull; {poorHealthAlerts.length + activeIncidents.length} Active Operational Signals
+              </strong>
             </div>
-
-            {["SUPER_ADMIN", "AGRONOMIST"].includes(role) && (
-              <Link href="/tasks/new" className="btn btn-secondary">
-                <Icons.Calendar size={14} /><span>Prescribe Corrective Task</span>
-              </Link>
-            )}
+            <Link href="/tasks" className="btn btn-sm btn-outline" style={{ borderColor: "var(--danger)", color: "var(--danger-text)" }}>
+              <span>Prescribe Corrective Task</span>
+              <Icons.ArrowRight size={13} />
+            </Link>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
-            {poorHealthAlerts.map((alert) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+            {poorHealthAlerts.map((a) => (
               <div
-                key={alert.id}
+                key={a.id}
                 style={{
-                  background: "var(--dark-surface)",
-                  border: "1px solid var(--border-card)",
+                  background: "var(--card)",
+                  border: "1px solid var(--danger-border)",
                   borderRadius: "var(--radius-sm)",
-                  padding: 20,
-                  display: "grid",
-                  gap: 10,
-                  boxShadow: "var(--shadow-medium)",
+                  padding: 12,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span className="mono-label" style={{ color: "var(--negative-red)", fontWeight: 700 }}>
-                    POOR CROP HEALTH
-                  </span>
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{alert.date}</span>
+                  <strong style={{ fontSize: "0.9rem", color: "var(--danger-text)" }}>🔴 {a.cropName} &bull; {a.plotName}</strong>
+                  <span className="priority-tag high">{a.impactPercent ? `${a.impactPercent}% Impact` : "Poor Health"}</span>
                 </div>
-                <div>
-                  <strong style={{ fontSize: 15, color: "var(--text-base)" }}>🌱 {alert.cropName}</strong>
-                  <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-                    {alert.farmName} &bull; Plot {alert.plotName} &bull; Stage: <strong style={{ color: "var(--text-base)" }}>{alert.stage}</strong>
-                  </p>
-                  {alert.impactPercent && (
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--negative-red)", fontWeight: 700 }}>
-                      Estimated Yield Impact: {alert.impactPercent}%
-                    </p>
-                  )}
-                </div>
-                {alert.remarks && (
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)", fontStyle: "italic", background: "var(--mid-dark)", padding: "8px 12px", borderRadius: "var(--radius-xs)" }}>
-                    &ldquo;{alert.remarks}&rdquo;
-                  </p>
-                )}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-                  <Link href={`/farms/${alert.farmId}`} style={{ fontSize: 13, fontWeight: 700, color: "var(--spotify-green)", textDecoration: "none" }}>
-                    Inspect Plot Details &rarr;
-                  </Link>
-                </div>
+                <p style={{ margin: "4px 0", fontSize: "0.82rem", color: "var(--text-main)" }}>
+                  {a.farmName} &bull; Stage: {a.stage} {a.remarks ? `&bull; "${a.remarks}"` : ""}
+                </p>
+                <Link href={`/farms/${a.farmId}`} style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: 600 }}>
+                  View Farm Hub &rarr;
+                </Link>
               </div>
             ))}
 
@@ -268,137 +214,156 @@ export function DashboardClient({
               <div
                 key={inc.id}
                 style={{
-                  background: "var(--dark-surface)",
-                  border: "1px solid var(--border-card)",
+                  background: "var(--card)",
+                  border: "1px solid var(--danger-border)",
                   borderRadius: "var(--radius-sm)",
-                  padding: 20,
-                  display: "grid",
-                  gap: 10,
-                  boxShadow: "var(--shadow-medium)",
+                  padding: 12,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span className="mono-label" style={{ color: "var(--warning-orange)", fontWeight: 700 }}>
-                    {inc.level} INCIDENT &bull; {inc.severity}
-                  </span>
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{inc.date}</span>
+                  <strong style={{ fontSize: "0.9rem" }}>⚠️ {inc.type}</strong>
+                  <span className="priority-tag critical">{inc.severity}</span>
                 </div>
-                <div>
-                  <strong style={{ fontSize: 15, color: "var(--text-base)" }}>{inc.type}</strong>
-                  <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
-                    {inc.farmName} {inc.plotName ? `&bull; Plot ${inc.plotName}` : ""} {inc.cropName ? `&bull; ${inc.cropName}` : ""}
-                  </p>
-                </div>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)", background: "var(--mid-dark)", padding: "8px 12px", borderRadius: "var(--radius-xs)" }}>
-                  {inc.description}
+                <p style={{ margin: "4px 0", fontSize: "0.82rem", color: "var(--text-main)" }}>
+                  {inc.farmName} &bull; {inc.description}
                 </p>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-                  <Link href={`/farms/${inc.farmId}`} style={{ fontSize: 13, fontWeight: 700, color: "var(--spotify-green)", textDecoration: "none" }}>
-                    View Farm Incident &rarr;
-                  </Link>
-                </div>
+                <Link href={`/farms/${inc.farmId}`} style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: 600 }}>
+                  Inspect Incident &rarr;
+                </Link>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {/* ── ESTATE PORTFOLIO SECTION (Spotify Content List) ── */}
-      <section style={{ marginTop: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 16, borderBottom: "1px solid var(--border-subtle)", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <div className="mono-label">ESTATE OPERATIONS</div>
-            <h2 style={{ margin: "4px 0 0", color: "var(--text-light)" }}>Estate Portfolio</h2>
+      {/* ── ESTATES PORTFOLIO DIRECTORY ── */}
+      <section style={{ display: "grid", gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          {/* Status Tabs */}
+          <div className="tabs-nav" style={{ margin: 0 }}>
+            {["ALL", "ACTIVE", "SETUP", "INACTIVE"].map((st) => (
+              <button
+                key={st}
+                type="button"
+                className={`tab-btn ${statusFilter === st ? "active" : ""}`}
+                onClick={() => setStatusFilter(st)}
+              >
+                {st === "ALL" ? `All Estates (${farms.length})` : `${st.replaceAll("_", " ")} (${farms.filter((f) => f.status === st).length})`}
+              </button>
+            ))}
           </div>
 
-          <div className="dashboard-filter-bar">
-            <div style={{ position: "relative", minWidth: 240, flex: "1 1 auto" }}>
-              <input
-                type="text"
-                placeholder="Search estates, location, owner…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-search"
-                style={{ height: 40, fontSize: 13, width: "100%" }}
-              />
-              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", display: "grid", placeItems: "center" }}>
-                <Icons.Search size={14} />
-              </span>
-            </div>
-
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {["ALL", "ACTIVE", "SETUP", "INACTIVE"].map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setStatusFilter(st)}
-                  className={`tab-btn ${statusFilter === st ? "active" : ""}`}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
+          {/* Search */}
+          <div style={{ position: "relative", minWidth: 260 }}>
+            <input
+              type="text"
+              placeholder="Filter by estate, location, owner…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: "8px 12px 8px 34px",
+                fontSize: "0.88rem",
+                height: 38,
+              }}
+            />
+            <span
+              style={{
+                position: "absolute",
+                left: 11,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "var(--text-muted)",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <Icons.Search size={15} />
+            </span>
           </div>
         </div>
 
-        {/* Dark Surface Estate List Cards */}
-        <div style={{ display: "grid", gap: 8, marginTop: 16 }}>
+        {/* Farm Cards Grid */}
+        <div style={{ display: "grid", gap: 12 }}>
           {filteredFarms.map((farm) => {
-            const plotCount = farm.plots?.length ?? 0;
-            const officerCount = farm.access?.filter((a) => a.user.role === "FARM_OFFICER").length ?? 0;
-            const crops = farm.plots?.flatMap((p) => p.cropCycles.map((c) => c.cropName)) ?? [];
+            const cropNames = Array.from(
+              new Set(
+                farm.plots.flatMap((p) =>
+                  p.cropCycles.filter((c) => c.status !== "CANCELLED").map((c) => c.cropName)
+                )
+              )
+            );
 
             return (
               <Link
                 key={farm.id}
                 href={`/farms/${farm.id}`}
-                className="estate-card-grid card"
+                className="card"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1.2fr 1.5fr 1fr auto",
+                  alignItems: "center",
+                  gap: 16,
+                  padding: "18px 22px",
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
               >
                 <div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4 }}>
-                    <span className={`status ${farm.status.toLowerCase()}`}>
-                      {farm.status}
-                    </span>
-                    <span className="mono-label" style={{ fontSize: 11 }}>{farm.location}</span>
+                    <strong style={{ fontSize: "1.1rem", color: "var(--text-main)" }}>
+                      {farm.name}
+                    </strong>
+                    <StatusBadge status={farm.status} />
                   </div>
-                  <strong style={{ fontSize: 16, color: "var(--text-light)" }}>{farm.name}</strong>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>{farm.ownerName}</div>
+                  <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
+                    <Icons.MapPin size={12} />
+                    <span>{farm.location}</span>
+                  </span>
                 </div>
 
                 <div>
-                  <div className="mono-label">ACREAGE</div>
-                  <div style={{ fontSize: 14, color: "var(--text-base)", fontWeight: 600 }}>
-                    {farm.totalArea} ac <span style={{ color: "var(--text-secondary)", fontWeight: 400 }}>({farm.cultivableArea} cult)</span>
-                  </div>
+                  <span className="mono-label" style={{ display: "block" }}>Acreage</span>
+                  <strong style={{ fontSize: "0.95rem" }}>
+                    {farm.totalArea} Total <span className="muted" style={{ fontWeight: 400 }}>({farm.cultivableArea} cult.)</span>
+                  </strong>
                 </div>
 
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {crops.length > 0 ? (
-                    crops.slice(0, 3).map((c, i) => (
-                      <span key={i} className="mono-label" style={{ background: "var(--mid-dark)", padding: "4px 10px", borderRadius: "var(--radius-full)", color: "var(--text-base)", border: "1px solid var(--border-subtle)" }}>
+                <div>
+                  <span className="mono-label" style={{ display: "block" }}>Active Crops ({cropNames.length})</span>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 2 }}>
+                    {cropNames.slice(0, 3).map((c) => (
+                      <span
+                        key={c}
+                        style={{
+                          padding: "2px 6px",
+                          borderRadius: "var(--radius-xs)",
+                          background: "var(--primary-light)",
+                          color: "var(--primary)",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
                         🌱 {c}
                       </span>
-                    ))
-                  ) : (
-                    <span style={{ fontSize: 13, color: "var(--text-secondary)", fontStyle: "italic" }}>
-                      No active crop cycles
-                    </span>
-                  )}
-                  {crops.length > 3 && (
-                    <span className="mono-label" style={{ color: "var(--text-secondary)" }}>
-                      +{crops.length - 3}
-                    </span>
-                  )}
-                </div>
-
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  <span>{plotCount} Plots</span> &bull; <span>{officerCount} Officers</span>
+                    ))}
+                    {cropNames.length === 0 && (
+                      <span className="muted" style={{ fontSize: "0.8rem" }}>No active crops</span>
+                    )}
+                    {cropNames.length > 3 && (
+                      <span className="muted" style={{ fontSize: "0.75rem" }}>+{cropNames.length - 3} more</span>
+                    )}
+                  </div>
                 </div>
 
                 <div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--spotify-green)", display: "inline-flex", gap: 6, alignItems: "center" }}>
-                    <span>Open Hub</span>
-                    <Icons.ArrowRight size={14} />
+                  <span className="mono-label" style={{ display: "block" }}>Plots</span>
+                  <strong style={{ fontSize: "0.95rem" }}>{farm.plots.length} Plots</strong>
+                </div>
+
+                <div>
+                  <span className="btn btn-sm btn-outline">
+                    <span>Manage</span>
+                    <Icons.ArrowRight size={13} />
                   </span>
                 </div>
               </Link>
@@ -406,13 +371,11 @@ export function DashboardClient({
           })}
 
           {!filteredFarms.length && (
-            <div style={{ padding: "48px 0" }}>
-              <EmptyState
-                icon={<Icons.Farm size={32} />}
-                title="No estates found"
-                description="No farms match your search or filter criteria."
-              />
-            </div>
+            <EmptyState
+              icon={<Icons.Farm size={28} />}
+              title="No estates match criteria"
+              description="Try adjusting your status filter or search term."
+            />
           )}
         </div>
       </section>

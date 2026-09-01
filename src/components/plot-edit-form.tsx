@@ -27,9 +27,6 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
 
   const initialSelected = new Set(plot.irrigation.map((i) => i.type));
   const [selected, setSelected] = useState<Set<string>>(initialSelected);
-  const detailsMap = Object.fromEntries(
-    plot.irrigation.map((i) => [i.type, i.details ?? ""])
-  );
 
   function capture() {
     if (!navigator.geolocation) {
@@ -140,7 +137,10 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
     <article className="card" style={{ padding: 24 }}>
       <div className="card-header">
         <div>
-          <div className="eyebrow">PLOT CONFIGURATION</div>
+          <div className="eyebrow">
+            <span className="eyebrow-dot"></span>
+            PLOT CONFIGURATION
+          </div>
           <h2 style={{ margin: "2px 0 0" }}>Edit Plot Details</h2>
         </div>
         <span className="status active">{plot.status}</span>
@@ -163,17 +163,9 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
               <label>Latitude</label>
               <button
                 type="button"
+                className="btn btn-ghost btn-sm"
                 onClick={capture}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--action-blue)",
-                  fontSize: 11,
-                  padding: 0,
-                  cursor: "pointer",
-                  fontFamily: "var(--font-mono)",
-                  textTransform: "uppercase",
-                }}
+                style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
               >
                 + Capture GPS
               </button>
@@ -181,8 +173,6 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
             <input
               name="latitude"
               type="number"
-              min="-90"
-              max="90"
               step="any"
               value={lat}
               onChange={(e) => setLat(e.target.value)}
@@ -195,8 +185,6 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
             <input
               name="longitude"
               type="number"
-              min="-180"
-              max="180"
               step="any"
               value={lng}
               onChange={(e) => setLng(e.target.value)}
@@ -210,51 +198,53 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
           </div>
 
           <div className="form-group" style={{ margin: 0 }}>
-            <label>Status</label>
+            <label>Plot Status</label>
             <select name="status" defaultValue={plot.status}>
-              <option value="SETUP">Setup</option>
               <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
+              <option value="FALLOW">Fallow</option>
               <option value="ARCHIVED">Archived</option>
             </select>
           </div>
         </div>
 
-        <div style={{ background: "var(--soft-stone)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xs)", padding: 16, display: "grid", gap: 10 }}>
-          <div className="mono-label">Irrigation Setup</div>
+        {/* Irrigation Setup */}
+        <div style={{ background: "var(--card-muted)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 16, display: "grid", gap: 10 }}>
+          <div className="mono-label" style={{ fontWeight: 700 }}>Irrigation Systems (Select all that apply)</div>
           <div style={{ display: "grid", gap: 8 }}>
-            {options.map((type) => (
-              <div
-                key={type}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 130px), 1fr))",
-                  gap: 12,
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  background: "var(--canvas)",
-                  borderRadius: "var(--radius-xs)",
-                  border: `1px solid ${selected.has(type) ? "var(--ink)" : "var(--hairline)"}`,
-                }}
-              >
-                <label className="check" style={{ margin: 0, fontSize: 13 }}>
+            {options.map((type) => {
+              const checked = selected.has(type);
+              return (
+                <div
+                  key={type}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))",
+                    gap: 12,
+                    alignItems: "center",
+                    padding: "8px 12px",
+                    background: "var(--card)",
+                    borderRadius: "var(--radius-sm)",
+                    border: `1px solid ${checked ? "var(--primary)" : "var(--border)"}`,
+                  }}
+                >
+                  <label className="check" style={{ margin: 0, fontSize: "0.88rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => toggle(type, e.target.checked)}
+                    />
+                    <span>{type}</span>
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={selected.has(type)}
-                    onChange={(e) => toggle(type, e.target.checked)}
+                    name={`irrigation_details_${type}`}
+                    defaultValue={plot.irrigation.find((i) => i.type === type)?.details ?? ""}
+                    placeholder={type === "Other" ? "Required details" : "Optional details"}
+                    disabled={!checked}
+                    style={{ padding: "5px 10px", fontSize: "0.85rem" }}
                   />
-                  <span>{type}</span>
-                </label>
-                <input
-                  name={`irrigation_details_${type}`}
-                  defaultValue={detailsMap[type] ?? ""}
-                  placeholder={type === "Other" ? "Required for Other" : "Details (optional)"}
-                  disabled={!selected.has(type)}
-                  maxLength={300}
-                  style={{ minHeight: 34, padding: "4px 10px", fontSize: 13 }}
-                />
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -272,20 +262,18 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap", marginTop: 8 }}>
-          <button type="submit" className="btn btn-primary" disabled={pending}>
-            <Icons.Check size={16} />
-            <span>{pending ? "Saving…" : "Save Plot Changes"}</span>
-          </button>
-
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
           <button
             type="button"
-            className="btn btn-danger"
+            className="btn btn-danger btn-sm"
             onClick={archive}
-            disabled={pending || plot.status === "ARCHIVED"}
+            disabled={pending}
           >
-            <Icons.Trash size={16} />
-            <span>Archive Plot</span>
+            Archive Plot
+          </button>
+
+          <button type="submit" className="btn btn-primary" disabled={pending}>
+            <span>{pending ? "Saving…" : "Save Plot Changes"}</span>
           </button>
         </div>
       </form>

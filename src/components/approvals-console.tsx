@@ -93,9 +93,9 @@ export function ApprovalsConsole() {
   }
 
   return (
-    <section>
+    <section style={{ display: "grid", gap: 18 }}>
       {/* Console Tabs */}
-      <div className="tabs-nav" style={{ marginBottom: 20 }}>
+      <div className="tabs-nav">
         <button
           type="button"
           className={`tab-btn ${activeTab === "exceptions" ? "active" : ""}`}
@@ -120,7 +120,7 @@ export function ApprovalsConsole() {
           onClick={() => setActiveTab("log")}
         >
           <Icons.Users size={14} />
-          <span>Attendance Log ({attendance.length})</span>
+          <span>Attendance Audit Log ({attendance.length})</span>
         </button>
       </div>
 
@@ -140,10 +140,13 @@ export function ApprovalsConsole() {
 
       {/* TAB 1: ATTENDANCE EXCEPTIONS */}
       {activeTab === "exceptions" && (
-        <article className="card" style={{ padding: 24 }}>
+        <article className="card" style={{ padding: 22 }}>
           <div className="card-header">
             <div>
-              <div className="eyebrow">ATTENDANCE GOVERNANCE</div>
+              <div className="eyebrow">
+                <span className="eyebrow-dot"></span>
+                ATTENDANCE GOVERNANCE
+              </div>
               <h3 style={{ margin: "2px 0 0" }}>Pending Distance Exceptions</h3>
             </div>
           </div>
@@ -165,22 +168,24 @@ export function ApprovalsConsole() {
                     <tr key={ex.id}>
                       <td>
                         <strong>{ex.attendance.user.name}</strong>
-                        <div style={{ fontSize: 12, color: "var(--body-muted)" }}>{ex.attendance.user.email}</div>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{ex.attendance.user.email}</div>
                       </td>
                       <td>{ex.attendance.farm.name}</td>
                       <td>
-                        <span className="mono-label" style={{ color: "var(--warning-orange)", background: "var(--warning-orange-tint)", border: "1px solid rgba(255, 164, 43, 0.3)", padding: "3px 10px", borderRadius: "var(--radius-full)" }}>
+                        <span className="priority-tag high">
                           {ex.distanceMeters}m (radius: {ex.attendance.farm.geofenceRadiusMeters ?? 500}m)
                         </span>
                       </td>
-                      <td style={{ maxWidth: 260 }}>&ldquo;{ex.reason}&rdquo;</td>
+                      <td style={{ maxWidth: 280, fontSize: "0.85rem" }}>&ldquo;{ex.reason}&rdquo;</td>
                       <td>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button
                             type="button"
                             className="btn btn-sm btn-primary"
                             disabled={reviewingId === ex.id}
-                            onClick={() => review(`/api/attendance-exceptions/${ex.id}`, "APPROVED", ex.id)}
+                            onClick={() =>
+                              review(`/api/attendance-exceptions/${ex.id}`, "APPROVED", ex.id)
+                            }
                           >
                             Approve
                           </button>
@@ -188,7 +193,9 @@ export function ApprovalsConsole() {
                             type="button"
                             className="btn btn-sm btn-danger"
                             disabled={reviewingId === ex.id}
-                            onClick={() => review(`/api/attendance-exceptions/${ex.id}`, "REJECTED", ex.id)}
+                            onClick={() =>
+                              review(`/api/attendance-exceptions/${ex.id}`, "REJECTED", ex.id)
+                            }
                           >
                             Reject
                           </button>
@@ -202,8 +209,8 @@ export function ApprovalsConsole() {
           ) : (
             <EmptyState
               icon={<Icons.Shield size={28} />}
-              title="No pending exceptions"
-              description="All officer attendance records are within geofence boundaries."
+              title="No pending attendance exceptions"
+              description="All officer clock-in records are verified within authorized farm geofence boundaries."
             />
           )}
         </article>
@@ -211,11 +218,14 @@ export function ApprovalsConsole() {
 
       {/* TAB 2: LOCATION CHANGE REQUESTS */}
       {activeTab === "locations" && (
-        <article className="card" style={{ padding: 24 }}>
+        <article className="card" style={{ padding: 22 }}>
           <div className="card-header">
             <div>
-              <div className="eyebrow">COORDINATE GOVERNANCE</div>
-              <h3 style={{ margin: "2px 0 0" }}>Proposed Farm GPS Adjustments</h3>
+              <div className="eyebrow">
+                <span className="eyebrow-dot"></span>
+                GEODATA GOVERNANCE
+              </div>
+              <h3 style={{ margin: "2px 0 0" }}>Pending Location Change Requests</h3>
             </div>
           </div>
 
@@ -224,29 +234,32 @@ export function ApprovalsConsole() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Estate</th>
+                    <th>Farm</th>
                     <th>Proposed Coordinates</th>
-                    <th>Reason</th>
+                    <th>Justification</th>
                     <th>Review Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {locations.map((loc) => (
                     <tr key={loc.id}>
-                      <td><strong>{loc.farm?.name ?? loc.farmId}</strong></td>
                       <td>
-                        <span className="mono-label">
-                          {Number(loc.proposedLatitude).toFixed(4)}, {Number(loc.proposedLongitude).toFixed(4)}
-                        </span>
+                        <strong>{loc.farm?.name ?? loc.farmId}</strong>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{loc.farm?.location}</div>
                       </td>
-                      <td style={{ maxWidth: 260 }}>&ldquo;{loc.reason}&rdquo;</td>
+                      <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.82rem" }}>
+                        {Number(loc.proposedLatitude).toFixed(5)}, {Number(loc.proposedLongitude).toFixed(5)}
+                      </td>
+                      <td style={{ maxWidth: 300, fontSize: "0.85rem" }}>&ldquo;{loc.reason}&rdquo;</td>
                       <td>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button
                             type="button"
                             className="btn btn-sm btn-primary"
                             disabled={reviewingId === loc.id}
-                            onClick={() => review(`/api/location-change-requests/${loc.id}`, "APPROVED", loc.id)}
+                            onClick={() =>
+                              review(`/api/location-change-requests/${loc.id}`, "APPROVED", loc.id)
+                            }
                           >
                             Approve
                           </button>
@@ -254,7 +267,9 @@ export function ApprovalsConsole() {
                             type="button"
                             className="btn btn-sm btn-danger"
                             disabled={reviewingId === loc.id}
-                            onClick={() => review(`/api/location-change-requests/${loc.id}`, "REJECTED", loc.id)}
+                            onClick={() =>
+                              review(`/api/location-change-requests/${loc.id}`, "REJECTED", loc.id)
+                            }
                           >
                             Reject
                           </button>
@@ -269,7 +284,7 @@ export function ApprovalsConsole() {
             <EmptyState
               icon={<Icons.MapPin size={28} />}
               title="No pending location requests"
-              description="No farm coordinate changes are pending administrator review."
+              description="No pending GPS coordinate adjustments from field staff."
             />
           )}
         </article>
@@ -277,40 +292,54 @@ export function ApprovalsConsole() {
 
       {/* TAB 3: ATTENDANCE AUDIT LOG */}
       {activeTab === "log" && (
-        <article className="card" style={{ padding: 24 }}>
+        <article className="card" style={{ padding: 22 }}>
           <div className="card-header">
             <div>
-              <div className="eyebrow">HISTORICAL TELEMETRY</div>
-              <h3 style={{ margin: "2px 0 0" }}>Global Attendance Log</h3>
+              <div className="eyebrow">
+                <span className="eyebrow-dot"></span>
+                AUDIT TRAIL
+              </div>
+              <h3 style={{ margin: "2px 0 0" }}>Comprehensive Attendance Log</h3>
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Officer</th>
-                  <th>Farm</th>
-                  <th>Shift Status</th>
-                  <th>Clock In</th>
-                  <th>Clock Out</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendance.map((att) => (
-                  <tr key={att.id}>
-                    <td><span className="mono-label">{att.attendanceDate?.slice(0, 10)}</span></td>
-                    <td><strong>{att.user.name}</strong></td>
-                    <td>{att.farm.name}</td>
-                    <td><StatusBadge status={att.status} /></td>
-                    <td>{att.startAt ? new Date(att.startAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}</td>
-                    <td>{att.endAt ? new Date(att.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Active"}</td>
+          {attendance.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Officer</th>
+                    <th>Farm</th>
+                    <th>Status</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>GPS Start</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {attendance.map((a) => (
+                    <tr key={a.id}>
+                      <td style={{ whiteSpace: "nowrap" }}>{new Date(a.attendanceDate).toLocaleDateString()}</td>
+                      <td><strong>{a.user.name}</strong></td>
+                      <td>{a.farm.name}</td>
+                      <td><StatusBadge status={a.status} /></td>
+                      <td>{a.startAt ? new Date(a.startAt).toLocaleTimeString() : "—"}</td>
+                      <td>{a.endAt ? new Date(a.endAt).toLocaleTimeString() : "In Progress"}</td>
+                      <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>
+                        {a.startLatitude ? `${Number(a.startLatitude).toFixed(4)}, ${Number(a.startLongitude).toFixed(4)}` : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState
+              icon={<Icons.Users size={28} />}
+              title="No attendance records in audit log"
+            />
+          )}
         </article>
       )}
     </section>

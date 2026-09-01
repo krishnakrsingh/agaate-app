@@ -112,119 +112,122 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
   }
 
   return (
-    <article className="card" style={{ margin: 0 }}>
-      <div className="card-header" style={{ marginBottom: 12 }}>
+    <article className="card" style={{ margin: 0, padding: 22 }}>
+      <div className="card-header" style={{ marginBottom: 14 }}>
         <div>
-          <h3>Agronomist Weather Override</h3>
-          <p className="muted" style={{ fontSize: "0.85rem" }}>
+          <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Agronomist Weather Override</h3>
+          <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>
             Record on-site micro-climate observations or rain forecasts for 7-day agronomy planning.
           </p>
         </div>
-        <span className="role-badge agronomist" style={{ fontSize: "0.68rem" }}>
+        <span className="role-badge" style={{ fontSize: "0.72rem" }}>
           Agronomy Override
         </span>
       </div>
 
-      <form className="form two-column" onSubmit={submit}>
-        {!fixedFarmId && (
-          <div className="form-group">
-            <label>Farm</label>
-            <select value={farmId} onChange={(e) => setFarmId(e.target.value)} required>
-              <option value="">Select farm</option>
-              {farms.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+        <div className="two-column">
+          {!fixedFarmId && (
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Farm Location</label>
+              <select value={farmId} onChange={(e) => setFarmId(e.target.value)} required>
+                <option value="">Select farm…</option>
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-        <div className="form-group">
-          <label>Plan Date</label>
-          <input
-            name="date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Plan Date</label>
+            <input
+              name="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
         </div>
 
         {/* Live Auto Weather vs Stored Manual */}
         <div
-          className="wide"
           style={{
-            background: "var(--slate-50)",
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--border-subtle)",
-            fontSize: "0.88rem",
+            background: "var(--card-muted)",
+            padding: "12px 14px",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--border)",
+            fontSize: "0.85rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--sky-blue)", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--info)", fontWeight: 600 }}>
             <Icons.Sun size={15} />
             <span>Auto Satellite (Live):</span>
             <span style={{ color: "var(--text-main)", fontWeight: 500 }}>{auto || "Fetching…"}</span>
           </div>
 
           {existing && (
-            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border-subtle)", color: "var(--primary-800)" }}>
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)", color: "var(--primary)" }}>
               <strong>Stored Manual Override:</strong> {existing.temperature ?? "—"}°C &bull; {existing.humidity ?? "—"}% humidity &bull; {existing.windSpeed ?? "—"} km/h wind &bull; Rain: {existing.rainForecast ?? "—"}%
-              {existing.remarks && <span style={{ display: "block", fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2 }}>Remarks: {existing.remarks}</span>}
+              {existing.remarks && <span style={{ display: "block", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 2 }}>Remarks: {existing.remarks}</span>}
             </div>
           )}
         </div>
 
-        <div className="form-group">
-          <label>Observed Temperature (°C)</label>
-          <input
-            name="temperature"
-            type="number"
-            step="0.1"
-            min="-50"
-            max="60"
-            placeholder={existing?.temperature?.toString() ?? "e.g., 31.5"}
-          />
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Observed Temperature (°C)</label>
+            <input
+              name="temperature"
+              type="number"
+              step="0.1"
+              min="-50"
+              max="60"
+              placeholder={existing?.temperature?.toString() ?? "e.g., 31.5"}
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Observed Humidity (%)</label>
+            <input
+              name="humidity"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              placeholder={existing?.humidity?.toString() ?? "e.g., 65"}
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Wind Speed (km/h)</label>
+            <input
+              name="windSpeed"
+              type="number"
+              step="0.1"
+              min="0"
+              max="200"
+              placeholder={existing?.windSpeed?.toString() ?? "e.g., 14"}
+            />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Rain Forecast (%)</label>
+            <input
+              name="rainForecast"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              placeholder={existing?.rainForecast?.toString() ?? "e.g., 40"}
+            />
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Observed Humidity (%)</label>
-          <input
-            name="humidity"
-            type="number"
-            step="0.1"
-            min="0"
-            max="100"
-            placeholder={existing?.humidity?.toString() ?? "e.g., 65"}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Wind speed (km/h)</label>
-          <input
-            name="windSpeed"
-            type="number"
-            step="0.1"
-            min="0"
-            max="200"
-            placeholder={existing?.windSpeed?.toString() ?? "e.g., 14"}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Rain forecast (%)</label>
-          <input
-            name="rainForecast"
-            type="number"
-            step="0.1"
-            min="0"
-            max="100"
-            placeholder={existing?.rainForecast?.toString() ?? "e.g., 40"}
-          />
-        </div>
-
-        <div className="form-group wide">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Weather Remarks & Agronomy Context</label>
           <textarea
             name="remarks"
@@ -235,7 +238,7 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
           />
         </div>
 
-        <div className="form-group wide">
+        <div className="form-group" style={{ margin: 0 }}>
           <label>Agronomy Plan Notes (Optional)</label>
           <textarea
             name="notes"
@@ -247,16 +250,18 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
         </div>
 
         {message && (
-          <div className={message.includes("recorded") ? "hint wide" : "error wide"} role="status">
+          <div className={message.includes("recorded") ? "success-banner" : "error"} role="status">
             {message.includes("recorded") ? <Icons.CheckCircle size={16} /> : <Icons.AlertCircle size={16} />}
             <span>{message}</span>
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary wide" disabled={pending || !farmId}>
-          <Icons.Check size={16} />
-          <span>{pending ? "Saving override…" : "Save Agronomy Weather"}</span>
-        </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+          <button type="submit" className="btn btn-primary" disabled={pending || !farmId}>
+            <Icons.Check size={16} />
+            <span>{pending ? "Saving override…" : "Save Agronomy Weather"}</span>
+          </button>
+        </div>
       </form>
     </article>
   );

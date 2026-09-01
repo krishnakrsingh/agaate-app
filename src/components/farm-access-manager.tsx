@@ -89,11 +89,11 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
     data?.users.filter((u) => !data.access.some((a) => a.user.id === u.id)) ?? [];
 
   return (
-    <article className="card">
+    <article className="card" style={{ padding: 22 }}>
       <div className="card-header">
         <div>
-          <h3>Assigned Farm Officers</h3>
-          <p className="muted" style={{ fontSize: "0.88rem" }}>
+          <h3 style={{ margin: 0 }}>Assigned Farm Officers</h3>
+          <p className="muted" style={{ fontSize: "0.85rem", margin: "2px 0 0" }}>
             Assign Farm Officers to execute daily tasks, mark geofenced attendance, and record monitoring telemetry.
           </p>
         </div>
@@ -105,11 +105,9 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
           onChange={(e) => setUserId(e.target.value)}
           style={{
             padding: "9px 14px",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--border-strong)",
-            fontSize: "0.9rem",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "0.88rem",
             flex: "1 1 280px",
-            background: "white",
           }}
         >
           <option value="">Select an active Farm Officer to assign…</option>
@@ -122,17 +120,17 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
 
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm"
           onClick={assign}
           disabled={!userId || pending}
         >
-          <Icons.Plus size={16} />
+          <Icons.Plus size={15} />
           <span>{pending ? "Assigning…" : "Assign Officer"}</span>
         </button>
       </div>
 
       {message && (
-        <div className={message.includes("failed") || message.includes("Unable") ? "error" : "hint"} role="alert">
+        <div className={message.includes("failed") || message.includes("Unable") ? "error" : "success-banner"} role="alert">
           {message.includes("failed") || message.includes("Unable") ? (
             <Icons.AlertCircle size={16} />
           ) : (
@@ -142,7 +140,7 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
         </div>
       )}
 
-      <div style={{ display: "grid", gap: 10 }}>
+      <div style={{ display: "grid", gap: 8 }}>
         {assignedOfficers.map((a) => (
           <div
             key={a.id}
@@ -150,19 +148,19 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "12px 16px",
-              background: "var(--slate-50)",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--border-subtle)",
+              padding: "10px 14px",
+              background: "var(--card-muted)",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--border)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div className="user-avatar" style={{ width: 34, height: 34 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="user-avatar" style={{ width: 32, height: 32 }}>
                 {a.user.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <strong style={{ fontSize: "0.95rem" }}>{a.user.name}</strong>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                <strong style={{ fontSize: "0.9rem" }}>{a.user.name}</strong>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                   {a.user.email} &bull; Farm Officer
                 </div>
               </div>
@@ -170,20 +168,19 @@ export function FarmAccessManager({ farmId }: { farmId: string }) {
 
             <button
               type="button"
-              className="btn btn-sm btn-secondary"
+              className="btn btn-sm btn-danger"
               onClick={() => remove(a.user.id)}
-              style={{ color: "var(--danger-red)" }}
             >
-              <Icons.Trash size={14} />
+              <Icons.Trash size={13} />
               <span>Remove</span>
             </button>
           </div>
         ))}
 
         {!assignedOfficers.length && (
-          <div className="empty" style={{ padding: 20 }}>
-            <p>No Farm Officers assigned to this farm yet.</p>
-          </div>
+          <p className="muted" style={{ fontSize: "0.85rem", margin: 0 }}>
+            No farm officers assigned to this farm yet.
+          </p>
         )}
       </div>
     </article>
