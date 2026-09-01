@@ -17,7 +17,7 @@ export function PlotForm({ farmId }: { farmId: string }) {
 
   const capture = () => {
     if (!navigator.geolocation) {
-      setError("Location is not supported on this device.");
+      setError("Location is not supported on this device. Enter coordinates manually.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -25,8 +25,16 @@ export function PlotForm({ farmId }: { farmId: string }) {
         setLat(String(p.coords.latitude));
         setLng(String(p.coords.longitude));
         setSuccess("Captured current device coordinates.");
+        setError("");
       },
-      () => setError("Location could not be captured. Please enter coordinates manually."),
+      (err) =>
+        setError(
+          err.code === 1
+            ? "Location permission was denied. Enter coordinates manually."
+            : err.code === 3
+            ? "Location timed out. Try again or enter coordinates manually."
+            : "Location is unavailable. Enter coordinates manually."
+        ),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };

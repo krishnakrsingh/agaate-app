@@ -14,7 +14,7 @@ export function FarmForm() {
 
   function capture() {
     if (!navigator.geolocation) {
-      setError("Location is not supported on this device.");
+      setError("Location is not supported on this device. Enter coordinates manually.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -22,8 +22,16 @@ export function FarmForm() {
         setLat(String(pos.coords.latitude));
         setLng(String(pos.coords.longitude));
         setSuccess("Current device GPS coordinates captured.");
+        setError("");
       },
-      () => setError("Location capture failed. Please enter coordinates manually."),
+      (err) =>
+        setError(
+          err.code === 1
+            ? "Location permission was denied. Enter coordinates manually."
+            : err.code === 3
+            ? "Location timed out. Try again or enter coordinates manually."
+            : "Location is unavailable. Enter coordinates manually."
+        ),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
