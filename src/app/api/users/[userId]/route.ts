@@ -11,4 +11,4 @@ export async function PATCH(request:NextRequest,{params}:{params:Promise<{userId
   if (input.password) passwordHash = await bcrypt.hash(input.password, 12);
   if(input.farmIds||input.managesFarmIds){await tx.farmAccess.deleteMany({where:{userId}});if(all.length)await tx.farmAccess.createMany({data:all.map(farmId=>({userId,farmId,canManage:manage.includes(farmId)}))});}
   return tx.user.update({where:{id:userId},data:{name:input.name,role:input.role,active:input.active, ...(passwordHash?{passwordHash}:{})},include:{farmAccess:true}})
-});await audit(actor.id,"UPDATE","User",userId,{role:updated.role,active:updated.active,farmIds:all});return NextResponse.json(updated);}catch(error){return apiError(error);}}
+ });const { passwordHash: _, ...safeUpdated } = updated as any; await audit(actor.id,"UPDATE","User",userId,{role:updated.role,active:updated.active,farmIds:all});return NextResponse.json(safeUpdated);}catch(error){return apiError(error);}}
