@@ -53,13 +53,13 @@
 | **Frontend** | Next.js (App Router) + React | 16.3.3 / 19.2.8 |
 | **Language** | TypeScript | 5.8.3 |
 | **Styling** | Vanilla CSS (globals.css design system) | — |
-| **Database** | PostgreSQL | 16 (Alpine) |
+| **Database** | MySQL | 8.0 |
 | **ORM** | Prisma | 6.8.2 |
 | **Authentication** | Session Cookie (jose JWT), bcryptjs | — |
 | **Object Storage** | S3-compatible (AWS S3 / MinIO for dev) | — |
 | **Validation** | Zod | 3.24.4 |
 | **Testing** | Vitest (unit & integration), Playwright (E2E) | 3.2.1 / 1.62.1 |
-| **Container** | Docker Compose (PostgreSQL + MinIO) | — |
+| **Container** | Docker Compose (MySQL + MinIO) | — |
 
 ### 1.2 Architecture Pattern
 
@@ -93,7 +93,7 @@
 └───────┼──────────────────────┼──────────────────────────┘
         │                      │
    ┌────▼─────┐          ┌─────▼────┐
-   │PostgreSQL│          │  MinIO   │
+   │MySQL│          │  MinIO   │
    │  16      │          │  S3      │
    └──────────┘          └──────────┘
 ```
@@ -171,7 +171,7 @@ agaateapp/
 │       ├── face-*.ts              # Face recognition utilities
 │       └── webauthn.ts            # WebAuthn server helpers
 ├── tests/                         # Test files
-├── docker-compose.yml             # PostgreSQL + MinIO
+├── docker-compose.yml             # MySQL + MinIO
 ├── package.json                   # Dependencies & scripts
 ├── tsconfig.json                  # TypeScript configuration
 ├── vitest.config.ts               # Vitest configuration
@@ -425,7 +425,7 @@ requireRole(userRole, ["SUPER_ADMIN", "FARM_ADMIN"]);
 ```yaml
 # docker-compose.yml
 services:
-  postgres:     # PostgreSQL 16 Alpine, port 5432
+  mysql:     # MySQL 8 Alpine, port 3306
   minio:        # S3-compatible storage, ports 9000/9001
   minio-setup:  # Auto-creates 'agaate-evidence' bucket
 ```
@@ -434,7 +434,7 @@ services:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | MySQL connection string |
 | `APP_SESSION_SECRET` | JWT signing key (≥32 chars) |
 | `S3_*` | Object storage configuration |
 | `WEATHER_PROVIDER_URL` | Open-Meteo API endpoint |

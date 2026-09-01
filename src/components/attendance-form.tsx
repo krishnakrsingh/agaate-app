@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
 import { FormEvent, useEffect, useState, useCallback } from "react";
 import { Icons } from "./icons";
 import { useToast } from "./ui/toast";

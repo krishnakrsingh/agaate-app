@@ -26,11 +26,13 @@ export async function POST(request: NextRequest) {
           origin: "DAILY_MONITORING",
           cropCycleId: input.cropCycleId,
           dueDate: today,
+          farmId: input.farmId,
           status: { in: ["ASSIGNED", "AVAILABLE", "IN_PROGRESS"] },
+          OR: [{ assignedOfficerId: actor.id }, { assignedOfficerId: null }],
         },
       });
       for (const task of tasks) {
-        await tx.task.update({ where: { id: task.id }, data: { status: "COMPLETED", assignedOfficerId: task.assignedOfficerId ?? actor.id } });
+        await tx.task.update({ where: { id: task.id }, data: { status: "COMPLETED", assignedOfficerId: actor.id } });
         await tx.taskExecution.upsert({
           where: { taskId: task.id },
           update: { officerId: actor.id, status: "COMPLETED", completedAt: new Date() },

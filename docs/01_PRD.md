@@ -427,7 +427,7 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 | Authentication | JWT sessions (8h expiry), bcrypt password hashing |
 | Biometric Security | Encrypted face embeddings (AES-256-GCM), WebAuthn passkeys, liveness challenges |
 | Storage | S3-compatible (MinIO for local dev) for media assets |
-| Database | PostgreSQL 16 via Prisma ORM |
+| Database | MySQL 8 via Prisma ORM |
 | Geolocation | Haversine distance calculation, configurable geofence radius |
 | Audit Trail | Complete audit logging for all entity changes |
 | Rate Limiting | In-memory rate limiting for API endpoints |

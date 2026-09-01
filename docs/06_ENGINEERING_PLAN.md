@@ -206,13 +206,13 @@ npx prisma migrate deploy
 | Session secure flag | ⚠️ | Set `APP_SESSION_SECURE=true` |
 | Error monitoring | ❌ | Add Sentry or equivalent |
 | Log aggregation | ❌ | Set up structured logging + aggregation |
-| Database backups | ❌ | Configure automated PostgreSQL backups |
+| Database backups | ❌ | Configure automated MySQL backups |
 
 ### 4.2 Recommended Infrastructure
 
 ```
 ┌───────────────┐     ┌──────────────┐     ┌──────────┐
-│  Cloudflare   │────▶│  Next.js     │────▶│PostgreSQL│
+│  Cloudflare   │────▶│  Next.js     │────▶│MySQL│
 │  CDN + SSL    │     │  App Server  │     │  (RDS)   │
 └───────────────┘     │  (Vercel/    │     └──────────┘
                       │   EC2/ECS)   │
@@ -232,7 +232,7 @@ npx prisma migrate deploy
 
 | Variable | Development | Production |
 |---|---|---|
-| `DATABASE_URL` | `localhost:5432` | RDS endpoint |
+| `DATABASE_URL` | `localhost:3306` | RDS endpoint |
 | `S3_ENDPOINT` | `localhost:9000` (MinIO) | `s3.amazonaws.com` |
 | `S3_FORCE_PATH_STYLE` | `true` | `false` |
 | `APP_SESSION_SECURE` | (not set) | `true` |

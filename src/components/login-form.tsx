@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 
 const DEMO_ACCOUNTS = [
@@ -30,6 +31,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 export function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -64,11 +66,11 @@ export function LoginForm() {
 
       const userRole = body.user?.role;
       if (userRole === "FARM_OFFICER") {
-        window.location.href = "/officer/day";
+        router.push("/officer/day");
       } else if (userRole === "AGRONOMIST") {
-        window.location.href = "/tasks";
+        router.push("/tasks");
       } else {
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     } catch {
       setPending(false);

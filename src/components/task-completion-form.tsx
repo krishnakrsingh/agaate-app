@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
 
@@ -6,11 +7,13 @@ export function TaskCompletionForm({
   taskId,
   farmId,
   taskTitle,
+  milestoneName,
   onComplete,
 }: {
   taskId: string;
   farmId: string;
   taskTitle: string;
+  milestoneName?: string | null;
   onComplete: () => void;
 }) {
   const [error, setError] = useState("");
@@ -109,9 +112,9 @@ export function TaskCompletionForm({
     }
   }
 
-  const titleLower = taskTitle.toLowerCase();
-  const bedActivity = titleLower.includes("bed") || titleLower.includes("land preparation");
-  const plantActivity = titleLower.includes("transplant") || titleLower.includes("direct sowing") || (titleLower.includes("sowing") && !titleLower.includes("protection") && !titleLower.includes("spray"));
+  // Structured domain check: use milestone name instead of title regex (brittle)
+  const bedActivity = milestoneName === "Land Preparation";
+  const plantActivity = milestoneName === "Transplantation" || milestoneName === "Direct Sowing";
 
   return (
     <form

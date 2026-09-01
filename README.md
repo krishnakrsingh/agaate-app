@@ -1,6 +1,6 @@
 # Agaate Farm Management PWA
 
-Production-oriented Next.js application for multi-farm planning, agronomy activities, and field execution. Business state is stored in PostgreSQL; evidence is stored in S3-compatible object storage.
+Production-oriented Next.js application for multi-farm planning, agronomy activities, and field execution. Business state is stored in MySQL 8 via Prisma ORM; evidence is stored in S3-compatible object storage.
 
 ## Documentation Suite
 
@@ -17,12 +17,12 @@ Comprehensive architecture, specifications, design briefs, and user flows are or
 ## Run locally
 
 1. Copy `.env.example` to `.env` and replace every `change-me` value. Add `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` (12+ characters), and optionally `INITIAL_ADMIN_NAME`.
-2. Start the development infrastructure: `docker compose up -d postgres minio`.
+2. Start the development infrastructure: `docker compose up -d mysql minio`.
 3. Create the S3/MinIO bucket named by `S3_BUCKET`, grant the configured credentials access to it, and allow browser `PUT` requests for the app origin with `Content-Type` exposed. The upload flow uses short-lived signed URLs and verifies each object server-side.
 4. Install dependencies with `npm install`, then run `npm run db:generate`, `npm run db:migrate`, and `npm run db:seed`.
 5. Start the app: `npm run dev`.
 
-For production, set managed PostgreSQL and S3 credentials in the deployment environment, run `npm run db:migrate` as a release step, then run `npm run build` and `npm start`. Do not use the development Docker passwords or default session secret in production.
+For production, set managed MySQL 8 and S3 credentials in the deployment environment, run `npm run db:migrate` as a release step, then run `npm run build` and `npm start`. Do not use the development Docker passwords or default session secret in production.
 
 ## Security and persistence
 
@@ -37,4 +37,4 @@ For production, set managed PostgreSQL and S3 credentials in the deployment envi
 
 The implementation includes real schema-backed APIs and UI for users/access, farm and plot CRUD, irrigation, crop cycles/varieties/milestones/support activities, activation, planned/system/daily-monitoring tasks, executions/materials/labour, attendance/geofence exceptions, location change approvals, secure evidence uploads, monitoring, incidents and follow-up status, filtered dashboards, daily reports, audit records, live weather, and PWA installability.
 
-Run `npm test` for calculation rules. Integration and end-to-end tests require an isolated PostgreSQL/S3 environment and configured secrets; they should be run in the deployment pipeline against those services.
+Run `npm test` for calculation rules. Integration and end-to-end tests require an isolated MySQL/S3 environment and configured secrets; they should be run in the deployment pipeline against those services.

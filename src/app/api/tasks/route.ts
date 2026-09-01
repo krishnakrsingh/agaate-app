@@ -4,7 +4,7 @@ import { currentActor, requireFarmAccess, requireRole, HttpError } from "@/lib/a
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, paginationParams } from "@/lib/api";
-import { isWithinRollingSevenDays, parseUtcDate, utcDateOnly } from "@/lib/business";
+import { isWithinRollingSevenDays, parseUtcDate } from "@/lib/business";
 
 const schema = z.object({ farmId: z.string().min(1), plotId: z.string().min(1).optional().nullable(), cropCycleId: z.string().min(1).optional().nullable(), date: z.coerce.date(), category: z.enum(["FERTIGATION", "FOLIAR_NUTRITION", "SOIL_APPLICATION", "PREVENTIVE_SPRAY", "PEST_CONTROL", "DISEASE_CONTROL", "CROP_MONITORING", "IRRIGATION_RECOMMENDATION", "CULTURAL_PRACTICE", "CROP_SPECIFIC"]), title: z.string().min(3).max(160), description: z.string().min(3).max(2000), instructions: z.string().max(2000).optional().nullable(), priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]), assignedOfficerId: z.string().min(1) });
 
@@ -15,54 +15,6 @@ export async function GET(request: NextRequest) {
     const farmId = search.get("farmId");
     const day = search.get("date");
     if (farmId) await requireFarmAccess(farmId);
-    const requestedDate = day ? parseUtcDate(day) : utcDateOnly(new Date());
-
-    if (actor.role === "FARM_OFFICER") {
-      const farms = await prisma.farm.findMany({
-        where: { status: "ACTIVE", access: { some: { userId: actor.id } }, ...(farmId ? { id: farmId } : {}) },
-        select: { id: true },
-      });
-      const farmIds = farms.map((f) => f.id);
-      const cycles = await prisma.cropCycle.findMany({
-        where: { status: "ACTIVE", plot: { farmId: { in: farmIds }, deletedAt: null } },
-        select: { id: true, cropName: true, plotId: true, plot: { select: { farmId: true } } },
-      });
-      for (const cycle of cycles) {
-        const exists = await prisma.task.findFirst({
-          where: {
-            origin: "DAILY_MONITORING",
-            cropCycleId: cycle.id,
-            dueDate: requestedDate,
-            OR: [{ assignedOfficerId: actor.id }, { assignedOfficerId: null }],
-          },
-        });
-        if (!exists) {
-          const nextDay = new Date(requestedDate);
-          nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-          const alreadyMonitored = await prisma.cropMonitoring.findFirst({
-            where: {
-              cropCycleId: cycle.id,
-              createdAt: { gte: requestedDate, lt: nextDay },
-            },
-          });
-          await prisma.task.create({
-            data: {
-              farmId: cycle.plot.farmId,
-              plotId: cycle.plotId,
-              cropCycleId: cycle.id,
-              origin: "DAILY_MONITORING",
-              category: "CROP_MONITORING",
-              title: `Daily monitoring · ${cycle.cropName}`,
-              description: "Record crop health, stage, remarks, and at least one photo.",
-              dueDate: requestedDate,
-              status: alreadyMonitored ? "COMPLETED" : "ASSIGNED",
-              assignedOfficerId: actor.id,
-              createdById: actor.id,
-            },
-          });
-        }
-      }
-    }
 
     const unrestricted = actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST";
     const { limit, offset } = paginationParams(search);
@@ -97,6 +49,7 @@ export async function GET(request: NextRequest) {
           farm: { select: { id: true, name: true } },
           plot: { select: { id: true, name: true } },
           cropCycle: { select: { id: true, cropName: true } },
+          milestone: { select: { id: true, name: true } },
           assignedOfficer: { select: { name: true } },
           executions: true,
         },

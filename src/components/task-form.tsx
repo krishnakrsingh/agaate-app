@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";

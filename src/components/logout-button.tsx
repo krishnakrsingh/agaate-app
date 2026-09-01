@@ -1,7 +1,9 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 
 export function LogoutButton({ variant = "default" }: { variant?: "default" | "menu" }) {
+  const router = useRouter();
   if (variant === "menu") {
     return (
       <button
@@ -9,7 +11,7 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
         className="btn btn-sm"
         onClick={async () => {
           await fetch("/api/auth/logout", { method: "POST" });
-          window.location.href = "/login";
+          router.push("/login");
         }}
         style={{
           width: "100%",
@@ -32,7 +34,7 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
       className="btn btn-outline btn-sm"
       onClick={async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        window.location.href = "/login";
+        router.push("/login");
       }}
       title="Sign out of console"
     >

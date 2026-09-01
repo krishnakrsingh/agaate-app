@@ -1242,7 +1242,7 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 | Authentication | JWT sessions (8h expiry), bcrypt password hashing |
 | Biometric Security | Encrypted face embeddings (AES-256-GCM), WebAuthn passkeys, liveness challenges |
 | Storage | S3-compatible (MinIO for local dev) for media assets |
-| Database | PostgreSQL 16 via Prisma ORM |
+| Database | MySQL 8 via Prisma ORM |
 | Geolocation | Haversine distance calculation, configurable geofence radius |
 | Audit Trail | Complete audit logging for all entity changes |
 | Rate Limiting | In-memory rate limiting for API endpoints |
@@ -1332,13 +1332,13 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 | **Frontend** | Next.js (App Router) + React | 16.3.3 / 19.2.8 |
 | **Language** | TypeScript | 5.8.3 |
 | **Styling** | Vanilla CSS (globals.css design system) | — |
-| **Database** | PostgreSQL | 16 (Alpine) |
+| **Database** | MySQL | 8.0 |
 | **ORM** | Prisma | 6.8.2 |
 | **Authentication** | Session Cookie (jose JWT), bcryptjs | — |
 | **Object Storage** | S3-compatible (AWS S3 / MinIO for dev) | — |
 | **Validation** | Zod | 3.24.4 |
 | **Testing** | Vitest (unit & integration), Playwright (E2E) | 3.2.1 / 1.62.1 |
-| **Container** | Docker Compose (PostgreSQL + MinIO) | — |
+| **Container** | Docker Compose (MySQL + MinIO) | — |
 
 ### 1.2 Architecture Pattern
 
@@ -1372,7 +1372,7 @@ Multi-level visibility: Activity → Crop → Plot → Farm → All Farms
 └───────┼──────────────────────┼──────────────────────────┘
         │                      │
    ┌────▼─────┐          ┌─────▼────┐
-   │PostgreSQL│          │  MinIO   │
+   │MySQL│          │  MinIO   │
    │  16      │          │  S3      │
    └──────────┘          └──────────┘
 ```
@@ -1450,7 +1450,7 @@ agaateapp/
 │       ├── face-*.ts              # Face recognition utilities
 │       └── webauthn.ts            # WebAuthn server helpers
 ├── tests/                         # Test files
-├── docker-compose.yml             # PostgreSQL + MinIO
+├── docker-compose.yml             # MySQL + MinIO
 ├── package.json                   # Dependencies & scripts
 ├── tsconfig.json                  # TypeScript configuration
 ├── vitest.config.ts               # Vitest configuration
@@ -1704,7 +1704,7 @@ requireRole(userRole, ["SUPER_ADMIN", "FARM_ADMIN"]);
 ```yaml
 # docker-compose.yml
 services:
-  postgres:     # PostgreSQL 16 Alpine, port 5432
+  postgres:     # MySQL 8 Alpine, port 3306
   minio:        # S3-compatible storage, ports 9000/9001
   minio-setup:  # Auto-creates 'agaate-evidence' bucket
 ```
@@ -1713,7 +1713,7 @@ services:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | MySQL connection string |
 | `APP_SESSION_SECRET` | JWT signing key (≥32 chars) |
 | `S3_*` | Object storage configuration |
 | `WEATHER_PROVIDER_URL` | Open-Meteo API endpoint |
@@ -2646,7 +2646,7 @@ All icons: 24×24 default size, `currentColor` fill, configurable via props.
 **Version:** 1.0  
 **Date:** 2026-08-30  
 **ORM:** Prisma 6.8.2  
-**Database:** PostgreSQL 16  
+**Database:** MySQL 8  
 **Schema:** [prisma/schema.prisma](file:///c:/Users/krish/Downloads/agaateapp/prisma/schema.prisma)
 
 ---
@@ -3458,13 +3458,13 @@ npx prisma migrate deploy
 | Session secure flag | ⚠️ | Set `APP_SESSION_SECURE=true` |
 | Error monitoring | ❌ | Add Sentry or equivalent |
 | Log aggregation | ❌ | Set up structured logging + aggregation |
-| Database backups | ❌ | Configure automated PostgreSQL backups |
+| Database backups | ❌ | Configure automated MySQL backups |
 
 ### 4.2 Recommended Infrastructure
 
 ```
 ┌───────────────┐     ┌──────────────┐     ┌──────────┐
-│  Cloudflare   │────▶│  Next.js     │────▶│PostgreSQL│
+│  Cloudflare   │────▶│  Next.js     │────▶│MySQL│
 │  CDN + SSL    │     │  App Server  │     │  (RDS)   │
 └───────────────┘     │  (Vercel/    │     └──────────┘
                       │   EC2/ECS)   │
@@ -3484,7 +3484,7 @@ npx prisma migrate deploy
 
 | Variable | Development | Production |
 |---|---|---|
-| `DATABASE_URL` | `localhost:5432` | RDS endpoint |
+| `DATABASE_URL` | `localhost:3306` | RDS endpoint |
 | `S3_ENDPOINT` | `localhost:9000` (MinIO) | `s3.amazonaws.com` |
 | `S3_FORCE_PATH_STYLE` | `true` | `false` |
 | `APP_SESSION_SECURE` | (not set) | `true` |

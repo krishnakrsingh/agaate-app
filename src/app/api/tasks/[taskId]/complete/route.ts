@@ -18,8 +18,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (actor.role === "FARM_OFFICER" && task.assignedOfficerId !== actor.id) throw new Error("This task is assigned to another officer.");
     if (task.status !== "IN_PROGRESS") return NextResponse.json({ error: "Start the activity before recording completion." }, { status: 409 });
     const input = schema.parse(await request.json());
-    if (input.actualBedsCreated !== undefined && (!task.cropCycleId || !/(land|bed) preparation/i.test(task.title))) return NextResponse.json({ error: "Actual bed count can only be recorded on a bed preparation activity." }, { status: 422 });
-    if (input.actualPlants !== undefined && (!task.cropCycleId || !/(transplantation|transplant|direct sowing|sowing)/i.test(task.title))) return NextResponse.json({ error: "Actual plant count can only be recorded on a transplantation or sowing activity." }, { status: 422 });
+    if (input.actualBedsCreated !== undefined) {
+      if (!task.cropCycleId || !task.milestoneId || task.milestone?.name !== "Land Preparation") return NextResponse.json({ error: "Actual bed count can only be recorded on the Land Preparation milestone." }, { status: 422 });
+    }
+    if (input.actualPlants !== undefined) {
+      const allowed = new Set(["Transplantation", "Direct Sowing"]);
+      if (!task.cropCycleId || !task.milestoneId || !allowed.has(task.milestone?.name ?? "")) return NextResponse.json({ error: "Actual plant count can only be recorded on a Transplantation or Direct Sowing milestone." }, { status: 422 });
+    }
     const execution = await prisma.$transaction(async tx => {
       const ex = await tx.taskExecution.upsert({ where: { taskId }, update: { officerId: actor.id, status: "COMPLETED", completedAt: new Date(), remarks: input.remarks, materials: { deleteMany: {}, create: input.materials }, labour: { deleteMany: {}, create: input.labour.map(l => ({ ...l, labourHours: labourHours(l.labourers, l.hours) })) } }, create: { taskId, officerId: actor.id, status: "COMPLETED", startedAt: new Date(), completedAt: new Date(), remarks: input.remarks, materials: { create: input.materials }, labour: { create: input.labour.map(l => ({ ...l, labourHours: labourHours(l.labourers, l.hours) })) } } });
       if (input.mediaIds.length) {

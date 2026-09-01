@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState, useMemo } from "react";
 import { TaskCompletionForm } from "@/components/task-completion-form";
 import { FieldReports } from "@/components/field-reports";
@@ -20,6 +21,7 @@ type Task = {
   farm: { id: string; name: string };
   plot?: { id?: string; name: string } | null;
   cropCycle?: { id?: string; cropName: string } | null;
+  milestone?: { id: string; name: string } | null;
 };
 
 export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
@@ -32,18 +34,23 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const [originFilter, setOriginFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = async () => {
     setLoading(true);
-    fetch(`/api/tasks?date=${new Date().toISOString().slice(0, 10)}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error((await r.json()).error);
-        setTasks(await r.json());
-        setLoading(false);
-      })
-      .catch((e) => {
-        setError(e.message);
-        setLoading(false);
-      });
+    try {
+      // Ensure daily monitoring tasks are generated via explicit mutation (not GET side-effect)
+      await fetch("/api/tasks/generate-daily", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: new Date().toISOString().slice(0, 10) }),
+      }).catch(() => undefined);
+      const r = await fetch(`/api/tasks?date=${new Date().toISOString().slice(0, 10)}`);
+      if (!r.ok) throw new Error((await r.json()).error);
+      setTasks(await r.json());
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -317,6 +324,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     taskId={task.id}
                     farmId={task.farm.id}
                     taskTitle={task.title}
+                    milestoneName={task.milestone?.name ?? null}
                     onComplete={() => {
                       setCompletionId(null);
                       toast.success("Activity completion recorded!");

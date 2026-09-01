@@ -29,7 +29,7 @@
 **Version:** 1.0  
 **Date:** 2026-08-30  
 **ORM:** Prisma 6.8.2  
-**Database:** PostgreSQL 16  
+**Database:** MySQL 8  
 **Schema:** [prisma/schema.prisma](file:///c:/Users/krish/Downloads/agaateapp/prisma/schema.prisma)
 
 ---

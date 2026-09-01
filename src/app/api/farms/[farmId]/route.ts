@@ -19,6 +19,13 @@ const patchSchema = z.object({
   status: z.enum(["SETUP", "ACTIVE", "INACTIVE", "COMPLETED"]).optional(),
 });
 
+const farmTransitions: Record<string, string[]> = {
+  SETUP: ["ACTIVE"],
+  ACTIVE: ["INACTIVE", "COMPLETED"],
+  INACTIVE: ["ACTIVE", "COMPLETED"],
+  COMPLETED: [],
+};
+
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ farmId: string }> }
@@ -79,6 +86,17 @@ export async function PATCH(
 
     if (totalAllocated > roundedCultivable) {
       throw new Error("Cultivable area cannot be reduced below the area already allocated to plots.");
+    }
+
+    if (input.status && input.status !== current.status) {
+      const allowed = farmTransitions[current.status] ?? [];
+      if (!allowed.includes(input.status)) {
+        return NextResponse.json({ error: `Invalid farm status transition from ${current.status} to ${input.status}. Allowed: ${allowed.join(", ") || "none (terminal)"}.` }, { status: 409 });
+      }
+      if (input.status === "ACTIVE") {
+        const hasPlot = await prisma.plot.count({ where: { farmId, deletedAt: null } });
+        if (!hasPlot) return NextResponse.json({ error: "Farm activation requires at least one plot." }, { status: 422 });
+      }
     }
 
     const farm = await prisma.farm.update({
