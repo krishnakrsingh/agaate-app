@@ -6,8 +6,8 @@
     "semantic_hash": "effa368837c2722432c83b5d28802f08"
   },
   "next-env.d.ts": {
-    "mtime": 1788241057.1326299,
-    "seen": 1788262736.0312884,
+    "mtime": 1788263159.745365,
+    "seen": 1788263499.841486,
     "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
     "semantic_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41"
   },
@@ -342,9 +342,9 @@
     "semantic_hash": ""
   },
   "src/components/admin-console.tsx": {
-    "mtime": 1788262397.7088158,
-    "seen": 1788262736.0314808,
-    "ast_hash": "d080778c76a77a073c342992942eeeac",
+    "mtime": 1788263336.9443572,
+    "seen": 1788263499.8416662,
+    "ast_hash": "23a7b475f0e615b60e5f6f6f59ca24ac",
     "semantic_hash": ""
   },
   "src/components/approvals-console.tsx": {
@@ -354,21 +354,21 @@
     "semantic_hash": ""
   },
   "src/components/attendance-form.tsx": {
-    "mtime": 1788262238.385237,
-    "seen": 1788262736.0314858,
-    "ast_hash": "fafc30a1e916b17b4f67cdbde010ca3e",
+    "mtime": 1788263252.8984337,
+    "seen": 1788263499.8416712,
+    "ast_hash": "4b1e1690ae6f8604c3f8462385ceed23",
     "semantic_hash": ""
   },
   "src/components/crop-cycle-edit-form.tsx": {
-    "mtime": 1788110467.4053297,
-    "seen": 1788262736.0314927,
-    "ast_hash": "da0b8cd11d0182276794d10959c993f0",
+    "mtime": 1788263239.3347435,
+    "seen": 1788263499.8416781,
+    "ast_hash": "9aaed4ad63459573e700af4b8c58ee26",
     "semantic_hash": ""
   },
   "src/components/crop-cycle-form.tsx": {
-    "mtime": 1788262327.2586968,
-    "seen": 1788262736.031495,
-    "ast_hash": "1d718a2cdd469121d01161dc694ef2a0",
+    "mtime": 1788263403.3552878,
+    "seen": 1788263499.84168,
+    "ast_hash": "ed7d5b7720e57fbcc327da5b835df905",
     "semantic_hash": ""
   },
   "src/components/daily-report.tsx": {
@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard-client.tsx": {
-    "mtime": 1788262342.0775895,
-    "seen": 1788262736.0315,
-    "ast_hash": "9039f26623e3501be74a4012f481355e",
+    "mtime": 1788263313.506742,
+    "seen": 1788263499.8416846,
+    "ast_hash": "ffdb4c202ffb47364e3c7ecd748ea3cd",
     "semantic_hash": ""
   },
   "src/components/evidence-gallery.tsx": {
@@ -414,9 +414,9 @@
     "semantic_hash": ""
   },
   "src/components/field-reports.tsx": {
-    "mtime": 1788262359.6008315,
-    "seen": 1788262736.0315168,
-    "ast_hash": "b726abc3db485160c732af60fb5882a9",
+    "mtime": 1788263267.689109,
+    "seen": 1788263499.8417006,
+    "ast_hash": "a6576316e8933bca22237aa9f631931b",
     "semantic_hash": ""
   },
   "src/components/incident-status-control.tsx": {
@@ -444,9 +444,9 @@
     "semantic_hash": ""
   },
   "src/components/officer-day.tsx": {
-    "mtime": 1788262248.9461186,
-    "seen": 1788262736.031551,
-    "ast_hash": "d902ce11e31c76740b0e63c652552612",
+    "mtime": 1788263470.0477219,
+    "seen": 1788263499.8417304,
+    "ast_hash": "3822ee6666abce6a5ec0a3412f6781ed",
     "semantic_hash": ""
   },
   "src/components/plot-edit-form.tsx": {
@@ -468,9 +468,9 @@
     "semantic_hash": "fc93a77dad169c388af9f19f5deb6b51"
   },
   "src/components/task-board.tsx": {
-    "mtime": 1788262294.634017,
-    "seen": 1788262736.0315611,
-    "ast_hash": "2e0af1b3fc4dab3fa056663443c00205",
+    "mtime": 1788263292.653556,
+    "seen": 1788263499.8417401,
+    "ast_hash": "84c6102ab71883f9162b20f099136164",
     "semantic_hash": ""
   },
   "src/components/task-completion-form.tsx": {
@@ -480,9 +480,9 @@
     "semantic_hash": ""
   },
   "src/components/task-form.tsx": {
-    "mtime": 1788262305.2406504,
-    "seen": 1788262736.0315654,
-    "ast_hash": "25be43e98c57f8920b928364c7f4bc43",
+    "mtime": 1788263324.893434,
+    "seen": 1788263499.841745,
+    "ast_hash": "25657cca1b5a2374478ebf08a1f272eb",
     "semantic_hash": ""
   },
   "src/components/weather-card.tsx": {
@@ -564,15 +564,15 @@
     "semantic_hash": ""
   },
   "src/components/farm-hub-client.tsx": {
-    "mtime": 1788262272.6609628,
-    "seen": 1788262736.031512,
-    "ast_hash": "277709ae3d4c14348b8c86108134ab0e",
+    "mtime": 1788263463.694517,
+    "seen": 1788263499.8416963,
+    "ast_hash": "c23735d932d182e300a0c2470f6ebba4",
     "semantic_hash": ""
   },
   "src/components/icons.tsx": {
-    "mtime": 1788238344.4823496,
-    "seen": 1788262736.031519,
-    "ast_hash": "6d04d759efdf9bf09548c2e89bff0575",
+    "mtime": 1788263208.8199658,
+    "seen": 1788263499.8417034,
+    "ast_hash": "3db21f9921acc881bfb6aaff81db3396",
     "semantic_hash": ""
   },
   "src/components/incident-followup.tsx": {
@@ -1002,9 +1002,9 @@
     "semantic_hash": ""
   },
   "src/components/camera-capture.tsx": {
-    "mtime": 1788241425.752283,
-    "seen": 1788262736.0314903,
-    "ast_hash": "45ed9af871b1a8454d0ef96809fbc770",
+    "mtime": 1788263186.8169258,
+    "seen": 1788263499.8416758,
+    "ast_hash": "2093552eb88fa282bf2f4853df967f7b",
     "semantic_hash": ""
   },
   "prisma/migrations/20260830181349_init_mysql/migration.sql": {

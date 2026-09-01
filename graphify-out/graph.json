@@ -17,17 +17,30 @@
       "source_location": "L6"
     },
     {
-      "id": "src_components_farm_edit_form_farm",
-      "label": "Farm",
+      "id": "src_components_farm_access_manager_accessresponse",
+      "label": "AccessResponse",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "farm-hub-client.tsx",
       "file_type": "code",
-      "norm_label": "farm",
-      "source_file": "src/components/farm-edit-form.tsx",
-      "source_location": "L6"
+      "norm_label": "accessresponse",
+      "source_file": "src/components/farm-access-manager.tsx",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_components_farm_access_manager_person",
+      "label": "Person",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "farm-hub-client.tsx",
+      "file_type": "code",
+      "norm_label": "person",
+      "source_file": "src/components/farm-access-manager.tsx",
+      "source_location": "L5"
     },
     {
       "id": "src_components_farm_hub_client_cropcycle",
@@ -40,7 +53,7 @@
       "file_type": "code",
       "norm_label": "cropcycle",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L25"
+      "source_location": "L17"
     },
     {
       "id": "src_components_farm_hub_client_farm",
@@ -53,7 +66,7 @@
       "file_type": "code",
       "norm_label": "farm",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L82"
+      "source_location": "L21"
     },
     {
       "id": "src_components_farm_hub_client_incident",
@@ -66,7 +79,7 @@
       "file_type": "code",
       "norm_label": "incident",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L58"
+      "source_location": "L19"
     },
     {
       "id": "src_components_farm_hub_client_milestone",
@@ -79,7 +92,7 @@
       "file_type": "code",
       "norm_label": "milestone",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L17"
+      "source_location": "L16"
     },
     {
       "id": "src_components_farm_hub_client_monitoring",
@@ -92,7 +105,7 @@
       "file_type": "code",
       "norm_label": "monitoring",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L71"
+      "source_location": "L20"
     },
     {
       "id": "src_components_farm_hub_client_plot",
@@ -105,20 +118,7 @@
       "file_type": "code",
       "norm_label": "plot",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L46"
-    },
-    {
-      "id": "src_components_incident_followup_followup",
-      "label": "FollowUp",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "farm-hub-client.tsx",
-      "file_type": "code",
-      "norm_label": "followup",
-      "source_file": "src/components/incident-followup.tsx",
-      "source_location": "L5"
+      "source_location": "L18"
     },
     {
       "id": "src_components_weather_card_weather",
@@ -147,52 +147,13 @@
       "source_location": "L13"
     },
     {
-      "id": "src_components_admin_console_access",
-      "label": "Access",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "access",
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L8"
-    },
-    {
-      "id": "src_components_admin_console_farm",
-      "label": "Farm",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "farm",
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_components_admin_console_user",
-      "label": "User",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "user",
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L9"
-    },
-    {
       "id": "src_components_approvals_console_attendance",
       "label": "Attendance",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "attendance",
       "source_file": "src/components/approvals-console.tsx",
@@ -205,7 +166,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "exception",
       "source_file": "src/components/approvals-console.tsx",
@@ -218,7 +179,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "locationrequest",
       "source_file": "src/components/approvals-console.tsx",
@@ -231,7 +192,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "farm",
       "source_file": "src/components/daily-report.tsx",
@@ -244,11 +205,63 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "report",
       "source_file": "src/components/daily-report.tsx",
       "source_location": "L10"
+    },
+    {
+      "id": "src_components_dashboard_client_alert",
+      "label": "Alert",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "alert",
+      "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L20"
+    },
+    {
+      "id": "src_components_dashboard_client_farm",
+      "label": "Farm",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "farm",
+      "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_components_dashboard_client_incident",
+      "label": "Incident",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "incident",
+      "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "src_components_dashboard_client_metricdata",
+      "label": "MetricData",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "metricdata",
+      "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L15"
     },
     {
       "id": "src_components_officer_day_task",
@@ -257,7 +270,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "task",
       "source_file": "src/components/officer-day.tsx",
@@ -270,7 +283,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "task",
       "source_file": "src/components/task-board.tsx",
@@ -283,24 +296,37 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "breadcrumbitem",
       "source_file": "src/components/breadcrumbs.tsx",
       "source_location": "L5"
     },
     {
-      "id": "src_components_plot_edit_form_plot",
-      "label": "Plot",
+      "id": "src_components_admin_console_farm",
+      "label": "Farm",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community": 24,
+      "community_name": "admin-console.tsx",
       "file_type": "code",
-      "norm_label": "plot",
-      "source_file": "src/components/plot-edit-form.tsx",
-      "source_location": "L6"
+      "norm_label": "farm",
+      "source_file": "src/components/admin-console.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_components_admin_console_user",
+      "label": "User",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "admin-console.tsx",
+      "file_type": "code",
+      "norm_label": "user",
+      "source_file": "src/components/admin-console.tsx",
+      "source_location": "L8"
     },
     {
       "id": "src_components_task_form_access",
@@ -313,7 +339,7 @@
       "file_type": "code",
       "norm_label": "access",
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L14"
+      "source_location": "L9"
     },
     {
       "id": "src_components_task_form_farm",
@@ -342,17 +368,30 @@
       "source_location": "L8"
     },
     {
-      "id": "src_components_task_form_taskformprops",
-      "label": "TaskFormProps",
+      "id": "src_components_camera_capture_cameracaptureprops",
+      "label": "CameraCaptureProps",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 28,
-      "community_name": "task-form.tsx",
+      "community": 3,
+      "community_name": "icons.tsx",
       "file_type": "code",
-      "norm_label": "taskformprops",
-      "source_file": "src/components/task-form.tsx",
-      "source_location": "L29"
+      "norm_label": "cameracaptureprops",
+      "source_file": "src/components/camera-capture.tsx",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_components_farm_edit_form_farm",
+      "label": "Farm",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "farm",
+      "source_file": "src/components/farm-edit-form.tsx",
+      "source_location": "L6"
     },
     {
       "id": "src_components_icons_iconprops",
@@ -368,6 +407,19 @@
       "source_location": "L3"
     },
     {
+      "id": "src_components_incident_followup_followup",
+      "label": "FollowUp",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "followup",
+      "source_file": "src/components/incident-followup.tsx",
+      "source_location": "L5"
+    },
+    {
       "id": "src_components_location_request_form_farm",
       "label": "Farm",
       "_callable": true,
@@ -379,6 +431,19 @@
       "norm_label": "farm",
       "source_file": "src/components/location-request-form.tsx",
       "source_location": "L5"
+    },
+    {
+      "id": "src_components_plot_edit_form_plot",
+      "label": "Plot",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "plot",
+      "source_file": "src/components/plot-edit-form.tsx",
+      "source_location": "L6"
     },
     {
       "id": "src_components_manual_weather_form_farm",
@@ -452,7 +517,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
       "norm_label": "cycle",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
@@ -498,19 +563,6 @@
       "source_location": "L9"
     },
     {
-      "id": "src_components_field_reports_fieldreportsprops",
-      "label": "FieldReportsProps",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "field-reports.tsx",
-      "file_type": "code",
-      "norm_label": "fieldreportsprops",
-      "source_file": "src/components/field-reports.tsx",
-      "source_location": "L71"
-    },
-    {
       "id": "src_components_field_reports_plot",
       "label": "Plot",
       "_callable": true,
@@ -530,7 +582,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "testreport",
       "source_file": "scripts/final-acceptance-proof.ts",
@@ -543,7 +595,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 76,
-      "community_name": "day/page.tsx",
+      "community_name": "attendance-form.tsx",
       "file_type": "code",
       "norm_label": "attendancerecord",
       "source_file": "src/components/attendance-form.tsx",
@@ -556,102 +608,11 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 76,
-      "community_name": "day/page.tsx",
+      "community_name": "attendance-form.tsx",
       "file_type": "code",
       "norm_label": "farm",
       "source_file": "src/components/attendance-form.tsx",
       "source_location": "L10"
-    },
-    {
-      "id": "src_components_camera_capture_cameracaptureprops",
-      "label": "CameraCaptureProps",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "cameracaptureprops",
-      "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_components_dashboard_client_activeincident",
-      "label": "ActiveIncident",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "dashboard-client.tsx",
-      "file_type": "code",
-      "norm_label": "activeincident",
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L44"
-    },
-    {
-      "id": "src_components_dashboard_client_farm",
-      "label": "Farm",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "dashboard-client.tsx",
-      "file_type": "code",
-      "norm_label": "farm",
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L8"
-    },
-    {
-      "id": "src_components_dashboard_client_metricdata",
-      "label": "MetricData",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "dashboard-client.tsx",
-      "file_type": "code",
-      "norm_label": "metricdata",
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L20"
-    },
-    {
-      "id": "src_components_dashboard_client_poorhealthalert",
-      "label": "PoorHealthAlert",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "dashboard-client.tsx",
-      "file_type": "code",
-      "norm_label": "poorhealthalert",
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L32"
-    },
-    {
-      "id": "src_components_farm_access_manager_accessresponse",
-      "label": "AccessResponse",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "accessresponse",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L13"
-    },
-    {
-      "id": "src_components_farm_access_manager_person",
-      "label": "Person",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "person",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L5"
     },
     {
       "id": "src_components_nav_config_navitem",
@@ -1019,18 +980,6 @@
       "source_location": "L9"
     },
     {
-      "id": "src_app_api_media_mediaid_url_route_get",
-      "label": "GET()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "apiError",
-      "file_type": "code",
-      "norm_label": "get()",
-      "source_file": "src/app/api/media/[mediaId]/url/route.ts",
-      "source_location": "L6"
-    },
-    {
       "id": "src_app_api_monitoring_route_post",
       "label": "POST()",
       "_callable": true,
@@ -1295,6 +1244,18 @@
       "source_location": "L6"
     },
     {
+      "id": "src_app_dashboard_page_dashboardpage",
+      "label": "DashboardPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "dashboardpage()",
+      "source_file": "src/app/dashboard/page.tsx",
+      "source_location": "L10"
+    },
+    {
       "id": "src_lib_access_accessiblefarmwhere",
       "label": "accessibleFarmWhere()",
       "_callable": true,
@@ -1487,6 +1448,78 @@
       "source_location": "L32"
     },
     {
+      "id": "src_lib_business_calculatedinfrastructure",
+      "label": "calculatedInfrastructure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "calculatedinfrastructure()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_lib_business_cantransitiontask",
+      "label": "canTransitionTask()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "cantransitiontask()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "src_lib_business_distancemeters",
+      "label": "distanceMeters()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "distancemeters()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L4"
+    },
+    {
+      "id": "src_lib_business_iswithinrollingsevendays",
+      "label": "isWithinRollingSevenDays()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "iswithinrollingsevendays()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L24"
+    },
+    {
+      "id": "src_lib_business_labourhours",
+      "label": "labourHours()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "labourhours()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "src_lib_business_milestonetemplates",
+      "label": "milestoneTemplates()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "milestonetemplates()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L33"
+    },
+    {
       "id": "src_lib_business_parseutcdate",
       "label": "parseUtcDate()",
       "_callable": true,
@@ -1497,6 +1530,18 @@
       "norm_label": "parseutcdate()",
       "source_file": "src/lib/business.ts",
       "source_location": "L20"
+    },
+    {
+      "id": "src_lib_business_radians",
+      "label": "radians()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "radians()",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L3"
     },
     {
       "id": "src_lib_business_utcdateonly",
@@ -1559,16 +1604,40 @@
       "source_location": "L32"
     },
     {
-      "id": "src_components_evidence_gallery_evidencegallery",
-      "label": "EvidenceGallery()",
+      "id": "src_components_farm_access_manager_farmaccessmanager",
+      "label": "FarmAccessManager()",
       "_callable": true,
       "_origin": "ast",
       "community": 1,
       "community_name": "farm-hub-client.tsx",
       "file_type": "code",
-      "norm_label": "evidencegallery()",
-      "source_file": "src/components/evidence-gallery.tsx",
-      "source_location": "L5"
+      "norm_label": "farmaccessmanager()",
+      "source_file": "src/components/farm-access-manager.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "src_components_farm_access_manager_farmaccessmanager_assign",
+      "label": "assign()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "farm-hub-client.tsx",
+      "file_type": "code",
+      "norm_label": "assign()",
+      "source_file": "src/components/farm-access-manager.tsx",
+      "source_location": "L37"
+    },
+    {
+      "id": "src_components_farm_access_manager_farmaccessmanager_remove",
+      "label": "remove()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "farm-hub-client.tsx",
+      "file_type": "code",
+      "norm_label": "remove()",
+      "source_file": "src/components/farm-access-manager.tsx",
+      "source_location": "L64"
     },
     {
       "id": "src_components_farm_edit_form_farmeditform",
@@ -1715,6 +1784,18 @@
       "source_location": "L3"
     },
     {
+      "id": "src_app_login_page_loginpage",
+      "label": "LoginPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "auth.ts",
+      "file_type": "code",
+      "norm_label": "loginpage()",
+      "source_file": "src/app/login/page.tsx",
+      "source_location": "L9"
+    },
+    {
       "id": "src_app_page_home",
       "label": "Home()",
       "_callable": true,
@@ -1775,28 +1856,88 @@
       "source_location": "L15"
     },
     {
+      "id": "src_components_approvals_console_approvalsconsole",
+      "label": "ApprovalsConsole()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "approvalsconsole()",
+      "source_file": "src/components/approvals-console.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "src_components_approvals_console_approvalsconsole_review",
+      "label": "review()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "review()",
+      "source_file": "src/components/approvals-console.tsx",
+      "source_location": "L68"
+    },
+    {
+      "id": "src_components_dashboard_client_dashboardclient",
+      "label": "DashboardClient()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "dashboardclient()",
+      "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L23"
+    },
+    {
+      "id": "src_components_task_completion_form_taskcompletionform",
+      "label": "TaskCompletionForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "taskcompletionform()",
+      "source_file": "src/components/task-completion-form.tsx",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_components_task_completion_form_taskcompletionform_handlephotochange",
+      "label": "handlePhotoChange()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "handlephotochange()",
+      "source_file": "src/components/task-completion-form.tsx",
+      "source_location": "L30"
+    },
+    {
+      "id": "src_components_task_completion_form_taskcompletionform_submit",
+      "label": "submit()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "submit()",
+      "source_file": "src/components/task-completion-form.tsx",
+      "source_location": "L36"
+    },
+    {
       "id": "src_components_ui_badge_prioritybadge",
       "label": "PriorityBadge()",
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "prioritybadge()",
       "source_file": "src/components/ui/badge.tsx",
       "source_location": "L15"
-    },
-    {
-      "id": "src_components_ui_badge_rolebadge",
-      "label": "RoleBadge()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "rolebadge()",
-      "source_file": "src/components/ui/badge.tsx",
-      "source_location": "L3"
     },
     {
       "id": "src_components_ui_badge_statusbadge",
@@ -1804,7 +1945,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "statusbadge()",
       "source_file": "src/components/ui/badge.tsx",
@@ -1816,7 +1957,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "emptystate()",
       "source_file": "src/components/ui/empty-state.tsx",
@@ -1828,7 +1969,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "cardskeleton()",
       "source_file": "src/components/ui/skeleton.tsx",
@@ -1840,23 +1981,59 @@
       "_callable": true,
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "skeleton()",
       "source_file": "src/components/ui/skeleton.tsx",
       "source_location": "L3"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_new_page_newcropcyclepage",
-      "label": "NewCropCyclePage()",
+      "id": "src_app_admin_approvals_page_adminapprovalspage",
+      "label": "AdminApprovalsPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "newcropcyclepage()",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
-      "source_location": "L11"
+      "norm_label": "adminapprovalspage()",
+      "source_file": "src/app/admin/approvals/page.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_app_admin_users_page_adminuserspage",
+      "label": "AdminUsersPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "adminuserspage()",
+      "source_file": "src/app/admin/users/page.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_app_officer_day_page_officerdaypage",
+      "label": "OfficerDayPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "officerdaypage()",
+      "source_file": "src/app/officer/day/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_app_officer_reports_page_officerreportspage",
+      "label": "OfficerReportsPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "officerreportspage()",
+      "source_file": "src/app/officer/reports/page.tsx",
+      "source_location": "L9"
     },
     {
       "id": "src_app_plots_plotid_page_plotpage",
@@ -1864,11 +2041,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "plotpage()",
       "source_file": "src/app/plots/[plotId]/page.tsx",
       "source_location": "L11"
+    },
+    {
+      "id": "src_app_tasks_new_page_newtaskpage",
+      "label": "NewTaskPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "newtaskpage()",
+      "source_file": "src/app/tasks/new/page.tsx",
+      "source_location": "L9"
     },
     {
       "id": "src_app_tasks_page_taskspage",
@@ -1876,7 +2065,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "taskspage()",
       "source_file": "src/app/tasks/page.tsx",
@@ -1888,102 +2077,54 @@
       "_callable": true,
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "breadcrumbs()",
       "source_file": "src/components/breadcrumbs.tsx",
       "source_location": "L10"
     },
     {
-      "id": "src_app_dashboard_page_dashboardpage",
-      "label": "DashboardPage()",
+      "id": "src_components_location_request_form_locationrequestform",
+      "label": "LocationRequestForm()",
       "_callable": true,
       "_origin": "ast",
-      "community": 23,
+      "community": 2,
       "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "dashboardpage()",
-      "source_file": "src/app/dashboard/page.tsx",
-      "source_location": "L10"
+      "norm_label": "locationrequestform()",
+      "source_file": "src/components/location-request-form.tsx",
+      "source_location": "L7"
     },
     {
-      "id": "src_app_farms_farmid_page_farmdetailpage",
-      "label": "FarmDetailPage()",
+      "id": "src_components_location_request_form_locationrequestform_capture",
+      "label": "capture()",
       "_callable": true,
       "_origin": "ast",
-      "community": 23,
+      "community": 2,
       "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "farmdetailpage()",
-      "source_file": "src/app/farms/[farmId]/page.tsx",
-      "source_location": "L10"
+      "norm_label": "capture()",
+      "source_file": "src/components/location-request-form.tsx",
+      "source_location": "L26"
     },
     {
-      "id": "src_app_officer_day_page_officerdaypage",
-      "label": "OfficerDayPage()",
+      "id": "src_components_location_request_form_locationrequestform_submit",
+      "label": "submit()",
       "_callable": true,
       "_origin": "ast",
-      "community": 23,
+      "community": 2,
       "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "officerdaypage()",
-      "source_file": "src/app/officer/day/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page_editcropcyclepage",
-      "label": "EditCropCyclePage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "editcropcyclepage()",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
-      "source_location": "L11"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_cropcycledetailpage",
-      "label": "CropCycleDetailPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "cropcycledetailpage()",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L14"
-    },
-    {
-      "id": "src_app_tasks_new_page_newtaskpage",
-      "label": "NewTaskPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "newtaskpage()",
-      "source_file": "src/app/tasks/new/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_components_farm_hub_client_farmhubclient",
-      "label": "FarmHubClient()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "farmhubclient()",
-      "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L101"
+      "norm_label": "submit()",
+      "source_file": "src/components/location-request-form.tsx",
+      "source_location": "L49"
     },
     {
       "id": "src_lib_auth_requiresession",
       "label": "requireSession()",
       "_callable": true,
       "_origin": "ast",
-      "community": 23,
+      "community": 2,
       "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "requiresession()",
@@ -1991,16 +2132,28 @@
       "source_location": "L57"
     },
     {
-      "id": "src_app_admin_users_page_adminuserspage",
-      "label": "AdminUsersPage()",
+      "id": "src_app_farms_farmid_page_farmdetailpage",
+      "label": "FarmDetailPage()",
       "_callable": true,
       "_origin": "ast",
-      "community": 24,
-      "community_name": "users/page.tsx",
+      "community": 23,
+      "community_name": "[farmId]/page.tsx",
       "file_type": "code",
-      "norm_label": "adminuserspage()",
-      "source_file": "src/app/admin/users/page.tsx",
-      "source_location": "L8"
+      "norm_label": "farmdetailpage()",
+      "source_file": "src/app/farms/[farmId]/page.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_components_farm_hub_client_farmhubclient",
+      "label": "FarmHubClient()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 23,
+      "community_name": "[farmId]/page.tsx",
+      "file_type": "code",
+      "norm_label": "farmhubclient()",
+      "source_file": "src/components/farm-hub-client.tsx",
+      "source_location": "L27"
     },
     {
       "id": "src_components_admin_console_adminconsole",
@@ -2008,11 +2161,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 24,
-      "community_name": "users/page.tsx",
+      "community_name": "admin-console.tsx",
       "file_type": "code",
       "norm_label": "adminconsole()",
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L20"
+      "source_location": "L11"
     },
     {
       "id": "src_components_admin_console_adminconsole_create",
@@ -2020,11 +2173,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 24,
-      "community_name": "users/page.tsx",
+      "community_name": "admin-console.tsx",
       "file_type": "code",
       "norm_label": "create()",
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L44"
+      "source_location": "L33"
     },
     {
       "id": "src_components_admin_console_adminconsole_update",
@@ -2032,11 +2185,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 24,
-      "community_name": "users/page.tsx",
+      "community_name": "admin-console.tsx",
       "file_type": "code",
       "norm_label": "update()",
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L86"
+      "source_location": "L58"
+    },
+    {
+      "id": "src_components_ui_badge_rolebadge",
+      "label": "RoleBadge()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "admin-console.tsx",
+      "file_type": "code",
+      "norm_label": "rolebadge()",
+      "source_file": "src/components/ui/badge.tsx",
+      "source_location": "L3"
     },
     {
       "id": "src_components_plot_edit_form_ploteditform",
@@ -2044,7 +2209,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community_name": "PlotEditForm",
       "file_type": "code",
       "norm_label": "ploteditform()",
       "source_file": "src/components/plot-edit-form.tsx",
@@ -2056,7 +2221,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community_name": "PlotEditForm",
       "file_type": "code",
       "norm_label": "archive()",
       "source_file": "src/components/plot-edit-form.tsx",
@@ -2068,7 +2233,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community_name": "PlotEditForm",
       "file_type": "code",
       "norm_label": "capture()",
       "source_file": "src/components/plot-edit-form.tsx",
@@ -2080,7 +2245,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community_name": "PlotEditForm",
       "file_type": "code",
       "norm_label": "save()",
       "source_file": "src/components/plot-edit-form.tsx",
@@ -2092,7 +2257,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "plot-edit-form.tsx",
+      "community_name": "PlotEditForm",
       "file_type": "code",
       "norm_label": "toggle()",
       "source_file": "src/components/plot-edit-form.tsx",
@@ -2108,7 +2273,7 @@
       "file_type": "code",
       "norm_label": "taskform()",
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L38"
+      "source_location": "L16"
     },
     {
       "id": "src_components_task_form_taskform_submit",
@@ -2120,7 +2285,19 @@
       "file_type": "code",
       "norm_label": "submit()",
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L93"
+      "source_location": "L53"
+    },
+    {
+      "id": "src_app_api_media_mediaid_url_route_get",
+      "label": "GET()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "url/route.ts",
+      "file_type": "code",
+      "norm_label": "get()",
+      "source_file": "src/app/api/media/[mediaId]/url/route.ts",
+      "source_location": "L6"
     },
     {
       "id": "src_lib_storage_bucket",
@@ -2128,7 +2305,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "bucket()",
       "source_file": "src/lib/storage.ts",
@@ -2140,7 +2317,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "client()",
       "source_file": "src/lib/storage.ts",
@@ -2152,7 +2329,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "downloadurl()",
       "source_file": "src/lib/storage.ts",
@@ -2164,7 +2341,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "env()",
       "source_file": "src/lib/storage.ts",
@@ -2176,7 +2353,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "headobject()",
       "source_file": "src/lib/storage.ts",
@@ -2188,7 +2365,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "uploadurl()",
       "source_file": "src/lib/storage.ts",
@@ -2219,6 +2396,54 @@
       "source_location": "L4"
     },
     {
+      "id": "src_components_icons_i",
+      "label": "i()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "i()",
+      "source_file": "src/components/icons.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "src_components_login_form_loginform",
+      "label": "LoginForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "loginform()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L33"
+    },
+    {
+      "id": "src_components_login_form_loginform_quickfill",
+      "label": "quickFill()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "quickfill()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "src_components_login_form_loginform_submit",
+      "label": "submit()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "submit()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L47"
+    },
+    {
       "id": "src_components_logout_button_logoutbutton",
       "label": "LogoutButton()",
       "_callable": true,
@@ -2231,40 +2456,28 @@
       "source_location": "L5"
     },
     {
-      "id": "src_components_task_completion_form_taskcompletionform",
-      "label": "TaskCompletionForm()",
+      "id": "src_components_theme_toggle_themetoggle",
+      "label": "ThemeToggle()",
       "_callable": true,
       "_origin": "ast",
       "community": 3,
       "community_name": "icons.tsx",
       "file_type": "code",
-      "norm_label": "taskcompletionform()",
-      "source_file": "src/components/task-completion-form.tsx",
+      "norm_label": "themetoggle()",
+      "source_file": "src/components/theme-toggle.tsx",
       "source_location": "L6"
     },
     {
-      "id": "src_components_task_completion_form_taskcompletionform_handlephotochange",
-      "label": "handlePhotoChange()",
+      "id": "src_components_theme_toggle_themetoggle_toggle",
+      "label": "toggle()",
       "_callable": true,
       "_origin": "ast",
       "community": 3,
       "community_name": "icons.tsx",
       "file_type": "code",
-      "norm_label": "handlephotochange()",
-      "source_file": "src/components/task-completion-form.tsx",
-      "source_location": "L30"
-    },
-    {
-      "id": "src_components_task_completion_form_taskcompletionform_submit",
-      "label": "submit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "icons.tsx",
-      "file_type": "code",
-      "norm_label": "submit()",
-      "source_file": "src/components/task-completion-form.tsx",
-      "source_location": "L36"
+      "norm_label": "toggle()",
+      "source_file": "src/components/theme-toggle.tsx",
+      "source_location": "L16"
     },
     {
       "id": "src_app_layout_rootlayout",
@@ -2387,6 +2600,30 @@
       "source_location": "L71"
     },
     {
+      "id": "src_components_officer_day_officerday",
+      "label": "OfficerDay()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 50,
+      "community_name": "toast.tsx",
+      "file_type": "code",
+      "norm_label": "officerday()",
+      "source_file": "src/components/officer-day.tsx",
+      "source_location": "L19"
+    },
+    {
+      "id": "src_components_officer_day_officerday_start",
+      "label": "start()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 50,
+      "community_name": "toast.tsx",
+      "file_type": "code",
+      "norm_label": "start()",
+      "source_file": "src/components/officer-day.tsx",
+      "source_location": "L44"
+    },
+    {
       "id": "src_components_task_board_taskboard",
       "label": "TaskBoard()",
       "_callable": true,
@@ -2396,7 +2633,7 @@
       "file_type": "code",
       "norm_label": "taskboard()",
       "source_file": "src/components/task-board.tsx",
-      "source_location": "L27"
+      "source_location": "L18"
     },
     {
       "id": "src_components_task_board_taskboard_save",
@@ -2408,7 +2645,7 @@
       "file_type": "code",
       "norm_label": "save()",
       "source_file": "src/components/task-board.tsx",
-      "source_location": "L72"
+      "source_location": "L54"
     },
     {
       "id": "src_components_ui_toast_usetoast",
@@ -2440,23 +2677,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 56,
-      "community_name": "CropCycleForm",
+      "community_name": "crop-cycle-form.tsx",
       "file_type": "code",
       "norm_label": "cropcycleform()",
       "source_file": "src/components/crop-cycle-form.tsx",
       "source_location": "L13"
-    },
-    {
-      "id": "src_components_crop_cycle_form_cropcycleform_addcustomsupport",
-      "label": "addCustomSupport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 56,
-      "community_name": "CropCycleForm",
-      "file_type": "code",
-      "norm_label": "addcustomsupport()",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L69"
     },
     {
       "id": "src_components_crop_cycle_form_cropcycleform_addpresetsupport",
@@ -2464,47 +2689,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 56,
-      "community_name": "CropCycleForm",
+      "community_name": "crop-cycle-form.tsx",
       "file_type": "code",
       "norm_label": "addpresetsupport()",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L61"
-    },
-    {
-      "id": "src_components_crop_cycle_form_cropcycleform_nextstep",
-      "label": "nextStep()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 56,
-      "community_name": "CropCycleForm",
-      "file_type": "code",
-      "norm_label": "nextstep()",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L119"
-    },
-    {
-      "id": "src_components_crop_cycle_form_cropcycleform_prevstep",
-      "label": "prevStep()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 56,
-      "community_name": "CropCycleForm",
-      "file_type": "code",
-      "norm_label": "prevstep()",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L125"
-    },
-    {
-      "id": "src_components_crop_cycle_form_cropcycleform_removesupport",
-      "label": "removeSupport()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 56,
-      "community_name": "CropCycleForm",
-      "file_type": "code",
-      "norm_label": "removesupport()",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L76"
+      "source_location": "L49"
     },
     {
       "id": "src_components_crop_cycle_form_cropcycleform_submit",
@@ -2512,35 +2701,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 56,
-      "community_name": "CropCycleForm",
+      "community_name": "crop-cycle-form.tsx",
       "file_type": "code",
       "norm_label": "submit()",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L130"
+      "source_location": "L63"
     },
     {
-      "id": "src_components_crop_cycle_form_cropcycleform_updatesupport",
-      "label": "updateSupport()",
+      "id": "src_components_crop_cycle_form_cropcycleform_validate",
+      "label": "validate()",
       "_callable": true,
       "_origin": "ast",
       "community": 56,
-      "community_name": "CropCycleForm",
+      "community_name": "crop-cycle-form.tsx",
       "file_type": "code",
-      "norm_label": "updatesupport()",
+      "norm_label": "validate()",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L80"
-    },
-    {
-      "id": "src_components_crop_cycle_form_cropcycleform_validatestep",
-      "label": "validateStep()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 56,
-      "community_name": "CropCycleForm",
-      "file_type": "code",
-      "norm_label": "validatestep()",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L100"
+      "source_location": "L54"
     },
     {
       "id": "src_components_crop_cycle_form_iso",
@@ -2548,11 +2725,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 56,
-      "community_name": "CropCycleForm",
+      "community_name": "crop-cycle-form.tsx",
       "file_type": "code",
       "norm_label": "iso()",
       "source_file": "src/components/crop-cycle-form.tsx",
       "source_location": "L7"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page_editcropcyclepage",
+      "label": "EditCropCyclePage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 57,
+      "community_name": "edit/page.tsx",
+      "file_type": "code",
+      "norm_label": "editcropcyclepage()",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
+      "source_location": "L11"
     },
     {
       "id": "src_components_crop_cycle_edit_form_cropcycleeditform",
@@ -2560,11 +2749,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
       "norm_label": "cropcycleeditform()",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L27"
+      "source_location": "L26"
     },
     {
       "id": "src_components_crop_cycle_edit_form_cropcycleeditform_addextra",
@@ -2572,23 +2761,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
       "norm_label": "addextra()",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L60"
-    },
-    {
-      "id": "src_components_crop_cycle_edit_form_cropcycleeditform_removeextra",
-      "label": "removeExtra()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 57,
-      "community_name": "CropCycleEditForm",
-      "file_type": "code",
-      "norm_label": "removeextra()",
-      "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L68"
+      "source_location": "L42"
     },
     {
       "id": "src_components_crop_cycle_edit_form_cropcycleeditform_submit",
@@ -2596,33 +2773,21 @@
       "_callable": true,
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
       "norm_label": "submit()",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L78"
+      "source_location": "L46"
     },
     {
-      "id": "src_components_crop_cycle_edit_form_cropcycleeditform_updateextra",
-      "label": "updateExtra()",
+      "id": "src_components_crop_cycle_edit_form_dateval",
+      "label": "dateVal()",
       "_callable": true,
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
-      "norm_label": "updateextra()",
-      "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L72"
-    },
-    {
-      "id": "src_components_crop_cycle_edit_form_datevalue",
-      "label": "dateValue()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 57,
-      "community_name": "CropCycleEditForm",
-      "file_type": "code",
-      "norm_label": "datevalue()",
+      "norm_label": "dateval()",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
       "source_location": "L24"
     },
@@ -2780,43 +2945,31 @@
       "file_type": "code",
       "norm_label": "fieldreports()",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L81"
+      "source_location": "L33"
     },
     {
-      "id": "src_components_field_reports_fieldreports_handlefarmselect",
-      "label": "handleFarmSelect()",
+      "id": "src_components_field_reports_fieldreports_submitincident",
+      "label": "submitIncident()",
       "_callable": true,
       "_origin": "ast",
       "community": 7,
       "community_name": "field-reports.tsx",
       "file_type": "code",
-      "norm_label": "handlefarmselect()",
+      "norm_label": "submitincident()",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L134"
+      "source_location": "L106"
     },
     {
-      "id": "src_components_field_reports_fieldreports_handleincidentsubmit",
-      "label": "handleIncidentSubmit()",
+      "id": "src_components_field_reports_fieldreports_submitmonitoring",
+      "label": "submitMonitoring()",
       "_callable": true,
       "_origin": "ast",
       "community": 7,
       "community_name": "field-reports.tsx",
       "file_type": "code",
-      "norm_label": "handleincidentsubmit()",
+      "norm_label": "submitmonitoring()",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L196"
-    },
-    {
-      "id": "src_components_field_reports_fieldreports_handlemonitoringsubmit",
-      "label": "handleMonitoringSubmit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 7,
-      "community_name": "field-reports.tsx",
-      "file_type": "code",
-      "norm_label": "handlemonitoringsubmit()",
-      "source_file": "src/components/field-reports.tsx",
-      "source_location": "L143"
+      "source_location": "L71"
     },
     {
       "id": "src_components_field_reports_uploadphotos",
@@ -2828,7 +2981,7 @@
       "file_type": "code",
       "norm_label": "uploadphotos()",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L34"
+      "source_location": "L14"
     },
     {
       "id": "scripts_final_acceptance_proof_loginandgetcookie",
@@ -2836,7 +2989,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "loginandgetcookie()",
       "source_file": "scripts/final-acceptance-proof.ts",
@@ -2848,7 +3001,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "record()",
       "source_file": "scripts/final-acceptance-proof.ts",
@@ -2860,7 +3013,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "runacceptanceproof()",
       "source_file": "scripts/final-acceptance-proof.ts",
@@ -2872,155 +3025,35 @@
       "_callable": true,
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "uploadandverifymedia()",
       "source_file": "scripts/final-acceptance-proof.ts",
       "source_location": "L40"
     },
     {
-      "id": "src_lib_business_calculatedinfrastructure",
-      "label": "calculatedInfrastructure()",
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_cropcycledetailpage",
+      "label": "CropCycleDetailPage()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
+      "community": 73,
+      "community_name": "[cycleId]/page.tsx",
       "file_type": "code",
-      "norm_label": "calculatedinfrastructure()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_lib_business_cantransitiontask",
-      "label": "canTransitionTask()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "cantransitiontask()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L32"
-    },
-    {
-      "id": "src_lib_business_distancemeters",
-      "label": "distanceMeters()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "distancemeters()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L4"
-    },
-    {
-      "id": "src_lib_business_iswithinrollingsevendays",
-      "label": "isWithinRollingSevenDays()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "iswithinrollingsevendays()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L24"
-    },
-    {
-      "id": "src_lib_business_labourhours",
-      "label": "labourHours()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "labourhours()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L16"
-    },
-    {
-      "id": "src_lib_business_milestonetemplates",
-      "label": "milestoneTemplates()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "milestonetemplates()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L33"
-    },
-    {
-      "id": "src_lib_business_radians",
-      "label": "radians()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "radians()",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L3"
+      "norm_label": "cropcycledetailpage()",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
+      "source_location": "L14"
     },
     {
       "id": "src_lib_business_variance",
       "label": "variance()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
+      "community": 73,
+      "community_name": "[cycleId]/page.tsx",
       "file_type": "code",
       "norm_label": "variance()",
       "source_file": "src/lib/business.ts",
       "source_location": "L12"
-    },
-    {
-      "id": "src_app_officer_reports_page_officerreportspage",
-      "label": "OfficerReportsPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "reports/page.tsx",
-      "file_type": "code",
-      "norm_label": "officerreportspage()",
-      "source_file": "src/app/officer/reports/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_components_location_request_form_locationrequestform",
-      "label": "LocationRequestForm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "reports/page.tsx",
-      "file_type": "code",
-      "norm_label": "locationrequestform()",
-      "source_file": "src/components/location-request-form.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_components_location_request_form_locationrequestform_capture",
-      "label": "capture()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "reports/page.tsx",
-      "file_type": "code",
-      "norm_label": "capture()",
-      "source_file": "src/components/location-request-form.tsx",
-      "source_location": "L26"
-    },
-    {
-      "id": "src_components_location_request_form_locationrequestform_submit",
-      "label": "submit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 73,
-      "community_name": "reports/page.tsx",
-      "file_type": "code",
-      "norm_label": "submit()",
-      "source_file": "src/components/location-request-form.tsx",
-      "source_location": "L49"
     },
     {
       "id": "src_app_reports_daily_page_dailyreportpage",
@@ -3035,12 +3068,96 @@
       "source_location": "L8"
     },
     {
+      "id": "src_components_attendance_form_attendanceform",
+      "label": "AttendanceForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "attendanceform()",
+      "source_file": "src/components/attendance-form.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_components_attendance_form_attendanceform_handleclockin",
+      "label": "handleClockIn()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "handleclockin()",
+      "source_file": "src/components/attendance-form.tsx",
+      "source_location": "L114"
+    },
+    {
+      "id": "src_components_attendance_form_attendanceform_handleclockout",
+      "label": "handleClockOut()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "handleclockout()",
+      "source_file": "src/components/attendance-form.tsx",
+      "source_location": "L164"
+    },
+    {
+      "id": "src_components_camera_capture_cameracapture",
+      "label": "CameraCapture()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "cameracapture()",
+      "source_file": "src/components/camera-capture.tsx",
+      "source_location": "L13"
+    },
+    {
+      "id": "src_components_camera_capture_cameracapture_captureframe",
+      "label": "captureFrame()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "captureframe()",
+      "source_file": "src/components/camera-capture.tsx",
+      "source_location": "L54"
+    },
+    {
+      "id": "src_components_camera_capture_cameracapture_handlefile",
+      "label": "handleFile()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 76,
+      "community_name": "attendance-form.tsx",
+      "file_type": "code",
+      "norm_label": "handlefile()",
+      "source_file": "src/components/camera-capture.tsx",
+      "source_location": "L76"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_new_page_newcropcyclepage",
+      "label": "NewCropCyclePage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "crop-cycles/new/page.tsx",
+      "file_type": "code",
+      "norm_label": "newcropcyclepage()",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
+      "source_location": "L11"
+    },
+    {
       "id": "src_components_daily_report_dailyreport",
       "label": "DailyReport()",
       "_callable": true,
       "_origin": "ast",
-      "community": 75,
-      "community_name": "daily/page.tsx",
+      "community": 83,
+      "community_name": "DailyReport",
       "file_type": "code",
       "norm_label": "dailyreport()",
       "source_file": "src/components/daily-report.tsx",
@@ -3051,8 +3168,8 @@
       "label": "adjustDate()",
       "_callable": true,
       "_origin": "ast",
-      "community": 75,
-      "community_name": "daily/page.tsx",
+      "community": 83,
+      "community_name": "DailyReport",
       "file_type": "code",
       "norm_label": "adjustdate()",
       "source_file": "src/components/daily-report.tsx",
@@ -3063,240 +3180,24 @@
       "label": "load()",
       "_callable": true,
       "_origin": "ast",
-      "community": 75,
-      "community_name": "daily/page.tsx",
+      "community": 83,
+      "community_name": "DailyReport",
       "file_type": "code",
       "norm_label": "load()",
       "source_file": "src/components/daily-report.tsx",
       "source_location": "L53"
     },
     {
-      "id": "src_components_attendance_form_attendanceform",
-      "label": "AttendanceForm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "attendanceform()",
-      "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L31"
-    },
-    {
-      "id": "src_components_attendance_form_attendanceform_handleclockin",
-      "label": "handleClockIn()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "handleclockin()",
-      "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L143"
-    },
-    {
-      "id": "src_components_attendance_form_attendanceform_handleclockout",
-      "label": "handleClockOut()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "handleclockout()",
-      "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L221"
-    },
-    {
-      "id": "src_components_camera_capture_cameracapture",
-      "label": "CameraCapture()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "cameracapture()",
-      "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L13"
-    },
-    {
-      "id": "src_components_camera_capture_cameracapture_capturelivesnapshot",
-      "label": "captureLiveSnapshot()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "capturelivesnapshot()",
-      "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L121"
-    },
-    {
-      "id": "src_components_camera_capture_cameracapture_triggercountdown",
-      "label": "triggerCountdown()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "triggercountdown()",
-      "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L159"
-    },
-    {
-      "id": "src_components_officer_day_officerday",
-      "label": "OfficerDay()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "officerday()",
-      "source_file": "src/components/officer-day.tsx",
-      "source_location": "L27"
-    },
-    {
-      "id": "src_components_officer_day_officerday_start",
-      "label": "start()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "start()",
-      "source_file": "src/components/officer-day.tsx",
-      "source_location": "L59"
-    },
-    {
-      "id": "src_components_dashboard_client_dashboardclient",
-      "label": "DashboardClient()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "dashboard-client.tsx",
-      "file_type": "code",
-      "norm_label": "dashboardclient()",
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L59"
-    },
-    {
-      "id": "src_components_farm_access_manager_farmaccessmanager",
-      "label": "FarmAccessManager()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "farmaccessmanager()",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L18"
-    },
-    {
-      "id": "src_components_farm_access_manager_farmaccessmanager_assign",
-      "label": "assign()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "assign()",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L37"
-    },
-    {
-      "id": "src_components_farm_access_manager_farmaccessmanager_remove",
-      "label": "remove()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "remove()",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L64"
-    },
-    {
-      "id": "src_app_admin_approvals_page_adminapprovalspage",
-      "label": "AdminApprovalsPage()",
+      "id": "src_components_evidence_gallery_evidencegallery",
+      "label": "EvidenceGallery()",
       "_callable": true,
       "_origin": "ast",
       "community": 84,
-      "community_name": "approvals/page.tsx",
+      "community_name": "evidence-gallery.tsx",
       "file_type": "code",
-      "norm_label": "adminapprovalspage()",
-      "source_file": "src/app/admin/approvals/page.tsx",
-      "source_location": "L8"
-    },
-    {
-      "id": "src_components_approvals_console_approvalsconsole",
-      "label": "ApprovalsConsole()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 84,
-      "community_name": "approvals/page.tsx",
-      "file_type": "code",
-      "norm_label": "approvalsconsole()",
-      "source_file": "src/components/approvals-console.tsx",
-      "source_location": "L41"
-    },
-    {
-      "id": "src_components_approvals_console_approvalsconsole_review",
-      "label": "review()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 84,
-      "community_name": "approvals/page.tsx",
-      "file_type": "code",
-      "norm_label": "review()",
-      "source_file": "src/components/approvals-console.tsx",
-      "source_location": "L68"
-    },
-    {
-      "id": "src_app_login_page_loginpage",
-      "label": "LoginPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "loginpage()",
-      "source_file": "src/app/login/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_components_login_form_loginform",
-      "label": "LoginForm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "loginform()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L33"
-    },
-    {
-      "id": "src_components_login_form_loginform_quickfill",
-      "label": "quickFill()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "quickfill()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L41"
-    },
-    {
-      "id": "src_components_login_form_loginform_submit",
-      "label": "submit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "submit()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L47"
+      "norm_label": "evidencegallery()",
+      "source_file": "src/components/evidence-gallery.tsx",
+      "source_location": "L5"
     },
     {
       "id": "src_components_nav_profile_menu_profilemenu",
@@ -3304,7 +3205,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 85,
-      "community_name": "login/page.tsx",
+      "community_name": "ProfileMenu",
       "file_type": "code",
       "norm_label": "profilemenu()",
       "source_file": "src/components/nav/profile-menu.tsx",
@@ -3316,7 +3217,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 85,
-      "community_name": "login/page.tsx",
+      "community_name": "ProfileMenu",
       "file_type": "code",
       "norm_label": "ondoc()",
       "source_file": "src/components/nav/profile-menu.tsx",
@@ -3328,7 +3229,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 85,
-      "community_name": "login/page.tsx",
+      "community_name": "ProfileMenu",
       "file_type": "code",
       "norm_label": "onkey()",
       "source_file": "src/components/nav/profile-menu.tsx",
@@ -3340,35 +3241,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 85,
-      "community_name": "login/page.tsx",
+      "community_name": "ProfileMenu",
       "file_type": "code",
       "norm_label": "signout()",
       "source_file": "src/components/nav/profile-menu.tsx",
       "source_location": "L37"
-    },
-    {
-      "id": "src_components_theme_toggle_themetoggle",
-      "label": "ThemeToggle()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "themetoggle()",
-      "source_file": "src/components/theme-toggle.tsx",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_components_theme_toggle_themetoggle_toggle",
-      "label": "toggle()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "toggle()",
-      "source_file": "src/components/theme-toggle.tsx",
-      "source_location": "L16"
     },
     {
       "id": "src_components_nav_config_getmobilenavforrole",
@@ -3764,17 +3641,6 @@
       "source_location": "L7"
     },
     {
-      "id": "src_app_api_media_mediaid_url_route",
-      "label": "url/route.ts",
-      "_origin": "ast",
-      "community": 0,
-      "community_name": "apiError",
-      "file_type": "code",
-      "norm_label": "url/route.ts",
-      "source_file": "src/app/api/media/[mediaId]/url/route.ts",
-      "source_location": "L1"
-    },
-    {
       "id": "src_app_api_monitoring_route",
       "label": "monitoring/route.ts",
       "_origin": "ast",
@@ -4127,6 +3993,28 @@
       "source_location": "L1"
     },
     {
+      "id": "src_app_dashboard_page",
+      "label": "dashboard/page.tsx",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "dashboard/page.tsx",
+      "source_file": "src/app/dashboard/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_dashboard_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/dashboard/page.tsx",
+      "source_location": "L8"
+    },
+    {
       "id": "src_lib_access",
       "label": "access.ts",
       "_origin": "ast",
@@ -4226,6 +4114,17 @@
       "source_location": "L1"
     },
     {
+      "id": "src_lib_auth_penetration_test",
+      "label": "auth-penetration.test.ts",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "auth-penetration.test.ts",
+      "source_file": "src/lib/auth-penetration.test.ts",
+      "source_location": "L1"
+    },
+    {
       "id": "src_lib_auth_testsessioncontext",
       "label": "testSessionContext",
       "_origin": "ast",
@@ -4257,6 +4156,61 @@
       "norm_label": "secret",
       "source_file": "src/lib/blackbox.test.ts",
       "source_location": "L31"
+    },
+    {
+      "id": "src_lib_business",
+      "label": "business.ts",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "business.ts",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_lib_business_default_geofence_radius_meters",
+      "label": "DEFAULT_GEOFENCE_RADIUS_METERS",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "default_geofence_radius_meters",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_lib_business_tasktransitions",
+      "label": "taskTransitions",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "tasktransitions",
+      "source_file": "src/lib/business.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "src_lib_business_test",
+      "label": "business.test.ts",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "business.test.ts",
+      "source_file": "src/lib/business.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_lib_domain_verification_test",
+      "label": "domain-verification.test.ts",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "apiError",
+      "file_type": "code",
+      "norm_label": "domain-verification.test.ts",
+      "source_file": "src/lib/domain-verification.test.ts",
+      "source_location": "L1"
     },
     {
       "id": "src_lib_prisma",
@@ -4314,25 +4268,14 @@
       "source_location": "L19"
     },
     {
-      "id": "src_components_evidence_gallery",
-      "label": "evidence-gallery.tsx",
+      "id": "src_components_farm_access_manager",
+      "label": "farm-access-manager.tsx",
       "_origin": "ast",
       "community": 1,
       "community_name": "farm-hub-client.tsx",
       "file_type": "code",
-      "norm_label": "evidence-gallery.tsx",
-      "source_file": "src/components/evidence-gallery.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_farm_edit_form",
-      "label": "farm-edit-form.tsx",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "farm-hub-client.tsx",
-      "file_type": "code",
-      "norm_label": "farm-edit-form.tsx",
-      "source_file": "src/components/farm-edit-form.tsx",
+      "norm_label": "farm-access-manager.tsx",
+      "source_file": "src/components/farm-access-manager.tsx",
       "source_location": "L1"
     },
     {
@@ -4344,17 +4287,6 @@
       "file_type": "code",
       "norm_label": "farm-hub-client.tsx",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_incident_followup",
-      "label": "incident-followup.tsx",
-      "_origin": "ast",
-      "community": 1,
-      "community_name": "farm-hub-client.tsx",
-      "file_type": "code",
-      "norm_label": "incident-followup.tsx",
-      "source_file": "src/components/incident-followup.tsx",
       "source_location": "L1"
     },
     {
@@ -6101,55 +6033,11 @@
       "source_location": "L3"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page",
-      "label": "[cycleId]/page.tsx",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "[cycleid]/page.tsx",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L12"
-    },
-    {
-      "id": "src_components_admin_console",
-      "label": "admin-console.tsx",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "admin-console.tsx",
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_admin_console_roles",
-      "label": "roles",
-      "_origin": "ast",
-      "community": 19,
-      "community_name": "[cycleId]/page.tsx",
-      "file_type": "code",
-      "norm_label": "roles",
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L18"
-    },
-    {
       "id": "src_components_approvals_console",
       "label": "approvals-console.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "approvals-console.tsx",
       "source_file": "src/components/approvals-console.tsx",
@@ -6160,10 +6048,21 @@
       "label": "daily-report.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "daily-report.tsx",
       "source_file": "src/components/daily-report.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_dashboard_client",
+      "label": "dashboard-client.tsx",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "dashboard-client.tsx",
+      "source_file": "src/components/dashboard-client.tsx",
       "source_location": "L1"
     },
     {
@@ -6171,7 +6070,7 @@
       "label": "officer-day.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "officer-day.tsx",
       "source_file": "src/components/officer-day.tsx",
@@ -6182,10 +6081,21 @@
       "label": "task-board.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "task-board.tsx",
       "source_file": "src/components/task-board.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_task_completion_form",
+      "label": "task-completion-form.tsx",
+      "_origin": "ast",
+      "community": 19,
+      "community_name": "officer-day.tsx",
+      "file_type": "code",
+      "norm_label": "task-completion-form.tsx",
+      "source_file": "src/components/task-completion-form.tsx",
       "source_location": "L1"
     },
     {
@@ -6193,7 +6103,7 @@
       "label": "badge.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "badge.tsx",
       "source_file": "src/components/ui/badge.tsx",
@@ -6204,7 +6114,7 @@
       "label": "empty-state.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "empty-state.tsx",
       "source_file": "src/components/ui/empty-state.tsx",
@@ -6215,62 +6125,106 @@
       "label": "skeleton.tsx",
       "_origin": "ast",
       "community": 19,
-      "community_name": "[cycleId]/page.tsx",
+      "community_name": "officer-day.tsx",
       "file_type": "code",
       "norm_label": "skeleton.tsx",
       "source_file": "src/components/ui/skeleton.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page",
-      "label": "edit/page.tsx",
+      "id": "src_app_admin_approvals_page",
+      "label": "approvals/page.tsx",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "edit/page.tsx",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
+      "norm_label": "approvals/page.tsx",
+      "source_file": "src/app/admin/approvals/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page_dynamic",
+      "id": "src_app_admin_approvals_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
-      "source_location": "L9"
+      "source_file": "src/app/admin/approvals/page.tsx",
+      "source_location": "L6"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_new_page",
-      "label": "crop-cycles/new/page.tsx",
+      "id": "src_app_admin_users_page",
+      "label": "users/page.tsx",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "crop-cycles/new/page.tsx",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
+      "norm_label": "users/page.tsx",
+      "source_file": "src/app/admin/users/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_plots_plotid_crop_cycles_new_page_dynamic",
+      "id": "src_app_admin_users_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
-      "source_location": "L9"
+      "source_file": "src/app/admin/users/page.tsx",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_app_officer_day_page",
+      "label": "day/page.tsx",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "day/page.tsx",
+      "source_file": "src/app/officer/day/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_officer_day_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/officer/day/page.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "src_app_officer_reports_page",
+      "label": "reports/page.tsx",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "reports/page.tsx",
+      "source_file": "src/app/officer/reports/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_officer_reports_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/officer/reports/page.tsx",
+      "source_location": "L7"
     },
     {
       "id": "src_app_plots_plotid_page",
       "label": "[plotId]/page.tsx",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "[plotid]/page.tsx",
       "source_file": "src/app/plots/[plotId]/page.tsx",
@@ -6281,18 +6235,40 @@
       "label": "dynamic",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "dynamic",
       "source_file": "src/app/plots/[plotId]/page.tsx",
       "source_location": "L9"
     },
     {
+      "id": "src_app_tasks_new_page",
+      "label": "tasks/new/page.tsx",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "tasks/new/page.tsx",
+      "source_file": "src/app/tasks/new/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_tasks_new_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/tasks/new/page.tsx",
+      "source_location": "L7"
+    },
+    {
       "id": "src_app_tasks_page",
       "label": "tasks/page.tsx",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "tasks/page.tsx",
       "source_file": "src/app/tasks/page.tsx",
@@ -6303,7 +6279,7 @@
       "label": "dynamic",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "dynamic",
       "source_file": "src/app/tasks/page.tsx",
@@ -6314,7 +6290,7 @@
       "label": "breadcrumbs.tsx",
       "_origin": "ast",
       "community": 2,
-      "community_name": "breadcrumbs.tsx",
+      "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "breadcrumbs.tsx",
       "source_file": "src/components/breadcrumbs.tsx",
@@ -6613,33 +6589,11 @@
       "source_location": "L63"
     },
     {
-      "id": "src_app_dashboard_page",
-      "label": "dashboard/page.tsx",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "dashboard/page.tsx",
-      "source_file": "src/app/dashboard/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_dashboard_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/dashboard/page.tsx",
-      "source_location": "L8"
-    },
-    {
       "id": "src_app_farms_farmid_page",
       "label": "[farmId]/page.tsx",
       "_origin": "ast",
       "community": 23,
-      "community_name": "requireSession",
+      "community_name": "[farmId]/page.tsx",
       "file_type": "code",
       "norm_label": "[farmid]/page.tsx",
       "source_file": "src/app/farms/[farmId]/page.tsx",
@@ -6650,77 +6604,33 @@
       "label": "dynamic",
       "_origin": "ast",
       "community": 23,
-      "community_name": "requireSession",
+      "community_name": "[farmId]/page.tsx",
       "file_type": "code",
       "norm_label": "dynamic",
       "source_file": "src/app/farms/[farmId]/page.tsx",
       "source_location": "L8"
     },
     {
-      "id": "src_app_tasks_new_page",
-      "label": "tasks/new/page.tsx",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "tasks/new/page.tsx",
-      "source_file": "src/app/tasks/new/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_tasks_new_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 23,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/tasks/new/page.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_app_admin_users_page",
-      "label": "users/page.tsx",
+      "id": "src_components_admin_console",
+      "label": "admin-console.tsx",
       "_origin": "ast",
       "community": 24,
-      "community_name": "users/page.tsx",
+      "community_name": "admin-console.tsx",
       "file_type": "code",
-      "norm_label": "users/page.tsx",
-      "source_file": "src/app/admin/users/page.tsx",
+      "norm_label": "admin-console.tsx",
+      "source_file": "src/components/admin-console.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_admin_users_page_dynamic",
-      "label": "dynamic",
+      "id": "src_components_admin_console_roles",
+      "label": "roles",
       "_origin": "ast",
       "community": 24,
-      "community_name": "users/page.tsx",
+      "community_name": "admin-console.tsx",
       "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/admin/users/page.tsx",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_components_plot_edit_form",
-      "label": "plot-edit-form.tsx",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "plot-edit-form.tsx",
-      "file_type": "code",
-      "norm_label": "plot-edit-form.tsx",
-      "source_file": "src/components/plot-edit-form.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_plot_edit_form_options",
-      "label": "options",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "plot-edit-form.tsx",
-      "file_type": "code",
-      "norm_label": "options",
-      "source_file": "src/components/plot-edit-form.tsx",
-      "source_location": "L18"
+      "norm_label": "roles",
+      "source_file": "src/components/admin-console.tsx",
+      "source_location": "L9"
     },
     {
       "id": "agents_skills_ponytail_examples_debounce_advanced_debounce_with_cancel_immediate_options",
@@ -7258,14 +7168,25 @@
       "file_type": "code",
       "norm_label": "categories",
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L16"
+      "source_location": "L11"
+    },
+    {
+      "id": "src_app_api_media_mediaid_url_route",
+      "label": "url/route.ts",
+      "_origin": "ast",
+      "community": 29,
+      "community_name": "url/route.ts",
+      "file_type": "code",
+      "norm_label": "url/route.ts",
+      "source_file": "src/app/api/media/[mediaId]/url/route.ts",
+      "source_location": "L1"
     },
     {
       "id": "src_lib_storage",
       "label": "storage.ts",
       "_origin": "ast",
       "community": 29,
-      "community_name": "storage.ts",
+      "community_name": "url/route.ts",
       "file_type": "code",
       "norm_label": "storage.ts",
       "source_file": "src/lib/storage.ts",
@@ -7283,6 +7204,28 @@
       "source_location": "L1"
     },
     {
+      "id": "src_app_login_page",
+      "label": "login/page.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "login/page.tsx",
+      "source_file": "src/app/login/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_login_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/login/page.tsx",
+      "source_location": "L7"
+    },
+    {
       "id": "src_app_not_found",
       "label": "not-found.tsx",
       "_origin": "ast",
@@ -7291,6 +7234,28 @@
       "file_type": "code",
       "norm_label": "not-found.tsx",
       "source_file": "src/app/not-found.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_camera_capture",
+      "label": "camera-capture.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "camera-capture.tsx",
+      "source_file": "src/components/camera-capture.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_farm_edit_form",
+      "label": "farm-edit-form.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "farm-edit-form.tsx",
+      "source_file": "src/components/farm-edit-form.tsx",
       "source_location": "L1"
     },
     {
@@ -7324,7 +7289,18 @@
       "file_type": "code",
       "norm_label": "icons",
       "source_file": "src/components/icons.tsx",
-      "source_location": "L7"
+      "source_location": "L26"
+    },
+    {
+      "id": "src_components_incident_followup",
+      "label": "incident-followup.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "incident-followup.tsx",
+      "source_file": "src/components/incident-followup.tsx",
+      "source_location": "L1"
     },
     {
       "id": "src_components_location_request_form",
@@ -7371,14 +7347,47 @@
       "source_location": "L1"
     },
     {
-      "id": "src_components_task_completion_form",
-      "label": "task-completion-form.tsx",
+      "id": "src_components_nav_profile_menu",
+      "label": "profile-menu.tsx",
       "_origin": "ast",
       "community": 3,
       "community_name": "icons.tsx",
       "file_type": "code",
-      "norm_label": "task-completion-form.tsx",
-      "source_file": "src/components/task-completion-form.tsx",
+      "norm_label": "profile-menu.tsx",
+      "source_file": "src/components/nav/profile-menu.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_plot_edit_form",
+      "label": "plot-edit-form.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "plot-edit-form.tsx",
+      "source_file": "src/components/plot-edit-form.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_plot_edit_form_options",
+      "label": "options",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "options",
+      "source_file": "src/components/plot-edit-form.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "src_components_theme_toggle",
+      "label": "theme-toggle.tsx",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "icons.tsx",
+      "file_type": "code",
+      "norm_label": "theme-toggle.tsx",
+      "source_file": "src/components/theme-toggle.tsx",
       "source_location": "L1"
     },
     {
@@ -9589,17 +9598,6 @@
       "source_location": "L1"
     },
     {
-      "id": "src_components_crop_cycle_form",
-      "label": "crop-cycle-form.tsx",
-      "_origin": "ast",
-      "community": 50,
-      "community_name": "toast.tsx",
-      "file_type": "code",
-      "norm_label": "crop-cycle-form.tsx",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L1"
-    },
-    {
       "id": "src_components_farm_status_control",
       "label": "farm-status-control.tsx",
       "_origin": "ast",
@@ -10050,11 +10048,44 @@
       "source_location": "L4"
     },
     {
+      "id": "src_components_crop_cycle_form",
+      "label": "crop-cycle-form.tsx",
+      "_origin": "ast",
+      "community": 56,
+      "community_name": "crop-cycle-form.tsx",
+      "file_type": "code",
+      "norm_label": "crop-cycle-form.tsx",
+      "source_file": "src/components/crop-cycle-form.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page",
+      "label": "edit/page.tsx",
+      "_origin": "ast",
+      "community": 57,
+      "community_name": "edit/page.tsx",
+      "file_type": "code",
+      "norm_label": "edit/page.tsx",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 57,
+      "community_name": "edit/page.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
+      "source_location": "L9"
+    },
+    {
       "id": "src_components_crop_cycle_edit_form",
       "label": "crop-cycle-edit-form.tsx",
       "_origin": "ast",
       "community": 57,
-      "community_name": "CropCycleEditForm",
+      "community_name": "edit/page.tsx",
       "file_type": "code",
       "norm_label": "crop-cycle-edit-form.tsx",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
@@ -10981,7 +11012,7 @@
       "file_type": "code",
       "norm_label": "cropstages",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L25"
+      "source_location": "L12"
     },
     {
       "id": "src_components_field_reports_incidenttypes",
@@ -11021,7 +11052,7 @@
       "label": "final-acceptance-proof.ts",
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "final-acceptance-proof.ts",
       "source_file": "scripts/final-acceptance-proof.ts",
@@ -11032,99 +11063,33 @@
       "label": "reports",
       "_origin": "ast",
       "community": 72,
-      "community_name": "business.ts",
+      "community_name": "final-acceptance-proof.ts",
       "file_type": "code",
       "norm_label": "reports",
       "source_file": "scripts/final-acceptance-proof.ts",
       "source_location": "L15"
     },
     {
-      "id": "src_lib_auth_penetration_test",
-      "label": "auth-penetration.test.ts",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "auth-penetration.test.ts",
-      "source_file": "src/lib/auth-penetration.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_lib_business",
-      "label": "business.ts",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "business.ts",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_lib_business_default_geofence_radius_meters",
-      "label": "DEFAULT_GEOFENCE_RADIUS_METERS",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "default_geofence_radius_meters",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_lib_business_tasktransitions",
-      "label": "taskTransitions",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "tasktransitions",
-      "source_file": "src/lib/business.ts",
-      "source_location": "L31"
-    },
-    {
-      "id": "src_lib_business_test",
-      "label": "business.test.ts",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "business.test.ts",
-      "source_file": "src/lib/business.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_lib_domain_verification_test",
-      "label": "domain-verification.test.ts",
-      "_origin": "ast",
-      "community": 72,
-      "community_name": "business.ts",
-      "file_type": "code",
-      "norm_label": "domain-verification.test.ts",
-      "source_file": "src/lib/domain-verification.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_officer_reports_page",
-      "label": "reports/page.tsx",
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page",
+      "label": "[cycleId]/page.tsx",
       "_origin": "ast",
       "community": 73,
-      "community_name": "reports/page.tsx",
+      "community_name": "[cycleId]/page.tsx",
       "file_type": "code",
-      "norm_label": "reports/page.tsx",
-      "source_file": "src/app/officer/reports/page.tsx",
+      "norm_label": "[cycleid]/page.tsx",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_officer_reports_page_dynamic",
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 73,
-      "community_name": "reports/page.tsx",
+      "community_name": "[cycleId]/page.tsx",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/officer/reports/page.tsx",
-      "source_location": "L7"
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
+      "source_location": "L12"
     },
     {
       "id": "scripts_build_docs_html",
@@ -11204,47 +11169,14 @@
       "source_location": "L6"
     },
     {
-      "id": "src_app_officer_day_page",
-      "label": "day/page.tsx",
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "day/page.tsx",
-      "source_file": "src/app/officer/day/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_officer_day_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/officer/day/page.tsx",
-      "source_location": "L7"
-    },
-    {
       "id": "src_components_attendance_form",
       "label": "attendance-form.tsx",
       "_origin": "ast",
       "community": 76,
-      "community_name": "day/page.tsx",
+      "community_name": "attendance-form.tsx",
       "file_type": "code",
       "norm_label": "attendance-form.tsx",
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_camera_capture",
-      "label": "camera-capture.tsx",
-      "_origin": "ast",
-      "community": 76,
-      "community_name": "day/page.tsx",
-      "file_type": "code",
-      "norm_label": "camera-capture.tsx",
-      "source_file": "src/components/camera-capture.tsx",
       "source_location": "L1"
     },
     {
@@ -11571,91 +11503,36 @@
       "source_location": "L1"
     },
     {
-      "id": "src_components_dashboard_client",
-      "label": "dashboard-client.tsx",
+      "id": "src_app_plots_plotid_crop_cycles_new_page",
+      "label": "crop-cycles/new/page.tsx",
       "_origin": "ast",
       "community": 82,
-      "community_name": "dashboard-client.tsx",
+      "community_name": "crop-cycles/new/page.tsx",
       "file_type": "code",
-      "norm_label": "dashboard-client.tsx",
-      "source_file": "src/components/dashboard-client.tsx",
+      "norm_label": "crop-cycles/new/page.tsx",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_components_farm_access_manager",
-      "label": "farm-access-manager.tsx",
-      "_origin": "ast",
-      "community": 83,
-      "community_name": "farm-access-manager.tsx",
-      "file_type": "code",
-      "norm_label": "farm-access-manager.tsx",
-      "source_file": "src/components/farm-access-manager.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_admin_approvals_page",
-      "label": "approvals/page.tsx",
-      "_origin": "ast",
-      "community": 84,
-      "community_name": "approvals/page.tsx",
-      "file_type": "code",
-      "norm_label": "approvals/page.tsx",
-      "source_file": "src/app/admin/approvals/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_admin_approvals_page_dynamic",
+      "id": "src_app_plots_plotid_crop_cycles_new_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
+      "community": 82,
+      "community_name": "crop-cycles/new/page.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/new/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_components_evidence_gallery",
+      "label": "evidence-gallery.tsx",
+      "_origin": "ast",
       "community": 84,
-      "community_name": "approvals/page.tsx",
+      "community_name": "evidence-gallery.tsx",
       "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/admin/approvals/page.tsx",
-      "source_location": "L6"
-    },
-    {
-      "id": "src_app_login_page",
-      "label": "login/page.tsx",
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "login/page.tsx",
-      "source_file": "src/app/login/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_login_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/login/page.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_components_nav_profile_menu",
-      "label": "profile-menu.tsx",
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "profile-menu.tsx",
-      "source_file": "src/components/nav/profile-menu.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_theme_toggle",
-      "label": "theme-toggle.tsx",
-      "_origin": "ast",
-      "community": 85,
-      "community_name": "login/page.tsx",
-      "file_type": "code",
-      "norm_label": "theme-toggle.tsx",
-      "source_file": "src/components/theme-toggle.tsx",
+      "norm_label": "evidence-gallery.tsx",
+      "source_file": "src/components/evidence-gallery.tsx",
       "source_location": "L1"
     },
     {
@@ -14734,7 +14611,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L132",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -14746,31 +14623,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L32",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_camera_capture_cameracapture_triggercountdown",
-      "target": "src_components_camera_capture_cameracapture_capturelivesnapshot",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L166",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
       "source": "src_components_crop_cycle_edit_form_cropcycleeditform",
-      "target": "src_components_crop_cycle_edit_form_datevalue",
+      "target": "src_components_crop_cycle_edit_form_dateval",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L206",
+      "source_location": "L113",
       "weight": 1.0
     },
     {
@@ -14782,7 +14647,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L23",
+      "source_location": "L15",
       "weight": 1.0
     },
     {
@@ -14794,19 +14659,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L29",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform_addcustomsupport",
-      "target": "src_components_crop_cycle_form_iso",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L72",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -14818,31 +14671,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L65",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform_nextstep",
-      "target": "src_components_crop_cycle_form_cropcycleform_validatestep",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L120",
+      "source_location": "L51",
       "weight": 1.0
     },
     {
       "source": "src_components_crop_cycle_form_cropcycleform_submit",
-      "target": "src_components_crop_cycle_form_cropcycleform_validatestep",
+      "target": "src_components_crop_cycle_form_cropcycleform_validate",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L132",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -14858,7 +14699,7 @@
       "weight": 1.0
     },
     {
-      "source": "src_components_field_reports_fieldreports_handleincidentsubmit",
+      "source": "src_components_field_reports_fieldreports_submitincident",
       "target": "src_components_field_reports_uploadphotos",
       "relation": "calls",
       "_origin": "ast",
@@ -14866,11 +14707,11 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L207",
+      "source_location": "L114",
       "weight": 1.0
     },
     {
-      "source": "src_components_field_reports_fieldreports_handlemonitoringsubmit",
+      "source": "src_components_field_reports_fieldreports_submitmonitoring",
       "target": "src_components_field_reports_uploadphotos",
       "relation": "calls",
       "_origin": "ast",
@@ -14878,7 +14719,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L160",
+      "source_location": "L82",
       "weight": 1.0
     },
     {
@@ -14962,7 +14803,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/officer-day.tsx",
-      "source_location": "L28",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -14974,7 +14815,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/task-board.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -15238,7 +15079,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L86",
+      "source_location": "L58",
       "weight": 1.0
     },
     {
@@ -15262,31 +15103,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L60",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_edit_form_cropcycleeditform",
-      "target": "src_components_crop_cycle_edit_form_cropcycleeditform_removeextra",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L68",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_edit_form_cropcycleeditform",
-      "target": "src_components_crop_cycle_edit_form_cropcycleeditform_updateextra",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L72",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -15298,31 +15115,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L61",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
       "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_removesupport",
+      "target": "src_components_crop_cycle_form_cropcycleform_validate",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L76",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_updatesupport",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L80",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
@@ -15359,18 +15164,6 @@
       "context": "call",
       "source_file": "src/components/farm-access-manager.tsx",
       "source_location": "L64",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_field_reports_fieldreports",
-      "target": "src_components_field_reports_fieldreports_handlefarmselect",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/field-reports.tsx",
-      "source_location": "L134",
       "weight": 1.0
     },
     {
@@ -15418,7 +15211,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/officer-day.tsx",
-      "source_location": "L59",
+      "source_location": "L44",
       "weight": 1.0
     },
     {
@@ -15454,7 +15247,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/task-board.tsx",
-      "source_location": "L72",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
@@ -19515,7 +19308,7 @@
     },
     {
       "source": "src_components_farm_hub_client",
-      "target": "src_components_evidence_gallery_evidencegallery",
+      "target": "src_components_ui_badge_prioritybadge",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -19527,18 +19320,6 @@
     },
     {
       "source": "src_components_farm_hub_client",
-      "target": "src_components_ui_badge_prioritybadge",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L15",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_farm_hub_client",
       "target": "src_components_ui_badge_statusbadge",
       "relation": "imports",
       "_origin": "ast",
@@ -19546,7 +19327,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L15",
+      "source_location": "L14",
       "weight": 1.0
     },
     {
@@ -24567,18 +24348,6 @@
     },
     {
       "source": "src_components_farm_hub_client",
-      "target": "src_components_evidence_gallery",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L14",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_farm_hub_client",
       "target": "src_components_ui_badge",
       "relation": "imports_from",
       "_origin": "ast",
@@ -24586,7 +24355,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L15",
+      "source_location": "L14",
       "weight": 1.0
     },
     {
@@ -32490,24 +32259,13 @@
     },
     {
       "source": "src_components_admin_console",
-      "target": "src_components_admin_console_roles",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/admin-console.tsx",
-      "source_location": "L18",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_admin_console",
       "target": "src_components_admin_console_adminconsole",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L20",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -32523,7 +32281,7 @@
     },
     {
       "source": "src_components_admin_console",
-      "target": "src_components_admin_console_access",
+      "target": "src_components_admin_console_user",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -32534,7 +32292,7 @@
     },
     {
       "source": "src_components_admin_console",
-      "target": "src_components_admin_console_user",
+      "target": "src_components_admin_console_roles",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -32551,7 +32309,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/admin-console.tsx",
-      "source_location": "L44",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
@@ -32628,7 +32386,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L31",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -32639,7 +32397,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L143",
+      "source_location": "L114",
       "weight": 1.0
     },
     {
@@ -32650,7 +32408,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/attendance-form.tsx",
-      "source_location": "L221",
+      "source_location": "L164",
       "weight": 1.0
     },
     {
@@ -32699,29 +32457,29 @@
     },
     {
       "source": "src_components_camera_capture_cameracapture",
-      "target": "src_components_camera_capture_cameracapture_capturelivesnapshot",
+      "target": "src_components_camera_capture_cameracapture_captureframe",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L121",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
       "source": "src_components_camera_capture_cameracapture",
-      "target": "src_components_camera_capture_cameracapture_triggercountdown",
+      "target": "src_components_camera_capture_cameracapture_handlefile",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/camera-capture.tsx",
-      "source_location": "L159",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
       "source": "src_components_crop_cycle_edit_form",
-      "target": "src_components_crop_cycle_edit_form_datevalue",
+      "target": "src_components_crop_cycle_edit_form_dateval",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -32738,7 +32496,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0
     },
     {
@@ -32760,7 +32518,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/crop-cycle-edit-form.tsx",
-      "source_location": "L78",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -32787,57 +32545,13 @@
     },
     {
       "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_validatestep",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L100",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_nextstep",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L119",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_prevstep",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L125",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform",
       "target": "src_components_crop_cycle_form_cropcycleform_submit",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L130",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_crop_cycle_form_cropcycleform",
-      "target": "src_components_crop_cycle_form_cropcycleform_addcustomsupport",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/crop-cycle-form.tsx",
-      "source_location": "L69",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -32881,29 +32595,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/dashboard-client.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_dashboard_client",
+      "target": "src_components_dashboard_client_alert",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/dashboard-client.tsx",
       "source_location": "L20",
       "weight": 1.0
     },
     {
       "source": "src_components_dashboard_client",
-      "target": "src_components_dashboard_client_poorhealthalert",
+      "target": "src_components_dashboard_client_incident",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L32",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_dashboard_client",
-      "target": "src_components_dashboard_client_activeincident",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L44",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -32914,7 +32628,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/dashboard-client.tsx",
-      "source_location": "L59",
+      "source_location": "L23",
       "weight": 1.0
     },
     {
@@ -33062,24 +32776,13 @@
     },
     {
       "source": "src_components_farm_hub_client",
-      "target": "src_components_farm_hub_client_farmhubclient",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L101",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_farm_hub_client",
       "target": "src_components_farm_hub_client_milestone",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L17",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -33090,7 +32793,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L25",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -33101,7 +32804,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L46",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -33112,7 +32815,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L58",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -33123,7 +32826,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L71",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -33134,7 +32837,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/farm-hub-client.tsx",
-      "source_location": "L82",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_farm_hub_client",
+      "target": "src_components_farm_hub_client_farmhubclient",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/farm-hub-client.tsx",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -33178,7 +32892,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L25",
+      "source_location": "L12",
       "weight": 1.0
     },
     {
@@ -33189,7 +32903,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L34",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_field_reports",
+      "target": "src_components_field_reports_fieldreports",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/field-reports.tsx",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
@@ -33205,17 +32930,6 @@
     },
     {
       "source": "src_components_field_reports",
-      "target": "src_components_field_reports_fieldreportsprops",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/field-reports.tsx",
-      "source_location": "L71",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_field_reports",
       "target": "src_components_field_reports_plot",
       "relation": "contains",
       "_origin": "ast",
@@ -33223,17 +32937,6 @@
       "confidence_score": 1.0,
       "source_file": "src/components/field-reports.tsx",
       "source_location": "L8",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_field_reports",
-      "target": "src_components_field_reports_fieldreports",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/field-reports.tsx",
-      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -33249,24 +32952,35 @@
     },
     {
       "source": "src_components_field_reports_fieldreports",
-      "target": "src_components_field_reports_fieldreports_handlemonitoringsubmit",
+      "target": "src_components_field_reports_fieldreports_submitincident",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L143",
+      "source_location": "L106",
       "weight": 1.0
     },
     {
       "source": "src_components_field_reports_fieldreports",
-      "target": "src_components_field_reports_fieldreports_handleincidentsubmit",
+      "target": "src_components_field_reports_fieldreports_submitmonitoring",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/field-reports.tsx",
-      "source_location": "L196",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_icons",
+      "target": "src_components_icons_icons",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/icons.tsx",
+      "source_location": "L26",
       "weight": 1.0
     },
     {
@@ -33282,13 +32996,13 @@
     },
     {
       "source": "src_components_icons",
-      "target": "src_components_icons_icons",
+      "target": "src_components_icons_i",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/icons.tsx",
-      "source_location": "L7",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -33607,7 +33321,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/officer-day.tsx",
-      "source_location": "L27",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -33739,7 +33453,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/task-board.tsx",
-      "source_location": "L27",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -33777,35 +33491,13 @@
     },
     {
       "source": "src_components_task_form",
-      "target": "src_components_task_form_access",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/task-form.tsx",
-      "source_location": "L14",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_task_form",
       "target": "src_components_task_form_categories",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L16",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_task_form",
-      "target": "src_components_task_form_taskformprops",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/task-form.tsx",
-      "source_location": "L29",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -33816,7 +33508,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L38",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -33842,6 +33534,17 @@
       "weight": 1.0
     },
     {
+      "source": "src_components_task_form",
+      "target": "src_components_task_form_access",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/task-form.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
       "source": "src_components_task_form_taskform",
       "target": "src_components_task_form_taskform_submit",
       "relation": "contains",
@@ -33849,7 +33552,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/task-form.tsx",
-      "source_location": "L93",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -35493,5 +35196,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c3af97568fccf3c08214efa77b4ae1b24f94915b"
+  "built_at_commit": "cb756e9cd78909b01aed2df05a9ca135c9bcc69f"
 }

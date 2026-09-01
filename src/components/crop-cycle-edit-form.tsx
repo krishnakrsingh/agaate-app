@@ -21,141 +21,73 @@ type Cycle = {
   milestones: { id: string; name: string; targetDate: string; remarks: string | null }[];
 };
 
-const dateValue = (value: string | null) =>
-  value ? new Date(value).toISOString().slice(0, 10) : "";
+const dateVal = (val: string | null) => (val ? new Date(val).toISOString().slice(0, 10) : "");
 
-export function CropCycleEditForm({
-  plotId,
-  cycleId,
-  farmId,
-}: {
-  plotId: string;
-  cycleId: string;
-  farmId: string;
-}) {
+export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string; cycleId: string; farmId: string }) {
   const router = useRouter();
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [mulchEnabled, setMulchEnabled] = useState(false);
   const [bedPrepEnabled, setBedPrepEnabled] = useState(false);
-  const [extraMilestones, setExtraMilestones] = useState<
-    { tempId: string; name: string; targetDate: string; remarks: string }[]
-  >([]);
+  const [extras, setExtras] = useState<Array<{ tempId: string; name: string; targetDate: string; remarks: string }>>([]);
 
   useEffect(() => {
     fetch(`/api/plots/${plotId}/crop-cycles/${cycleId}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error((await r.json()).error ?? "Unable to load crop cycle.");
-        return r.json();
-      })
-      .then((data: Cycle) => {
-        setCycle(data);
-        setMulchEnabled(data.mulchEnabled);
-        setBedPrepEnabled(data.bedPreparationEnabled);
-      })
+      .then(async (r) => { if (!r.ok) throw new Error((await r.json()).error ?? "Unable to load cycle"); return r.json(); })
+      .then((data: Cycle) => { setCycle(data); setMulchEnabled(data.mulchEnabled); setBedPrepEnabled(data.bedPreparationEnabled); })
       .catch((e) => setError(e.message));
   }, [plotId, cycleId]);
 
   function addExtra(name = "") {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    setExtraMilestones((prev) => [
-      ...prev,
-      { tempId: Math.random().toString(36).slice(2, 9), name, targetDate: todayStr, remarks: "" },
-    ]);
+    setExtras((prev) => [...prev, { tempId: Math.random().toString(36).slice(2, 9), name, targetDate: new Date().toISOString().slice(0, 10), remarks: "" }]);
   }
 
-  function removeExtra(tempId: string) {
-    setExtraMilestones((prev) => prev.filter((m) => m.tempId !== tempId));
-  }
-
-  function updateExtra(tempId: string, field: "name" | "targetDate" | "remarks", val: string) {
-    setExtraMilestones((prev) =>
-      prev.map((m) => (m.tempId === tempId ? { ...m, [field]: val } : m))
-    );
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     if (!cycle) return;
     setPending(true);
     setError("");
-    const f = new FormData(event.currentTarget);
+    const f = new FormData(e.currentTarget);
+    const est = String(f.get("establishmentType"));
+    const readiness = mulchEnabled ? "Mulching & TP / Sowing Readiness" : "TP / Sowing Readiness";
+    const execution = est === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing";
 
-    const newEstablishment = String(f.get("establishmentType"));
-    const newMulch = mulchEnabled;
-    const dynamicReadiness = newMulch
-      ? "Mulching & TP / Sowing Readiness"
-      : "TP / Sowing Readiness";
-    const dynamicExecution =
-      newEstablishment === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing";
+    const existing = cycle.milestones.map((m, idx) => {
+      let name = String(f.get(`milestoneName${idx}`));
+      if (name.includes("Readiness")) name = readiness;
+      if (name === "Transplantation" || name === "Direct Sowing") name = execution;
+      return { id: m.id, name, targetDate: f.get(`milestoneDate${idx}`), remarks: f.get(`milestoneRemarks${idx}`) || null, remove: f.get(`removeMilestone${idx}`) === "on" };
+    }).filter((m) => !m.remove).map(({ remove, ...m }) => m);
 
-    const milestoneIds = cycle.milestones.map((m) => m.id);
-    const existingMilestones = milestoneIds
-      .map((id, index) => {
-        let name = String(f.get(`milestoneName${index}`));
-        if (name === "TP / Sowing Readiness" || name === "Mulching & TP / Sowing Readiness")
-          name = dynamicReadiness;
-        if (name === "Transplantation" || name === "Direct Sowing") name = dynamicExecution;
-        return {
-          id,
-          name,
-          targetDate: f.get(`milestoneDate${index}`),
-          remarks: f.get(`milestoneRemarks${index}`) || null,
-          remove: f.get(`removeMilestone${index}`) === "on",
-        };
-      })
-      .filter((m) => !m.remove)
-      .map(({ remove, ...m }) => m);
-
-    const newMilestones = extraMilestones
-      .filter((m) => m.name.trim() && m.targetDate)
-      .map((m) => ({
-        name: m.name.trim(),
-        targetDate: m.targetDate,
-        remarks: m.remarks.trim() || null,
-      }));
-
-    const allMilestones = [...existingMilestones, ...newMilestones];
+    const newMilestones = extras.filter((m) => m.name.trim() && m.targetDate).map((m) => ({ name: m.name.trim(), targetDate: m.targetDate, remarks: m.remarks.trim() || null }));
 
     try {
-      const response = await fetch(`/api/plots/${plotId}/crop-cycles/${cycleId}`, {
+      const res = await fetch(`/api/plots/${plotId}/crop-cycles/${cycleId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cropName: f.get("cropName"),
           startDate: f.get("startDate"),
           expectedFirstHarvestDate: f.get("harvestDate") || null,
-          establishmentType: f.get("establishmentType"),
-          varieties: String(f.get("varieties"))
-            .split(",")
-            .map((v) => v.trim())
-            .filter(Boolean),
+          establishmentType: est,
+          varieties: String(f.get("varieties")).split(",").map((v) => v.trim()).filter(Boolean),
           bedPreparationEnabled: bedPrepEnabled,
           bedWidthCm: f.get("bedWidthCm") ? Number(f.get("bedWidthCm")) : null,
-          bedCenterDistanceCm: f.get("bedCenterDistanceCm")
-            ? Number(f.get("bedCenterDistanceCm"))
-            : null,
-          expectedBedsPerAcre: f.get("expectedBedsPerAcre")
-            ? Number(f.get("expectedBedsPerAcre"))
-            : null,
+          bedCenterDistanceCm: f.get("bedCenterDistanceCm") ? Number(f.get("bedCenterDistanceCm")) : null,
+          expectedBedsPerAcre: f.get("expectedBedsPerAcre") ? Number(f.get("expectedBedsPerAcre")) : null,
           mulchEnabled,
           mulchHolePattern: mulchEnabled ? f.get("mulchHolePattern") : null,
           plantDistanceCm: f.get("plantDistanceCm") ? Number(f.get("plantDistanceCm")) : null,
-          expectedPlantsPerAcre: f.get("expectedPlantsPerAcre")
-            ? Number(f.get("expectedPlantsPerAcre"))
-            : null,
-          milestones: allMilestones,
+          expectedPlantsPerAcre: f.get("expectedPlantsPerAcre") ? Number(f.get("expectedPlantsPerAcre")) : null,
+          milestones: [...existing, ...newMilestones],
         }),
       });
       setPending(false);
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        setError(body.error ?? "Unable to save crop cycle.");
+      if (!res.ok) {
+        setError((await res.json().catch(() => ({}))).error ?? "Unable to save crop cycle.");
         return;
       }
-
       router.replace(`/farms/${farmId}`);
       router.refresh();
     } catch {
@@ -164,300 +96,93 @@ export function CropCycleEditForm({
     }
   }
 
-  if (!cycle) {
-    return (
-      <div className="card">
-        <p className={error ? "error" : "hint"}>{error || "Loading crop cycle configuration…"}</p>
-      </div>
-    );
-  }
+  if (!cycle) return <div className="card"><p className={error ? "error" : "muted"}>{error || "Loading crop cycle…"}</p></div>;
 
   return (
-    <form className="card form" onSubmit={submit}>
+    <form className="card" onSubmit={submit} style={{ padding: 24, display: "grid", gap: 16 }}>
       <div className="card-header">
         <div>
-          <h2>Edit Crop Cycle & Milestones</h2>
-          <p className="muted" style={{ fontSize: "0.88rem" }}>
-            Update variety assignments, mulch settings, and milestone targets.
-          </p>
+          <h2 style={{ margin: 0 }}>Edit Crop Cycle & Milestones</h2>
+          <p className="muted" style={{ margin: "2px 0 0" }}>Update variety assignments, mulch settings, and milestone targets.</p>
         </div>
       </div>
 
       <div className="two-column">
-        <div className="form-group">
-          <label>Crop name</label>
-          <input name="cropName" defaultValue={cycle.cropName} required />
-        </div>
-
-        <div className="form-group">
-          <label>Varieties (comma separated)</label>
-          <input
-            name="varieties"
-            defaultValue={cycle.varieties.map((v) => v.name).join(", ")}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Cycle start date</label>
-          <input
-            name="startDate"
-            type="date"
-            defaultValue={dateValue(cycle.startDate)}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Expected first harvest date</label>
-          <input
-            name="harvestDate"
-            type="date"
-            defaultValue={dateValue(cycle.expectedFirstHarvestDate)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Establishment type</label>
+        <div className="form-group" style={{ margin: 0 }}><label>Crop Name</label><input name="cropName" defaultValue={cycle.cropName} required /></div>
+        <div className="form-group" style={{ margin: 0 }}><label>Varieties (Comma Separated)</label><input name="varieties" defaultValue={cycle.varieties.map((v) => v.name).join(", ")} required /></div>
+        <div className="form-group" style={{ margin: 0 }}><label>Start Date</label><input name="startDate" type="date" defaultValue={dateVal(cycle.startDate)} required /></div>
+        <div className="form-group" style={{ margin: 0 }}><label>First Harvest Date</label><input name="harvestDate" type="date" defaultValue={dateVal(cycle.expectedFirstHarvestDate)} /></div>
+        <div className="form-group" style={{ margin: 0 }}>
+          <label>Establishment</label>
           <select name="establishmentType" defaultValue={cycle.establishmentType}>
             <option value="NURSERY_TRANSPLANTATION">Nursery Transplantation</option>
             <option value="DIRECT_SOWING">Direct Sowing</option>
           </select>
         </div>
-
-        <div className="form-group">
-          <label>Expected plants / acre</label>
-          <input
-            name="expectedPlantsPerAcre"
-            type="number"
-            min="1"
-            step="1"
-            defaultValue={cycle.expectedPlantsPerAcre ?? ""}
-          />
-        </div>
+        <div className="form-group" style={{ margin: 0 }}><label>Plants / Acre</label><input name="expectedPlantsPerAcre" type="number" defaultValue={cycle.expectedPlantsPerAcre ?? ""} /></div>
       </div>
 
-      <fieldset>
-        <legend>Bed Preparation</legend>
-        <label className="check">
-          <input
-            name="bedPreparationEnabled"
-            type="checkbox"
-            checked={bedPrepEnabled}
-            onChange={(e) => setBedPrepEnabled(e.target.checked)}
-          />
-          <strong>Required for this cycle</strong>
-        </label>
-
+      {/* Bed Prep */}
+      <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 8 }}>
+        <label className="check"><input type="checkbox" checked={bedPrepEnabled} onChange={(e) => setBedPrepEnabled(e.target.checked)} /><strong>Bed Preparation Required</strong></label>
         {bedPrepEnabled && (
-          <div className="two-column" style={{ marginTop: 8 }}>
-            <div className="form-group">
-              <label>Bed width (cm)</label>
-              <input
-                name="bedWidthCm"
-                type="number"
-                min="0.1"
-                step="0.1"
-                defaultValue={cycle.bedWidthCm ?? ""}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Centre-to-centre (cm)</label>
-              <input
-                name="bedCenterDistanceCm"
-                type="number"
-                min="0.1"
-                step="0.1"
-                defaultValue={cycle.bedCenterDistanceCm ?? ""}
-              />
-            </div>
-
-            <div className="form-group wide">
-              <label>Expected beds / acre</label>
-              <input
-                name="expectedBedsPerAcre"
-                type="number"
-                min="1"
-                step="0.1"
-                defaultValue={cycle.expectedBedsPerAcre ?? ""}
-              />
-            </div>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}><label>Bed Width (cm)</label><input name="bedWidthCm" type="number" step="0.1" defaultValue={cycle.bedWidthCm ?? ""} /></div>
+            <div className="form-group" style={{ margin: 0 }}><label>Centre-to-Centre (cm)</label><input name="bedCenterDistanceCm" type="number" step="0.1" defaultValue={cycle.bedCenterDistanceCm ?? ""} /></div>
+            <div className="form-group wide" style={{ margin: 0 }}><label>Expected Beds / Acre</label><input name="expectedBedsPerAcre" type="number" step="0.1" defaultValue={cycle.expectedBedsPerAcre ?? ""} /></div>
           </div>
         )}
-      </fieldset>
+      </div>
 
-      <fieldset>
-        <legend>Mulching</legend>
-        <label className="check">
-          <input
-            name="mulchEnabled"
-            type="checkbox"
-            checked={mulchEnabled}
-            onChange={(e) => setMulchEnabled(e.target.checked)}
-          />
-          <strong>Enabled</strong>
-        </label>
-
+      {/* Mulching */}
+      <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 8 }}>
+        <label className="check"><input type="checkbox" checked={mulchEnabled} onChange={(e) => setMulchEnabled(e.target.checked)} /><strong>Mulch Film Enabled</strong></label>
         {mulchEnabled && (
-          <div className="two-column" style={{ marginTop: 8 }}>
-            <div className="form-group">
-              <label>Hole pattern</label>
-              <select name="mulchHolePattern" defaultValue={cycle.mulchHolePattern ?? "SINGLE_LINE"}>
-                <option value="SINGLE_LINE">Single line</option>
-                <option value="DOUBLE_LINE_ZIGZAG">Double line zigzag</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Plant distance (cm)</label>
-              <input
-                name="plantDistanceCm"
-                type="number"
-                min="0.1"
-                step="0.1"
-                defaultValue={cycle.plantDistanceCm ?? ""}
-              />
-            </div>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}><label>Hole Pattern</label><select name="mulchHolePattern" defaultValue={cycle.mulchHolePattern ?? "SINGLE_LINE"}><option value="SINGLE_LINE">Single Line</option><option value="DOUBLE_LINE_ZIGZAG">Double Line Zigzag</option></select></div>
+            <div className="form-group" style={{ margin: 0 }}><label>Plant Distance (cm)</label><input name="plantDistanceCm" type="number" step="0.1" defaultValue={cycle.plantDistanceCm ?? ""} /></div>
           </div>
         )}
-      </fieldset>
+      </div>
 
-      <fieldset>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <legend style={{ margin: 0, padding: 0 }}>Milestones & Support Activities</legend>
+      {/* Milestones & Presets */}
+      <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+          <strong style={{ fontSize: "0.9rem" }}>Milestone Schedule & Support Activities</strong>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {["Crop Cover", "Bamboo Stacking", "Trellising", "Net Support", "Rope Support"].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ fontSize: 11, padding: "3px 8px" }}
-                onClick={() => addExtra(preset)}
-              >
-                + {preset}
-              </button>
+              <button key={preset} type="button" className="btn btn-secondary btn-sm" onClick={() => addExtra(preset)}>+ {preset}</button>
             ))}
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              style={{ fontSize: 11, padding: "3px 8px" }}
-              onClick={() => addExtra("")}
-            >
-              + Custom Milestone
-            </button>
+            <button key="custom-milestone-btn" type="button" className="btn btn-primary btn-sm" onClick={() => addExtra("")}>+ Custom</button>
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 12 }}>
-          {cycle.milestones.map((m, index) => (
-            <div
-              key={m.id}
-              className="two-column"
-              style={{
-                padding: "12px 14px",
-                background: "white",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border-subtle)",
-              }}
-            >
-              <div className="form-group">
-                <label>Milestone Name</label>
-                <input name={`milestoneName${index}`} defaultValue={m.name} required />
-              </div>
+        {cycle.milestones.map((m, idx) => (
+          <div key={m.id} className="two-column" style={{ background: "var(--card)", padding: 10, borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}>
+            <div className="form-group" style={{ margin: 0 }}><label>Milestone</label><input name={`milestoneName${idx}`} defaultValue={m.name} required /></div>
+            <div className="form-group" style={{ margin: 0 }}><label>Target Date</label><input name={`milestoneDate${idx}`} type="date" defaultValue={dateVal(m.targetDate)} required /></div>
+            <div className="form-group wide" style={{ margin: 0 }}><label>Remarks</label><input name={`milestoneRemarks${idx}`} defaultValue={m.remarks ?? ""} /></div>
+            <label className="check wide" style={{ color: "var(--danger-text)" }}><input name={`removeMilestone${idx}`} type="checkbox" /><span>Remove on save</span></label>
+          </div>
+        ))}
 
-              <div className="form-group">
-                <label>Target Date</label>
-                <input
-                  name={`milestoneDate${index}`}
-                  type="date"
-                  defaultValue={dateValue(m.targetDate)}
-                  required
-                />
-              </div>
+        {extras.map((extra) => (
+          <div key={extra.tempId} className="two-column" style={{ background: "var(--primary-light)", padding: 10, borderRadius: "var(--radius-xs)", border: "1px solid var(--primary-border)" }}>
+            <div className="form-group" style={{ margin: 0 }}><label>New Activity</label><input value={extra.name} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, name: e.target.value } : x))} placeholder="Activity Name" required /></div>
+            <div className="form-group" style={{ margin: 0 }}><label>Target Date</label><input type="date" value={extra.targetDate} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, targetDate: e.target.value } : x))} required /></div>
+            <div className="form-group wide" style={{ margin: 0 }}><label>Remarks</label><input value={extra.remarks} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, remarks: e.target.value } : x))} placeholder="Instructions" /></div>
+            <div className="wide" style={{ display: "flex", justifyContent: "flex-end" }}><button type="button" className="btn btn-ghost btn-sm" onClick={() => setExtras((prev) => prev.filter((x) => x.tempId !== extra.tempId))}><Icons.Trash size={13} /><span>Cancel</span></button></div>
+          </div>
+        ))}
+      </div>
 
-              <div className="form-group wide">
-                <label>Remarks</label>
-                <input name={`milestoneRemarks${index}`} defaultValue={m.remarks ?? ""} />
-              </div>
+      {error && <div className="error" role="alert"><Icons.AlertCircle size={16} /><span>{error}</span></div>}
 
-              <div className="wide">
-                <label className="check" style={{ color: "var(--danger-red)" }}>
-                  <input name={`removeMilestone${index}`} type="checkbox" />
-                  <span>Remove this milestone on save</span>
-                </label>
-              </div>
-            </div>
-          ))}
-
-          {/* Newly Added Milestones / Support Activities */}
-          {extraMilestones.map((extra, i) => (
-            <div
-              key={extra.tempId}
-              className="two-column"
-              style={{
-                padding: "12px 14px",
-                background: "var(--primary-50)",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--primary-300)",
-              }}
-            >
-              <div className="form-group">
-                <label>New Milestone / Activity Name</label>
-                <input
-                  value={extra.name}
-                  onChange={(e) => updateExtra(extra.tempId, "name", e.target.value)}
-                  placeholder="e.g., Bamboo Stacking or Custom Activity"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Target Date</label>
-                <input
-                  type="date"
-                  value={extra.targetDate}
-                  onChange={(e) => updateExtra(extra.tempId, "targetDate", e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group wide">
-                <label>Remarks / Instructions</label>
-                <input
-                  value={extra.remarks}
-                  onChange={(e) => updateExtra(extra.tempId, "remarks", e.target.value)}
-                  placeholder="Optional guidance or remarks"
-                />
-              </div>
-
-              <div className="wide" style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  style={{ color: "var(--danger-red)" }}
-                  onClick={() => removeExtra(extra.tempId)}
-                >
-                  <Icons.X size={12} />
-                  <span>Cancel New Milestone</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </fieldset>
-
-      {error && (
-        <div className="error" role="alert">
-          <Icons.AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <button type="submit" className="btn btn-primary" disabled={pending}>
-        <Icons.Check size={16} />
-        <span>{pending ? "Saving…" : "Save Crop Cycle Changes"}</span>
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
+          <Icons.Check size={16} /><span>{pending ? "Saving…" : "Save Crop Cycle Changes"}</span>
+        </button>
+      </div>
     </form>
   );
 }

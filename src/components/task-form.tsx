@@ -5,44 +5,20 @@ import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 
 type Farm = { id: string; name: string };
-type Plot = {
-  id: string;
-  name: string;
-  status: string;
-  cropCycles: { id: string; cropName: string; status: string }[];
-};
+type Plot = { id: string; name: string; status: string; cropCycles: { id: string; cropName: string; status: string }[] };
 type Access = { user: { id: string; name: string; role: string; active?: boolean } };
 
 const categories = [
-  { value: "FERTIGATION", label: "Fertigation", icon: "Droplet" },
-  { value: "FOLIAR_NUTRITION", label: "Foliar Nutrition", icon: "Leaf" },
-  { value: "SOIL_APPLICATION", label: "Soil Application", icon: "Layers" },
-  { value: "PREVENTIVE_SPRAY", label: "Preventive Spray", icon: "Shield" },
-  { value: "PEST_CONTROL", label: "Pest Control", icon: "AlertTriangle" },
-  { value: "DISEASE_CONTROL", label: "Disease Control", icon: "AlertCircle" },
-  { value: "CROP_MONITORING", label: "Crop Monitoring", icon: "Eye" },
-  { value: "IRRIGATION_RECOMMENDATION", label: "Irrigation Setup", icon: "Droplet" },
-  { value: "CULTURAL_PRACTICE", label: "Cultural Practice", icon: "Sprout" },
-  { value: "CROP_SPECIFIC", label: "Crop-Specific Activity", icon: "Activity" },
-] as const;
-
-export interface TaskFormProps {
-  initialDate?: string;
-  initialFarmId?: string;
-  initialPlotId?: string;
-  initialCropCycleId?: string;
-  onSuccess?: () => void;
-  onCancel?: () => void;
-}
+  "FERTIGATION", "FOLIAR_NUTRITION", "SOIL_APPLICATION", "PREVENTIVE_SPRAY",
+  "PEST_CONTROL", "DISEASE_CONTROL", "CROP_MONITORING", "IRRIGATION_RECOMMENDATION", "CULTURAL_PRACTICE", "CROP_SPECIFIC",
+];
 
 export function TaskForm({
-  initialDate,
-  initialFarmId,
-  initialPlotId,
-  initialCropCycleId,
-  onSuccess,
-  onCancel,
-}: TaskFormProps = {}) {
+  initialDate, initialFarmId, initialPlotId, initialCropCycleId, onSuccess, onCancel,
+}: {
+  initialDate?: string; initialFarmId?: string; initialPlotId?: string; initialCropCycleId?: string;
+  onSuccess?: () => void; onCancel?: () => void;
+} = {}) {
   const router = useRouter();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [plots, setPlots] = useState<Plot[]>([]);
@@ -50,294 +26,130 @@ export function TaskForm({
   const [farmId, setFarmId] = useState(initialFarmId || "");
   const [plotId, setPlotId] = useState(initialPlotId || "");
   const [cropCycleId, setCropCycleId] = useState(initialCropCycleId || "");
-  const [category, setCategory] = useState<string>("FERTIGATION");
-  const [priority, setPriority] = useState<string>("MEDIUM");
+  const [category, setCategory] = useState("FERTIGATION");
+  const [priority, setPriority] = useState("MEDIUM");
   const [planDate, setPlanDate] = useState(() => initialDate || new Date().toISOString().slice(0, 10));
-
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    fetch("/api/farms")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((list: Farm[]) => {
-        setFarms(list);
-        if (!farmId && list.length > 0) {
-          setFarmId(list[0].id);
-        }
-      })
-      .catch(() => setError("Unable to load farms."));
+    fetch("/api/farms").then((r) => r.ok ? r.json() : []).then((list) => {
+      setFarms(list);
+      if (!farmId && list.length > 0) setFarmId(list[0].id);
+    });
   }, [farmId]);
 
   useEffect(() => {
-    if (!farmId) {
-      setPlots([]);
-      setAccess([]);
-      return;
-    }
-    fetch(`/api/farms/${farmId}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((f) => {
-        setAccess(
-          (f.access ?? []).filter(
-            (a: Access) => a.user.role === "FARM_OFFICER" && a.user.active !== false
-          )
-        );
-        setPlots(f.plots ?? []);
-        if (initialPlotId) setPlotId(initialPlotId);
-        if (initialCropCycleId) setCropCycleId(initialCropCycleId);
-      })
-      .catch(() => setError("Unable to load farm planning data."));
+    if (!farmId) { setPlots([]); setAccess([]); return; }
+    fetch(`/api/farms/${farmId}`).then((r) => r.ok ? r.json() : null).then((f) => {
+      if (!f) return;
+      setAccess((f.access ?? []).filter((a: Access) => a.user.role === "FARM_OFFICER" && a.user.active !== false));
+      setPlots(f.plots ?? []);
+      if (initialPlotId) setPlotId(initialPlotId);
+      if (initialCropCycleId) setCropCycleId(initialCropCycleId);
+    });
   }, [farmId, initialPlotId, initialCropCycleId]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
     setError("");
-
     const f = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          farmId,
-          date: planDate,
-          plotId: plotId || null,
-          cropCycleId: cropCycleId || null,
-          category,
-          title: f.get("title"),
-          description: f.get("description"),
-          instructions: f.get("instructions") || null,
-          priority,
-          assignedOfficerId: f.get("assignedOfficerId"),
+          farmId, date: planDate, plotId: plotId || null, cropCycleId: cropCycleId || null,
+          category, title: f.get("title"), description: f.get("description"), instructions: f.get("instructions") || null,
+          priority, assignedOfficerId: f.get("assignedOfficerId"),
         }),
       });
       setPending(false);
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Failed to create activity.");
-        return;
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        router.push("/tasks");
-        router.refresh();
-      }
-    } catch {
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Failed to create activity.");
+      if (onSuccess) onSuccess();
+      else { router.push("/tasks"); router.refresh(); }
+    } catch (err: any) {
       setPending(false);
-      setError("Network error creating activity.");
+      setError(err.message ?? "Network error.");
     }
   }
 
   const selectedPlot = plots.find((p) => p.id === plotId);
 
   return (
-    <form onSubmit={submit} className="card" style={{ padding: 24, display: "grid", gap: 18 }}>
-      {error && (
-        <div className="error" role="alert">
-          <Icons.AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
+    <form onSubmit={submit} className="card" style={{ padding: 22, display: "grid", gap: 14 }}>
+      {error && <div className="error" role="alert"><Icons.AlertCircle size={16} /><span>{error}</span></div>}
 
-      {/* Target Farm & Officer */}
       <div className="two-column">
         <div className="form-group" style={{ margin: 0 }}>
           <label>Target Farm</label>
-          <select
-            name="farmId"
-            value={farmId}
-            onChange={(e) => {
-              setFarmId(e.target.value);
-              setPlotId("");
-              setCropCycleId("");
-            }}
-            required
-          >
-            <option value="">Select target farm…</option>
-            {farms.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
+          <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCropCycleId(""); }} required>
+            {farms.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
           </select>
         </div>
-
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Assigned Farm Officer</label>
-          <select name="assignedOfficerId" required disabled={!farmId}>
-            <option value="">Select officer…</option>
-            {access.map((a) => (
-              <option key={a.user.id} value={a.user.id}>
-                {a.user.name}
-              </option>
-            ))}
+          <label>Assign to Officer</label>
+          <select name="assignedOfficerId" required>
+            <option value="">Select Farm Officer…</option>
+            {access.map((a) => (<option key={a.user.id} value={a.user.id}>{a.user.name}</option>))}
           </select>
         </div>
-
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Plot (Optional)</label>
-          <select
-            name="plotId"
-            value={plotId}
-            onChange={(e) => {
-              setPlotId(e.target.value);
-              setCropCycleId("");
-            }}
-            disabled={!farmId}
-          >
-            <option value="">Farm-level activity</option>
-            {plots
-              .filter((p) => p.status !== "ARCHIVED")
-              .map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
+          <label>Target Plot (Optional)</label>
+          <select value={plotId} onChange={(e) => { setPlotId(e.target.value); setCropCycleId(""); }}>
+            <option value="">Farm Wide (No Specific Plot)</option>
+            {plots.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
           </select>
         </div>
-
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Crop Cycle (Optional)</label>
-          <select
-            name="cropCycleId"
-            value={cropCycleId}
-            onChange={(e) => setCropCycleId(e.target.value)}
-            disabled={!selectedPlot}
-          >
-            <option value="">Plot-level activity</option>
-            {selectedPlot?.cropCycles
-              .filter((c) => c.status !== "CANCELLED")
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cropName}
-                </option>
-              ))}
+          <label>Target Crop Cycle (Optional)</label>
+          <select value={cropCycleId} onChange={(e) => setCropCycleId(e.target.value)} disabled={!selectedPlot?.cropCycles?.length}>
+            <option value="">Plot Wide</option>
+            {selectedPlot?.cropCycles?.map((c) => (<option key={c.id} value={c.id}>{c.cropName}</option>))}
           </select>
         </div>
       </div>
 
-      {/* Date & Priority */}
       <div className="two-column">
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Execution Date (Within 7 Days)</label>
-          <input
-            name="date"
-            type="date"
-            value={planDate}
-            onChange={(e) => setPlanDate(e.target.value)}
-            required
-          />
+          <label>Execution Date</label>
+          <input type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} required />
         </div>
-
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Priority Level</label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 70px), 1fr))", gap: 6 }}>
-            {["LOW", "MEDIUM", "HIGH", "URGENT"].map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                style={{
-                  padding: "8px 4px",
-                  borderRadius: "var(--radius-sm)",
-                  background: priority === p ? "var(--primary)" : "var(--card-muted)",
-                  color: priority === p ? "var(--on-primary)" : "var(--text-main)",
-                  border: `1px solid ${priority === p ? "var(--primary)" : "var(--border)"}`,
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  fontFamily: "var(--font-mono)",
-                  cursor: "pointer",
-                }}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+          <label>Priority</label>
+          <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+            <option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option>
+          </select>
         </div>
       </div>
 
-      {/* Category Grid */}
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Activity Category (BRD §20)</label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 8 }}>
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => setCategory(cat.value)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 12px",
-                borderRadius: "var(--radius-sm)",
-                background: category === cat.value ? "var(--primary)" : "var(--card-muted)",
-                color: category === cat.value ? "var(--on-primary)" : "var(--text-main)",
-                border: `1px solid ${category === cat.value ? "var(--primary)" : "var(--border)"}`,
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                textAlign: "left",
-                cursor: "pointer",
-              }}
-            >
-              <Icons.Sprout size={14} />
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
+        <label>Activity Category</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          {categories.map((c) => (<option key={c} value={c}>{c.replaceAll("_", " ")}</option>))}
+        </select>
       </div>
 
-      {/* Title, Instructions, Description */}
       <div className="form-group" style={{ margin: 0 }}>
         <label>Activity Title</label>
-        <input
-          name="title"
-          placeholder="e.g. 19:19:19 Drip Fertigation Cycle (Week 3)"
-          required
-        />
+        <input name="title" placeholder="e.g. 19:19:19 Drip Fertigation - 2.5 kg/acre" required />
       </div>
 
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Agronomist Guidance / Technical Instructions (Optional)</label>
-        <input
-          name="instructions"
-          placeholder="e.g. Mix 2.5kg 19-19-19 in 200L tank; run venturi for 45 min"
-        />
+        <label>Task Instructions & Description</label>
+        <textarea name="description" rows={2} placeholder="Explain steps for field officer execution." required />
       </div>
 
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Detailed Description</label>
-        <textarea
-          name="description"
-          placeholder="Explain field objectives, dose recommendations, and execution prerequisites…"
-          rows={3}
-          required
-        />
+        <label>Agronomist Guidance & Mixing Instructions</label>
+        <textarea name="instructions" rows={2} placeholder="e.g. Dissolve completely in tank B; check pH 6.2 before injection." />
       </div>
 
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => {
-            if (onCancel) onCancel();
-            else router.back();
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={pending || !farmId}
-        >
-          <span>{pending ? "Dispatching…" : "Dispatch to Officer"}</span>
-          <Icons.ArrowRight size={14} />
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
+        <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
+          <Icons.Check size={16} /><span>{pending ? "Scheduling…" : "Dispatch Activity"}</span>
         </button>
       </div>
     </form>
