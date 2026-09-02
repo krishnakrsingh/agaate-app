@@ -1,118 +1,40 @@
-# Agaate — Precision Agricultural Operations Platform
+# Agaate Farm Management PWA
 
-A line-first operational system for agricultural estates: verified field presence, 7-day rolling agronomy task matrix, crop cycle geometry, and automated operations intelligence.
+Production-oriented Next.js application for multi-farm planning, agronomy activities, and field execution. Business state is stored in MySQL 8 via Prisma ORM; evidence is stored in S3-compatible object storage.
 
----
+## Documentation Suite
 
-## ⚡ Quick Start Guide (Run in 3 Steps)
+Comprehensive architecture, specifications, design briefs, and user flows are organized in the [`docs/`](file:///c:/Users/krish/Downloads/agaateapp/docs) directory:
 
-### 1. Prerequisites
-Ensure you have the following installed on your machine:
-- **Node.js 20+** (`node -v`)
-- **Docker Desktop** (Make sure Docker Desktop is running)
-- **npm** (`npm -v`)
+- **[01. Product Requirements Document (PRD)](file:///c:/Users/krish/Downloads/agaateapp/docs/01_PRD.md)** — Complete 34-section BRD mapping, 4 user roles, and 22 feature specs.
+- **[02. Technical Design Document (TDD)](file:///c:/Users/krish/Downloads/agaateapp/docs/02_TDD.md)** — System architecture, 44 API routes, security, biometric crypto, and S3 pipeline.
+- **[03. User Flows & Diagrams](file:///c:/Users/krish/Downloads/agaateapp/docs/03_USER_FLOWS.md)** — 11 Mermaid-rendered end-to-end interactive workflows.
+- **[04. Design Brief & UI Spec](file:///c:/Users/krish/Downloads/agaateapp/docs/04_DESIGN_BRIEF.md)** — Design tokens, color palette, mobile-first field UI, and component library.
+- **[05. Data Model Reference](file:///c:/Users/krish/Downloads/agaateapp/docs/05_DATA_MODEL.md)** — Prisma schema, 20 models, 14 enums, ER diagram, and DB constraints.
+- **[06. Engineering & Ops Plan](file:///c:/Users/krish/Downloads/agaateapp/docs/06_ENGINEERING_PLAN.md)** — Implementation audit, tech debt, production checklist, and AI roadmap.
+- **[Interactive HTML Documentation Portal](file:///c:/Users/krish/Downloads/agaateapp/docs/index.html)** — Standalone HTML web portal containing all documents with live search, theme toggle, and rendered diagrams. Regenerate anytime with `npm run build:docs`.
 
----
+## Run locally
 
-### 2. Startup Commands
+1. Copy `.env.example` to `.env` and replace every `change-me` value. Add `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` (12+ characters), and optionally `INITIAL_ADMIN_NAME`.
+2. Start the development infrastructure: `docker compose up -d mysql minio`.
+3. Create the S3/MinIO bucket named by `S3_BUCKET`, grant the configured credentials access to it, and allow browser `PUT` requests for the app origin with `Content-Type` exposed. The upload flow uses short-lived signed URLs and verifies each object server-side.
+4. Install dependencies with `npm install`, then run `npm run db:generate`, `npm run db:migrate`, and `npm run db:seed`.
+5. Start the app: `npm run dev`.
 
-Open your terminal in the project root (`c:\Users\krish\Downloads\agaateapp`):
+For production, set managed MySQL 8 and S3 credentials in the deployment environment, run `npm run db:migrate` as a release step, then run `npm run build` and `npm start`. Do not use the development Docker passwords or default session secret in production.
 
-```bash
-# Step 1: Install dependencies (if first time)
-npm install
+## Security and persistence
 
-# Step 2: Start background services (MySQL 8.0 & MinIO Object Storage)
-docker compose up -d
+- Signed, HTTP-only sessions are issued only after a BCrypt password check.
+- Every protected route verifies the active database user, role, and farm-level access server-side.
+- Farm access is modeled separately from roles, supporting one admin/officer across many farms.
+- API mutations use Zod validation, database transactions where multiple records change together, lifecycle transitions, and audit records. Crop planning edits replace varieties safely, retain required milestones, and synchronize pending system tasks.
+- Browser uploads receive short-lived S3 URLs; a server-side completion call verifies the object exists and matches its declared type/size. Database records persist media metadata and object keys, never base64 payloads.
+- Weather is fetched from the configured real provider and reports a service error when unavailable; it never fabricates weather data.
 
-# Step 3: Seed the database with the ultra-rich multi-estate demo dataset
-npm run db:seed
+## Current coverage
 
-# Step 4: Start the Next.js development server
-npm run dev
-```
+The implementation includes real schema-backed APIs and UI for users/access, farm and plot CRUD, irrigation, crop cycles/varieties/milestones/support activities, activation, planned/system/daily-monitoring tasks, executions/materials/labour, attendance/geofence exceptions, location change approvals, secure evidence uploads, monitoring, incidents and follow-up status, filtered dashboards, daily reports, audit records, live weather, and PWA installability.
 
-The application is now live at: **[http://localhost:3000](http://localhost:3000)**
-
----
-
-## 🔑 Ready-to-Use Demo Personas
-
-The database is pre-seeded with 4 distinct hierarchy roles. You can use the **1-click persona buttons on the `/login` screen** or sign in manually with the credentials below:
-
-| Persona | Role | Email | Password | Primary Interface / Features |
-| :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `SUPER_ADMIN` | `admin@agaate.local` | `LocalAdminPassword-ChangeMe-123` | Multi-estate portfolio overview, estate activation gatekeeper, team access controls, audit logs. |
-| **Farm Admin** | `FARM_ADMIN` | `farmadmin@agaate.local` | `LocalAdminPassword-ChangeMe-123` | Governance & approvals queue (attendance exceptions, estate relocation requests), plot management. |
-| **Senior Agronomist** | `AGRONOMIST` | `agronomist@agaate.local` | `LocalAdminPassword-ChangeMe-123` | Crop cycle planning (bed & mulch math), 7-day agronomy dispatch matrix, weather overrides, prescription history. |
-| **Lead Field Officer** | `FARM_OFFICER` | `officer@agaate.local` | `LocalAdminPassword-ChangeMe-123` | Mobile field console, geofenced GPS clock-in, task completion with fertilizer/labor logs, crop scouting. |
-
----
-
-## 🛠️ Service Infrastructure & Ports
-
-| Service | Port | Endpoint / Console URL | Default Credentials |
-| :--- | :--- | :--- | :--- |
-| **Next.js Web App** | `3000` | [http://localhost:3000](http://localhost:3000) | Persona credentials above |
-| **MySQL 8.0 Database** | `3306` | `localhost:3306/agaate_db` | User: `root` \| Password: `password` |
-| **MinIO S3 API** | `9000` | [http://localhost:9000](http://localhost:9000) | Key: `minioadmin` \| Secret: `minioadmin` |
-| **MinIO Web Console** | `9001` | [http://localhost:9001](http://localhost:9001) | User: `minioadmin` \| Password: `minioadmin` |
-
----
-
-## 🧪 Available NPM Scripts
-
-```bash
-# Start Next.js development server with Turbopack hot-reload
-npm run dev
-
-# Run all 134 automated unit, integration, and security penetration tests
-npm test
-
-# Re-seed the database with 4 estates, crop cycles, tasks, and incidents
-npm run db:seed
-
-# Generate Prisma client bindings
-npm run db:generate
-
-# Apply pending Prisma database migrations
-npm run db:migrate
-
-# Build production bundle (compiles all 32 routes)
-npm run build
-
-# Start production server
-npm start
-```
-
----
-
-## 🚨 Troubleshooting & Common Fixes
-
-### 1. Laptop Reboot / Docker Daemon Connection Error
-If you see `failed to connect to the docker API` or `The system cannot find the file specified`:
-1. Open **Docker Desktop** from your Windows Start Menu or Desktop.
-2. Wait until the Docker whale icon in your system tray indicates that Docker engine is running.
-3. Run `docker compose up -d`.
-
-### 2. Reset or Reseed Database
-To reset the database to a clean, rich operational state:
-```bash
-npm run db:seed
-```
-
-### 3. Port Conflicts (Port 3000 or 3306 in use)
-- If port 3000 is occupied, run `npm run dev -- -p 3001`.
-- If local MySQL is already running on port 3306, stop your local MySQL service or adjust the port mapping in `docker-compose.yml`.
-
----
-
-## 📚 Architectural & Technical Documentation
-
-For in-depth architectural specifications and user flows, refer to the [`docs/`](docs/) directory:
-- **[`01_PRD.md`](docs/01_PRD.md)** — Product Requirements Document & Feature Specs.
-- **[`02_TDD.md`](docs/02_TDD.md)** — Technical Architecture, APIs, and Security.
-- **[`03_USER_FLOWS.md`](docs/03_USER_FLOWS.md)** — Interactive Mermaid User Workflows.
-- **[`04_DESIGN_BRIEF.md`](docs/04_DESIGN_BRIEF.md)** — Line-First Design System Specifications.
-- **[`05_DATA_MODEL.md`](docs/05_DATA_MODEL.md)** — Schema Models, Enums, and Entity Relationships.
-- **[`06_ENGINEERING_PLAN.md`](docs/06_ENGINEERING_PLAN.md)** — Production Operations & Roadmap.
+Run `npm test` for calculation rules. Integration and end-to-end tests require an isolated MySQL/S3 environment and configured secrets; they should be run in the deployment pipeline against those services.
