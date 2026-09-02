@@ -43,10 +43,42 @@ export function FarmForm() {
     setSuccess("");
 
     const f = new FormData(e.currentTarget);
-    const payload = Object.fromEntries(f);
-    for (const key of ["latitude", "longitude", "totalArea", "cultivableArea", "geofenceRadiusMeters"]) {
-      (payload as Record<string, unknown>)[key] = Number(f.get(key));
+    const totalArea = Number(f.get("totalArea"));
+    const cultivableArea = Number(f.get("cultivableArea"));
+    const latitude = Number(f.get("latitude"));
+    const longitude = Number(f.get("longitude"));
+    const geofenceRadiusMeters = Number(f.get("geofenceRadiusMeters") || 500);
+
+    if (cultivableArea > totalArea) {
+      setPending(false);
+      setError(`Cultivable area (${cultivableArea} acres) cannot exceed total farm area (${totalArea} acres).`);
+      return;
     }
+
+    if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+      setPending(false);
+      setError("Please enter a valid latitude between -90 and 90.");
+      return;
+    }
+
+    if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+      setPending(false);
+      setError("Please enter a valid longitude between -180 and 180.");
+      return;
+    }
+
+    const payload = {
+      name: String(f.get("name") || "").trim(),
+      ownerName: String(f.get("ownerName") || "").trim(),
+      location: String(f.get("location") || "").trim(),
+      waterSource: String(f.get("waterSource") || "").trim(),
+      address: String(f.get("address") || "").trim() || undefined,
+      latitude,
+      longitude,
+      totalArea,
+      cultivableArea,
+      geofenceRadiusMeters,
+    };
 
     try {
       const res = await fetch("/api/farms", {
@@ -54,19 +86,19 @@ export function FarmForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      setPending(false);
 
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error ?? "Unable to create farm.");
+        setPending(false);
+        setError(body.error ?? "Unable to create farm. Please verify all details.");
         return;
       }
 
-      router.replace(`/farms/${body.id}`);
-      router.refresh();
+      // Smooth direct navigation to the new farm console
+      window.location.replace(`/farms/${body.id}`);
     } catch {
       setPending(false);
-      setError("Network error.");
+      setError("Network connectivity error. Please try again.");
     }
   }
 

@@ -6,7 +6,13 @@ export function apiError(error: unknown) {
   if (error instanceof HttpError || (typeof error === "object" && error !== null && "status" in error && typeof (error as any).status === "number")) {
     return NextResponse.json({ error: (error as any).message }, { status: (error as any).status });
   }
-  if (error instanceof ZodError) return NextResponse.json({ error: "Validation failed", details: error.flatten() }, { status: 422 });
+  if (error instanceof ZodError) {
+    const flat = error.flatten();
+    const firstFieldErr = Object.entries(flat.fieldErrors)[0]?.[1]?.[0];
+    const firstFormErr = flat.formErrors[0];
+    const message = firstFormErr || firstFieldErr || "Validation failed";
+    return NextResponse.json({ error: message, details: flat }, { status: 422 });
+  }
   if (error instanceof Error && (error.message === "Unauthenticated" || error.message === "Account is unavailable")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   if (error instanceof Prisma.PrismaClientKnownRequestError) { console.error(error); return NextResponse.json({ error: "The requested record could not be saved." }, { status: 409 }); }
   if (error instanceof Error && /not configured|provider is temporarily unavailable/i.test(error.message)) { console.error(error); return NextResponse.json({ error: "This integration is temporarily unavailable." }, { status: 503 }); }
