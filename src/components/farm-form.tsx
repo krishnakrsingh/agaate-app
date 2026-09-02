@@ -71,107 +71,115 @@ export function FarmForm() {
   }
 
   return (
-    <article className="card" style={{ padding: 24 }}>
-      <div className="card-header">
+    <article className="compact-card" style={{ padding: 28, gap: 20 }}>
+      <div className="page-header" style={{ paddingBottom: 14 }}>
         <div>
           <div className="eyebrow">
-            <span className="eyebrow-dot"></span>
-            ESTATE ONBOARDING
+            <span className="eyebrow-dot" />
+            <span>ESTATE ONBOARDING</span>
           </div>
-          <h2 style={{ margin: "2px 0 0" }}>Setup New Farm Property</h2>
+          <h2 className="section-title">Setup New Farm Property</h2>
         </div>
       </div>
 
-      <form onSubmit={submit} style={{ display: "grid", gap: 16 }}>
-        <div className="two-column">
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Farm Name</label>
-            <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Client / Owner Name</label>
-            <input name="ownerName" placeholder="e.g., Ramesh Patel" required maxLength={120} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Location (City / District)</label>
-            <input name="location" placeholder="e.g., Hosur, Krishnagiri" required maxLength={180} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Primary Water Source</label>
-            <input name="waterSource" placeholder="e.g., Borewell (20 HP) + Farm Pond" required maxLength={180} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-            <label>Full Address / Landmark</label>
-            <input name="address" placeholder="Survey No. 42/1, Denkanikottai Road…" maxLength={500} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label>Latitude</label>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={capture}
-                style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
-              >
-                + Capture GPS
-              </button>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <div className="form-section-title">1. General Information</div>
+          <div className="two-column" style={{ marginTop: 12 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Farm Name</label>
+              <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
             </div>
-            <input
-              name="latitude"
-              type="number"
-              step="any"
-              min="-90"
-              max="90"
-              placeholder="e.g., 12.5284"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              required
-            />
-          </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Longitude</label>
-            <input
-              name="longitude"
-              type="number"
-              step="any"
-              min="-180"
-              max="180"
-              placeholder="e.g., 77.8341"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              required
-            />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Client / Owner Name</label>
+              <input name="ownerName" placeholder="e.g., Ramesh Patel" required maxLength={120} />
+            </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Total Farm Area (Acres)</label>
-            <input name="totalArea" type="number" step="0.01" min="0.01" placeholder="e.g., 10.0" required />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Location (City / District)</label>
+              <input name="location" placeholder="e.g., Hosur, Krishnagiri" required maxLength={180} />
+            </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Cultivable Area (Acres)</label>
-            <input name="cultivableArea" type="number" step="0.01" min="0.01" placeholder="e.g., 8.5" required />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Primary Water Source</label>
+              <input name="waterSource" placeholder="e.g., Borewell (20 HP) + Farm Pond" required maxLength={180} />
+            </div>
 
-          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-            <label>Geofence Radius (Meters)</label>
-            <input
-              name="geofenceRadiusMeters"
-              type="number"
-              defaultValue="500"
-              min="50"
-              max="10000"
-              required
-            />
-            <small className="muted" style={{ display: "block", marginTop: 4, fontSize: "0.8rem" }}>
-              Used for automatic presence attendance validation. Default is 500m around coordinates.
-            </small>
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Full Address / Landmark</label>
+              <input name="address" placeholder="Survey No. 42/1, Denkanikottai Road…" maxLength={500} />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <div className="form-section-title">2. Geodata &amp; Acreage</div>
+          <div className="two-column" style={{ marginTop: 12 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label>Latitude</label>
+                <button
+                  type="button"
+                  className="text-action"
+                  onClick={capture}
+                  style={{ fontSize: "11px" }}
+                >
+                  + Capture GPS
+                </button>
+              </div>
+              <input
+                name="latitude"
+                type="number"
+                step="any"
+                min="-90"
+                max="90"
+                placeholder="e.g., 12.5284"
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Longitude</label>
+              <input
+                name="longitude"
+                type="number"
+                step="any"
+                min="-180"
+                max="180"
+                placeholder="e.g., 77.8341"
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Total Farm Area (Acres)</label>
+              <input name="totalArea" type="number" step="0.01" min="0.01" placeholder="e.g., 10.0" required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Cultivable Area (Acres)</label>
+              <input name="cultivableArea" type="number" step="0.01" min="0.01" placeholder="e.g., 8.5" required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Geofence Radius (Meters)</label>
+              <input
+                name="geofenceRadiusMeters"
+                type="number"
+                defaultValue="500"
+                min="50"
+                max="10000"
+                required
+              />
+              <small className="muted" style={{ display: "block", marginTop: 4, fontSize: "12px" }}>
+                Used for automatic presence attendance validation. Default is 500m around coordinates.
+              </small>
+            </div>
           </div>
         </div>
 
@@ -189,8 +197,8 @@ export function FarmForm() {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-          <button type="submit" className="btn btn-primary" disabled={pending} style={{ padding: "10px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+          <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
             <span>{pending ? "Creating Farm…" : "Save & Continue to Farm Hub"}</span>
             <Icons.ArrowRight size={16} />
           </button>

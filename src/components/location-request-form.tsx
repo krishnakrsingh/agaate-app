@@ -80,11 +80,11 @@ export function LocationRequestForm() {
   }
 
   return (
-    <article className="card" style={{ marginTop: 24, padding: 22 }}>
+    <article className="compact-card" style={{ marginTop: 20, padding: 22, gap: 14 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Need to Update Farm Coordinates?</h3>
-          <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>
+          <h3 className="item-title" style={{ margin: 0 }}>Need to Update Farm Coordinates?</h3>
+          <p className="muted" style={{ fontSize: "12px", margin: "2px 0 0" }}>
             Submit a farm boundary relocation request if the original geofence was misconfigured.
           </p>
         </div>
@@ -102,9 +102,10 @@ export function LocationRequestForm() {
       {show && (
         <form
           onSubmit={submit}
-          style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border)", display: "grid", gap: 14 }}
+          style={{ marginTop: 8, paddingTop: 16, borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 14 }}
         >
-          <div className="two-column">
+          <div className="form-section-title">Geodata Relocation Request</div>
+          <div className="two-column" style={{ marginTop: 4 }}>
             <div className="form-group" style={{ margin: 0 }}>
               <label>Target Farm</label>
               <select
@@ -137,9 +138,9 @@ export function LocationRequestForm() {
                 <label>Proposed Latitude</label>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="text-action"
                   onClick={capture}
-                  style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
+                  style={{ fontSize: "11px" }}
                 >
                   + Capture GPS
                 </button>
@@ -182,8 +183,8 @@ export function LocationRequestForm() {
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button type="submit" className="btn btn-primary" disabled={pending}>
+          <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+            <button type="submit" className="btn btn-green" disabled={pending}>
               <Icons.Check size={15} />
               <span>{pending ? "Submitting…" : "Submit Location Request"}</span>
             </button>

@@ -32,9 +32,9 @@ export function ThemeToggle({ variant = "button" }: { variant?: "button" | "menu
         style={{
           width: 36,
           height: 36,
-          borderRadius: "var(--radius-circle)",
-          background: "var(--mid-dark)",
-          border: "1px solid var(--border-subtle)",
+          borderRadius: "var(--radius-xs)",
+          background: "var(--canvas)",
+          border: "1px solid var(--line)",
           display: "grid",
           placeItems: "center",
           opacity: 0,
@@ -48,19 +48,23 @@ export function ThemeToggle({ variant = "button" }: { variant?: "button" | "menu
       <button
         type="button"
         onClick={toggle}
-        className="nav-link"
         style={{
           width: "100%",
-          justifyContent: "flex-start",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
           padding: "8px 12px",
           fontSize: 13,
-          borderRadius: "var(--radius-xs)",
+          fontFamily: "var(--font-body)",
+          color: "var(--ink)",
+          background: "transparent",
           cursor: "pointer",
           border: "none",
+          textAlign: "left",
         }}
       >
         {theme === "light" ? <Icons.Moon size={14} /> : <Icons.Sun size={14} />}
-        <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
+        <span>{theme === "light" ? "Dark Theme" : "Light Theme"}</span>
       </button>
     );
   }
@@ -74,17 +78,17 @@ export function ThemeToggle({ variant = "button" }: { variant?: "button" | "menu
       style={{
         width: 36,
         height: 36,
-        borderRadius: "var(--radius-circle)",
-        background: "var(--mid-dark)",
-        color: "var(--text-base)",
-        border: "1px solid var(--border-subtle)",
+        borderRadius: "var(--radius-xs)",
+        background: "var(--canvas)",
+        color: "var(--ink)",
+        border: "1px solid var(--line)",
         display: "grid",
         placeItems: "center",
         cursor: "pointer",
-        transition: "all var(--transition-fast)",
+        transition: "background-color 0.12s ease",
       }}
     >
-      {theme === "light" ? <Icons.Moon size={16} /> : <Icons.Sun size={16} />}
+      {theme === "light" ? <Icons.Moon size={15} /> : <Icons.Sun size={15} />}
     </button>
   );
 }

@@ -78,78 +78,93 @@ export function TaskForm({
   const selectedPlot = plots.find((p) => p.id === plotId);
 
   return (
-    <form onSubmit={submit} className="card" style={{ padding: 22, display: "grid", gap: 14 }}>
-      {error && <div className="error" role="alert"><Icons.AlertCircle size={16} /><span>{error}</span></div>}
+    <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {error && (
+        <div className="error" role="alert">
+          <Icons.AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div className="two-column">
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Target Farm</label>
-          <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCropCycleId(""); }} required>
-            {farms.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
+      <div>
+        <div className="form-section-title">1. Target Location &amp; Assignment</div>
+        <div className="two-column" style={{ marginTop: 12 }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Target Farm</label>
+            <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCropCycleId(""); }} required>
+              {farms.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
+            </select>
+          </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Assign to Officer</label>
+            <select name="assignedOfficerId" required>
+              <option value="">Select Farm Officer…</option>
+              {access.map((a) => (<option key={a.user.id} value={a.user.id}>{a.user.name}</option>))}
+            </select>
+          </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Target Plot (Optional)</label>
+            <select value={plotId} onChange={(e) => { setPlotId(e.target.value); setCropCycleId(""); }}>
+              <option value="">Farm Wide (No Specific Plot)</option>
+              {plots.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
+            </select>
+          </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Target Crop Cycle (Optional)</label>
+            <select value={cropCycleId} onChange={(e) => setCropCycleId(e.target.value)} disabled={!selectedPlot?.cropCycles?.length}>
+              <option value="">Plot Wide</option>
+              {selectedPlot?.cropCycles?.map((c) => (<option key={c.id} value={c.id}>{c.cropName}</option>))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div className="form-section-title">2. Activity Specification</div>
+        <div className="two-column" style={{ marginTop: 12 }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Execution Date</label>
+            <input type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} required />
+          </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Priority</label>
+            <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+              <option value="URGENT">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group" style={{ margin: 0, marginTop: 12 }}>
+          <label>Activity Category</label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            {categories.map((c) => (<option key={c} value={c}>{c.replaceAll("_", " ")}</option>))}
           </select>
         </div>
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Assign to Officer</label>
-          <select name="assignedOfficerId" required>
-            <option value="">Select Farm Officer…</option>
-            {access.map((a) => (<option key={a.user.id} value={a.user.id}>{a.user.name}</option>))}
-          </select>
+
+        <div className="form-group" style={{ margin: 0, marginTop: 12 }}>
+          <label>Activity Title</label>
+          <input name="title" placeholder="e.g. 19:19:19 Drip Fertigation - 2.5 kg/acre" required />
         </div>
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Target Plot (Optional)</label>
-          <select value={plotId} onChange={(e) => { setPlotId(e.target.value); setCropCycleId(""); }}>
-            <option value="">Farm Wide (No Specific Plot)</option>
-            {plots.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
-          </select>
+
+        <div className="form-group" style={{ margin: 0, marginTop: 12 }}>
+          <label>Task Instructions &amp; Description</label>
+          <textarea name="description" rows={2} placeholder="Explain steps for field officer execution." required />
         </div>
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Target Crop Cycle (Optional)</label>
-          <select value={cropCycleId} onChange={(e) => setCropCycleId(e.target.value)} disabled={!selectedPlot?.cropCycles?.length}>
-            <option value="">Plot Wide</option>
-            {selectedPlot?.cropCycles?.map((c) => (<option key={c.id} value={c.id}>{c.cropName}</option>))}
-          </select>
+
+        <div className="form-group" style={{ margin: 0, marginTop: 12 }}>
+          <label>Agronomist Guidance &amp; Mixing Instructions</label>
+          <textarea name="instructions" rows={2} placeholder="e.g. Dissolve completely in tank B; check pH 6.2 before injection." />
         </div>
       </div>
 
-      <div className="two-column">
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Execution Date</label>
-          <input type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} required />
-        </div>
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Priority</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="form-group" style={{ margin: 0 }}>
-        <label>Activity Category</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {categories.map((c) => (<option key={c} value={c}>{c.replaceAll("_", " ")}</option>))}
-        </select>
-      </div>
-
-      <div className="form-group" style={{ margin: 0 }}>
-        <label>Activity Title</label>
-        <input name="title" placeholder="e.g. 19:19:19 Drip Fertigation - 2.5 kg/acre" required />
-      </div>
-
-      <div className="form-group" style={{ margin: 0 }}>
-        <label>Task Instructions & Description</label>
-        <textarea name="description" rows={2} placeholder="Explain steps for field officer execution." required />
-      </div>
-
-      <div className="form-group" style={{ margin: 0 }}>
-        <label>Agronomist Guidance & Mixing Instructions</label>
-        <textarea name="instructions" rows={2} placeholder="e.g. Dissolve completely in tank B; check pH 6.2 before injection." />
-      </div>
-
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 16 }}>
         {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
-        <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
-          <Icons.Check size={16} /><span>{pending ? "Scheduling…" : "Dispatch Activity"}</span>
+        <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
+          <Icons.Check size={16} />
+          <span>{pending ? "Scheduling…" : "Dispatch Activity"}</span>
         </button>
       </div>
     </form>

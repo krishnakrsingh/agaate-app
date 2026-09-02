@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 
 export function LogoutButton({ variant = "default" }: { variant?: "default" | "menu" }) {
-  const router = useRouter();
   if (variant === "menu") {
     return (
       <button
@@ -11,14 +10,14 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
         className="btn btn-sm"
         onClick={async () => {
           await fetch("/api/auth/logout", { method: "POST" });
-          router.push("/login");
+          window.location.href = "/login";
         }}
         style={{
           width: "100%",
           justifyContent: "center",
-          color: "var(--negative-red)",
-          borderColor: "rgba(243, 114, 127, 0.3)",
-          background: "var(--negative-red-tint)",
+          color: "var(--red)",
+          borderColor: "rgba(166, 59, 50, 0.3)",
+          background: "var(--red-light)",
           minHeight: 36,
         }}
       >
@@ -34,7 +33,7 @@ export function LogoutButton({ variant = "default" }: { variant?: "default" | "m
       className="btn btn-outline btn-sm"
       onClick={async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/login");
+        window.location.href = "/login";
       }}
       title="Sign out of console"
     >

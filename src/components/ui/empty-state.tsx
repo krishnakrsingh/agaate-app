@@ -20,35 +20,35 @@ export function EmptyState({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--card-muted)",
-        border: "1px dashed var(--border-strong)",
-        borderRadius: "var(--radius-md)",
+        backgroundColor: "var(--canvas)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--radius-sm)",
       }}
     >
       {icon && (
         <div
           style={{
-            color: "var(--text-muted)",
+            color: "var(--muted)",
             marginBottom: 12,
-            width: 48,
-            height: 48,
-            borderRadius: "var(--radius-full)",
-            background: "var(--card)",
+            width: 44,
+            height: 44,
+            borderRadius: "var(--radius-xs)",
+            backgroundColor: "var(--stone)",
             display: "grid",
             placeItems: "center",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--line)",
           }}
         >
           {icon}
         </div>
       )}
-      <strong style={{ fontSize: "1.05rem", color: "var(--text-main)" }}>{title}</strong>
+      <strong style={{ fontSize: "16px", fontWeight: 550, color: "var(--ink)" }}>{title}</strong>
       {description && (
-        <p style={{ color: "var(--text-muted)", fontSize: "0.88rem", margin: "6px 0 16px", maxWidth: 420 }}>
+        <p style={{ color: "var(--muted)", fontSize: "13px", margin: "6px 0 16px", maxWidth: 440 }}>
           {description}
         </p>
       )}
-      {action && <div style={{ marginTop: 6 }}>{action}</div>}
+      {action && <div style={{ marginTop: 4 }}>{action}</div>}
     </div>
   );
 }

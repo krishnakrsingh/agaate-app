@@ -138,21 +138,22 @@ export function FieldReports({
   }
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {!hideTabs && (
-        <div className="tabs-nav" style={{ margin: 0 }}>
+        <div className="tabs-nav">
           <button type="button" className={`tab-btn ${tab === "monitoring" ? "active" : ""}`} onClick={() => setTab("monitoring")}>
-            <Icons.Eye size={15} /><span>Daily Crop Health Monitoring</span>
+            <Icons.Eye size={14} /><span>Daily Crop Health Monitoring</span>
           </button>
           <button type="button" className={`tab-btn ${tab === "incident" ? "active" : ""}`} onClick={() => setTab("incident")}>
-            <Icons.AlertTriangle size={15} /><span>Report Field Incident</span>
+            <Icons.AlertTriangle size={14} /><span>Report Field Incident</span>
           </button>
         </div>
       )}
 
       {/* Target Cascading Selects */}
-      <div className="card" style={{ padding: 18, display: "grid", gap: 12 }}>
-        <div className="two-column">
+      <div className="compact-card" style={{ padding: 18, gap: 12 }}>
+        <div className="form-section-title">Target Operational Context</div>
+        <div className="two-column" style={{ marginTop: 8 }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Target Farm</label>
             <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCycleId(""); }} required>
@@ -182,14 +183,26 @@ export function FieldReports({
 
       {/* FORM: MONITORING */}
       {tab === "monitoring" && (
-        <form onSubmit={submitMonitoring} className="card" style={{ padding: 22, display: "grid", gap: 14 }}>
+        <form onSubmit={submitMonitoring} className="compact-card" style={{ padding: 22, gap: 16 }}>
+          <div className="form-section-title">Crop Health Observation</div>
+
           <div className="form-group" style={{ margin: 0 }}>
             <label>Crop Health Condition</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button type="button" className={`btn ${health === "GOOD" ? "btn-primary" : "btn-secondary"}`} onClick={() => setHealth("GOOD")}>
+              <button
+                type="button"
+                className={`btn ${health === "GOOD" ? "btn-green" : "btn-secondary"}`}
+                onClick={() => setHealth("GOOD")}
+                style={{ minHeight: 44 }}
+              >
                 <Icons.CheckCircle size={16} /><span>Good / Healthy</span>
               </button>
-              <button type="button" className={`btn ${health === "POOR" ? "btn-danger" : "btn-secondary"}`} onClick={() => setHealth("POOR")}>
+              <button
+                type="button"
+                className={`btn ${health === "POOR" ? "btn-danger" : "btn-secondary"}`}
+                onClick={() => setHealth("POOR")}
+                style={{ minHeight: 44 }}
+              >
                 <Icons.AlertTriangle size={16} /><span>Poor / Distressed</span>
               </button>
             </div>
@@ -209,7 +222,7 @@ export function FieldReports({
           </div>
 
           <div className="form-group" style={{ margin: 0 }}>
-            <label>Field Observations & Remarks</label>
+            <label>Field Observations &amp; Remarks</label>
             <textarea name="remarks" rows={2} placeholder="e.g. Excellent foliage, robust fruit setting observed." />
           </div>
 
@@ -217,15 +230,15 @@ export function FieldReports({
             <label>Evidence Photos (Required)</label>
             <input type="file" name="photos" accept="image/*" multiple onChange={(e) => setMonitoringPhotos(Array.from(e.target.files ?? []).map((f) => URL.createObjectURL(f)))} required />
             {monitoringPhotos.length > 0 && (
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                {monitoringPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-sm)", objectFit: "cover" }} />))}
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                {monitoringPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }} />))}
               </div>
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
-            <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
+            <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
               <Icons.Check size={16} /><span>{pending ? "Logging…" : "Log Crop Health"}</span>
             </button>
           </div>
@@ -234,7 +247,9 @@ export function FieldReports({
 
       {/* FORM: INCIDENT */}
       {tab === "incident" && (
-        <form onSubmit={submitIncident} className="card" style={{ padding: 22, display: "grid", gap: 14 }}>
+        <form onSubmit={submitIncident} className="compact-card" style={{ padding: 22, gap: 16 }}>
+          <div className="form-section-title" style={{ color: "var(--red)" }}>Report Agricultural Incident</div>
+
           <div className="two-column">
             <div className="form-group" style={{ margin: 0 }}>
               <label>Incident Level</label>
@@ -268,13 +283,13 @@ export function FieldReports({
             <label>Incident Evidence Photos (Optional)</label>
             <input type="file" name="photos" accept="image/*" multiple onChange={(e) => setIncidentPhotos(Array.from(e.target.files ?? []).map((f) => URL.createObjectURL(f)))} />
             {incidentPhotos.length > 0 && (
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                {incidentPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-sm)", objectFit: "cover" }} />))}
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                {incidentPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }} />))}
               </div>
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
             <button type="submit" className="btn btn-danger btn-lg" disabled={pending}>
               <Icons.AlertTriangle size={16} /><span>{pending ? "Logging…" : "Log Field Incident"}</span>

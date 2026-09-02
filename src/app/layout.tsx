@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
+  themeColor: "#FAFAF7",
   width: "device-width",
   initialScale: 1,
 };
@@ -19,14 +19,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
-      <head>
+      <body suppressHydrationWarning>
         <script
+          id="theme-initializer"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('agaate_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `try{var t=localStorage.getItem('agaate_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
-      </head>
-      <body>
         <ServiceWorker />
         <ToastProvider>{children}</ToastProvider>
       </body>

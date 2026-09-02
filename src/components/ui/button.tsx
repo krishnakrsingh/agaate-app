@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "green" | "secondary" | "ghost" | "danger" | "outline" | "link";
 type Size = "sm" | "md" | "lg";
 
 export function Button({

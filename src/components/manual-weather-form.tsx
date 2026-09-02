@@ -112,20 +112,21 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
   }
 
   return (
-    <article className="card" style={{ margin: 0, padding: 22 }}>
-      <div className="card-header" style={{ marginBottom: 14 }}>
+    <article className="compact-card" style={{ margin: 0, padding: 22, gap: 16 }}>
+      <div className="page-header" style={{ marginBottom: 4, paddingBottom: 10 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.05rem" }}>Agronomist Weather Override</h3>
-          <p className="muted" style={{ fontSize: "0.82rem", margin: "2px 0 0" }}>
+          <div className="eyebrow"><span className="eyebrow-dot" /><span>MICRO-CLIMATE TELEMETRY</span></div>
+          <h3 className="section-title">Agronomist Weather Override</h3>
+          <p className="muted" style={{ fontSize: "12px", marginTop: 2 }}>
             Record on-site micro-climate observations or rain forecasts for 7-day agronomy planning.
           </p>
         </div>
-        <span className="role-badge" style={{ fontSize: "0.72rem" }}>
+        <span className="role-badge">
           Agronomy Override
         </span>
       </div>
 
-      <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="two-column">
           {!fixedFarmId && (
             <div className="form-group" style={{ margin: 0 }}>
@@ -156,23 +157,23 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
         {/* Live Auto Weather vs Stored Manual */}
         <div
           style={{
-            background: "var(--card-muted)",
+            background: "var(--stone)",
             padding: "12px 14px",
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid var(--border)",
-            fontSize: "0.85rem",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid var(--line)",
+            fontSize: "13px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--info)", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--green)", fontWeight: 550 }}>
             <Icons.Sun size={15} />
             <span>Auto Satellite (Live):</span>
-            <span style={{ color: "var(--text-main)", fontWeight: 500 }}>{auto || "Fetching…"}</span>
+            <span style={{ color: "var(--ink)", fontWeight: 500 }}>{auto || "Fetching…"}</span>
           </div>
 
           {existing && (
-            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--border)", color: "var(--primary)" }}>
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--line)", color: "var(--green)" }}>
               <strong>Stored Manual Override:</strong> {existing.temperature ?? "—"}°C &bull; {existing.humidity ?? "—"}% humidity &bull; {existing.windSpeed ?? "—"} km/h wind &bull; Rain: {existing.rainForecast ?? "—"}%
-              {existing.remarks && <span style={{ display: "block", fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 2 }}>Remarks: {existing.remarks}</span>}
+              {existing.remarks && <span style={{ display: "block", fontSize: "12px", color: "var(--muted)", marginTop: 2 }}>Remarks: {existing.remarks}</span>}
             </div>
           )}
         </div>
@@ -228,7 +229,7 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
         </div>
 
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Weather Remarks & Agronomy Context</label>
+          <label>Weather Remarks &amp; Agronomy Context</label>
           <textarea
             name="remarks"
             maxLength={500}
@@ -256,8 +257,8 @@ export function ManualWeatherForm({ farmId: fixedFarmId }: { farmId?: string }) 
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-          <button type="submit" className="btn btn-primary" disabled={pending || !farmId}>
+        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+          <button type="submit" className="btn btn-green" disabled={pending || !farmId}>
             <Icons.Check size={16} />
             <span>{pending ? "Saving override…" : "Save Agronomy Weather"}</span>
           </button>

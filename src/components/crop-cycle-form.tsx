@@ -124,9 +124,9 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
   ];
 
   return (
-    <article className="card" style={{ padding: 24, display: "grid", gap: 20 }}>
+    <article className="compact-card" style={{ padding: 24, gap: 20 }}>
       {/* Stepper Header */}
-      <div className="tabs-nav" style={{ margin: 0 }}>
+      <div className="tabs-nav">
         {steps.map((s) => (
           <button
             key={s.num}
@@ -139,64 +139,71 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
         ))}
       </div>
 
-      <form onSubmit={submit} style={{ display: "grid", gap: 16 }}>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {/* STEP 1: Crop & Varieties */}
         {step === 1 && (
-          <div className="two-column">
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Crop Name</label>
-              <input value={cropName} onChange={(e) => setCropName(e.target.value)} placeholder="e.g., Tomato (Solanum lycopersicum)" required />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Varieties (Comma Separated)</label>
-              <input value={varieties} onChange={(e) => setVarieties(e.target.value)} placeholder="e.g., Arka Rakshak, Abhinav, Saaho 3251" required />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Cycle Start Date</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Expected First Harvest Date (Optional)</label>
-              <input type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
+          <div className="form-section" style={{ borderTop: "none", paddingTop: 0 }}>
+            <div className="form-section-title">1. Crop Selection &amp; Timelines</div>
+            <div className="two-column" style={{ marginTop: 12 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Crop Name</label>
+                <input value={cropName} onChange={(e) => setCropName(e.target.value)} placeholder="e.g., Tomato (Solanum lycopersicum)" required />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Varieties (Comma Separated)</label>
+                <input value={varieties} onChange={(e) => setVarieties(e.target.value)} placeholder="e.g., Arka Rakshak, Abhinav, Saaho 3251" required />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Cycle Start Date</label>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Expected First Harvest Date (Optional)</label>
+                <input type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
+              </div>
             </div>
           </div>
         )}
 
         {/* STEP 2: Establishment */}
         {step === 2 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-            {[
-              { type: "NURSERY_TRANSPLANTATION", title: "Nursery Transplantation", desc: "Seedlings raised in pro-trays and transplanted." },
-              { type: "DIRECT_SOWING", title: "Direct Sowing", desc: "Seeds placed directly into plot bed." },
-            ].map((opt) => (
-              <div
-                key={opt.type}
-                onClick={() => setEstablishmentType(opt.type as any)}
-                style={{
-                  padding: 16,
-                  borderRadius: "var(--radius-sm)",
-                  border: `2px solid ${establishmentType === opt.type ? "var(--primary)" : "var(--border)"}`,
-                  background: establishmentType === opt.type ? "var(--primary-light)" : "var(--card-muted)",
-                  cursor: "pointer",
-                }}
-              >
-                <strong style={{ display: "block", color: "var(--text-main)", marginBottom: 4 }}>{opt.title}</strong>
-                <p className="muted" style={{ margin: 0, fontSize: "0.82rem" }}>{opt.desc}</p>
-              </div>
-            ))}
+          <div className="form-section" style={{ borderTop: "none", paddingTop: 0 }}>
+            <div className="form-section-title">2. Establishment Method</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
+              {[
+                { type: "NURSERY_TRANSPLANTATION", title: "Nursery Transplantation", desc: "Seedlings raised in pro-trays and transplanted into beds." },
+                { type: "DIRECT_SOWING", title: "Direct Sowing", desc: "Seeds placed directly into plot soil bed." },
+              ].map((opt) => (
+                <div
+                  key={opt.type}
+                  onClick={() => setEstablishmentType(opt.type as any)}
+                  style={{
+                    padding: 16,
+                    borderRadius: "var(--radius-xs)",
+                    border: `1px solid ${establishmentType === opt.type ? "var(--green)" : "var(--line)"}`,
+                    background: establishmentType === opt.type ? "var(--green-light)" : "var(--stone)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <strong style={{ display: "block", color: "var(--ink)", marginBottom: 4, fontSize: "14px" }}>{opt.title}</strong>
+                  <p className="muted" style={{ margin: 0, fontSize: "12px" }}>{opt.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {/* STEP 3: Bed & Mulching */}
         {step === 3 && (
-          <div style={{ display: "grid", gap: 16 }}>
-            <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
               <label className="check">
                 <input type="checkbox" checked={bedPrepEnabled} onChange={(e) => setBedPrepEnabled(e.target.checked)} />
                 <strong>Bed Preparation Required (Raised Bed Geometry)</strong>
               </label>
               {bedPrepEnabled && (
-                <div className="two-column">
+                <div className="two-column" style={{ marginTop: 8 }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Bed Width (cm)</label>
                     <input type="number" value={bedWidthCm} onChange={(e) => setBedWidthCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 90" />
@@ -210,22 +217,22 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
                     <input type="number" value={bedsPerAcre} onChange={(e) => setBedsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 26" />
                   </div>
                   {calculatedTotalBeds && (
-                    <div style={{ padding: 10, background: "var(--card)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
+                    <div style={{ padding: 12, background: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
                       <span className="mono-label">Estimated Total Beds</span>
-                      <strong style={{ display: "block", fontSize: "1.1rem" }}>{calculatedTotalBeds} beds ({plotArea} acres)</strong>
+                      <strong className="data" style={{ display: "block", fontSize: "16px", color: "var(--green)", marginTop: 4 }}>{calculatedTotalBeds} beds ({plotArea} acres)</strong>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 10 }}>
+            <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
               <label className="check">
                 <input type="checkbox" checked={mulchEnabled} onChange={(e) => setMulchEnabled(e.target.checked)} />
-                <strong>Mulch Film & Population Density</strong>
+                <strong>Mulch Film &amp; Population Density</strong>
               </label>
               {mulchEnabled && (
-                <div className="two-column">
+                <div className="two-column" style={{ marginTop: 8 }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Hole Pattern</label>
                     <select value={mulchHolePattern} onChange={(e) => setMulchHolePattern(e.target.value as any)}>
@@ -242,9 +249,9 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
                     <input type="number" value={plantsPerAcre} onChange={(e) => setPlantsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 6000" />
                   </div>
                   {calculatedTotalPlants && (
-                    <div style={{ padding: 10, background: "var(--card)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
+                    <div style={{ padding: 12, background: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
                       <span className="mono-label">Estimated Population</span>
-                      <strong style={{ display: "block", fontSize: "1.1rem" }}>{calculatedTotalPlants} plants ({plotArea} acres)</strong>
+                      <strong className="data" style={{ display: "block", fontSize: "16px", color: "var(--green)", marginTop: 4 }}>{calculatedTotalPlants} plants ({plotArea} acres)</strong>
                     </div>
                   )}
                 </div>
@@ -255,7 +262,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
 
         {/* STEP 4: Milestones & Support Activities */}
         {step === 4 && (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="two-column">
               <div className="form-group" style={{ margin: 0 }}>
                 <label>1. Land Preparation Target</label>
@@ -276,7 +283,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
             </div>
 
             {/* Support Activity Presets */}
-            <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 10 }}>
+            <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
               <div className="mono-label">Add Support Activities</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {["Crop Cover", "Bamboo Stacking", "Trellising", "Net Support", "Rope Support"].map((preset) => (
@@ -286,7 +293,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
                 ))}
               </div>
               {supports.map((s) => (
-                <div key={s.id} className="two-column" style={{ background: "var(--card)", padding: 10, borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}>
+                <div key={s.id} className="two-column" style={{ background: "var(--canvas)", padding: 12, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
                   <input value={s.name} onChange={(e) => setSupports((prev) => prev.map((x) => x.id === s.id ? { ...x, name: e.target.value } : x))} placeholder="Activity Name" />
                   <div style={{ display: "flex", gap: 8 }}>
                     <input type="date" value={s.targetDate} onChange={(e) => setSupports((prev) => prev.map((x) => x.id === s.id ? { ...x, targetDate: e.target.value } : x))} />
@@ -300,15 +307,15 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
 
         {/* STEP 5: Review & Launch */}
         {step === 5 && (
-          <div style={{ display: "grid", gap: 12, background: "var(--card-muted)", padding: 18, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
-            <h4 style={{ margin: 0 }}>Crop Plan Review</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: "0.88rem" }}>
-              <div><span className="mono-label">Crop:</span> <strong>{cropName}</strong></div>
-              <div><span className="mono-label">Varieties:</span> <strong>{varieties}</strong></div>
-              <div><span className="mono-label">Establishment:</span> <strong>{establishmentType.replaceAll("_", " ")}</strong></div>
-              <div><span className="mono-label">Start Date:</span> <strong>{startDate}</strong></div>
-              <div><span className="mono-label">Beds:</span> <strong>{bedPrepEnabled ? `${calculatedTotalBeds ?? bedsPerAcre} beds` : "Direct"}</strong></div>
-              <div><span className="mono-label">Plants:</span> <strong>{mulchEnabled ? `${calculatedTotalPlants ?? plantsPerAcre} plants` : "Standard"}</strong></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "var(--stone)", padding: 20, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>Crop Plan Review</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, fontSize: "13px" }}>
+              <div><span className="mono-label">Crop:</span> <strong style={{ display: "block", marginTop: 2 }}>{cropName}</strong></div>
+              <div><span className="mono-label">Varieties:</span> <strong style={{ display: "block", marginTop: 2 }}>{varieties}</strong></div>
+              <div><span className="mono-label">Establishment:</span> <strong style={{ display: "block", marginTop: 2 }}>{establishmentType.replaceAll("_", " ")}</strong></div>
+              <div><span className="mono-label">Start Date:</span> <strong className="data" style={{ display: "block", marginTop: 2 }}>{startDate}</strong></div>
+              <div><span className="mono-label">Beds:</span> <strong className="data" style={{ display: "block", marginTop: 2 }}>{bedPrepEnabled ? `${calculatedTotalBeds ?? bedsPerAcre} beds` : "Direct"}</strong></div>
+              <div><span className="mono-label">Plants:</span> <strong className="data" style={{ display: "block", marginTop: 2 }}>{mulchEnabled ? `${calculatedTotalPlants ?? plantsPerAcre} plants` : "Standard"}</strong></div>
             </div>
           </div>
         )}
@@ -316,7 +323,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
         {error && <div className="error" role="alert"><Icons.AlertCircle size={16} /><span>{error}</span></div>}
 
         {/* Navigation Buttons */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", paddingTop: 16 }}>
           {step > 1 ? (
             <button type="button" className="btn btn-secondary" onClick={() => setStep((s) => (s - 1) as any)}>
               <Icons.ArrowLeft size={14} /><span>Back</span>
@@ -324,11 +331,11 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
           ) : <div />}
 
           {step < 5 ? (
-            <button type="button" className="btn btn-primary" onClick={() => { if (validate()) setStep((s) => (s + 1) as any); }}>
+            <button type="button" className="btn btn-green" onClick={() => { if (validate()) setStep((s) => (s + 1) as any); }}>
               <span>Continue</span><Icons.ArrowRight size={14} />
             </button>
           ) : (
-            <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
+            <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
               <Icons.Check size={16} /><span>{pending ? "Launching…" : "Launch Crop Cycle"}</span>
             </button>
           )}

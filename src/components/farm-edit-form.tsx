@@ -92,101 +92,106 @@ export function FarmEditForm({ farm }: { farm: Farm }) {
   }
 
   return (
-    <article className="card" style={{ padding: 24 }}>
-      <div className="card-header">
+    <article className="compact-card" style={{ padding: 24, gap: 18 }}>
+      <div className="page-header" style={{ paddingBottom: 12 }}>
         <div>
           <div className="eyebrow">
-            <span className="eyebrow-dot"></span>
-            FARM CONFIGURATION
+            <span className="eyebrow-dot" />
+            <span>FARM CONFIGURATION</span>
           </div>
-          <h3 style={{ margin: "2px 0 0" }}>Edit Farm Details</h3>
-          <p className="muted" style={{ fontSize: "0.85rem", margin: "2px 0 0" }}>
-            Update farm boundary coordinates, cultivable area, and geofence radius.
-          </p>
+          <h2 className="section-title">Edit Farm Details: {farm.name}</h2>
         </div>
       </div>
 
-      <form onSubmit={save} style={{ display: "grid", gap: 16 }}>
-        <div className="two-column">
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Farm Name</label>
-            <input name="name" defaultValue={farm.name} required />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Client / Owner Name</label>
-            <input name="ownerName" defaultValue={farm.ownerName} required />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Location (City / District)</label>
-            <input name="location" defaultValue={farm.location} required />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Water Source</label>
-            <input name="waterSource" defaultValue={farm.waterSource} required />
-          </div>
-
-          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-            <label>Full Address</label>
-            <input name="address" defaultValue={farm.address ?? ""} />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label>Latitude</label>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={capture}
-                style={{ fontSize: "0.75rem", padding: "0 4px", color: "var(--primary)" }}
-              >
-                + Capture GPS
-              </button>
+      <form onSubmit={save} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <div>
+          <div className="form-section-title">1. General Information</div>
+          <div className="two-column" style={{ marginTop: 12 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Farm Name</label>
+              <input name="name" defaultValue={farm.name} required />
             </div>
-            <input
-              name="latitude"
-              type="number"
-              step="any"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              required
-            />
-          </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Longitude</label>
-            <input
-              name="longitude"
-              type="number"
-              step="any"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              required
-            />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Client / Owner Name</label>
+              <input name="ownerName" defaultValue={farm.ownerName} required />
+            </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Total Area (Acres)</label>
-            <input name="totalArea" type="number" min="0.01" step="0.01" defaultValue={farm.totalArea} required />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Location (City / District)</label>
+              <input name="location" defaultValue={farm.location} required />
+            </div>
 
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Cultivable Area (Acres)</label>
-            <input name="cultivableArea" type="number" min="0.01" step="0.01" defaultValue={farm.cultivableArea} required />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Water Source</label>
+              <input name="waterSource" defaultValue={farm.waterSource} required />
+            </div>
 
-          <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-            <label>Geofence Radius (Meters)</label>
-            <input
-              name="geofenceRadiusMeters"
-              type="number"
-              min="50"
-              max="10000"
-              defaultValue={farm.geofenceRadiusMeters}
-              required
-            />
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Full Address</label>
+              <input name="address" defaultValue={farm.address ?? ""} />
+            </div>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <div className="form-section-title">2. Geodata &amp; Acreage</div>
+          <div className="two-column" style={{ marginTop: 12 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label>Latitude</label>
+                <button
+                  type="button"
+                  className="text-action"
+                  onClick={capture}
+                  style={{ fontSize: "11px" }}
+                >
+                  + Capture GPS
+                </button>
+              </div>
+              <input
+                name="latitude"
+                type="number"
+                step="any"
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Longitude</label>
+              <input
+                name="longitude"
+                type="number"
+                step="any"
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Total Area (Acres)</label>
+              <input name="totalArea" type="number" min="0.01" step="0.01" defaultValue={farm.totalArea} required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Cultivable Area (Acres)</label>
+              <input name="cultivableArea" type="number" min="0.01" step="0.01" defaultValue={farm.cultivableArea} required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Geofence Radius (Meters)</label>
+              <input
+                name="geofenceRadiusMeters"
+                type="number"
+                min="50"
+                max="10000"
+                defaultValue={farm.geofenceRadiusMeters}
+                required
+              />
+            </div>
           </div>
         </div>
 
@@ -204,8 +209,8 @@ export function FarmEditForm({ farm }: { farm: Farm }) {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-          <button type="submit" className="btn btn-primary" disabled={pending}>
+        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <button type="submit" className="btn btn-green" disabled={pending}>
             <span>{pending ? "Saving…" : "Save Farm Changes"}</span>
           </button>
         </div>

@@ -91,120 +91,188 @@ export function AdminConsole() {
   }, [users, roleFilter, search]);
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <input type="text" placeholder="Search team…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 200 }} />
-          <div className="tabs-nav" style={{ margin: 0 }}>
+    <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            type="text"
+            placeholder="Search team members…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 220, minHeight: 38, padding: "8px 12px" }}
+          />
+          <div className="tabs-nav">
             {["ALL", "SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"].map((r) => (
-              <button key={r} type="button" className={`tab-btn ${roleFilter === r ? "active" : ""}`} onClick={() => setRoleFilter(r)}>
+              <button
+                key={r}
+                type="button"
+                className={`tab-btn ${roleFilter === r ? "active" : ""}`}
+                onClick={() => setRoleFilter(r)}
+              >
                 {r === "ALL" ? "All" : r.replaceAll("_", " ")}
               </button>
             ))}
           </div>
         </div>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowCreate(!showCreate)}>
-          <Icons.Plus size={14} /><span>{showCreate ? "Close" : "Add User"}</span>
+        <button type="button" className="btn btn-green btn-sm" onClick={() => setShowCreate(!showCreate)}>
+          <Icons.Plus size={14} />
+          <span>{showCreate ? "Close Form" : "Add Team Member"}</span>
         </button>
       </div>
 
-      {error && <div className="error" role="alert"><Icons.AlertCircle size={15} /><span>{error}</span></div>}
-      {message && <div className="success-banner" role="status"><span>{message}</span></div>}
+      {error && (
+        <div className="error" role="alert">
+          <Icons.AlertCircle size={15} />
+          <span>{error}</span>
+        </div>
+      )}
+      {message && (
+        <div className="success-banner" role="status">
+          <Icons.CheckCircle size={15} />
+          <span>{message}</span>
+        </div>
+      )}
 
       {/* CREATE FORM */}
       {showCreate && (
-        <form onSubmit={create} className="card" style={{ padding: 20, display: "grid", gap: 14 }}>
-          <h3 style={{ margin: 0 }}>New Team Member</h3>
+        <form onSubmit={create} className="compact-card" style={{ padding: 22, gap: 16 }}>
+          <div className="form-section-title">New Team Member Profile</div>
           <div className="two-column">
-            <div className="form-group" style={{ margin: 0 }}><label>Name</label><input name="name" required placeholder="Full Name" /></div>
-            <div className="form-group" style={{ margin: 0 }}><label>Email</label><input name="email" type="email" required placeholder="user@agaate.ag" /></div>
-            <div className="form-group" style={{ margin: 0 }}><label>Password</label><input name="password" type="password" required minLength={8} placeholder="Min 8 chars" /></div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label>Role</label>
-              <select name="role" defaultValue="FARM_OFFICER">{roles.map((r) => (<option key={r} value={r}>{r.replaceAll("_", " ")}</option>))}</select>
+              <label>Full Name</label>
+              <input name="name" required placeholder="Full Name" />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Email Address</label>
+              <input name="email" type="email" required placeholder="user@agaate.ag" />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Initial Password</label>
+              <input name="password" type="password" required minLength={8} placeholder="Min 8 chars" />
+            </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>System Role</label>
+              <select name="role" defaultValue="FARM_OFFICER">
+                {roles.map((r) => (
+                  <option key={r} value={r}>{r.replaceAll("_", " ")}</option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="form-group" style={{ margin: 0 }}>
-            <label>Farm Assignments</label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
+            <label>Farm &amp; Estate Assignments</label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
               {farms.map((f) => (
-                <div key={f.id} style={{ padding: 8, background: "var(--card-muted)", borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}>
+                <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
                   <label className="check"><input type="checkbox" name="farmIds" value={f.id} /><span>{f.name}</span></label>
-                  <label className="check" style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}><input type="checkbox" name="managesFarmIds" value={f.id} /><span>Manager</span></label>
+                  <label className="check" style={{ fontSize: "11px", color: "var(--muted)", marginTop: 4 }}>
+                    <input type="checkbox" name="managesFarmIds" value={f.id} /><span>Manager Permissions</span>
+                  </label>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowCreate(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? "Saving…" : "Create Account"}</button>
+            <button type="submit" className="btn btn-green btn-sm" disabled={pending}>
+              {pending ? "Saving…" : "Create Account"}
+            </button>
           </div>
         </form>
       )}
 
       {/* DIRECTORY TABLE */}
-      <article className="card" style={{ padding: 18 }}>
-        {filtered.length ? (
-          <div style={{ overflowX: "auto" }}>
-            <table className="data-table">
-              <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Estates</th><th>Action</th></tr></thead>
-              <tbody>
-                {filtered.map((u) => {
-                  const isEdit = editingId === u.id;
-                  const farmNames = u.farmAccess.map((a) => farms.find((f) => f.id === a.farmId)?.name).filter(Boolean);
-                  return (
-                    <tr key={u.id}>
-                      <td><strong>{u.name}</strong><div className="muted" style={{ fontSize: "0.75rem" }}>{u.email}</div></td>
-                      <td><RoleBadge role={u.role} /></td>
-                      <td><span className={`status ${u.active ? "active" : "inactive"}`}>{u.active ? "Active" : "Inactive"}</span></td>
-                      <td style={{ fontSize: "0.82rem" }}>{farmNames.join(", ") || (u.role === "SUPER_ADMIN" ? "Global" : "None")}</td>
-                      <td>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingId(isEdit ? null : u.id)}>
-                          <Icons.Edit size={12} /><span>{isEdit ? "Close" : "Edit"}</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState icon={<Icons.Users size={28} />} title="No users found" />
-        )}
-      </article>
+      {filtered.length ? (
+        <div style={{ overflowX: "auto" }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Team Member</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Assigned Estates</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((u) => {
+                const isEdit = editingId === u.id;
+                const farmNames = u.farmAccess.map((a) => farms.find((f) => f.id === a.farmId)?.name).filter(Boolean);
+                return (
+                  <tr key={u.id}>
+                    <td>
+                      <strong>{u.name}</strong>
+                      <div className="muted" style={{ fontSize: "12px" }}>{u.email}</div>
+                    </td>
+                    <td><RoleBadge role={u.role} /></td>
+                    <td><span className={`status ${u.active ? "active" : "inactive"}`}>{u.active ? "Active" : "Inactive"}</span></td>
+                    <td style={{ fontSize: "13px" }}>{farmNames.join(", ") || (u.role === "SUPER_ADMIN" ? "Global Access" : "None")}</td>
+                    <td>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingId(isEdit ? null : u.id)}>
+                        <Icons.Edit size={12} />
+                        <span>{isEdit ? "Close" : "Edit Access"}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <EmptyState icon={<Icons.Users size={24} />} title="No team members found" />
+      )}
 
       {/* EDIT MODAL */}
       {editingId && (() => {
         const u = users.find((x) => x.id === editingId);
         if (!u) return null;
         return (
-          <form onSubmit={(e) => update(e, u)} className="card" style={{ padding: 20, display: "grid", gap: 12 }}>
-            <h4>Edit Access for {u.name}</h4>
+          <form onSubmit={(e) => update(e, u)} className="compact-card" style={{ padding: 22, gap: 16 }}>
+            <div className="form-section-title">Edit Access &amp; Permissions: {u.name}</div>
             <div className="two-column">
-              <div className="form-group" style={{ margin: 0 }}><label>Role</label><select name="role" defaultValue={u.role}>{roles.map((r) => (<option key={r} value={r}>{r.replaceAll("_", " ")}</option>))}</select></div>
-              <div className="form-group" style={{ margin: 0 }}><label>New Password (Optional)</label><input name="newPassword" type="password" minLength={8} placeholder="Leave blank to keep" /></div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Role</label>
+                <select name="role" defaultValue={u.role}>
+                  {roles.map((r) => (<option key={r} value={r}>{r.replaceAll("_", " ")}</option>))}
+                </select>
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>New Password (Optional)</label>
+                <input name="newPassword" type="password" minLength={8} placeholder="Leave blank to keep existing" />
+              </div>
             </div>
-            <label className="check"><input type="checkbox" name="active" defaultChecked={u.active} /><strong>Account Active</strong></label>
+            <label className="check">
+              <input type="checkbox" name="active" defaultChecked={u.active} />
+              <strong>Account Active</strong>
+            </label>
             <div className="form-group" style={{ margin: 0 }}>
               <label>Assigned Farms</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 6 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
                 {farms.map((f) => {
                   const acc = u.farmAccess.find((a) => a.farmId === f.id);
                   return (
-                    <div key={f.id} style={{ padding: 8, background: "var(--card-muted)", borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}>
-                      <label className="check"><input type="checkbox" name="farmIds" value={f.id} defaultChecked={Boolean(acc)} /><span>{f.name}</span></label>
-                      <label className="check" style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}><input type="checkbox" name="managesFarmIds" value={f.id} defaultChecked={Boolean(acc?.canManage)} /><span>Manager</span></label>
+                    <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+                      <label className="check">
+                        <input type="checkbox" name="farmIds" value={f.id} defaultChecked={Boolean(acc)} />
+                        <span>{f.name}</span>
+                      </label>
+                      <label className="check" style={{ fontSize: "11px", color: "var(--muted)", marginTop: 4 }}>
+                        <input type="checkbox" name="managesFarmIds" value={f.id} defaultChecked={Boolean(acc?.canManage)} />
+                        <span>Manager Permissions</span>
+                      </label>
                     </div>
                   );
                 })}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
-              <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>{pending ? "Saving…" : "Save Changes"}</button>
+              <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+                {pending ? "Saving…" : "Save Changes"}
+              </button>
             </div>
           </form>
         );

@@ -88,10 +88,10 @@ export function DailyReport() {
   const selectedFarm = farms.find((f) => f.id === farmId);
 
   return (
-    <section style={{ display: "grid", gap: 20 }}>
+    <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Date & Farm Selector Bar */}
       <div
-        className="card"
+        className="compact-card"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -102,15 +102,16 @@ export function DailyReport() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 280px" }}>
-          <Icons.Farm size={18} style={{ color: "var(--primary)" }} />
-          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontWeight: 600, fontSize: "0.88rem", flex: 1 }}>
+          <Icons.Farm size={18} color="var(--green)" />
+          <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontWeight: 550, fontSize: "13px", flex: 1 }}>
             <span style={{ whiteSpace: "nowrap" }}>Select Estate:</span>
             <select
               value={farmId}
               onChange={(e) => setFarmId(e.target.value)}
               style={{
+                minHeight: 36,
                 padding: "6px 12px",
-                fontSize: "0.88rem",
+                fontSize: "13px",
                 flex: 1,
                 maxWidth: 280,
               }}
@@ -140,8 +141,9 @@ export function DailyReport() {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             style={{
+              minHeight: 36,
               padding: "6px 12px",
-              fontSize: "0.88rem",
+              fontSize: "13px",
               fontWeight: 500,
               width: "auto",
             }}
@@ -191,44 +193,46 @@ export function DailyReport() {
 
       {report && !loading && (
         <>
-          {/* Executive Summary Metrics */}
-          <div className="metric-grid">
-            <div className="metric-card">
+          {/* Executive Summary Telemetry */}
+          <div className="metric-summary-row">
+            <div className="metric-summary-item">
               <span className="metric-label">Field Staff On-Site</span>
               <div className="metric-value">{report.attendance.length}</div>
               <div className="metric-sub">
-                {report.attendance.filter((a) => a.endAt).length} Shifts Finished
+                {report.attendance.filter((a) => a.endAt).length} SHIFTS FINISHED
               </div>
             </div>
 
-            <div className="metric-card">
+            <div className="metric-summary-item">
               <span className="metric-label">Task Progress</span>
               <div className="metric-value">{completedTasks} / {totalTasks}</div>
-              <div className="metric-sub">{taskCompletionRate}% Execution Rate</div>
+              <div className="metric-sub">{taskCompletionRate}% EXECUTION RATE</div>
             </div>
 
-            <div className="metric-card">
+            <div className="metric-summary-item">
               <span className="metric-label">Labour Utilization</span>
-              <div className="metric-value">{report.resources.labourHours} <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>Hrs</span></div>
-              <div className="metric-sub">Total Man-Hours Logged</div>
+              <div className="metric-value">
+                {report.resources.labourHours} <span style={{ fontSize: "14px", fontWeight: 400, color: "var(--muted)" }}>HRS</span>
+              </div>
+              <div className="metric-sub">TOTAL MAN-HOURS LOGGED</div>
             </div>
 
-            <div className="metric-card">
+            <div className="metric-summary-item">
               <span className="metric-label">Field Signals</span>
               <div className="metric-value">{report.monitoring.length + report.incidents.length}</div>
               <div className="metric-sub">
-                {report.monitoring.length} Monitoring &bull; {report.incidents.length} Incidents
+                {report.monitoring.length} MONITORING &bull; {report.incidents.length} INCIDENTS
               </div>
             </div>
           </div>
 
           {/* ── SECTION 1: ATTENDANCE ROSTER ── */}
-          <article className="card" style={{ padding: 22 }}>
-            <div className="card-header">
+          <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <h3 style={{ margin: 0 }}>Verified Field Presence Roster</h3>
-                <p className="muted" style={{ margin: "2px 0 0" }}>
-                  Officer clock-ins verified via GPS coordinates and live front-camera selfie.
+                <h2 className="section-title">Verified Field Presence Roster</h2>
+                <p className="muted" style={{ marginTop: 2 }}>
+                  Officer presence verified via GPS coordinate boundaries and timestamp telemetry.
                 </p>
               </div>
             </div>
@@ -250,9 +254,9 @@ export function DailyReport() {
                       <tr key={i}>
                         <td><strong>{a.user.name}</strong></td>
                         <td><StatusBadge status={a.status} /></td>
-                        <td>{a.startAt ? new Date(a.startAt).toLocaleTimeString() : "—"}</td>
-                        <td>{a.endAt ? new Date(a.endAt).toLocaleTimeString() : "In Progress"}</td>
-                        <td style={{ fontFamily: "var(--font-mono)", fontSize: "0.78rem" }}>
+                        <td className="data">{a.startAt ? new Date(a.startAt).toLocaleTimeString() : "—"}</td>
+                        <td className="data">{a.endAt ? new Date(a.endAt).toLocaleTimeString() : "In Progress"}</td>
+                        <td className="data" style={{ fontSize: "12px" }}>
                           {a.startLatitude ? `${Number(a.startLatitude).toFixed(4)}, ${Number(a.startLongitude).toFixed(4)}` : "—"}
                         </td>
                       </tr>
@@ -261,18 +265,18 @@ export function DailyReport() {
                 </table>
               </div>
             ) : (
-              <div style={{ padding: 16, textAlign: "center", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--line)" }}>
                 <p className="muted" style={{ margin: 0 }}>No attendance records logged for this date.</p>
               </div>
             )}
-          </article>
+          </section>
 
           {/* ── SECTION 2: OPERATIONS & TASK COMPLETIONS ── */}
-          <article className="card" style={{ padding: 22 }}>
-            <div className="card-header">
+          <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <h3 style={{ margin: 0 }}>Assigned & Completed Field Tasks</h3>
-                <p className="muted" style={{ margin: "2px 0 0" }}>
+                <h2 className="section-title">Assigned &amp; Completed Field Tasks</h2>
+                <p className="muted" style={{ marginTop: 2 }}>
                   Status of scheduled agronomy operations for {selectedFarm?.name ?? "the farm"}.
                 </p>
               </div>
@@ -300,56 +304,55 @@ export function DailyReport() {
                 </table>
               </div>
             ) : (
-              <div style={{ padding: 16, textAlign: "center", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--line)" }}>
                 <p className="muted" style={{ margin: 0 }}>No activities scheduled for this date.</p>
               </div>
             )}
-          </article>
+          </section>
 
           {/* ── SECTION 3: RESOURCE CONSUMPTION ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
             {/* Materials Used */}
-            <article className="card" style={{ padding: 22 }}>
-              <h3 style={{ margin: "0 0 12px" }}>Input Material Consumption</h3>
+            <article className="compact-card" style={{ padding: 20, gap: 12 }}>
+              <h3 className="item-title">Input Material Consumption</h3>
               {report.resources.materials.length > 0 ? (
-                <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {report.resources.materials.map((m, i) => (
                     <div
                       key={i}
                       style={{
                         display: "flex",
                         justifyContent: "space-between",
-                        padding: "10px 14px",
-                        background: "var(--card-muted)",
-                        borderRadius: "var(--radius-sm)",
-                        fontSize: "0.88rem",
+                        padding: "10px 12px",
+                        borderBottom: "1px solid var(--line)",
+                        fontSize: "13px",
                       }}
                     >
                       <span>{m.materialName}</span>
-                      <strong>{m.quantity} {m.unit}</strong>
+                      <strong className="data">{m.quantity} {m.unit}</strong>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="muted" style={{ margin: 0, fontSize: "0.88rem" }}>No material inputs recorded today.</p>
+                <p className="muted" style={{ margin: 0, fontSize: "13px" }}>No material inputs recorded today.</p>
               )}
             </article>
 
             {/* Field Signals Summary */}
-            <article className="card" style={{ padding: 22 }}>
-              <h3 style={{ margin: "0 0 12px" }}>Field Telemetry & Evidence</h3>
-              <div style={{ display: "grid", gap: 10, fontSize: "0.88rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+            <article className="compact-card" style={{ padding: 20, gap: 12 }}>
+              <h3 className="item-title">Field Telemetry &amp; Evidence</h3>
+              <div style={{ display: "flex", flexDirection: "column", fontSize: "13px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 12px", borderBottom: "1px solid var(--line)" }}>
                   <span>Crop Monitoring Logs</span>
-                  <strong>{report.monitoring.length} Observations</strong>
+                  <strong className="data">{report.monitoring.length} Observations</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 12px", borderBottom: "1px solid var(--line)" }}>
                   <span>Field Incidents Logged</span>
-                  <strong>{report.incidents.length} Incidents</strong>
+                  <strong className="data">{report.incidents.length} Incidents</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 12px" }}>
                   <span>Evidence Photos Captured</span>
-                  <strong>{report.photoCount} High-Res Frames</strong>
+                  <strong className="data">{report.photoCount} High-Res Frames</strong>
                 </div>
               </div>
             </article>
@@ -359,7 +362,7 @@ export function DailyReport() {
 
       {!report && !loading && (
         <EmptyState
-          icon={<Icons.FileText size={28} />}
+          icon={<Icons.FileText size={24} />}
           title="No daily report data available"
           description="Select an active estate and date to inspect automated operations intelligence."
         />

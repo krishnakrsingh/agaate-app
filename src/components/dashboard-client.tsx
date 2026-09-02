@@ -39,116 +39,188 @@ export function DashboardClient({
   const totalAcreage = farms.reduce((acc, f) => acc + Number(f.totalArea || 0), 0).toFixed(1);
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       {/* PAGE HEADER */}
       <div className="page-header">
         <div className="page-header-content">
-          <div className="eyebrow"><span className="eyebrow-dot" />PORTFOLIO OVERVIEW &bull; {role.replaceAll("_", " ")}</div>
-          <h1>Farm Operations Portfolio</h1>
-          <p className="muted">Global monitoring of managed land estates, active crop cycles, and daily field execution telemetry.</p>
+          <div className="eyebrow">
+            <span className="eyebrow-dot" />
+            <span>PORTFOLIO OVERVIEW &bull; {role.replaceAll("_", " ")}</span>
+          </div>
+          <h1 className="page-title">Farm Operations Portfolio</h1>
+          <p className="muted" style={{ marginTop: 4 }}>
+            Global monitoring of managed land estates, active crop cycles, and daily field execution telemetry.
+          </p>
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
-            <Link href="/farms/new" className="btn btn-primary"><Icons.Plus size={15} /><span>Create Farm</span></Link>
+            <Link href="/farms/new" className="btn btn-primary">
+              <Icons.Plus size={15} />
+              <span>Create Farm</span>
+            </Link>
           )}
           {role === "FARM_OFFICER" && (
-            <Link href="/officer/day" className="btn btn-primary"><Icons.Sun size={15} /><span>Open My Day</span></Link>
+            <Link href="/officer/day" className="btn btn-green">
+              <Icons.Sun size={15} />
+              <span>Open My Day</span>
+            </Link>
           )}
           {role === "AGRONOMIST" && (
-            <Link href="/tasks/new" className="btn btn-primary"><Icons.Calendar size={15} /><span>Plan Activity</span></Link>
+            <Link href="/tasks/new" className="btn btn-green">
+              <Icons.Calendar size={15} />
+              <span>Plan Activity</span>
+            </Link>
           )}
-          <Link href="/reports/daily" className="btn btn-secondary"><Icons.FileText size={15} /><span>Daily Report</span></Link>
+          <Link href="/reports/daily" className="btn btn-secondary">
+            <Icons.FileText size={15} />
+            <span>Daily Report</span>
+          </Link>
         </div>
       </div>
 
-      {/* METRIC GRID */}
-      <section className="metric-grid">
-        <div className="metric-card">
-          <span className="metric-label">Managed Estates</span>
-          <div className="metric-value">{metrics.totalFarms}</div>
-          <div className="metric-sub">{metrics.activeFarms} Active &bull; {metrics.setupFarms} Setup</div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Total Acreage</span>
-          <div className="metric-value">{totalAcreage} <span style={{ fontSize: "1.1rem", fontWeight: 500 }}>Acres</span></div>
-          <div className="metric-sub">{metrics.totalPlots} Land Plots</div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Active Crop Cycles</span>
-          <div className="metric-value">{metrics.totalCrops}</div>
-          <div className="metric-sub">Controlled Varieties</div>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Daily Operations</span>
-          <div className="metric-value">{metrics.totalTasks}</div>
-          <div className="metric-sub">{metrics.completedTasks} Finished Today</div>
+      {/* METRIC ORIENTATION SUMMARY (Lines over Floating Cards) */}
+      <section>
+        <div className="label" style={{ marginBottom: 8, color: "var(--ink)" }}>OPERATIONAL TELEMETRY</div>
+        <div className="metric-summary-row">
+          <div className="metric-summary-item">
+            <span className="metric-label">Managed Estates</span>
+            <div className="metric-value">{metrics.totalFarms}</div>
+            <div className="metric-sub">{metrics.activeFarms} ACTIVE &bull; {metrics.setupFarms} SETUP</div>
+          </div>
+          <div className="metric-summary-item">
+            <span className="metric-label">Total Acreage</span>
+            <div className="metric-value">
+              {totalAcreage} <span style={{ fontSize: "14px", fontWeight: 400, color: "var(--muted)" }}>ACRES</span>
+            </div>
+            <div className="metric-sub">{metrics.totalPlots} LAND PLOTS</div>
+          </div>
+          <div className="metric-summary-item">
+            <span className="metric-label">Active Crop Cycles</span>
+            <div className="metric-value">{metrics.totalCrops}</div>
+            <div className="metric-sub">CONTROLLED VARIETIES</div>
+          </div>
+          <div className="metric-summary-item">
+            <span className="metric-label">Daily Operations</span>
+            <div className="metric-value">{metrics.totalTasks}</div>
+            <div className="metric-sub">{metrics.completedTasks} COMPLETED TODAY</div>
+          </div>
         </div>
       </section>
 
       {/* SIGNALS TRAY */}
       {(poorHealthAlerts.length > 0 || activeIncidents.length > 0) && (
-        <section className="card" style={{ padding: 18, background: "var(--card-muted)", display: "grid", gap: 10 }}>
-          <div className="eyebrow" style={{ color: "var(--danger-text)" }}><span className="eyebrow-dot" style={{ background: "var(--danger)" }} />ATTENTION SIGNALS</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
+        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="eyebrow" style={{ color: "var(--red)" }}>
+            <span className="eyebrow-dot" style={{ backgroundColor: "var(--red)" }} />
+            <span>EXCEPTIONS &amp; ATTENTION SIGNALS</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12 }}>
             {poorHealthAlerts.map((a) => (
-              <Link key={a.id} href={`/farms/${a.farmId}`} style={{ padding: 12, background: "var(--card)", borderRadius: "var(--radius-sm)", border: "1px solid var(--danger-border)", textDecoration: "none", color: "inherit" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <strong style={{ color: "var(--danger-text)" }}>🌱 Poor Health: {a.cropName}</strong>
+              <Link
+                key={a.id}
+                href={`/farms/${a.farmId}`}
+                className="callout red"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong style={{ fontSize: "13px", color: "var(--red)" }}>POOR HEALTH: {a.cropName}</strong>
                   <span className="priority-tag critical">{a.impactPercent ? `${a.impactPercent}% Loss` : "Alert"}</span>
                 </div>
-                <div className="muted" style={{ fontSize: "0.78rem", marginTop: 4 }}>{a.farmName} &bull; {a.stage} stage &bull; {a.remarks}</div>
+                <div className="muted" style={{ fontSize: "12px" }}>
+                  {a.farmName} &bull; Stage: {a.stage} &bull; {a.remarks}
+                </div>
               </Link>
             ))}
             {activeIncidents.map((inc) => (
-              <Link key={inc.id} href={`/farms/${inc.farmId}`} style={{ padding: 12, background: "var(--card)", borderRadius: "var(--radius-sm)", border: "1px solid var(--warning-border)", textDecoration: "none", color: "inherit" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <strong style={{ color: "var(--warning-text)" }}>⚠ {inc.type}</strong>
+              <Link
+                key={inc.id}
+                href={`/farms/${inc.farmId}`}
+                className="callout amber"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong style={{ fontSize: "13px", color: "var(--amber)" }}>INCIDENT: {inc.type}</strong>
                   <span className="priority-tag high">{inc.severity}</span>
                 </div>
-                <div className="muted" style={{ fontSize: "0.78rem", marginTop: 4 }}>{inc.farmName} &bull; {inc.description}</div>
+                <div className="muted" style={{ fontSize: "12px" }}>
+                  {inc.farmName} &bull; {inc.description}
+                </div>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      {/* ESTATE DIRECTORY */}
-      <section style={{ display: "grid", gap: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <input type="text" placeholder="Search estates…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 240 }} />
-          <div className="tabs-nav" style={{ margin: 0 }}>
-            {["ALL", "ACTIVE", "SETUP", "COMPLETED"].map((s) => (
-              <button key={s} type="button" className={`tab-btn ${statusFilter === s ? "active" : ""}`} onClick={() => setStatusFilter(s)}>
-                {s === "ALL" ? "All Estates" : s}
-              </button>
-            ))}
+      {/* ESTATE DIRECTORY (Line-First Structured Rows) */}
+      <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="section-title">Estate Directory</span>
+            <span className="data" style={{ color: "var(--muted)" }}>({filteredFarms.length})</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <input
+              type="text"
+              placeholder="Filter by name or location…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: 240, minHeight: 38, padding: "8px 12px" }}
+            />
+            <div className="tabs-nav">
+              {["ALL", "ACTIVE", "SETUP", "COMPLETED"].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`tab-btn ${statusFilter === s ? "active" : ""}`}
+                  onClick={() => setStatusFilter(s)}
+                >
+                  {s === "ALL" ? "All Estates" : s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {filteredFarms.map((farm) => {
             const activeCrops = farm.plots.flatMap((p) => p.cropCycles).filter((c) => c.status === "ACTIVE");
             return (
-              <Link key={farm.id} href={`/farms/${farm.id}`} className="card" style={{ padding: 18, textDecoration: "none", color: "inherit", display: "grid", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "1.1rem" }}>{farm.name}</h3>
-                    <span className="muted" style={{ fontSize: "0.82rem" }}>{farm.location} &bull; Owner: {farm.ownerName} &bull; {farm.totalArea} acres</span>
+              <Link
+                key={farm.id}
+                href={`/farms/${farm.id}`}
+                className="data-row"
+                style={{ padding: "16px 20px" }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="item-title">{farm.name}</span>
+                    <StatusBadge status={farm.status} />
                   </div>
-                  <StatusBadge status={farm.status} />
+                  <div className="muted" style={{ fontSize: "13px" }}>
+                    {farm.location} &bull; Owner: {farm.ownerName} &bull; <span className="data">{farm.totalArea}</span> acres
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.82rem", color: "var(--text-muted)", borderTop: "1px solid var(--border)", paddingTop: 8 }}>
-                  <span>Plots: <strong>{farm.plots.length}</strong></span>
-                  <span>&bull;</span>
-                  <span>Active Crops: <strong>{activeCrops.length > 0 ? activeCrops.map((c) => c.cropName).join(", ") : "None"}</strong></span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 24, textAlign: "right" }}>
+                  <div>
+                    <div className="data" style={{ fontWeight: 500, color: "var(--ink)" }}>{farm.plots.length} Plots</div>
+                    <div className="muted" style={{ fontSize: "12px" }}>
+                      {activeCrops.length > 0 ? activeCrops.map((c) => c.cropName).join(", ") : "No active crops"}
+                    </div>
+                  </div>
+                  <Icons.ChevronRight size={16} color="var(--muted)" />
                 </div>
               </Link>
             );
           })}
 
           {!filteredFarms.length && (
-            <EmptyState icon={<Icons.Farm size={28} />} title="No estates found" description="No farm properties match your search criteria." />
+            <EmptyState
+              icon={<Icons.Farm size={24} />}
+              title="No estates found"
+              description="No farm properties match your search criteria."
+            />
           )}
         </div>
       </section>

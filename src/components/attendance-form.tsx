@@ -188,13 +188,13 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
   // ACTIVE SHIFT BANNER
   if (attendance && !attendance.endAt) {
     return (
-      <article className="card" style={{ padding: 18, background: "var(--primary-light)", border: "1px solid var(--primary-border)" }}>
+      <article className="compact-card" style={{ padding: 18, background: "var(--green-light)", borderLeft: "3px solid var(--green)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--primary)", animation: "pulse 1.5s infinite" }} />
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--green)" }} />
             <div>
-              <strong style={{ fontSize: "1rem", color: "var(--primary-active)" }}>Shift Active &bull; {attendance.farm.name}</strong>
-              <div className="muted" style={{ fontSize: "0.82rem" }}>Elapsed Time: <strong style={{ color: "var(--primary)" }}>{elapsed || "0h 0m 0s"}</strong></div>
+              <strong style={{ fontSize: "14px", color: "var(--green-dark)" }}>Shift Active &bull; {attendance.farm.name}</strong>
+              <div className="muted" style={{ fontSize: "12px" }}>Elapsed Time: <strong className="data" style={{ color: "var(--green-dark)" }}>{elapsed || "0h 0m 0s"}</strong></div>
             </div>
           </div>
           <button type="button" className="btn btn-danger btn-sm" onClick={() => setShowEndModal(true)}>
@@ -204,9 +204,9 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
         {showEndModal && (
           <div className="modal-overlay" onClick={() => setShowEndModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, display: "grid", gap: 16 }}>
-              <h3 style={{ margin: 0 }}>Clock Out Confirmation</h3>
-              <p className="muted" style={{ margin: 0 }}>End your active shift at <strong>{attendance.farm.name}</strong>? Your total shift duration will be logged.</p>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, display: "flex", flexDirection: "column", gap: 16 }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>Clock Out Confirmation</h3>
+              <p className="muted" style={{ margin: 0, fontSize: "13px" }}>End your active shift at <strong>{attendance.farm.name}</strong>? Your total shift duration will be logged.</p>
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowEndModal(false)}>Cancel</button>
                 <button type="button" className="btn btn-danger" onClick={handleClockOut} disabled={pending}>
@@ -223,11 +223,11 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
   // COMPLETED SHIFT BANNER
   if (attendance?.endAt) {
     return (
-      <article className="card" style={{ padding: 16, background: "var(--card-muted)" }}>
+      <article className="compact-card" style={{ padding: 16, background: "var(--stone)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <strong style={{ color: "var(--text-main)" }}>Shift Completed Today ({attendance.farm.name})</strong>
-            <p className="muted" style={{ margin: "2px 0 0", fontSize: "0.82rem" }}>Clocked out on {new Date(attendance.endAt).toLocaleTimeString()}.</p>
+            <strong style={{ color: "var(--ink)", fontSize: "14px" }}>Shift Completed Today ({attendance.farm.name})</strong>
+            <p className="muted" style={{ margin: "2px 0 0", fontSize: "12px" }}>Clocked out on {new Date(attendance.endAt).toLocaleTimeString()}.</p>
           </div>
           <span className="status completed">Shift Finished</span>
         </div>
@@ -237,18 +237,18 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
   // CLOCK IN COCKPIT
   return (
-    <article className="card" style={{ padding: 22, display: "grid", gap: 16 }}>
-      <div className="card-header" style={{ margin: 0 }}>
+    <article className="compact-card" style={{ padding: 22, gap: 16 }}>
+      <div className="page-header" style={{ margin: 0, paddingBottom: 10 }}>
         <div>
-          <div className="eyebrow"><span className="eyebrow-dot" />PRESENCE VERIFICATION</div>
-          <h3 style={{ margin: "2px 0 0" }}>Start Daily Shift</h3>
+          <div className="eyebrow"><span className="eyebrow-dot" /><span>PRESENCE VERIFICATION</span></div>
+          <h3 className="section-title">Start Daily Shift</h3>
         </div>
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => void getGPS()} disabled={gpsLoading}>
           <Icons.MapPin size={14} /><span>{gpsLoading ? "Acquiring GPS…" : "Refresh GPS"}</span>
         </button>
       </div>
 
-      <form onSubmit={handleClockIn} style={{ display: "grid", gap: 14 }}>
+      <form onSubmit={handleClockIn} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="two-column">
           <div className="form-group" style={{ margin: 0 }}>
             <label>Assigned Estate</label>
@@ -259,9 +259,9 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
           <div className="form-group" style={{ margin: 0 }}>
             <label>GPS Geofence Radar</label>
-            <div style={{ padding: "8px 12px", background: "var(--card-muted)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: "0.85rem" }}>
+            <div style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", fontSize: "13px", minHeight: 44, display: "flex", alignItems: "center" }}>
               {radar ? (
-                <span style={{ color: radar.isInside ? "var(--success-text)" : "var(--danger-text)", fontWeight: 600 }}>
+                <span style={{ color: radar.isInside ? "var(--green)" : "var(--red)", fontWeight: 550 }}>
                   {radar.isInside ? `✓ Within boundary (${radar.dist}m / ${radar.radius}m)` : `⚠ Outside fence (${radar.dist}m / ${radar.radius}m)`}
                 </span>
               ) : (
@@ -273,24 +273,24 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
         {radar && !radar.isInside && (
           <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ color: "var(--danger-text)" }}>Reason for Out-of-Bounds Clock In</label>
+            <label style={{ color: "var(--red)" }}>Reason for Out-of-Bounds Clock In</label>
             <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g., Gate road blocked, parking at East entrance" required />
           </div>
         )}
 
         {/* Selfie Capture Box */}
-        <div style={{ background: "var(--card-muted)", padding: 14, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ background: "var(--stone)", padding: 14, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {selfiePreview ? (
-              <img src={selfiePreview} alt="Selfie preview" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--primary)" }} />
+              <img src={selfiePreview} alt="Selfie preview" style={{ width: 44, height: 44, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--green)" }} />
             ) : (
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--card)", display: "grid", placeItems: "center", border: "1px solid var(--border)" }}>
-                <Icons.Camera size={20} style={{ color: "var(--text-muted)" }} />
+              <div style={{ width: 44, height: 44, borderRadius: "var(--radius-xs)", background: "var(--canvas)", display: "grid", placeItems: "center", border: "1px solid var(--line)" }}>
+                <Icons.Camera size={18} color="var(--muted)" />
               </div>
             )}
             <div>
-              <strong style={{ fontSize: "0.9rem" }}>{selfie ? "Presence Selfie Ready" : "Selfie Verification Required"}</strong>
-              <div className="muted" style={{ fontSize: "0.78rem" }}>{selfie ? "Photo captured & verified" : "Take live photo with front camera"}</div>
+              <strong style={{ fontSize: "13px" }}>{selfie ? "Presence Selfie Ready" : "Selfie Verification Required"}</strong>
+              <div className="muted" style={{ fontSize: "12px" }}>{selfie ? "Photo captured & verified" : "Take live photo with front camera"}</div>
             </div>
           </div>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowCamera(true)}>
@@ -308,7 +308,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
         {gpsError && <div className="error" role="alert"><Icons.AlertCircle size={15} /><span>{gpsError}</span></div>}
 
-        <button type="submit" className="btn btn-primary btn-lg" disabled={pending || !farmId}>
+        <button type="submit" className="btn btn-green btn-lg" disabled={pending || !farmId} style={{ marginTop: 4 }}>
           <Icons.Check size={16} /><span>{pending ? "Starting Shift…" : "Clock In & Start Shift"}</span>
         </button>
       </form>

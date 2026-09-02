@@ -38,108 +38,148 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  function quickFill(demoEmail: string, demoPass: string) {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError("");
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function performLogin(loginEmail: string, loginPass: string) {
+    if (pending) return;
     setPending(true);
     setError("");
+    setEmail(loginEmail);
+    setPassword(loginPass);
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        body: JSON.stringify({ email: loginEmail.trim().toLowerCase(), password: loginPass }),
       });
 
       const body = await response.json().catch(() => ({}));
-      setPending(false);
 
       if (!response.ok) {
+        setPending(false);
         setError(body.error ?? "Unable to sign in. Please verify your credentials.");
         return;
       }
 
       const userRole = body.user?.role;
+      let targetUrl = "/dashboard";
       if (userRole === "FARM_OFFICER") {
-        router.push("/officer/day");
+        targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {
-        router.push("/tasks");
-      } else {
-        router.push("/dashboard");
+        targetUrl = "/tasks";
       }
+      // Instant browser redirect to target console
+      window.location.replace(targetUrl);
     } catch {
       setPending(false);
       setError("Network connectivity error. Please try again.");
     }
   }
 
+  function handleQuickFill(accEmail: string, accPass: string) {
+    setEmail(accEmail);
+    setPassword(accPass);
+    setError("");
+    void performLogin(accEmail, accPass);
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await performLogin(email, password);
+  }
+
   return (
-    <div style={{ display: "grid", gap: 20, width: "100%" }}>
-      {/* Demo Account Persona Selector */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%" }}>
+      {/* 1-Click Demo Persona Selector */}
       <div
+        className="compact-card"
         style={{
-          background: "var(--card-muted)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-md)",
           padding: 16,
+          gap: 12,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
-          <span className="mono-label" style={{ color: "var(--text-main)", fontWeight: 700 }}>
-            Quick Demo Persona Selector
-          </span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }} />
+            <span className="mono-label" style={{ color: "var(--ink)", fontWeight: 650 }}>
+              QUICK DEMO PERSONAS
+            </span>
+          </div>
+          <span className="muted" style={{ fontSize: "11px" }}>Tap to autofill &amp; sign in</span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
           {DEMO_ACCOUNTS.map((acc) => {
             const isSelected = email === acc.email;
             return (
-              <button
+              <div
                 key={acc.email}
-                type="button"
-                onClick={() => quickFill(acc.email, acc.password)}
+                onClick={() => handleQuickFill(acc.email, acc.password)}
                 style={{
-                  background: isSelected ? "var(--primary-light)" : "var(--card)",
-                  color: isSelected ? "var(--primary)" : "var(--text-main)",
-                  border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
-                  borderRadius: "var(--radius-sm)",
-                  padding: "8px 10px",
-                  textAlign: "left",
+                  background: isSelected ? "var(--green-light)" : "var(--stone)",
+                  border: `1px solid ${isSelected ? "var(--green)" : "var(--line)"}`,
+                  borderRadius: "var(--radius-xs)",
+                  padding: "10px 12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                 }}
               >
-                <div style={{ fontSize: "0.85rem", fontWeight: 700 }}>{acc.role}</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{acc.badge}</div>
-              </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <strong style={{ fontSize: "13px", color: isSelected ? "var(--green-dark)" : "var(--ink)" }}>
+                    {acc.role}
+                  </strong>
+                  {isSelected && <Icons.CheckCircle size={14} style={{ color: "var(--green)" }} />}
+                </div>
+                <div className="muted" style={{ fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+                  {acc.email}
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void performLogin(acc.email, acc.password);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  disabled={pending}
+                  style={{
+                    fontSize: "11px",
+                    padding: "3px 8px",
+                    minHeight: "auto",
+                    justifyContent: "center",
+                    marginTop: 2,
+                    background: isSelected ? "var(--green)" : "var(--canvas)",
+                    color: isSelected ? "#fff" : "var(--ink)",
+                    borderColor: isSelected ? "var(--green)" : "var(--line)",
+                  }}
+                >
+                  <Icons.Zap size={11} />
+                  <span>{pending && isSelected ? "Signing in…" : "Sign In →"}</span>
+                </button>
+              </div>
             );
           })}
         </div>
       </div>
 
       {/* Main Authentication Card */}
-      <div className="card" style={{ padding: 28 }}>
-        <div style={{ marginBottom: 20 }}>
-          <h2 style={{ margin: "0 0 4px", fontSize: "1.4rem" }}>Sign in to Agaate</h2>
-          <p className="muted" style={{ margin: 0, fontSize: "0.88rem" }}>
-            Enter your credentials to access precision agriculture operations.
+      <div className="compact-card" style={{ padding: 24, gap: 16 }}>
+        <div>
+          <h2 className="section-title" style={{ margin: "0 0 2px" }}>Sign in to Agaate</h2>
+          <p className="muted" style={{ margin: 0, fontSize: "12px" }}>
+            Enter credentials or select a persona above. Default password: <code className="data" style={{ fontSize: "11px" }}>LocalAdminPassword-ChangeMe-123</code>
           </p>
         </div>
 
         {error && (
-          <div className="error" role="alert" style={{ marginBottom: 14 }}>
+          <div className="error" role="alert">
             <Icons.AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label htmlFor="login-email">Email Address</label>
             <input
@@ -159,10 +199,10 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="btn btn-ghost"
-                style={{ fontSize: "0.78rem", padding: 0 }}
+                className="btn btn-link"
+                style={{ fontSize: "12px", padding: 0 }}
               >
-                {showPassword ? "Hide password" : "Show password"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
             <input
@@ -178,11 +218,11 @@ export function LoginForm() {
 
           <button
             type="submit"
-            className="btn btn-primary btn-lg"
+            className="btn btn-green btn-lg"
             disabled={pending || !email || !password}
-            style={{ width: "100%", marginTop: 6 }}
+            style={{ width: "100%", marginTop: 4 }}
           >
-            <span>{pending ? "Authenticating…" : "Sign In to Console"}</span>
+            <span>{pending ? "Authenticating & Redirecting…" : "Sign In to Console"}</span>
             <Icons.ArrowRight size={15} />
           </button>
         </form>

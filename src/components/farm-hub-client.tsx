@@ -12,6 +12,7 @@ import { FarmStatusControl } from "./farm-status-control";
 import { IncidentFollowUp } from "./incident-followup";
 import { IncidentStatusControl } from "./incident-status-control";
 import { StatusBadge, PriorityBadge } from "./ui/badge";
+import { EmptyState } from "./ui/empty-state";
 
 type Milestone = { id: string; name: string; targetDate: string; status: string };
 type CropCycle = { id: string; cropName: string; startDate: string; status: string; varieties: { name: string }[]; milestones: Milestone[] };
@@ -34,65 +35,72 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
   const hasMilestones = farm.plots.some((p) => p.cropCycles.some((c) => c.milestones.length >= 4));
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
       {/* COMMAND HEADER */}
-      <div className="card" style={{ padding: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
-              <StatusBadge status={farm.status} />
-              <span className="mono-label" style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-                <Icons.MapPin size={13} />
-                <span>{farm.location} &bull; {farm.geofenceRadiusMeters}m geofence &bull; {farm.plots.length} plots</span>
-              </span>
-            </div>
-            <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.1rem)", margin: "0 0 6px" }}>{farm.name}</h1>
-            <p className="muted" style={{ margin: 0 }}>
-              <strong>{farm.ownerName}</strong> &bull; {farm.totalArea} acres ({farm.cultivableArea} cultivable) &bull; Water: {farm.waterSource}
-            </p>
+      <div className="page-header">
+        <div className="page-header-content">
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+            <StatusBadge status={farm.status} />
+            <span className="mono-label" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+              <Icons.MapPin size={13} color="var(--green)" />
+              <span>{farm.location} &bull; {farm.geofenceRadiusMeters}M GEOFENCE &bull; {farm.plots.length} PLOTS</span>
+            </span>
           </div>
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            {canManage && isSetup && <ActivateFarmButton farmId={farm.id} />}
-            {canManage && !isSetup && <FarmStatusControl farmId={farm.id} status={farm.status} />}
-          </div>
+          <h1 className="page-title">{farm.name}</h1>
+          <p className="muted" style={{ marginTop: 4 }}>
+            <strong>{farm.ownerName}</strong> &bull; <span className="data">{farm.totalArea}</span> acres (<span className="data">{farm.cultivableArea}</span> cultivable) &bull; Water: {farm.waterSource}
+          </p>
         </div>
 
-        {/* ACTIVATION PIPELINE BANNER */}
-        {isSetup && (
-          <div style={{ marginTop: 18, background: "var(--primary-light)", border: "1px solid var(--primary-border)", borderRadius: "var(--radius-md)", padding: 16, display: "grid", gap: 10 }}>
-            <div className="eyebrow"><span className="eyebrow-dot" />FARM ACTIVATION PIPELINE</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: hasPlots ? "var(--primary)" : "var(--border)", color: "#fff", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{hasPlots ? "✓" : "1"}</span>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>1. Create Plot ({farm.plots.length})</span>
-              </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: hasCycles ? "var(--primary)" : "var(--border)", color: "#fff", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{hasCycles ? "✓" : "2"}</span>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>2. Plan Crop Cycle</span>
-              </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: hasMilestones ? "var(--primary)" : "var(--border)", color: "#fff", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{hasMilestones ? "✓" : "3"}</span>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>3. Schedule 4 Milestones</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          {canManage && isSetup && <ActivateFarmButton farmId={farm.id} />}
+          {canManage && !isSetup && <FarmStatusControl farmId={farm.id} status={farm.status} />}
+        </div>
       </div>
 
+      {/* ACTIVATION PIPELINE BANNER */}
+      {isSetup && (
+        <div className="callout" style={{ gap: 12 }}>
+          <div className="eyebrow" style={{ color: "var(--green-dark)" }}>
+            <span className="eyebrow-dot" />
+            <span>FARM ACTIVATION GATEKEEPER PIPELINE</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ width: 22, height: 22, border: "1px solid var(--line-strong)", background: hasPlots ? "var(--green)" : "var(--canvas)", color: hasPlots ? "#fff" : "var(--ink)", display: "grid", placeItems: "center", fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                {hasPlots ? "✓" : "1"}
+              </span>
+              <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--ink)" }}>1. Create Plot ({farm.plots.length})</span>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ width: 22, height: 22, border: "1px solid var(--line-strong)", background: hasCycles ? "var(--green)" : "var(--canvas)", color: hasCycles ? "#fff" : "var(--ink)", display: "grid", placeItems: "center", fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                {hasCycles ? "✓" : "2"}
+              </span>
+              <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--ink)" }}>2. Plan Crop Cycle</span>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ width: 22, height: 22, border: "1px solid var(--line-strong)", background: hasMilestones ? "var(--green)" : "var(--canvas)", color: hasMilestones ? "#fff" : "var(--ink)", display: "grid", placeItems: "center", fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                {hasMilestones ? "✓" : "3"}
+              </span>
+              <span style={{ fontSize: "13px", fontWeight: 550, color: "var(--ink)" }}>3. Schedule 4 Milestones</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SEGMENTED TABS */}
-      <div className="tabs-nav" style={{ margin: 0 }}>
+      <div className="tabs-nav">
         <button type="button" className={`tab-btn ${tab === "plots" ? "active" : ""}`} onClick={() => setTab("plots")}>
-          <Icons.Plot size={14} /><span>Plots & Crops ({farm.plots.length})</span>
+          <Icons.Plot size={14} /><span>Plots &amp; Crops ({farm.plots.length})</span>
         </button>
         <button type="button" className={`tab-btn ${tab === "weather" ? "active" : ""}`} onClick={() => setTab("weather")}>
-          <Icons.Sun size={14} /><span>Agronomy & Weather</span>
+          <Icons.Sun size={14} /><span>Agronomy &amp; Weather</span>
         </button>
         <button type="button" className={`tab-btn ${tab === "team" ? "active" : ""}`} onClick={() => setTab("team")}>
-          <Icons.Users size={14} /><span>Team & Access</span>
+          <Icons.Users size={14} /><span>Team &amp; Access</span>
         </button>
         <button type="button" className={`tab-btn ${tab === "signals" ? "active" : ""}`} onClick={() => setTab("signals")}>
-          <Icons.Activity size={14} /><span>Signals & Incidents ({farm.incidents.length + farm.monitoring.length})</span>
+          <Icons.Activity size={14} /><span>Signals &amp; Incidents ({farm.incidents.length + farm.monitoring.length})</span>
         </button>
         {canManage && (
           <button type="button" className={`tab-btn ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}>
@@ -103,75 +111,104 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
 
       {/* TAB 1: PLOTS & CROPS */}
       {tab === "plots" && (
-        <section style={{ display: "grid", gap: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <h3 style={{ margin: 0 }}>Plots & Precision Crop Cycles</h3>
-              <p className="muted" style={{ margin: "2px 0 0" }}>Manage plot acreage, irrigation systems, and launch crop cycles.</p>
+              <h2 className="section-title">Plots &amp; Precision Crop Cycles</h2>
+              <p className="muted" style={{ marginTop: 2 }}>Manage plot acreage, irrigation systems, and launch crop cycles.</p>
             </div>
             {canManage && (
               <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(!showAddPlot)}>
-                <Icons.Plus size={14} /><span>{showAddPlot ? "Close" : "Add Plot"}</span>
+                <Icons.Plus size={14} /><span>{showAddPlot ? "Close Form" : "Add Land Plot"}</span>
               </button>
             )}
           </div>
 
-          {showAddPlot && <PlotForm farmId={farm.id} />}
+          {showAddPlot && (
+            <div style={{ background: "var(--canvas)", border: "1px solid var(--line)", padding: 20, borderRadius: "var(--radius-sm)" }}>
+              <PlotForm farmId={farm.id} />
+            </div>
+          )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+          {/* SPATIAL PLOT GRID */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
             {farm.plots.map((plot) => (
-              <article key={plot.id} className="card" style={{ padding: 20, display: "grid", gap: 14 }}>
-                <div className="card-header" style={{ margin: 0 }}>
+              <article key={plot.id} className="compact-card" style={{ padding: 20, gap: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: "1.1rem" }}>{plot.name}</h4>
-                    <span className="muted" style={{ fontSize: "0.82rem" }}>{plot.area} acres &bull; {plot.soilType || "Soil Not Specified"}</span>
+                    <h3 className="item-title">{plot.name}</h3>
+                    <span className="muted" style={{ fontSize: "13px" }}>
+                      <span className="data">{plot.area}</span> acres &bull; {plot.soilType || "Soil Not Specified"}
+                    </span>
                   </div>
-                  <span className={`status ${plot.status.toLowerCase()}`}>{plot.status}</span>
+                  <StatusBadge status={plot.status} />
                 </div>
 
                 {/* Irrigation tags */}
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {plot.irrigation.map((irr, idx) => (
-                    <span key={idx} className="mono-label" style={{ background: "var(--card-muted)", padding: "2px 8px", borderRadius: "var(--radius-xs)" }}>
+                    <span key={idx} className="mono-label" style={{ background: "var(--stone)", padding: "3px 8px", border: "1px solid var(--line)" }}>
                       {irr.type}
                     </span>
                   ))}
                 </div>
 
                 {/* Crop Cycles list */}
-                <div style={{ background: "var(--card-muted)", padding: 12, borderRadius: "var(--radius-sm)", display: "grid", gap: 8 }}>
-                  <div className="mono-label">Active Crop Cycles ({plot.cropCycles.length})</div>
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div className="mono-label" style={{ color: "var(--muted)" }}>Active Crop Cycles ({plot.cropCycles.length})</div>
                   {plot.cropCycles.map((cycle) => (
                     <Link
                       key={cycle.id}
                       href={`/plots/${plot.id}/crop-cycles/${cycle.id}`}
-                      style={{ padding: "8px 10px", background: "var(--card)", borderRadius: "var(--radius-xs)", border: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none", color: "inherit" }}
+                      className="data-row"
+                      style={{ padding: "10px 12px", minHeight: "auto", border: "1px solid var(--line)", textDecoration: "none", color: "inherit" }}
                     >
                       <div>
-                        <strong>🌱 {cycle.cropName}</strong>
-                        <div className="muted" style={{ fontSize: "0.75rem" }}>Started: {new Date(cycle.startDate).toLocaleDateString()}</div>
+                        <div style={{ fontWeight: 550, fontSize: "13px" }}>🌱 {cycle.cropName}</div>
+                        <div className="muted" style={{ fontSize: "11px" }}>Started: {new Date(cycle.startDate).toLocaleDateString()}</div>
                       </div>
                       <StatusBadge status={cycle.status} />
                     </Link>
                   ))}
-                  {!plot.cropCycles.length && <p className="muted" style={{ fontSize: "0.82rem", margin: 0 }}>No active crop cycles.</p>}
+                  {!plot.cropCycles.length && <p className="muted" style={{ fontSize: "12px", margin: 0 }}>No active crop cycles in this plot.</p>}
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Link href={`/plots/${plot.id}`} className="btn btn-secondary btn-sm"><Icons.Edit size={13} /><span>Edit Plot</span></Link>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+                  <Link href={`/plots/${plot.id}`} className="btn btn-secondary btn-sm">
+                    <Icons.Edit size={13} />
+                    <span>Inspect Plot</span>
+                  </Link>
                   {canManage && (
-                    <Link href={`/plots/${plot.id}/crop-cycles/new`} className="btn btn-primary btn-sm"><Icons.Plus size={13} /><span>Launch Crop Cycle</span></Link>
+                    <Link href={`/plots/${plot.id}/crop-cycles/new`} className="btn btn-green btn-sm">
+                      <Icons.Plus size={13} />
+                      <span>Launch Crop Cycle</span>
+                    </Link>
                   )}
                 </div>
               </article>
             ))}
           </div>
+
+          {!farm.plots.length && !showAddPlot && (
+            <EmptyState
+              icon={<Icons.Plot size={24} />}
+              title="No land plots configured"
+              description="Create the first land plot to begin the farm operational setup."
+              action={
+                canManage && (
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(true)}>
+                    <Icons.Plus size={14} /><span>Add Plot</span>
+                  </button>
+                )
+              }
+            />
+          )}
         </section>
       )}
 
       {/* TAB 2: WEATHER & OVERRIDE */}
       {tab === "weather" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
           <WeatherCard farmId={farm.id} />
           {["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"].includes(role) && <ManualWeatherForm farmId={farm.id} />}
         </div>
@@ -182,31 +219,45 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
 
       {/* TAB 4: SIGNALS & INCIDENTS */}
       {tab === "signals" && (
-        <div style={{ display: "grid", gap: 16 }}>
-          <article className="card" style={{ padding: 20 }}>
-            <h3 style={{ margin: "0 0 12px" }}>Field Incidents ({farm.incidents.length})</h3>
-            <div style={{ display: "grid", gap: 10 }}>
-              {farm.incidents.map((inc) => (
-                <div key={inc.id} style={{ padding: 14, background: "var(--card-muted)", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", display: "grid", gap: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <strong style={{ color: "var(--danger-text)" }}>{inc.type}</strong>
-                      {inc.severity && <PriorityBadge priority={inc.severity} />}
-                    </div>
-                    {canManage ? <IncidentStatusControl incidentId={inc.id} status={inc.status} /> : <StatusBadge status={inc.status} />}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div className="page-header" style={{ paddingBottom: 12 }}>
+            <h2 className="section-title">Field Incidents &amp; Observations ({farm.incidents.length})</h2>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {farm.incidents.map((inc) => (
+              <div
+                key={inc.id}
+                className="compact-card"
+                style={{ padding: 16, borderLeft: inc.severity === "CRITICAL" ? "2px solid var(--red)" : "2px solid var(--amber)", gap: 10 }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <strong style={{ fontSize: "14px", color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--ink)" }}>{inc.type}</strong>
+                    {inc.severity && <PriorityBadge priority={inc.severity} />}
                   </div>
-                  <p style={{ margin: 0, fontSize: "0.88rem" }}>{inc.description}</p>
-                  <IncidentFollowUp incidentId={inc.id} />
+                  {canManage ? <IncidentStatusControl incidentId={inc.id} status={inc.status} /> : <StatusBadge status={inc.status} />}
                 </div>
-              ))}
-              {!farm.incidents.length && <p className="muted" style={{ margin: 0 }}>No incidents reported.</p>}
-            </div>
-          </article>
+                <p style={{ margin: 0, fontSize: "13px" }}>{inc.description}</p>
+                <IncidentFollowUp incidentId={inc.id} />
+              </div>
+            ))}
+            {!farm.incidents.length && (
+              <EmptyState
+                icon={<Icons.Activity size={24} />}
+                title="No field incidents reported"
+                description="Field operations and crop monitoring signals are operating within standard parameters."
+              />
+            )}
+          </div>
         </div>
       )}
 
       {/* TAB 5: SETTINGS */}
-      {tab === "settings" && canManage && <FarmEditForm farm={farm} />}
+      {tab === "settings" && canManage && (
+        <div style={{ background: "var(--canvas)", border: "1px solid var(--line)", padding: 24, borderRadius: "var(--radius-sm)" }}>
+          <FarmEditForm farm={farm} />
+        </div>
+      )}
     </div>
   );
 }
