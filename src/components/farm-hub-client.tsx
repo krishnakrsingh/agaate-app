@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Icons } from "./icons";
 import { PlotForm } from "./plot-form";
 import { WeatherCard } from "./weather-card";
-import { ManualWeatherForm } from "./manual-weather-form";
 import { FarmAccessManager } from "./farm-access-manager";
 import { FarmEditForm } from "./farm-edit-form";
 import { ActivateFarmButton } from "./activate-farm-button";
@@ -250,11 +249,10 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
         </section>
       )}
 
-      {/* TAB 2: WEATHER & OVERRIDE */}
+      {/* TAB 2: WEATHER */}
       {tab === "weather" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+        <div style={{ maxWidth: 640 }}>
           <WeatherCard farmId={farm.id} />
-          {["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"].includes(role) && <ManualWeatherForm farmId={farm.id} />}
         </div>
       )}
 

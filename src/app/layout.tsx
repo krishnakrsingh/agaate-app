@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
-import { ServiceWorker } from "@/components/service-worker";
 import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
@@ -28,8 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `try{var t=localStorage.getItem('agaate_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
-        <ServiceWorker />
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

@@ -3,6 +3,30 @@ import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { milestoneTemplates } from "@/lib/business";
-const validActivationFrom = new Set(["SETUP"]);
-export async function POST(_:Request,{params}:{params:Promise<{farmId:string}>}) {try{const {farmId}=await params;const actor=await requireFarmAccess(farmId,true);const farm=await prisma.farm.findUniqueOrThrow({where:{id:farmId},include:{plots:{where:{deletedAt:null,status:{not:"ARCHIVED"}},include:{cropCycles:{where:{status:{in:["PLANNED","ACTIVE"]}},include:{milestones:true}}}}}});if(!validActivationFrom.has(farm.status)) return NextResponse.json({error:`Farm activation is only allowed from SETUP status. Current status: ${farm.status}`},{status:409});const ready=farm.plots.length>0&&farm.plots.some(p=>p.cropCycles.some(c=>{const required=milestoneTemplates({mulchEnabled:c.mulchEnabled,establishmentType:c.establishmentType}).map(m=>m.name);return required.every(name=>c.milestones.some(m=>m.name===name || (name === "First Harvest" && m.name === "Harvesting")));}));if(!ready)return NextResponse.json({error:"Farm activation requires at least one non-archived plot with a planned crop cycle and all four standard milestones."},{status:422});const active=await prisma.farm.update({where:{id:farmId},data:{status:"ACTIVE"}});await prisma.plot.updateMany({where:{farmId,status:"SETUP",deletedAt:null},data:{status:"ACTIVE"}});await prisma.cropCycle.updateMany({where:{plot:{farmId},status:"PLANNED"},data:{status:"ACTIVE"}});await audit(actor.id,"ACTIVATE","Farm",farmId);return NextResponse.json(active);}catch(error){return apiError(error);}}
+
+export async function POST(_: Request, { params }: { params: Promise<{ farmId: string }> }) {
+  try {
+    const { farmId } = await params;
+    const actor = await requireFarmAccess(farmId, true);
+    const farm = await prisma.farm.findUniqueOrThrow({ where: { id: farmId } });
+    if (farm.status === "ACTIVE") {
+      return NextResponse.json(farm);
+    }
+    const active = await prisma.farm.update({
+      where: { id: farmId },
+      data: { status: "ACTIVE" },
+    });
+    await prisma.plot.updateMany({
+      where: { farmId, status: "SETUP", deletedAt: null },
+      data: { status: "ACTIVE" },
+    });
+    await prisma.cropCycle.updateMany({
+      where: { plot: { farmId }, status: "PLANNED" },
+      data: { status: "ACTIVE" },
+    });
+    await audit(actor.id, "ACTIVATE", "Farm", farmId);
+    return NextResponse.json(active);
+  } catch (error) {
+    return apiError(error);
+  }
+}

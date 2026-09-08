@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState, useRef, useEffect, useCallback, ChangeEvent } from "react";
 import { Icons } from "./icons";
+import { compressImage } from "@/lib/image-compress";
 
 export interface PhotoItem {
   id: string;
@@ -440,6 +441,9 @@ export async function uploadEvidencePhotos(
     const item = photos[i];
     onProgress?.(i + 1, photos.length);
 
+    // Compress photo to eliminate timeout errors on mobile devices
+    const compressed = await compressImage(item.file);
+
     // 1. Presign upload URL
     const presignRes = await fetch("/api/uploads/presign", {
       method: "POST",
@@ -447,8 +451,8 @@ export async function uploadEvidencePhotos(
       body: JSON.stringify({
         farmId,
         kind,
-        mimeType: item.file.type || "image/jpeg",
-        sizeBytes: item.file.size,
+        mimeType: compressed.type || "image/jpeg",
+        sizeBytes: compressed.size,
       }),
     });
 
@@ -462,8 +466,8 @@ export async function uploadEvidencePhotos(
     // 2. Direct S3 PUT
     const s3Res = await fetch(uploadUrl, {
       method: "PUT",
-      headers: { "Content-Type": item.file.type || "image/jpeg" },
-      body: item.file,
+      headers: { "Content-Type": compressed.type || "image/jpeg" },
+      body: compressed,
     });
 
     if (!s3Res.ok) {

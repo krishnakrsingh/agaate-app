@@ -28,6 +28,12 @@ async function main() {
   // STEP 1: CLEAN SLATE WIPE (Remove all legacy and test slop data)
   // -------------------------------------------------------------------------
   console.log("\n[1/7] Wiping all existing database records...");
+  await prisma.agronomyPrescription.deleteMany({});
+  await prisma.harvestLog.deleteMany({});
+  await prisma.expenseLog.deleteMany({});
+  await prisma.dailyCrewMuster.deleteMany({});
+  await prisma.inventoryTransaction.deleteMany({});
+  await prisma.inventoryItem.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.mediaAsset.deleteMany({});
   await prisma.materialUsage.deleteMany({});
@@ -1319,6 +1325,220 @@ async function main() {
   });
 
   console.log("✓ Audit trail and governance records created.");
+
+  // -------------------------------------------------------------------------
+  // STEP 8: COMMERCIAL ENGINE (HARVESTS, INVENTORY, MUSTER, EXPENSES, PRESCRIPTIONS)
+  // -------------------------------------------------------------------------
+  console.log("\n[8/8] Seeding commercial harvest ledger, shed stock, crew musters & prescriptions...");
+
+  // 1. Shed Inventory Items
+  await prisma.inventoryItem.createMany({
+    data: [
+      {
+        farmId: greenfieldFarm.id,
+        name: "Urea 46% Nitrogen (Neem Coated)",
+        category: "FERTILIZER",
+        quantityInStock: 8.0,
+        unit: "BAGS",
+        reorderLevel: 10.0,
+        costPerUnit: 266.5,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        name: "NPK 19-19-19 100% Water Soluble",
+        category: "FERTILIZER",
+        quantityInStock: 25.0,
+        unit: "BAGS",
+        reorderLevel: 5.0,
+        costPerUnit: 1850.0,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        name: "Emamectin Benzoate 5% SG (Proclaim)",
+        category: "PESTICIDE",
+        quantityInStock: 6.0,
+        unit: "PACKETS",
+        reorderLevel: 2.0,
+        costPerUnit: 1150.0,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        name: "Perforated Harvest Crates (20 KG)",
+        category: "PACKAGING",
+        quantityInStock: 180.0,
+        unit: "PCS",
+        reorderLevel: 50.0,
+        costPerUnit: 220.0,
+      },
+    ],
+  });
+
+  // 2. Daily Crew Musters
+  await prisma.dailyCrewMuster.createMany({
+    data: [
+      {
+        farmId: greenfieldFarm.id,
+        musterDate: dateOnly(0),
+        totalLabourers: 14,
+        maleCount: 6,
+        femaleCount: 8,
+        hoursPerShift: 8.0,
+        dailyWageRate: 450.0,
+        totalWageCost: 6300.0,
+        contractorName: "Ramesh Maistry (Kaveripattinam Crew)",
+        notes: "Morning harvest in Polyhouse Ridge 1; afternoon weeding in South Terrace",
+        recordedById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        musterDate: dateOnly(-1),
+        totalLabourers: 12,
+        maleCount: 4,
+        femaleCount: 8,
+        hoursPerShift: 8.0,
+        dailyWageRate: 450.0,
+        totalWageCost: 5400.0,
+        contractorName: "Ramesh Maistry (Kaveripattinam Crew)",
+        notes: "Drip lateral inspection and trellising string tying",
+        recordedById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        musterDate: dateOnly(-2),
+        totalLabourers: 10,
+        maleCount: 4,
+        femaleCount: 6,
+        hoursPerShift: 8.0,
+        dailyWageRate: 450.0,
+        totalWageCost: 4500.0,
+        contractorName: "Ramesh Maistry",
+        notes: "Mulch bed bed preparation & staking",
+        recordedById: officer1.id,
+      },
+    ],
+  });
+
+  // 3. Commercial Harvest Logs
+  await prisma.harvestLog.createMany({
+    data: [
+      {
+        farmId: greenfieldFarm.id,
+        plotId: plotGf1.id,
+        cropCycleId: cycleCapsicum.id,
+        harvestDate: dateOnly(0),
+        quantity: 680.0,
+        unit: "KG",
+        grade: "GRADE_A",
+        buyerOrMarket: "Reliance Retail Hub (Bangalore)",
+        vehicleNumber: "KA-04-E-1234",
+        pricePerUnit: 34.0,
+        totalAmount: 23120.0,
+        notes: "34 crates packed directly into refrigerated tempo; Brix 11.2",
+        createdById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        plotId: plotGf1.id,
+        cropCycleId: cycleCapsicum.id,
+        harvestDate: dateOnly(-1),
+        quantity: 520.0,
+        unit: "KG",
+        grade: "GRADE_B",
+        buyerOrMarket: "Hosur APMC Mandi",
+        vehicleNumber: "TN-70-F-5588",
+        pricePerUnit: 24.0,
+        totalAmount: 12480.0,
+        notes: "Medium sized peppers; clean skin, prompt dispatch before noon",
+        createdById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        plotId: plotGf1.id,
+        cropCycleId: cycleCapsicum.id,
+        harvestDate: dateOnly(-3),
+        quantity: 840.0,
+        unit: "KG",
+        grade: "GRADE_A",
+        buyerOrMarket: "BigBasket Distribution Center",
+        vehicleNumber: "KA-05-AB-9876",
+        pricePerUnit: 35.0,
+        totalAmount: 29400.0,
+        notes: "First selective pick of export-grade block",
+        createdById: officer1.id,
+      },
+    ],
+  });
+
+  // 4. Categorized Operational Spend Logs
+  await prisma.expenseLog.createMany({
+    data: [
+      {
+        farmId: greenfieldFarm.id,
+        date: dateOnly(0),
+        category: "LABOUR",
+        amount: 6300.0,
+        description: "Daily labour crew muster payout (14 workers @ ₹450)",
+        recordedById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        date: dateOnly(-1),
+        category: "LABOUR",
+        amount: 5400.0,
+        description: "Daily labour crew muster payout (12 workers @ ₹450)",
+        recordedById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        date: dateOnly(-2),
+        category: "FUEL",
+        amount: 2450.0,
+        description: "Diesel for Mahindra tractor (25 Liters @ ₹98/L)",
+        recordedById: officer1.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        date: dateOnly(-4),
+        category: "IRRIGATION",
+        amount: 3800.0,
+        description: "Replacement of 2-inch screen filter element and venturi injector valves",
+        recordedById: farmAdmin.id,
+      },
+      {
+        farmId: greenfieldFarm.id,
+        date: dateOnly(-7),
+        category: "FERTILIZER",
+        amount: 18500.0,
+        description: "Shed restocking: 10 bags 19-19-19 water soluble fertilizer",
+        recordedById: farmAdmin.id,
+      },
+    ],
+  });
+
+  // 5. Agronomy Prescription
+  await prisma.agronomyPrescription.create({
+    data: {
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      authorId: agronomist.id,
+      targetIssue: "Early Anthracnose & Foliar Fruit Rot Prophylaxis",
+      recipeDetails: [
+        {
+          materialName: "Azoxystrobin 18.2% + Difenoconazole 11.4% SC (Amistar Top)",
+          dosage: "1 ml / Liter water",
+          waterVolume: "200 L / Acre",
+          notes: "Spray in early morning or late afternoon; ensure complete lower canopy coverage",
+        },
+      ],
+      applicationDate: dateOnly(0),
+      instructions: "Apply immediately following morning harvest. Clean spray nozzles with freshwater post application.",
+      priority: "HIGH",
+      status: "DISPATCHED",
+    },
+  });
+
+  console.log("✓ Commercial ledger, harvest records, inventory items & prescriptions seeded.");
 
   console.log("\n==========================================================");
   console.log("🎉 SEEDING COMPLETE! THE PLATFORM IS 100% READY FOR THE DEMO.");

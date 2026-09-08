@@ -20,8 +20,16 @@ export default async function Home() {
     redirect("/login");
   }
 
+  if (user.role === "FARM_ADMIN") {
+    redirect("/owner/dashboard");
+  }
+
   if (user.role === "FARM_OFFICER") {
     redirect("/officer/day");
+  }
+
+  if (user.role === "AGRONOMIST") {
+    redirect("/agronomy/radar");
   }
 
   redirect("/dashboard");

@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
+import { compressImage } from "@/lib/image-compress";
 
 export function TaskCompletionForm({
   taskId,
@@ -42,15 +43,16 @@ export function TaskCompletionForm({
 
     try {
       const mediaIds: string[] = [];
-      for (const file of form.getAll("evidence")) {
-        if (!(file instanceof File) || !file.size) continue;
+      for (const rawFile of form.getAll("evidence")) {
+        if (!(rawFile instanceof File) || !rawFile.size) continue;
+        const file = await compressImage(rawFile);
         const signed = await fetch("/api/uploads/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             farmId,
             kind: "ACTIVITY_EVIDENCE",
-            mimeType: file.type,
+            mimeType: file.type || "image/jpeg",
             sizeBytes: file.size,
           }),
         });
@@ -63,7 +65,7 @@ export function TaskCompletionForm({
         const upload = await signed.json();
         const stored = await fetch(upload.uploadUrl, {
           method: "PUT",
-          headers: { "Content-Type": file.type },
+          headers: { "Content-Type": file.type || "image/jpeg" },
           body: file,
         });
 

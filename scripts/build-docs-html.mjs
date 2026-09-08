@@ -10,7 +10,8 @@ const docFiles = [
   { id: "userflows", title: "03. User Flows & Diagrams", icon: "🔀", filename: "03_USER_FLOWS.md", badge: "UX / Workflows" },
   { id: "designbrief", title: "04. Design Brief & UI Spec", icon: "🎨", filename: "04_DESIGN_BRIEF.md", badge: "Design System" },
   { id: "datamodel", title: "05. Data Model Reference", icon: "🗄️", filename: "05_DATA_MODEL.md", badge: "Database" },
-  { id: "engplan", title: "06. Engineering & Ops Plan", icon: "🛠️", filename: "06_ENGINEERING_PLAN.md", badge: "Engineering" }
+  { id: "engplan", title: "06. Engineering & Ops Plan", icon: "🛠️", filename: "06_ENGINEERING_PLAN.md", badge: "Engineering" },
+  { id: "masterarch", title: "07. Master System Architecture (v2.0)", icon: "🏛️", filename: "07_MASTER_SYSTEM_ARCHITECTURE.md", badge: "Architecture v2" }
 ];
 
 const docsData = docFiles.map(doc => {

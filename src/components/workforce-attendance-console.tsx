@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, FormEvent } from "react";
 import { Icons } from "./icons";
 import { RoleBadge, StatusBadge } from "./ui/badge";
 import { EmptyState } from "./ui/empty-state";
@@ -81,6 +81,43 @@ export function WorkforceAttendanceConsole({
 
   // Exception action pending ID
   const [processingExceptionId, setProcessingExceptionId] = useState<string | null>(null);
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [hirePending, setHirePending] = useState(false);
+
+  const handleHireOfficer = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setHirePending(true);
+    const form = new FormData(e.currentTarget);
+    const farmId = String(form.get("farmId"));
+
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          email: form.get("email"),
+          password: form.get("password"),
+          role: "FARM_OFFICER",
+          farmIds: [farmId],
+          managesFarmIds: [],
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || body.error || "Failed to employ farm officer.");
+      }
+
+      toast.success("Farm Manager employed! Login credentials created.");
+      setShowHireModal(false);
+      void fetchRoster();
+    } catch (err: any) {
+      toast.error(err.message || "Could not hire officer.");
+    } finally {
+      setHirePending(false);
+    }
+  };
 
   const fetchRoster = async () => {
     setLoading(true);
@@ -294,6 +331,18 @@ export function WorkforceAttendanceConsole({
             <Icons.Refresh size={14} />
             <span>Sync</span>
           </button>
+
+          {(initialRole === "FARM_ADMIN" || initialRole === "SUPER_ADMIN") && (
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={() => setShowHireModal(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <Icons.Plus size={14} />
+              <span>Hire Farm Manager</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -771,6 +820,127 @@ export function WorkforceAttendanceConsole({
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showHireModal && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowHireModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 16,
+          }}
+        >
+          <div
+            className="modal card"
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 440, padding: 24, gap: 16, backgroundColor: "var(--card-bg, #18181b)", border: "1px solid var(--line, #27272a)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>Employ On-Site Farm Manager</div>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setShowHireModal(false)}
+                aria-label="Close"
+              >
+                <Icons.X size={16} />
+              </button>
+            </div>
+
+            <p className="muted" style={{ fontSize: 13, margin: 0 }}>
+              Create an on-site supervisor account (Farm Officer) with credentials to log daily field tasks, crew musters, and harvests.
+            </p>
+
+            <form onSubmit={handleHireOfficer} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label className="label" style={{ fontSize: 12, marginBottom: 4, display: "block" }}>
+                  Manager Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="e.g. Ramesh Patil"
+                  className="input-field"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div>
+                <label className="label" style={{ fontSize: 12, marginBottom: 4, display: "block" }}>
+                  Email Address (Username) *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="e.g. ramesh@farm.agaate.com"
+                  className="input-field"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div>
+                <label className="label" style={{ fontSize: 12, marginBottom: 4, display: "block" }}>
+                  Initial Password *
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  minLength={8}
+                  placeholder="Minimum 8 characters"
+                  className="input-field"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div>
+                <label className="label" style={{ fontSize: 12, marginBottom: 4, display: "block" }}>
+                  Assigned Farm / Estate *
+                </label>
+                <select
+                  name="farmId"
+                  required
+                  defaultValue={selectedFarmId !== "ALL" ? selectedFarmId : estates[0]?.id}
+                  className="input-field"
+                  style={{ width: "100%" }}
+                >
+                  {estates.map((est) => (
+                    <option key={est.id} value={est.id}>
+                      {est.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowHireModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={hirePending}
+                >
+                  {hirePending ? "Creating Credential..." : "Employ Manager"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -12,6 +12,7 @@ Comprehensive architecture, specifications, design briefs, and user flows are or
 - **[04. Design Brief & UI Spec](file:///c:/Users/krish/Downloads/agaateapp/docs/04_DESIGN_BRIEF.md)** — Design tokens, color palette, mobile-first field UI, and component library.
 - **[05. Data Model Reference](file:///c:/Users/krish/Downloads/agaateapp/docs/05_DATA_MODEL.md)** — Prisma schema, 20 models, 14 enums, ER diagram, and DB constraints.
 - **[06. Engineering & Ops Plan](file:///c:/Users/krish/Downloads/agaateapp/docs/06_ENGINEERING_PLAN.md)** — Implementation audit, tech debt, production checklist, and AI roadmap.
+- **[07. Master System Architecture (v2.0 Redesign)](file:///c:/Users/krish/Downloads/agaateapp/docs/07_MASTER_SYSTEM_ARCHITECTURE.md)** — Canonical system blueprint: 4 real authorities, 24-screen UI matrix, 12 modules, 20 edge cases, and harvest/inventory schema.
 - **[Interactive HTML Documentation Portal](file:///c:/Users/krish/Downloads/agaateapp/docs/index.html)** — Standalone HTML web portal containing all documents with live search, theme toggle, and rendered diagrams. Regenerate anytime with `npm run build:docs`.
 
 ## Run locally

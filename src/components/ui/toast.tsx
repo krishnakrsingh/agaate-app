@@ -12,6 +12,7 @@ interface ToastMessage {
 
 interface ToastContextType {
   showToast: (text: string, type?: ToastType) => void;
+  show: (text: string, type?: ToastType) => void;
   success: (text: string) => void;
   error: (text: string) => void;
   info: (text: string) => void;
@@ -43,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const info = useCallback((text: string) => showToast(text, "info"), [showToast]);
 
   return (
-    <ToastContext.Provider value={{ showToast, success, error, info }}>
+    <ToastContext.Provider value={{ showToast, show: showToast, success, error, info }}>
       {children}
       <div className="toast-container" aria-live="polite" aria-atomic="true">
         {toasts.map((toast) => (
@@ -82,6 +83,7 @@ export function useToast() {
     // Graceful fallback if used outside provider
     return {
       showToast: (msg: string) => console.log(msg),
+      show: (msg: string, type?: ToastType) => console.log(`[${type || "info"}] ${msg}`),
       success: (msg: string) => console.log(msg),
       error: (msg: string) => console.error(msg),
       info: (msg: string) => console.info(msg),

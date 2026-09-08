@@ -39,13 +39,19 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Users: Icons.Users,
     Camera: Icons.Camera,
     Activity: Icons.Activity,
+    Package: Icons.Package,
+    Coins: Icons.Coins,
+    Truck: Icons.Truck,
+    Stethoscope: Icons.Stethoscope,
+    TrendingUp: Icons.TrendingUp,
+    Zap: Icons.Zap,
   };
 
   const roleLabels: Record<string, string> = {
     SUPER_ADMIN: "SUPER ADMIN",
-    FARM_ADMIN: "FARM ADMIN",
+    FARM_ADMIN: "FARM OWNER",
     AGRONOMIST: "AGRONOMIST",
-    FARM_OFFICER: "FIELD OFFICER",
+    FARM_OFFICER: "FARM MANAGER",
   };
 
   return (

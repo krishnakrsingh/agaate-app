@@ -1,7 +1,9 @@
 import { requireSession } from "@/lib/auth";
-import { FarmForm } from "@/components/farm-form";
+import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ClientOnboardingWizard } from "@/components/admin/client-onboarding-wizard";
+import { FarmForm } from "@/components/farm-form";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +23,34 @@ export default async function NewFarmPage() {
     );
   }
 
+  // If Super Admin, provide the complete Client Onboarding & Handover Wizard
+  if (session.role === "SUPER_ADMIN") {
+    const agronomists = await prisma.user.findMany({
+      where: { role: "AGRONOMIST", active: true },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    });
+
+    return (
+      <>
+        <Navbar role={session.role} userName={session.name} />
+        <main className="shell">
+          <Breadcrumbs
+            items={[
+              { label: "Estates Command", href: "/dashboard" },
+              { label: "Onboard Client Farmland" },
+            ]}
+          />
+          <ClientOnboardingWizard agronomists={agronomists} />
+        </main>
+      </>
+    );
+  }
+
+  // Farm Admin adding an additional estate to their portfolio
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
-
       <main className="shell narrow">
         <Breadcrumbs items={[{ label: "Setup New Farm" }]} />
 
@@ -32,11 +58,11 @@ export default async function NewFarmPage() {
           <div className="page-header-content">
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
-              PROPERTY ONBOARDING &bull; SETUP PHASE
+              ESTATE EXPANSION &bull; CLIENT PORTFOLIO
             </div>
-            <h1>Create Farm Record</h1>
+            <h1>Register Additional Farmland</h1>
             <p className="muted">
-              A farm remains in SETUP mode until at least one plot and planned crop cycle with all 4 milestones is configured.
+              Add a new parcel or estate to your landowner account.
             </p>
           </div>
         </div>

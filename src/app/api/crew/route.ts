@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { currentActor, requireFarmAccess } from "@/lib/access";
+import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import { apiError } from "@/lib/api";
+import { parseUtcDate } from "@/lib/business";
+
+const musterSchema = z.object({
+  farmId: z.string().min(1),
+  musterDate: z.string().min(1),
+  totalLabourers: z.coerce.number().int().min(1),
+  maleCount: z.coerce.number().int().min(0).optional().nullable(),
+  femaleCount: z.coerce.number().int().min(0).optional().nullable(),
+  hoursPerShift: z.coerce.number().positive().default(8.0),
+  dailyWageRate: z.coerce.number().positive().optional().nullable(),
+  contractorName: z.string().optional().nullable(),
+  notes: z.string().max(1000).optional().nullable(),
+});
+
+export async function GET(request: NextRequest) {
+  try {
+    const actor = await currentActor();
+    const { searchParams } = new URL(request.url);
+    const farmId = searchParams.get("farmId");
+
+    let where: any = {};
+    if (farmId) {
+      await requireFarmAccess(farmId);
+      where.farmId = farmId;
+    } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
+      where.farm = { access: { some: { userId: actor.id } } };
+    }
+
+    const musters = await prisma.dailyCrewMuster.findMany({
+      where,
+      include: {
+        farm: { select: { id: true, name: true } },
+        recordedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { musterDate: "desc" },
+      take: 60,
+    });
+
+    return NextResponse.json(musters);
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const actor = await currentActor();
+    const body = await request.json();
+    const input = musterSchema.parse(body);
+
+    await requireFarmAccess(input.farmId);
+
+    const date = parseUtcDate(input.musterDate);
+    const totalWageCost = input.dailyWageRate
+      ? input.totalLabourers * input.dailyWageRate
+      : null;
+
+    const muster = await prisma.dailyCrewMuster.upsert({
+      where: {
+        farmId_musterDate: {
+          farmId: input.farmId,
+          musterDate: date,
+        },
+      },
+      update: {
+        totalLabourers: input.totalLabourers,
+        maleCount: input.maleCount ?? null,
+        femaleCount: input.femaleCount ?? null,
+        hoursPerShift: input.hoursPerShift,
+        dailyWageRate: input.dailyWageRate ?? null,
+        totalWageCost,
+        contractorName: input.contractorName || null,
+        notes: input.notes || null,
+        recordedById: actor.id,
+      },
+      create: {
+        farmId: input.farmId,
+        musterDate: date,
+        totalLabourers: input.totalLabourers,
+        maleCount: input.maleCount ?? null,
+        femaleCount: input.femaleCount ?? null,
+        hoursPerShift: input.hoursPerShift,
+        dailyWageRate: input.dailyWageRate ?? null,
+        totalWageCost,
+        contractorName: input.contractorName || null,
+        notes: input.notes || null,
+        recordedById: actor.id,
+      },
+      include: {
+        farm: { select: { id: true, name: true } },
+      },
+    });
+
+    await audit(actor.id, "UPDATE", "DailyCrewMuster", muster.id, {
+      totalLabourers: input.totalLabourers,
+      farmId: input.farmId,
+    });
+
+    return NextResponse.json(muster, { status: 201 });
+  } catch (error) {
+    return apiError(error);
+  }
+}

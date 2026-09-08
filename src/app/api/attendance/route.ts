@@ -221,17 +221,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function DELETE() {
-  try {
-    const actor = await currentActor();
-    const attendanceDate = today();
-    await prisma.attendance.deleteMany({
-      where: { userId: actor.id, attendanceDate },
-    });
-    await audit(actor.id, "RESET_DEMO_SHIFT", "Attendance", actor.id);
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiError(error);
-  }
-}
-

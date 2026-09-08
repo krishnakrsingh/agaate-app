@@ -1,11 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @next/next/no-img-element */
-import { FormEvent, useEffect, useState, useCallback } from "react";
+import { FormEvent, useEffect, useState, useCallback, useRef } from "react";
 import { Icons } from "./icons";
 import { useToast } from "./ui/toast";
-import { CameraCapture } from "./camera-capture";
 import { distanceMeters } from "@/lib/business";
+import { compressImage } from "@/lib/image-compress";
 
 type Farm = {
   id: string;
@@ -27,15 +27,15 @@ type AttendanceRecord = {
 
 export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }) {
   const toast = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord | null>(null);
   const [farmId, setFarmId] = useState("");
   const [showEndModal, setShowEndModal] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
+  const [compressing, setCompressing] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [simulatedMode, setSimulatedMode] = useState<"device" | "outside" | "inside">("device");
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState("");
   const [reason, setReason] = useState("");
@@ -58,7 +58,9 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   useEffect(() => {
     if (!attendance?.startAt || attendance?.endAt) return;
@@ -77,7 +79,6 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
   const getGPS = useCallback(async (): Promise<{ lat: number; lng: number }> => {
     setGpsLoading(true);
     setGpsError("");
-    setSimulatedMode("device");
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         setGpsLoading(false);
@@ -95,11 +96,14 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
         },
         (err) => {
           setGpsLoading(false);
-          const msg = err.code === 1 ? "GPS access denied by browser." : "Unable to acquire GPS fix.";
+          const msg =
+            err.code === 1
+              ? "GPS access denied. Please enable location permissions."
+              : "Unable to acquire GPS fix. Please step outside.";
           setGpsError(msg);
           reject(new Error(msg));
         },
-        { enableHighAccuracy: true, timeout: 8000 }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     });
   }, []);
@@ -111,46 +115,47 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
     }
   }, [attendance, coords, getGPS]);
 
-  // Demo Location Simulation Helpers
-  const simulateLocation = (type: "inside" | "outside") => {
-    if (!selectedFarm?.latitude || !selectedFarm?.longitude) return;
-    const fLat = Number(selectedFarm.latitude);
-    const fLng = Number(selectedFarm.longitude);
-    if (isNaN(fLat) || isNaN(fLng)) return;
-
-    if (type === "inside") {
-      // ~45 meters from farm center (well within geofence radius)
-      setCoords({ lat: fLat + 0.0003, lng: fLng + 0.0002 });
-      setSimulatedMode("inside");
-      toast.info("Simulated location: At Farm Gate (45m inside boundary)");
-    } else {
-      // ~2.5 kilometers away from farm center (flagged as out-of-bounds exception)
-      setCoords({ lat: fLat + 0.022, lng: fLng + 0.015 });
-      setSimulatedMode("outside");
-      toast.info("Simulated location: 2.5km Away (Outside Geofence Exception)");
-    }
-  };
-
   const radar = (() => {
     if (!coords || !selectedFarm?.latitude || !selectedFarm?.longitude) return null;
     const fLat = Number(selectedFarm.latitude);
     const fLng = Number(selectedFarm.longitude);
     if (isNaN(fLat) || isNaN(fLng)) return null;
-    const dist = Math.round(distanceMeters({ latitude: coords.lat, longitude: coords.lng }, { latitude: fLat, longitude: fLng }));
+    const dist = Math.round(
+      distanceMeters(
+        { latitude: coords.lat, longitude: coords.lng },
+        { latitude: fLat, longitude: fLng }
+      )
+    );
     const radius = selectedFarm.geofenceRadiusMeters ?? 500;
     return { dist, radius, isInside: dist <= radius };
   })();
 
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompressing(true);
+    try {
+      const compressed = await compressImage(file);
+      setSelfie(compressed);
+      setSelfiePreview(URL.createObjectURL(compressed));
+      toast.show("Presence photo captured successfully", "success");
+    } catch {
+      toast.show("Could not process photo. Please try again.", "error");
+    } finally {
+      setCompressing(false);
+    }
+  };
+
   async function handleClockIn(e: FormEvent) {
     e.preventDefault();
     if (!selfie) {
-      toast.error("Please capture a presence selfie first.");
-      setShowCamera(true);
+      toast.show("Please capture a presence photo first.", "error");
+      fileInputRef.current?.click();
       return;
     }
 
     if (radar && !radar.isInside && (!reason || reason.trim().length < 5)) {
-      toast.error("Please provide an operational reason (min 5 characters) for out-of-bounds clock-in.");
+      toast.show("Please provide a reason (min 5 chars) for out-of-bounds clock-in.", "error");
       return;
     }
 
@@ -159,7 +164,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       const loc = coords ?? (await getGPS());
 
       // 1. Presign upload URL for selfie
-      const mimeType = selfie.type === "image/png" ? "image/png" : selfie.type === "image/webp" ? "image/webp" : "image/jpeg";
+      const mimeType = selfie.type || "image/jpeg";
       const presignRes = await fetch("/api/uploads/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,21 +178,21 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
       if (!presignRes.ok) {
         const err = await presignRes.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to prepare selfie upload.");
+        throw new Error(err.error || "Failed to prepare photo upload.");
       }
       const { uploadUrl, mediaId } = await presignRes.json();
 
-      // 2. Upload image to S3/MinIO
+      // 2. Upload photo to S3
       const s3Res = await fetch(uploadUrl, {
         method: "PUT",
         body: selfie,
         headers: { "Content-Type": mimeType },
       });
-      if (!s3Res.ok) throw new Error("Could not upload selfie to storage.");
+      if (!s3Res.ok) throw new Error("Could not upload presence photo.");
 
       // 3. Complete and verify upload
       const completeRes = await fetch(`/api/uploads/${mediaId}/complete`, { method: "POST" });
-      if (!completeRes.ok) throw new Error("Could not verify selfie upload.");
+      if (!completeRes.ok) throw new Error("Could not verify photo upload.");
 
       // 4. Submit attendance record
       const attRes = await fetch("/api/attendance", {
@@ -206,15 +211,15 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       setPending(false);
       if (!attRes.ok) {
         const errorData = await attRes.json().catch(() => ({}));
-        toast.error(errorData.error ?? "Clock-in failed.");
+        toast.show(errorData.error ?? "Clock-in failed.", "error");
         return;
       }
 
       const resData = await attRes.json();
       if (resData.attendance?.status === "EXCEPTION_PENDING") {
-        toast.info("Shift started with OUT-OF-BOUNDS EXCEPTION! Sent to Farm Admin for authorization.");
+        toast.show("Shift started with Out-of-Bounds exception (sent to admin for review)", "info");
       } else {
-        toast.success("Shift started successfully!");
+        toast.show("Shift started successfully!", "success");
       }
 
       setSelfie(null);
@@ -224,7 +229,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       onShiftChange?.();
     } catch (err: any) {
       setPending(false);
-      toast.error(err.message ?? "Network error during clock-in.");
+      toast.show(err.message ?? "Network error during clock-in.", "error");
     }
   }
 
@@ -245,36 +250,16 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       setPending(false);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        toast.error(errorData.error ?? "Clock-out failed.");
+        toast.show(errorData.error ?? "Clock-out failed.", "error");
         return;
       }
-      toast.success("Shift ended successfully.");
+      toast.show("Shift ended successfully.", "success");
       setShowEndModal(false);
       void load();
       onShiftChange?.();
     } catch {
       setPending(false);
-      toast.error("Network error during clock-out.");
-    }
-  }
-
-  async function handleResetShift() {
-    if (!confirm("Reset today's shift to test clocking in again?")) return;
-    setPending(true);
-    try {
-      const res = await fetch("/api/attendance", { method: "DELETE" });
-      if (!res.ok) throw new Error("Could not reset shift.");
-      toast.success("Shift reset! You can now test clock-in.");
-      setAttendance(null);
-      setSelfie(null);
-      setSelfiePreview(null);
-      setReason("");
-      void load();
-      onShiftChange?.();
-    } catch {
-      toast.error("Failed to reset shift.");
-    } finally {
-      setPending(false);
+      toast.show("Network error during clock-out.", "error");
     }
   }
 
@@ -289,12 +274,12 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           padding: 22,
           borderRadius: "var(--radius-md)",
           boxShadow: "var(--shadow-card)",
-          backgroundColor: "var(--canvas)",
           border: isException ? "1px solid var(--amber)" : "1px solid var(--green)",
+          background: "var(--card)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div
               style={{
                 width: 44,
@@ -316,7 +301,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <strong style={{ fontSize: "16px", color: "var(--ink)" }}>
-                  {isException ? "Shift Active • Out-of-Bounds" : "Shift Active"}
+                  {isException ? "Shift Active • Out-of-Bounds" : "Shift Active • On Duty"}
                 </strong>
                 {isException ? (
                   <span className="badge badge-amber">EXCEPTION PENDING</span>
@@ -331,50 +316,51 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 </strong>
                 {isException && (
                   <span style={{ display: "block", color: "var(--amber)", fontSize: "12px", marginTop: 2 }}>
-                    ⚠ Awaiting Farm Admin / Super Admin authorization in Action Center
+                    ⚠ Awaiting Farm Admin authorization
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleResetShift}
-              disabled={pending}
-              title="Reset shift so you can demonstrate clocking in again"
-              style={{ borderRadius: "var(--radius-pill)", padding: "8px 14px", fontSize: "12px" }}
-            >
-              <Icons.Refresh size={14} />
-              <span>Reset Shift (Demo)</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => setShowEndModal(true)}
-              style={{ borderRadius: "var(--radius-pill)", padding: "8px 18px" }}
-            >
-              <Icons.LogOut size={15} />
-              <span>End Shift / Clock Out</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={() => setShowEndModal(true)}
+            style={{ borderRadius: "var(--radius-pill)", padding: "8px 20px" }}
+          >
+            <Icons.LogOut size={15} />
+            <span>Clock Out / End Shift</span>
+          </button>
         </div>
 
         {showEndModal && (
           <div className="modal-overlay" onClick={() => setShowEndModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, display: "flex", flexDirection: "column", gap: 16, borderRadius: "var(--radius-lg)", padding: 24 }}>
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 440, display: "flex", flexDirection: "column", gap: 16, borderRadius: "var(--radius-lg)", padding: 24 }}
+            >
               <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600 }}>Clock Out Confirmation</h3>
               <p className="muted" style={{ margin: 0, fontSize: "14px", lineHeight: 1.5 }}>
-                End your active shift at <strong>{attendance.farm.name}</strong>? Your total shift duration will be logged.
+                End your active shift at <strong>{attendance.farm.name}</strong>? Total duration: <strong>{elapsed}</strong>.
               </p>
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEndModal(false)} style={{ borderRadius: "var(--radius-pill)" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEndModal(false)}
+                  style={{ borderRadius: "var(--radius-pill)" }}
+                >
                   Cancel
                 </button>
-                <button type="button" className="btn btn-danger" onClick={handleClockOut} disabled={pending} style={{ borderRadius: "var(--radius-pill)" }}>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleClockOut}
+                  disabled={pending}
+                  style={{ borderRadius: "var(--radius-pill)" }}
+                >
                   {pending ? "Ending…" : "Confirm Clock Out"}
                 </button>
               </div>
@@ -399,25 +385,14 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <strong style={{ color: "var(--ink)", fontSize: "15px" }}>Shift Completed Today &bull; {attendance.farm.name}</strong>
+            <strong style={{ color: "var(--ink)", fontSize: "15px" }}>
+              Shift Completed Today &bull; {attendance.farm.name}
+            </strong>
             <p className="muted" style={{ margin: "2px 0 0", fontSize: "13px" }}>
-              Clocked out on {new Date(attendance.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.
+              Clocked out at {new Date(attendance.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span className="badge badge-green">SHIFT FINISHED</span>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={handleResetShift}
-              disabled={pending}
-              title="Reset shift to test clocking in again"
-              style={{ borderRadius: "var(--radius-pill)" }}
-            >
-              <Icons.Refresh size={13} />
-              <span>Reset (Demo)</span>
-            </button>
-          </div>
+          <span className="badge badge-green">SHIFT FINISHED</span>
         </div>
       </article>
     );
@@ -431,7 +406,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           <div className="eyebrow"><span className="eyebrow-dot" /><span>PRESENCE VERIFICATION</span></div>
           <h3 className="section-title">Start Daily Shift</h3>
           <p className="muted" style={{ margin: "4px 0 0", fontSize: "13px" }}>
-            Capture a verified presence selfie and confirm geofence boundary coordinates to begin field operations.
+            Capture a photo and verify your estate geofence coordinates to begin field operations.
           </p>
         </div>
       </div>
@@ -451,7 +426,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
 
           <div className="form-group" style={{ margin: 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <label style={{ margin: 0 }}>GPS Geofence Radar</label>
+              <label style={{ margin: 0 }}>GPS Geofence Status</label>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
@@ -460,7 +435,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 style={{ fontSize: "11px", padding: "4px 8px" }}
               >
                 <Icons.MapPin size={12} />
-                <span>{gpsLoading ? "Acquiring…" : "Device GPS"}</span>
+                <span>{gpsLoading ? "Acquiring…" : "Refresh GPS"}</span>
               </button>
             </div>
 
@@ -473,60 +448,20 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 fontSize: "13px",
                 minHeight: 44,
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: 4,
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 6,
               }}
             >
               {radar ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
-                  <span style={{ color: radar.isInside ? "var(--green)" : "var(--red)", fontWeight: 650 }}>
-                    {radar.isInside
-                      ? `✓ Within boundary (${radar.dist}m / ${radar.radius}m radius)`
-                      : `⚠ Outside fence (${radar.dist >= 1000 ? `${(radar.dist / 1000).toFixed(1)}km` : `${radar.dist}m`} / ${radar.radius}m radius)`}
-                  </span>
-                  <span className="muted" style={{ fontSize: "11px" }}>
-                    {simulatedMode === "inside" ? "🎯 At Farm Gate" : simulatedMode === "outside" ? "🚶 2.5km Away" : "📍 Real Device"}
-                  </span>
-                </div>
+                <span style={{ color: radar.isInside ? "var(--green)" : "var(--red)", fontWeight: 650 }}>
+                  {radar.isInside
+                    ? `✓ Within boundary (${radar.dist}m / ${radar.radius}m radius)`
+                    : `⚠ Outside fence (${radar.dist >= 1000 ? `${(radar.dist / 1000).toFixed(1)}km` : `${radar.dist}m`} / ${radar.radius}m radius)`}
+                </span>
               ) : (
-                <span className="muted">Acquiring GPS fix…</span>
+                <span className="muted">{gpsLoading ? "Acquiring GPS fix…" : "Awaiting location…"}</span>
               )}
-            </div>
-
-            {/* Quick Demo Location Simulation Pills */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-              <span className="muted" style={{ fontSize: "11px" }}>Demo Simulation:</span>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => simulateLocation("inside")}
-                style={{
-                  fontSize: "11px",
-                  padding: "2px 8px",
-                  borderRadius: "var(--radius-pill)",
-                  backgroundColor: simulatedMode === "inside" ? "var(--green-light)" : undefined,
-                  color: simulatedMode === "inside" ? "var(--green)" : undefined,
-                  borderColor: simulatedMode === "inside" ? "var(--green)" : undefined,
-                }}
-              >
-                🎯 At Farm Gate (Within Fence)
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => simulateLocation("outside")}
-                style={{
-                  fontSize: "11px",
-                  padding: "2px 8px",
-                  borderRadius: "var(--radius-pill)",
-                  backgroundColor: simulatedMode === "outside" ? "var(--amber-light)" : undefined,
-                  color: simulatedMode === "outside" ? "var(--red)" : undefined,
-                  borderColor: simulatedMode === "outside" ? "var(--red)" : undefined,
-                }}
-              >
-                🚶 2.5km Away (Outside Fence)
-              </button>
             </div>
           </div>
         </div>
@@ -546,10 +481,12 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--red)", fontWeight: 650, fontSize: "13px" }}>
               <Icons.AlertTriangle size={17} />
-              <span>Out-of-Bounds Location Flagged ({radar.dist >= 1000 ? `${(radar.dist / 1000).toFixed(1)}km` : `${radar.dist}m`} from {selectedFarm?.name || "farm"})</span>
+              <span>
+                Out-of-Bounds Location Flagged ({radar.dist >= 1000 ? `${(radar.dist / 1000).toFixed(1)}km` : `${radar.dist}m`} from {selectedFarm?.name || "estate"})
+              </span>
             </div>
             <p style={{ margin: 0, fontSize: "12px", color: "var(--ink)", lineHeight: 1.45 }}>
-              You are currently outside the {radar.radius}m estate geofence. You must state an operational reason below. This shift will be recorded as <strong>EXCEPTION PENDING</strong> and immediately routed to the Farm Admin Action Center for formal authorization.
+              You are currently outside the {radar.radius}m estate geofence. Please provide a reason below. This shift will be logged as <strong>EXCEPTION PENDING</strong> for owner review.
             </p>
             <div>
               <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)", display: "block", marginBottom: 4 }}>
@@ -558,7 +495,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               <input
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Attending machinery supplier in Hosur / Approach road flooded"
+                placeholder="e.g. Attending machinery vendor / road diversion"
                 required
                 minLength={5}
                 style={{ width: "100%", background: "var(--canvas)", borderColor: "var(--amber)" }}
@@ -567,68 +504,62 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
           </div>
         )}
 
-        {/* Selfie Capture Box */}
+        {/* Native Mobile Camera Capture */}
         <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-sm)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             {selfiePreview ? (
               <img
                 src={selfiePreview}
                 alt="Selfie preview"
-                style={{ width: 50, height: 50, borderRadius: "var(--radius-sm)", objectFit: "cover", border: "2px solid var(--green)" }}
+                style={{ width: 52, height: 52, borderRadius: "var(--radius-sm)", objectFit: "cover", border: "2px solid var(--green)" }}
               />
             ) : (
-              <div style={{ width: 50, height: 50, borderRadius: "var(--radius-sm)", background: "var(--canvas)", display: "grid", placeItems: "center", border: "1px dashed var(--line)" }}>
+              <div style={{ width: 52, height: 52, borderRadius: "var(--radius-sm)", background: "var(--canvas)", display: "grid", placeItems: "center", border: "1px dashed var(--line)" }}>
                 <Icons.Camera size={22} color="var(--muted)" />
               </div>
             )}
             <div>
               <strong style={{ fontSize: "14px", color: "var(--ink)" }}>
-                {selfie ? "✓ Presence Selfie Verified" : "Presence Selfie Required"}
+                {selfie ? "✓ Photo Attached" : "Presence Photo Required"}
               </strong>
               <div className="muted" style={{ fontSize: "12px", marginTop: 2 }}>
-                {selfie ? `${selfie.name} (${Math.round(selfie.size / 1024)} KB)` : "Take live photo with webcam or front camera"}
+                {compressing ? "Compressing image…" : selfie ? `${Math.round(selfie.size / 1024)} KB compressed` : "Take a quick photo to verify attendance"}
               </div>
             </div>
           </div>
 
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            onChange={handlePhotoSelect}
+            style={{ display: "none" }}
+          />
+
           <button
             type="button"
             className={`btn ${selfie ? "btn-secondary" : "btn-green"}`}
-            onClick={() => setShowCamera(true)}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={compressing}
             style={{ borderRadius: "var(--radius-pill)", padding: "8px 18px" }}
           >
             <Icons.Camera size={15} />
-            <span>{selfie ? "Retake Selfie" : "Take Live Selfie"}</span>
+            <span>{selfie ? "Change Photo" : "Take Photo"}</span>
           </button>
         </div>
-
-        {showCamera && (
-          <div className="modal-overlay" onClick={() => setShowCamera(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, padding: 0, overflow: "hidden", borderRadius: "var(--radius-lg)" }}>
-              <CameraCapture
-                onCapture={(file, url) => {
-                  setSelfie(file);
-                  setSelfiePreview(url);
-                  setShowCamera(false);
-                  toast.success("Selfie captured!");
-                }}
-                onCancel={() => setShowCamera(false)}
-              />
-            </div>
-          </div>
-        )}
 
         {gpsError && (
           <div className="error" role="alert" style={{ fontSize: "12px" }}>
             <Icons.AlertCircle size={15} />
-            <span>{gpsError} (You can use the simulation pills above for demo testing)</span>
+            <span>{gpsError}</span>
           </div>
         )}
 
         <button
           type="submit"
           className="btn btn-green btn-lg"
-          disabled={pending || !farmId || !selfie}
+          disabled={pending || !farmId || !selfie || compressing}
           style={{ marginTop: 6, borderRadius: "var(--radius-sm)" }}
         >
           <Icons.Check size={16} />

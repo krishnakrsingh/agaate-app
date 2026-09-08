@@ -4,6 +4,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "./icons";
 import { IncidentReportForm } from "./incident-report-form";
+import { compressImage } from "@/lib/image-compress";
 
 type Cycle = { id: string; cropName: string };
 type Plot = { id: string; name: string; cropCycles: Cycle[] };
@@ -16,14 +17,15 @@ async function uploadPhotos(farmId: string, kind: "CROP_PHOTO" | "INCIDENT_PHOTO
   const ids: string[] = [];
   for (const file of files) {
     if (!(file instanceof File) || !file.size) continue;
+    const processed = await compressImage(file);
     const signed = await fetch("/api/uploads/presign", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ farmId, kind, mimeType: file.type, sizeBytes: file.size }),
+      body: JSON.stringify({ farmId, kind, mimeType: processed.type, sizeBytes: processed.size }),
     });
     if (!signed.ok) throw new Error((await signed.json()).error ?? "Could not prepare upload.");
     const { uploadUrl, mediaId } = await signed.json();
-    const stored = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+    const stored = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": processed.type }, body: processed });
     if (!stored.ok) throw new Error("Photo upload failed.");
     await fetch(`/api/uploads/${mediaId}/complete`, { method: "POST" });
     ids.push(mediaId);

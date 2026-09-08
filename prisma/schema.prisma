@@ -108,6 +108,10 @@ model User {
   reportedIncidents Incident[] @relation("IncidentReporter")
   incidentFollowUps IncidentFollowUp[] @relation("FollowUpAuthor")
   auditLogs AuditLog[] @relation("AuditActor")
+  harvestLogs HarvestLog[]
+  expenseLogs ExpenseLog[]
+  crewMusters DailyCrewMuster[]
+  authoredPrescriptions AgronomyPrescription[]
 }
 
 model Farm {
@@ -133,6 +137,11 @@ model Farm {
   monitoring CropMonitoring[]
   locationChangeRequests LocationChangeRequest[]
   agronomyPlans AgronomyPlan[]
+  harvestLogs HarvestLog[]
+  inventoryItems InventoryItem[]
+  expenseLogs ExpenseLog[]
+  crewMusters DailyCrewMuster[]
+  prescriptions AgronomyPrescription[]
 }
 
 model FarmAccess {
@@ -165,6 +174,8 @@ model Plot {
   tasks Task[]
   monitoring CropMonitoring[]
   incidents Incident[]
+  harvestLogs HarvestLog[]
+  prescriptions AgronomyPrescription[]
   @@unique([farmId, name])
   @@index([farmId, status])
 }
@@ -206,6 +217,8 @@ model CropCycle {
   tasks Task[]
   monitoring CropMonitoring[]
   incidents Incident[]
+  harvestLogs HarvestLog[]
+  prescriptions AgronomyPrescription[]
   @@index([plotId, status])
 }
 
@@ -431,3 +444,120 @@ model AuditLog {
   createdAt DateTime @default(now())
   actor User? @relation("AuditActor", fields: [actorId], references: [id])
 }
+
+model HarvestLog {
+  id              String       @id @default(cuid())
+  farmId          String
+  plotId          String
+  cropCycleId     String
+  harvestDate     DateTime     @db.Date
+  quantity        Decimal      @db.Decimal(12, 2)
+  unit            String
+  grade           String
+  buyerOrMarket   String?
+  vehicleNumber   String?
+  pricePerUnit    Decimal?     @db.Decimal(10, 2)
+  totalAmount     Decimal?     @db.Decimal(12, 2)
+  notes           String?
+  photoKey        String?
+  createdById     String
+  createdAt       DateTime     @default(now())
+
+  farm            Farm         @relation(fields: [farmId], references: [id])
+  plot            Plot         @relation(fields: [plotId], references: [id])
+  cropCycle       CropCycle    @relation(fields: [cropCycleId], references: [id])
+  createdBy       User         @relation(fields: [createdById], references: [id])
+
+  @@index([farmId, harvestDate])
+  @@index([cropCycleId])
+}
+
+model InventoryItem {
+  id              String       @id @default(cuid())
+  farmId          String
+  name            String
+  category        String
+  quantityInStock Decimal      @db.Decimal(12, 2)
+  unit            String
+  reorderLevel    Decimal?     @db.Decimal(12, 2)
+  costPerUnit     Decimal?     @db.Decimal(10, 2)
+  updatedAt       DateTime     @updatedAt
+
+  farm            Farm         @relation(fields: [farmId], references: [id])
+  transactions    InventoryTransaction[]
+
+  @@unique([farmId, name])
+}
+
+model InventoryTransaction {
+  id              String       @id @default(cuid())
+  itemId          String
+  type            String
+  quantity        Decimal      @db.Decimal(12, 2)
+  taskId          String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model ExpenseLog {
+  id              String       @id @default(cuid())
+  farmId          String
+  date            DateTime     @db.Date
+  category        String
+  amount          Decimal      @db.Decimal(12, 2)
+  description     String
+  receiptKey      String?
+  recordedById    String
+  createdAt       DateTime     @default(now())
+
+  farm            Farm         @relation(fields: [farmId], references: [id])
+  recordedBy      User         @relation(fields: [recordedById], references: [id])
+
+  @@index([farmId, date])
+}
+
+model DailyCrewMuster {
+  id              String       @id @default(cuid())
+  farmId          String
+  musterDate      DateTime     @db.Date
+  totalLabourers  Int
+  maleCount       Int?
+  femaleCount     Int?
+  hoursPerShift   Decimal      @default(8.0) @db.Decimal(4, 2)
+  dailyWageRate   Decimal?     @db.Decimal(10, 2)
+  totalWageCost   Decimal?     @db.Decimal(12, 2)
+  contractorName  String?
+  notes           String?
+  recordedById    String
+  createdAt       DateTime     @default(now())
+
+  farm            Farm         @relation(fields: [farmId], references: [id])
+  recordedBy      User         @relation(fields: [recordedById], references: [id])
+
+  @@unique([farmId, musterDate])
+}
+
+model AgronomyPrescription {
+  id              String       @id @default(cuid())
+  farmId          String
+  plotId          String
+  cropCycleId     String
+  authorId        String
+  targetIssue     String
+  recipeDetails   Json
+  applicationDate DateTime     @db.Date
+  instructions    String
+  priority        String       @default("HIGH")
+  status          String       @default("DISPATCHED")
+  createdAt       DateTime     @default(now())
+
+  farm            Farm         @relation(fields: [farmId], references: [id])
+  plot            Plot         @relation(fields: [plotId], references: [id])
+  cropCycle       CropCycle    @relation(fields: [cropCycleId], references: [id])
+  author          User         @relation(fields: [authorId], references: [id])
+
+  @@index([farmId, applicationDate])
+}
+

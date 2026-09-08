@@ -3,13 +3,64 @@ import type { Role } from "@prisma/client";
 export type NavItem = {
   href: string;
   label: string;
-  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity";
+  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap";
   roles: Role[];
   isActive?: (pathname: string) => boolean;
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  // 1. Officer-specific: My Day
+  // ── 1. FARM OWNER (FARM_ADMIN) ──
+  {
+    href: "/owner/dashboard",
+    label: "Cockpit",
+    icon: "Farm",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/dashboard") || p === "/dashboard",
+  },
+  {
+    href: "/owner/plots",
+    label: "Plots & Crops",
+    icon: "TrendingUp",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/plots"),
+  },
+  {
+    href: "/owner/harvest",
+    label: "Harvest",
+    icon: "Truck",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/harvest"),
+  },
+  {
+    href: "/owner/financials",
+    label: "Financials",
+    icon: "Coins",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/financials"),
+  },
+  {
+    href: "/owner/inventory",
+    label: "Shed Stock",
+    icon: "Package",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/inventory"),
+  },
+  {
+    href: "/admin/attendance",
+    label: "Workforce",
+    icon: "Users",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/admin/attendance"),
+  },
+  {
+    href: "/reports/daily",
+    label: "Reports",
+    icon: "FileText",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/reports"),
+  },
+
+  // ── 2. ON-SITE FARM MANAGER (FARM_OFFICER) ──
   {
     href: "/officer/day",
     label: "My Day",
@@ -18,73 +69,119 @@ export const NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
   },
   {
+    href: "/officer/quick-log",
+    label: "Quick Log",
+    icon: "Zap",
+    roles: ["FARM_OFFICER"],
+    isActive: (p) => p.startsWith("/officer/quick-log"),
+  },
+  {
+    href: "/officer/harvest",
+    label: "Log Harvest",
+    icon: "Truck",
+    roles: ["FARM_OFFICER"],
+    isActive: (p) => p.startsWith("/officer/harvest"),
+  },
+  {
+    href: "/officer/crew",
+    label: "Crew Muster",
+    icon: "Users",
+    roles: ["FARM_OFFICER"],
+    isActive: (p) => p.startsWith("/officer/crew"),
+  },
+  {
     href: "/officer/reports",
-    label: "Signals",
+    label: "Signals & Snaps",
     icon: "Camera",
     roles: ["FARM_OFFICER"],
     isActive: (p) => p.startsWith("/officer/reports"),
   },
 
-  // 2. Executive Command & Cockpit
+  // ── 3. CENTRAL AGRONOMIST ──
+  {
+    href: "/agronomy/radar",
+    label: "Crop Radar",
+    icon: "TrendingUp",
+    roles: ["AGRONOMIST"],
+    isActive: (p) => p.startsWith("/agronomy/radar") || p === "/dashboard",
+  },
+  {
+    href: "/agronomy/planning",
+    label: "Weekly Plan",
+    icon: "Calendar",
+    roles: ["AGRONOMIST"],
+    isActive: (p) => p.startsWith("/agronomy/planning"),
+  },
+  {
+    href: "/agronomy/diagnostics",
+    label: "Diagnostics",
+    icon: "Stethoscope",
+    roles: ["AGRONOMIST"],
+    isActive: (p) => p.startsWith("/agronomy/diagnostics"),
+  },
+  {
+    href: "/tasks",
+    label: "All Tasks",
+    icon: "ClipboardList",
+    roles: ["AGRONOMIST"],
+    isActive: (p) => p.startsWith("/tasks"),
+  },
+  {
+    href: "/reports/daily",
+    label: "Field Reports",
+    icon: "FileText",
+    roles: ["AGRONOMIST"],
+    isActive: (p) => p.startsWith("/reports"),
+  },
+
+  // ── 4. SUPER ADMIN (AGAATE HQ) ──
   {
     href: "/dashboard",
     label: "Command",
     icon: "Farm",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"],
-    isActive: (p) => p === "/dashboard" || p.startsWith("/farms") || p.startsWith("/plots"),
+    roles: ["SUPER_ADMIN"],
+    isActive: (p) => p === "/dashboard" || p.startsWith("/farms"),
   },
-
-  // 3. Workforce & Live Attendance Roster (Executive & Managerial)
   {
     href: "/admin/attendance",
     label: "Workforce",
     icon: "Users",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN"],
+    roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/admin/attendance"),
   },
-
-  // 4. Approvals & Operational Exception Authorization
   {
     href: "/admin/approvals",
     label: "Approvals",
     icon: "Shield",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN"],
+    roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/admin/approvals"),
   },
-
-  // 5. Agronomy Planner & Operational Execution
   {
     href: "/tasks",
     label: "Planner",
     icon: "Calendar",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"],
+    roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/tasks"),
   },
-
-  // 6. User Access Control & Farm Permissions (Super Admin only)
   {
     href: "/admin/users",
-    label: "People",
+    label: "Clients & Team",
     icon: "Users",
     roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/admin/users"),
   },
-
-  // 7. System Audit Trail (Super Admin & Farm Admin)
   {
     href: "/admin/audit",
     label: "Audit",
     icon: "Activity",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN"],
+    roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/admin/audit"),
   },
-
-  // 8. Daily Operational Reports
   {
     href: "/reports/daily",
     label: "Reports",
     icon: "FileText",
-    roles: ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"],
+    roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/reports"),
   },
 ];
@@ -96,8 +193,13 @@ export function getNavForRole(role: Role): NavItem[] {
 export function getMobileNavForRole(role: Role): NavItem[] {
   const all = getNavForRole(role);
   if (role === "SUPER_ADMIN") {
-    // Show top 5 priority items on mobile
     return all.filter((i) => ["/dashboard", "/admin/attendance", "/admin/approvals", "/admin/users", "/reports/daily"].includes(i.href));
+  }
+  if (role === "FARM_ADMIN") {
+    return all.filter((i) => ["/owner/dashboard", "/owner/harvest", "/owner/financials", "/owner/inventory", "/admin/attendance"].includes(i.href));
+  }
+  if (role === "FARM_OFFICER") {
+    return all.filter((i) => ["/officer/day", "/officer/quick-log", "/officer/harvest", "/officer/crew", "/officer/reports"].includes(i.href));
   }
   return all.slice(0, 5);
 }
