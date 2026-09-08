@@ -3,13 +3,13 @@ import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function performLogin(loginEmail: string, loginPass: string) {
+  async function performLogin(loginId: string, loginPass: string) {
     if (pending) return;
     setPending(true);
     setError("");
@@ -18,14 +18,14 @@ export function LoginForm() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail.trim().toLowerCase(), password: loginPass }),
+        body: JSON.stringify({ identifier: loginId.trim(), password: loginPass }),
       });
 
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         setPending(false);
-        setError(body.error ?? "Invalid email or password. Please try again.");
+        setError(body.error ?? "Invalid mobile number, email, or password.");
         return;
       }
 
@@ -47,7 +47,7 @@ export function LoginForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await performLogin(email, password);
+    await performLogin(identifier, password);
   }
 
   return (
@@ -60,7 +60,7 @@ export function LoginForm() {
           </div>
           <h2 className="section-title" style={{ margin: "0 0 4px", fontSize: "20px" }}>Sign in to Agaate</h2>
           <p className="muted" style={{ margin: 0, fontSize: "13px" }}>
-            Precision farm operations and agronomy management platform.
+            Precision farm operations and management portal.
           </p>
         </div>
 
@@ -73,16 +73,16 @@ export function LoginForm() {
 
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="form-group" style={{ margin: 0 }}>
-            <label htmlFor="login-email" style={{ fontSize: "13px", fontWeight: 600 }}>Email Address</label>
+            <label htmlFor="login-identifier" style={{ fontSize: "13px", fontWeight: 600 }}>Mobile Number or Email</label>
             <input
-              id="login-email"
-              type="email"
+              id="login-identifier"
+              type="text"
               required
               autoFocus
-              autoComplete="email"
-              placeholder="e.g. name@agaate.ag"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+              placeholder="e.g. 9876543210 or name@agaate.ag"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               disabled={pending}
             />
           </div>
@@ -115,7 +115,7 @@ export function LoginForm() {
           <button
             type="submit"
             className="btn btn-green btn-lg"
-            disabled={pending || !email || !password}
+            disabled={pending || !identifier || !password}
             style={{ width: "100%", marginTop: 6 }}
           >
             <span>{pending ? "Authenticating…" : "Sign In to Operations"}</span>

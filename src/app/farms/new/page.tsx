@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { ClientOnboardingWizard } from "@/components/admin/client-onboarding-wizard";
+import { ClientOnboardingWizardV2 } from "@/components/admin/onboarding/client-onboarding-wizard-v2";
 import { FarmForm } from "@/components/farm-form";
 
 export const dynamic = "force-dynamic";
@@ -23,14 +23,8 @@ export default async function NewFarmPage() {
     );
   }
 
-  // If Super Admin, provide the complete Client Onboarding & Handover Wizard
+  // If Super Admin, provide the complete Airbnb-style Client Onboarding & Handover Wizard
   if (session.role === "SUPER_ADMIN") {
-    const agronomists = await prisma.user.findMany({
-      where: { role: "AGRONOMIST", active: true },
-      select: { id: true, name: true, email: true },
-      orderBy: { name: "asc" },
-    });
-
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
@@ -41,7 +35,7 @@ export default async function NewFarmPage() {
               { label: "Onboard Client Farmland" },
             ]}
           />
-          <ClientOnboardingWizard agronomists={agronomists} />
+          <ClientOnboardingWizardV2 />
         </main>
       </>
     );

@@ -7,6 +7,7 @@ import { getNavForRole, getMobileNavForRole, isActiveItem } from "./nav/config";
 import { FarmSwitcher } from "./nav/farm-switcher";
 import { ProfileMenu } from "./nav/profile-menu";
 import { ThemeToggle } from "./theme-toggle";
+import { DesktopSidebar } from "./layout/desktop-sidebar";
 
 type Role = "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
 
@@ -56,7 +57,11 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
 
   return (
     <>
-      <header className="app-header">
+      {/* Desktop Sidebar Navigation (Viewports >= 1024px) */}
+      <DesktopSidebar role={role} userName={userName} />
+
+      {/* Mobile/Tablet Top Header (Viewports < 1024px) */}
+      <header className="app-header lg:hidden">
         <div className="app-header-inner">
           {/* Left: Brand & Farm Switcher Instrument */}
           <div className="app-header-left">
@@ -124,7 +129,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
       </header>
 
       {/* Mobile Bottom Dock (Touch-Engineered) */}
-      <nav className="app-mobile-dock" aria-label="Mobile Navigation">
+      <nav className="app-mobile-dock lg:hidden" aria-label="Mobile Navigation">
         <div className="app-mobile-dock-inner">
           {mobile.map((item) => {
             const active = isActiveItem(pathname, item);

@@ -17,12 +17,16 @@ const onboardSchema = z.object({
   totalArea: z.coerce.number().positive(),
   cultivableArea: z.coerce.number().positive(),
   waterSource: z.string().max(300).optional().nullable(),
+  soilType: z.string().max(100).optional().nullable(),
+  boundaryGeoJson: z.string().optional().nullable(),
   geofenceRadiusMeters: z.coerce.number().int().min(100).max(5000).default(500),
 
   // Client Owner Credentials
   ownerName: z.string().min(2).max(100),
-  ownerEmail: z.string().email(),
-  ownerPassword: z.string().min(8).max(128),
+  ownerPhone: z.string().max(30).optional().nullable(),
+  ownerDob: z.string().optional().nullable(),
+  ownerEmail: z.string().optional().nullable(),
+  ownerPassword: z.string().min(6).max(128),
 
   // Assigned Central Agronomist
   agronomistId: z.string().optional().nullable(),
@@ -32,6 +36,13 @@ const onboardSchema = z.object({
   initialPlotArea: z.coerce.number().positive().optional().nullable(),
   initialIrrigationType: z.enum(["Drip", "Sprinkler", "Rain Pipe", "Flood", "Other"]).default("Drip"),
 }).superRefine((data, ctx) => {
+  if (!data.ownerEmail && !data.ownerPhone) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["ownerPhone"],
+      message: "Either mobile number or email address is required for client login.",
+    });
+  }
   if (data.cultivableArea > data.totalArea) {
     ctx.addIssue({
       code: "custom",
@@ -56,13 +67,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = onboardSchema.parse(body);
 
-    const email = input.ownerEmail.toLowerCase();
+    const email = (input.ownerEmail && input.ownerEmail.trim())
+      ? input.ownerEmail.trim().toLowerCase()
+      : `${(input.ownerPhone || "client").replace(/[^\d]/g, "")}@client.agaate.ag`;
+    const phone = input.ownerPhone ? input.ownerPhone.replace(/[^\d+]/g, "") : null;
     const passwordHash = await bcrypt.hash(input.ownerPassword, 12);
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create or retrieve Client Owner user
-      let owner = await tx.user.findUnique({
-        where: { email },
+      let owner = await tx.user.findFirst({
+        where: {
+          OR: [
+            { email },
+            ...(phone ? [{ phone }] : []),
+          ],
+        },
       });
 
       if (!owner) {
@@ -70,6 +89,8 @@ export async function POST(request: NextRequest) {
           data: {
             name: input.ownerName,
             email,
+            phone,
+            dateOfBirth: input.ownerDob ? new Date(input.ownerDob) : null,
             passwordHash,
             role: "FARM_ADMIN",
             active: true,
@@ -89,6 +110,10 @@ export async function POST(request: NextRequest) {
           totalArea: input.totalArea,
           cultivableArea: input.cultivableArea,
           waterSource: input.waterSource || "Borewell / General",
+          soilType: input.soilType || "Red Loam",
+          boundaryGeoJson: input.boundaryGeoJson || null,
+          clientPhone: input.ownerPhone || null,
+          clientDob: input.ownerDob ? new Date(input.ownerDob) : null,
           geofenceRadiusMeters: input.geofenceRadiusMeters,
           status: "ACTIVE",
         },
@@ -181,6 +206,8 @@ export async function POST(request: NextRequest) {
         estateName: result.farm.name,
         clientName: result.owner.name,
         clientEmail: result.owner.email,
+        clientPhone: phone,
+        loginIdentifier: phone || result.owner.email,
         initialPassword: input.ownerPassword,
         loginUrl: "/login",
       },

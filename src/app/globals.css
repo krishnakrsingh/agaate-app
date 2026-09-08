@@ -365,6 +365,21 @@ a:hover {
   max-width: 900px;
 }
 
+@media (min-width: 1024px) {
+  body.has-desktop-sidebar .shell,
+  body:has(.app-desktop-sidebar) .shell {
+    margin-left: 256px;
+    width: calc(100% - 256px);
+    max-width: 1600px;
+    padding: 32px 48px 80px;
+  }
+  body.has-desktop-sidebar .shell.narrow,
+  body:has(.app-desktop-sidebar) .shell.narrow {
+    max-width: 960px;
+    margin-left: 256px;
+  }
+}
+
 @media (max-width: 1024px) {
   .shell {
     padding: 24px 24px 88px;

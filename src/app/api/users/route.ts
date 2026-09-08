@@ -8,12 +8,22 @@ import { apiError, paginationParams } from "@/lib/api";
 
 const createUserSchema = z.object({
   name: z.string().min(2).max(100),
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
-  role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]),
+  email: z.string().optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  password: z.string().min(6).max(128),
+  role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
+  isSupervisor: z.boolean().default(false),
   farmId: z.string().optional(),
   farmIds: z.array(z.string().min(1)).default([]),
   managesFarmIds: z.array(z.string().min(1)).default([]),
+}).superRefine((data, ctx) => {
+  if (!data.email && !data.phone) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["phone"],
+      message: "Either mobile number or email address is required.",
+    });
+  }
 });
 
 export async function GET(request: NextRequest) {
@@ -22,6 +32,8 @@ export async function GET(request: NextRequest) {
     requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN"]);
     const { limit, offset } = paginationParams(request.nextUrl.searchParams);
 
+    const farmIdParam = request.nextUrl.searchParams.get("farmId");
+
     let where: any = {};
     if (actor.role === "FARM_ADMIN") {
       const ownedFarms = await prisma.farm.findMany({
@@ -29,9 +41,16 @@ export async function GET(request: NextRequest) {
         select: { id: true },
       });
       const farmIds = ownedFarms.map((f) => f.id);
+      const targetIds = farmIdParam && farmIds.includes(farmIdParam) ? [farmIdParam] : farmIds;
       where = {
         farmAccess: {
-          some: { farmId: { in: farmIds } },
+          some: { farmId: { in: targetIds } },
+        },
+      };
+    } else if (farmIdParam) {
+      where = {
+        farmAccess: {
+          some: { farmId: farmIdParam },
         },
       };
     }
@@ -42,6 +61,8 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
+        isSupervisor: true,
         role: true,
         active: true,
         createdAt: true,
@@ -96,12 +117,22 @@ export async function POST(request: NextRequest) {
       if (count !== farmIds.length) throw new Error("A selected farm no longer exists.");
     }
 
-    // Check if email already exists
-    const existing = await prisma.user.findUnique({
-      where: { email: input.email.toLowerCase() },
+    const normalizedPhone = input.phone ? input.phone.replace(/[^\d+]/g, "") : null;
+    const normalizedEmail = (input.email && input.email.trim())
+      ? input.email.trim().toLowerCase()
+      : `${(normalizedPhone || "worker").replace(/[^\d]/g, "")}@worker.agaate.ag`;
+
+    // Check if email or phone already exists
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedEmail },
+          ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+        ],
+      },
     });
     if (existing) {
-      throw new Error("A user account with this email address already exists.");
+      throw new Error("A user account with this mobile number or email already exists.");
     }
 
     const passwordHash = await bcrypt.hash(input.password, 12);
@@ -110,7 +141,9 @@ export async function POST(request: NextRequest) {
       tx.user.create({
         data: {
           name: input.name,
-          email: input.email.toLowerCase(),
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          isSupervisor: input.isSupervisor,
           passwordHash,
           role: input.role,
           farmAccess: {

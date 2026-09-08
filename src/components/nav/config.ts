@@ -25,6 +25,20 @@ export const NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/plots"),
   },
   {
+    href: "/owner/team",
+    label: "Team & Labor",
+    icon: "Users",
+    roles: ["FARM_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/team"),
+  },
+  {
+    href: "/owner/calendar",
+    label: "Ops Calendar",
+    icon: "Calendar",
+    roles: ["FARM_ADMIN", "SUPER_ADMIN"],
+    isActive: (p) => p.startsWith("/owner/calendar"),
+  },
+  {
     href: "/owner/harvest",
     label: "Harvest",
     icon: "Truck",
@@ -47,8 +61,8 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/admin/attendance",
-    label: "Workforce",
-    icon: "Users",
+    label: "Attendance",
+    icon: "Activity",
     roles: ["FARM_ADMIN"],
     isActive: (p) => p.startsWith("/admin/attendance"),
   },
@@ -193,10 +207,10 @@ export function getNavForRole(role: Role): NavItem[] {
 export function getMobileNavForRole(role: Role): NavItem[] {
   const all = getNavForRole(role);
   if (role === "SUPER_ADMIN") {
-    return all.filter((i) => ["/dashboard", "/admin/attendance", "/admin/approvals", "/admin/users", "/reports/daily"].includes(i.href));
+    return all.filter((i) => ["/dashboard", "/owner/calendar", "/admin/attendance", "/admin/approvals", "/admin/users"].includes(i.href));
   }
   if (role === "FARM_ADMIN") {
-    return all.filter((i) => ["/owner/dashboard", "/owner/harvest", "/owner/financials", "/owner/inventory", "/admin/attendance"].includes(i.href));
+    return all.filter((i) => ["/owner/dashboard", "/owner/team", "/owner/calendar", "/owner/harvest", "/owner/financials"].includes(i.href));
   }
   if (role === "FARM_OFFICER") {
     return all.filter((i) => ["/officer/day", "/officer/quick-log", "/officer/harvest", "/officer/crew", "/officer/reports"].includes(i.href));
