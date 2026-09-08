@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent, useMemo } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
@@ -34,21 +34,24 @@ type HarvestLog = {
 
 export function HarvestConsole({ farms }: { farms: Farm[] }) {
   const toast = useToast();
-  const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
+  const [selectedFarmId, setSelectedFarmId] = useState(farms.length > 1 ? "ALL" : farms[0]?.id || "");
   const [logs, setLogs] = useState<HarvestLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [pending, setPending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("ALL");
 
+  const isAll = selectedFarmId === "ALL";
   const selectedFarm = farms.find((f) => f.id === selectedFarmId) || farms[0];
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [selectedCycleId, setSelectedCycleId] = useState("");
 
   const loadLogs = async () => {
-    if (!selectedFarmId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/harvest?farmId=${selectedFarmId}`);
+      const url = isAll ? "/api/harvest" : `/api/harvest?farmId=${selectedFarmId}`;
+      const res = await fetch(url);
       if (res.ok) setLogs(await res.json());
     } finally {
       setLoading(false);
@@ -57,7 +60,7 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
 
   useEffect(() => {
     void loadLogs();
-  }, [selectedFarmId]);
+  }, [selectedFarmId, isAll]);
 
   const activePlot = selectedFarm?.plots.find((p) => p.id === selectedPlotId);
 
@@ -65,12 +68,14 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
     e.preventDefault();
     setPending(true);
     const fd = new FormData(e.currentTarget);
+    const targetFarmId = isAll ? farms[0]?.id : selectedFarmId;
+
     try {
       const res = await fetch("/api/harvest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          farmId: selectedFarmId,
+          farmId: targetFarmId,
           plotId: selectedPlotId,
           cropCycleId: selectedCycleId,
           harvestDate: fd.get("harvestDate"),
@@ -99,42 +104,96 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
     }
   }
 
-  const totalQuantity = logs.reduce((acc, l) => acc + Number(l.quantity || 0), 0);
-  const gradeACount = logs.filter((l) => l.grade === "GRADE_A").reduce((acc, l) => acc + Number(l.quantity || 0), 0);
-  const gradeBCount = logs.filter((l) => l.grade === "GRADE_B").reduce((acc, l) => acc + Number(l.quantity || 0), 0);
-  const totalValue = logs.reduce((acc, l) => acc + Number(l.totalAmount || 0), 0);
+  // Filtered logs
+  const filteredLogs = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return logs.filter((l) => {
+      const matchesSearch =
+        !q ||
+        l.plot.name.toLowerCase().includes(q) ||
+        l.cropCycle.cropName.toLowerCase().includes(q) ||
+        (l.farm?.name && l.farm.name.toLowerCase().includes(q)) ||
+        (l.buyerOrMarket && l.buyerOrMarket.toLowerCase().includes(q)) ||
+        (l.vehicleNumber && l.vehicleNumber.toLowerCase().includes(q));
+
+      const matchesGrade = gradeFilter === "ALL" || l.grade === gradeFilter;
+      return matchesSearch && matchesGrade;
+    });
+  }, [logs, searchQuery, gradeFilter]);
+
+  const totalQuantity = filteredLogs.reduce((acc, l) => acc + Number(l.quantity || 0), 0);
+  const gradeACount = filteredLogs.filter((l) => l.grade === "GRADE_A").reduce((acc, l) => acc + Number(l.quantity || 0), 0);
+  const gradeBCount = filteredLogs.filter((l) => l.grade === "GRADE_B").reduce((acc, l) => acc + Number(l.quantity || 0), 0);
+  const totalValue = filteredLogs.reduce((acc, l) => acc + Number(l.totalAmount || 0), 0);
 
   const handleExportCsv = () => {
-    const farmName = selectedFarm?.name || "Estate";
-    const headers = [
-      "Harvest Date",
-      "Plot",
-      "Crop",
-      "Quantity",
-      "Unit",
-      "Grade",
-      "Price Per Unit (INR)",
-      "Total Amount (INR)",
-      "Buyer / Mandi",
-      "Vehicle No",
-      "Recorded By",
-      "Role",
-    ];
-    const rows = logs.map((l) => [
-      l.harvestDate.slice(0, 10),
-      l.plot.name,
-      l.cropCycle.cropName,
-      l.quantity,
-      l.unit,
-      l.grade,
-      l.pricePerUnit || "",
-      l.totalAmount || "",
-      l.buyerOrMarket || "N/A",
-      l.vehicleNumber || "N/A",
-      l.createdBy.name,
-      l.createdBy.role,
-    ]);
-    downloadCsv(`harvest-ledger-${farmName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    const scopeLabel = isAll ? "all-estates" : (selectedFarm?.name || "estate").toLowerCase().replace(/\s+/g, "-");
+    const headers = isAll
+      ? [
+          "Harvest Date",
+          "Estate",
+          "Plot",
+          "Crop",
+          "Quantity",
+          "Unit",
+          "Grade",
+          "Price Per Unit (INR)",
+          "Total Amount (INR)",
+          "Buyer / Mandi",
+          "Vehicle No",
+          "Recorded By",
+          "Role",
+        ]
+      : [
+          "Harvest Date",
+          "Plot",
+          "Crop",
+          "Quantity",
+          "Unit",
+          "Grade",
+          "Price Per Unit (INR)",
+          "Total Amount (INR)",
+          "Buyer / Mandi",
+          "Vehicle No",
+          "Recorded By",
+          "Role",
+        ];
+
+    const rows = filteredLogs.map((l) => {
+      if (isAll) {
+        return [
+          l.harvestDate.slice(0, 10),
+          l.farm?.name || "N/A",
+          l.plot.name,
+          l.cropCycle.cropName,
+          l.quantity,
+          l.unit,
+          l.grade,
+          l.pricePerUnit || "",
+          l.totalAmount || "",
+          l.buyerOrMarket || "N/A",
+          l.vehicleNumber || "N/A",
+          l.createdBy.name,
+          l.createdBy.role,
+        ];
+      }
+      return [
+        l.harvestDate.slice(0, 10),
+        l.plot.name,
+        l.cropCycle.cropName,
+        l.quantity,
+        l.unit,
+        l.grade,
+        l.pricePerUnit || "",
+        l.totalAmount || "",
+        l.buyerOrMarket || "N/A",
+        l.vehicleNumber || "N/A",
+        l.createdBy.name,
+        l.createdBy.role,
+      ];
+    });
+
+    downloadCsv(`harvest-ledger-${scopeLabel}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
     toast.success("Harvest & Mandi records exported to CSV!");
   };
 
@@ -145,11 +204,15 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
         <div className="page-header-content">
           <div className="eyebrow">
             <span className="eyebrow-dot" />
-            <span>COMMERCIAL OPERATIONS &bull; HARVEST &amp; DISPATCH</span>
+            <span>
+              {isAll
+                ? `COMMERCIAL OPERATIONS • ${farms.length} ESTATES`
+                : `COMMERCIAL HARVEST • ${selectedFarm?.name}`}
+            </span>
           </div>
           <h1 className="page-title">Commercial Harvest Ledger</h1>
           <p className="muted" style={{ marginTop: 4 }}>
-            Recorded picking batches, crate counts, quality grades, buyer dispatch receipts, and revenue totals.
+            Recorded picking batches, crate weights, quality grading, buyer dispatch receipts, and commercial revenue totals.
           </p>
         </div>
 
@@ -159,8 +222,9 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
               value={selectedFarmId}
               onChange={(e) => setSelectedFarmId(e.target.value)}
               className="input-field"
-              style={{ width: "auto" }}
+              style={{ width: "auto", fontWeight: 600, fontSize: "13px" }}
             >
+              <option value="ALL">★ All Estates Portfolio ({farms.length} Estates)</option>
               {farms.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -173,7 +237,7 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
             type="button"
             className="btn btn-secondary"
             onClick={handleExportCsv}
-            disabled={logs.length === 0}
+            disabled={filteredLogs.length === 0}
             title="Download CSV for buyer reconciliation & accounting"
           >
             <Icons.FileText size={15} />
@@ -184,9 +248,10 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
             type="button"
             className="btn btn-green"
             onClick={() => {
-              if (selectedFarm?.plots[0]) {
-                setSelectedPlotId(selectedFarm.plots[0].id);
-                setSelectedCycleId(selectedFarm.plots[0].cropCycles[0]?.id || "");
+              const targetF = isAll ? farms[0] : selectedFarm;
+              if (targetF?.plots[0]) {
+                setSelectedPlotId(targetF.plots[0].id);
+                setSelectedCycleId(targetF.plots[0].cropCycles[0]?.id || "");
               }
               setShowAddModal(true);
             }}
@@ -198,17 +263,17 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
       </div>
 
       {/* ── 2. HARVEST TELEMETRY ROW ── */}
-      <div className="metric-summary-row">
+      <div className="metric-summary-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
         <div className="metric-summary-item">
           <span className="metric-label">Cumulative Harvest</span>
           <div className="metric-value" style={{ color: "var(--green)" }}>
             {totalQuantity.toLocaleString()} <span style={{ fontSize: 16 }}>kg</span>
           </div>
-          <div className="metric-sub">{logs.length} picking batches logged</div>
+          <div className="metric-sub">{filteredLogs.length} picking batches logged</div>
         </div>
 
         <div className="metric-summary-item">
-          <span className="metric-label">Grade A (Export / Premium)</span>
+          <span className="metric-label">Grade A (Premium)</span>
           <div className="metric-value" style={{ color: "var(--green)" }}>
             {gradeACount.toLocaleString()} <span style={{ fontSize: 16 }}>kg</span>
           </div>
@@ -218,32 +283,66 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
         </div>
 
         <div className="metric-summary-item">
-          <span className="metric-label">Grade B (Local Market)</span>
+          <span className="metric-label">Grade B (Standard)</span>
           <div className="metric-value">{gradeBCount.toLocaleString()} <span style={{ fontSize: 16 }}>kg</span></div>
-          <div className="metric-sub">Secondary grade produce</div>
+          <div className="metric-sub">Secondary market produce</div>
         </div>
 
         <div className="metric-summary-item">
-          <span className="metric-label">Estimated Harvest Value</span>
+          <span className="metric-label">Estimated Gross Revenue</span>
           <div className="metric-value" style={{ color: "var(--ink)" }}>
             ₹{totalValue.toLocaleString()}
           </div>
-          <div className="metric-sub">Commercial gross value</div>
+          <div className="metric-sub">Commercial dispatched value</div>
         </div>
       </div>
 
-      {/* ── 3. HARVEST LOGS TABLE ── */}
-      <div className="compact-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <strong style={{ fontSize: "15px" }}>Picking Batches &amp; Dispatch History</strong>
-          <span className="muted" style={{ fontSize: "12px" }}>Showing recent 100 entries</span>
+      {/* ── 3. HARVEST LOGS TABLE & SEARCH ── */}
+      <div className="compact-card" style={{ padding: 22, gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <span className="mono-label" style={{ color: "var(--green-dark)" }}>PICKING BATCHES</span>
+            <h2 className="section-title" style={{ fontSize: "17px", margin: "2px 0 0" }}>
+              Harvest &amp; Dispatch History ({filteredLogs.length})
+            </h2>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <select
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              className="input-field"
+              style={{ fontSize: "12px", height: 34, width: "auto" }}
+            >
+              <option value="ALL">All Grades</option>
+              <option value="GRADE_A">Grade A (Premium)</option>
+              <option value="GRADE_B">Grade B (Standard)</option>
+              <option value="GRADE_C">Grade C / Processing</option>
+              <option value="REJECT">Reject / Discard</option>
+            </select>
+
+            <div style={{ position: "relative", width: 240 }}>
+              <input
+                type="text"
+                placeholder="Search plot, crop, mandi, buyer…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-field"
+                style={{ paddingLeft: 30, fontSize: "12px", height: 34 }}
+              />
+              <div style={{ position: "absolute", left: 9, top: 9, color: "var(--muted)" }}>
+                <Icons.Search size={14} />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table className="operational-table" style={{ width: "100%", margin: 0, border: "none" }}>
+          <table className="data-table" style={{ width: "100%", fontSize: "13px" }}>
             <thead>
               <tr>
                 <th>Date</th>
+                {isAll && <th>Estate</th>}
                 <th>Plot &amp; Crop</th>
                 <th>Quantity</th>
                 <th>Grade</th>
@@ -255,50 +354,72 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
+              {filteredLogs.map((log) => (
                 <tr key={log.id}>
                   <td>
                     <strong>{formatDate(log.harvestDate)}</strong>
                   </td>
+                  {isAll && (
+                    <td>
+                      <span style={{ fontWeight: 600, color: "var(--ink)" }}>
+                        {log.farm?.name || "Estate"}
+                      </span>
+                    </td>
+                  )}
                   <td>
-                    <div>{log.plot.name}</div>
+                    <strong style={{ color: "var(--ink)", display: "block" }}>{log.plot.name}</strong>
                     <span className="muted" style={{ fontSize: "11px" }}>{log.cropCycle.cropName}</span>
                   </td>
                   <td>
-                    <span style={{ fontWeight: 650, color: "var(--green)" }}>
-                      {Number(log.quantity).toLocaleString()} {log.unit}
-                    </span>
+                    <strong style={{ color: "var(--green)" }}>{Number(log.quantity).toLocaleString()}</strong>{" "}
+                    <span className="muted" style={{ fontSize: "11px" }}>{log.unit}</span>
                   </td>
                   <td>
                     <span
-                      className={`badge ${
-                        log.grade === "GRADE_A"
-                          ? "badge-green"
-                          : log.grade === "GRADE_B"
-                          ? "badge-amber"
-                          : "badge-danger"
-                      }`}
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: "var(--radius-pill)",
+                        background: log.grade === "GRADE_A" ? "var(--green-light)" : "var(--stone)",
+                        color: log.grade === "GRADE_A" ? "var(--green-dark)" : "var(--ink)",
+                        border: "1px solid var(--line)",
+                      }}
                     >
-                      {log.grade.replace("_", " ")}
+                      {log.grade.replaceAll("_", " ")}
                     </span>
                   </td>
-                  <td>{log.buyerOrMarket || "—"}</td>
+                  <td>{log.buyerOrMarket || <span className="muted">Farm Gate</span>}</td>
                   <td>
-                    <code className="data" style={{ fontSize: "11px" }}>{log.vehicleNumber || "—"}</code>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px" }}>
+                      {log.vehicleNumber || <span className="muted">-</span>}
+                    </span>
                   </td>
-                  <td>{log.pricePerUnit ? `₹${Number(log.pricePerUnit).toFixed(2)}` : "—"}</td>
                   <td>
-                    <strong>{log.totalAmount ? `₹${Number(log.totalAmount).toLocaleString()}` : "—"}</strong>
+                    {log.pricePerUnit ? (
+                      <span style={{ fontFamily: "var(--font-mono)" }}>₹{Number(log.pricePerUnit).toLocaleString()}</span>
+                    ) : (
+                      <span className="muted">-</span>
+                    )}
+                  </td>
+                  <td>
+                    {log.totalAmount ? (
+                      <strong style={{ color: "var(--ink)", fontFamily: "var(--font-mono)" }}>
+                        ₹{Number(log.totalAmount).toLocaleString()}
+                      </strong>
+                    ) : (
+                      <span className="muted">-</span>
+                    )}
                   </td>
                   <td>
                     <span className="muted" style={{ fontSize: "12px" }}>{log.createdBy.name}</span>
                   </td>
                 </tr>
               ))}
-              {logs.length === 0 && !loading && (
+              {filteredLogs.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: 36, color: "var(--muted)" }}>
-                    No harvest records logged yet for this estate. Tap &ldquo;Record Harvest Batch&rdquo; to add the first picking.
+                  <td colSpan={isAll ? 10 : 9} style={{ textAlign: "center", padding: 36, color: "var(--muted)" }}>
+                    No harvest records match the selected filters.
                   </td>
                 </tr>
               )}
@@ -316,7 +437,9 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
             style={{ maxWidth: 520, borderRadius: "var(--radius-lg)", padding: 24 }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Record Harvest Batch</h3>
+              <h3 style={{ margin: 0, fontSize: "18px" }}>
+                Record Harvest Batch {isAll ? `on ${farms[0]?.name}` : `on ${selectedFarm?.name}`}
+              </h3>
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
@@ -327,99 +450,138 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
             </div>
 
             <form onSubmit={handleAddHarvest} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div className="two-column">
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Harvest Date</label>
-                  <input
-                    name="harvestDate"
-                    type="date"
-                    required
-                    defaultValue={new Date().toISOString().slice(0, 10)}
-                  />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Target Plot</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Plot Parcel *</label>
                   <select
                     value={selectedPlotId}
                     onChange={(e) => {
                       setSelectedPlotId(e.target.value);
-                      const p = selectedFarm?.plots.find((x) => x.id === e.target.value);
+                      const p = (isAll ? farms[0] : selectedFarm)?.plots.find((plt) => plt.id === e.target.value);
                       setSelectedCycleId(p?.cropCycles[0]?.id || "");
                     }}
                     required
+                    className="input-field"
                   >
-                    {selectedFarm?.plots.map((p) => (
+                    {(isAll ? farms[0] : selectedFarm)?.plots.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}
                       </option>
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Crop Cycle</label>
-                <select
-                  value={selectedCycleId}
-                  onChange={(e) => setSelectedCycleId(e.target.value)}
-                  required
-                >
-                  {activePlot?.cropCycles.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.cropName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="two-column">
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Quantity Harvested</label>
-                  <input name="quantity" type="number" step="0.1" min="0.1" required placeholder="e.g. 450" />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Unit of Measure</label>
-                  <select name="unit" defaultValue="KG">
-                    <option value="KG">Kilograms (kg)</option>
-                    <option value="CRATES">Crates (standard)</option>
-                    <option value="TONS">Metric Tons</option>
-                    <option value="BOXES">Corrugated Boxes</option>
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Crop Cycle *</label>
+                  <select
+                    value={selectedCycleId}
+                    onChange={(e) => setSelectedCycleId(e.target.value)}
+                    required
+                    className="input-field"
+                  >
+                    {activePlot?.cropCycles.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.cropName}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div className="two-column">
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Quality Grade</label>
-                  <select name="grade" defaultValue="GRADE_A">
-                    <option value="GRADE_A">Grade A (Export / Premium)</option>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Harvest Date *</label>
+                  <input
+                    type="date"
+                    name="harvestDate"
+                    required
+                    defaultValue={new Date().toISOString().slice(0, 10)}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Quality Grade *</label>
+                  <select name="grade" required className="input-field">
+                    <option value="GRADE_A">Grade A (Premium / Export)</option>
                     <option value="GRADE_B">Grade B (Domestic Wholesale)</option>
-                    <option value="REJECT">Processing / Culls</option>
+                    <option value="GRADE_C">Grade C (Local / Processing)</option>
+                    <option value="REJECT">Reject / Wastage</option>
                   </select>
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Price per Unit (Optional)</label>
-                  <input name="pricePerUnit" type="number" step="0.5" min="0" placeholder="e.g. 28.50" />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Harvest Quantity *</label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    step="0.01"
+                    min="0.1"
+                    required
+                    placeholder="e.g. 1250"
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Measurement Unit *</label>
+                  <select name="unit" required className="input-field">
+                    <option value="KG">Kilograms (kg)</option>
+                    <option value="QUINTAL">Quintals (100 kg)</option>
+                    <option value="CRATES">Standard Crates (20 kg)</option>
+                    <option value="BOXES">Carton Boxes</option>
+                    <option value="TONNES">Metric Tonnes</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="two-column">
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Buyer / Destination Market</label>
-                  <input name="buyerOrMarket" placeholder="e.g., Reliance Fresh / APMC Mandi" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Buyer / Mandi</label>
+                  <input
+                    type="text"
+                    name="buyerOrMarket"
+                    placeholder="e.g. Vashi APMC Mandi"
+                    className="input-field"
+                  />
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Dispatch Vehicle Number</label>
-                  <input name="vehicleNumber" placeholder="e.g., KA-04-E-5512" />
+
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Vehicle / Dispatch No</label>
+                  <input
+                    type="text"
+                    name="vehicleNumber"
+                    placeholder="e.g. MH-12-AB-1234"
+                    className="input-field"
+                  />
                 </div>
               </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label>Field Remarks / Notes</label>
-                <textarea name="notes" rows={2} placeholder="Fruit sizing, brix rating, weather during harvest..." />
+              <div>
+                <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Price Realized Per Unit (₹ INR)</label>
+                <input
+                  type="number"
+                  name="pricePerUnit"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 45.00"
+                  className="input-field"
+                />
               </div>
 
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
+              <div>
+                <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>Field Notes</label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  placeholder="e.g. Morning harvest between 6:00 AM - 10:00 AM. Total 62 crates loaded onto tempo."
+                  className="input-field"
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -427,8 +589,12 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-green" disabled={pending}>
-                  {pending ? "Recording…" : "Save Harvest Entry"}
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="btn btn-green"
+                >
+                  {pending ? "Saving..." : "Confirm & Save Harvest"}
                 </button>
               </div>
             </form>

@@ -1,157 +1,156 @@
 "use client";
-import { useEffect, useState, FormEvent } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
 import { downloadCsv } from "@/lib/export";
 
-type Farm = {
-  id: string;
-  name: string;
-};
-
-type InventoryTx = {
-  id: string;
-  type: string;
-  quantity: string;
-  notes?: string | null;
-  createdAt: string;
-};
-
-type InventoryItem = {
+interface InventoryItem {
   id: string;
   farmId: string;
   name: string;
   category: string;
-  quantityInStock: string;
+  quantityInStock: string | number;
   unit: string;
-  reorderLevel?: string | null;
-  costPerUnit?: string | null;
-  isLowStock: boolean;
-  transactions?: InventoryTx[];
+  costPerUnit?: string | number | null;
+  reorderLevel?: string | number | null;
+  isLowStock?: boolean;
+  createdAt: string;
   updatedAt: string;
-};
+}
 
-export function InventoryConsole({ farms }: { farms: Farm[] }) {
+interface FarmOption {
+  id: string;
+  name: string;
+}
+
+interface Props {
+  farms: FarmOption[];
+  initialItems?: InventoryItem[];
+  farmId?: string;
+}
+
+export function InventoryConsole({ farms, initialItems = [], farmId }: Props) {
   const toast = useToast();
-  const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedFarmId, setSelectedFarmId] = useState(farmId || (farms.length > 0 ? farms[0].id : ""));
+  const [items, setItems] = useState<InventoryItem[]>(initialItems);
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [showLowOnly, setShowLowOnly] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTxItem, setActiveTxItem] = useState<InventoryItem | null>(null);
   const [pending, setPending] = useState(false);
 
-  const loadInventory = async () => {
+  const loadItems = async () => {
     if (!selectedFarmId) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/inventory?farmId=${selectedFarmId}`);
-      if (res.ok) {
-        setItems(await res.json());
-      }
+      if (!res.ok) throw new Error("Failed to load inventory");
+      const data = await res.json();
+      setItems(data || []);
     } catch {
-      toast.show("Failed to load shed inventory", "error");
+      toast.show("Error loading inventory items", "error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadInventory();
+    if (selectedFarmId) {
+      void loadItems();
+    }
   }, [selectedFarmId]);
 
-  const filteredItems = items.filter((item) => {
-    if (showLowOnly && !item.isLowStock) return false;
-    if (categoryFilter !== "ALL" && item.category !== categoryFilter) return false;
-    return true;
-  });
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchesCategory = categoryFilter === "ALL" || item.category === categoryFilter;
+      const matchesLow = !showLowOnly || Boolean(item.isLowStock);
+      const matchesSearch =
+        !searchQuery ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesLow && matchesSearch;
+    });
+  }, [items, categoryFilter, showLowOnly, searchQuery]);
 
   const totalSKUs = items.length;
   const lowStockCount = items.filter((i) => i.isLowStock).length;
-  const totalValuation = items.reduce((acc, curr) => {
-    const qty = Number(curr.quantityInStock) || 0;
-    const cost = Number(curr.costPerUnit) || 0;
-    return acc + qty * cost;
+  const totalValuation = items.reduce((acc, item) => {
+    const qty = Number(item.quantityInStock) || 0;
+    const rate = Number(item.costPerUnit) || 0;
+    return acc + qty * rate;
   }, 0);
 
-  const handleAddItem = async (e: FormEvent<HTMLFormElement>) => {
+  const handleAddItem = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
-    const form = new FormData(e.currentTarget);
-    const body = {
-      farmId: selectedFarmId,
-      name: form.get("name"),
-      category: form.get("category"),
-      quantity: Number(form.get("quantity")),
-      unit: form.get("unit"),
-      reorderLevel: form.get("reorderLevel") ? Number(form.get("reorderLevel")) : null,
-      costPerUnit: form.get("costPerUnit") ? Number(form.get("costPerUnit")) : null,
-    };
+    const fd = new FormData(e.currentTarget);
 
     try {
       const res = await fetch("/api/inventory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          farmId: selectedFarmId,
+          name: fd.get("name"),
+          category: fd.get("category"),
+          unit: fd.get("unit"),
+          quantityInStock: parseFloat(fd.get("quantity") as string) || 0,
+          reorderLevel: fd.get("reorderLevel") ? parseFloat(fd.get("reorderLevel") as string) : null,
+          costPerUnit: fd.get("costPerUnit") ? parseFloat(fd.get("costPerUnit") as string) : null,
+        }),
       });
+
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to add inventory item");
+        throw new Error(err.error || "Failed to register item");
       }
-      toast.show("Inventory item saved to shed", "success");
+
+      toast.show("Item added to shed inventory!", "success");
       setShowAddModal(false);
-      void loadInventory();
+      void loadItems();
     } catch (err: any) {
-      toast.show(err.message || "Failed to save item", "error");
+      toast.show(err.message || "Failed to add item", "error");
     } finally {
       setPending(false);
     }
   };
 
-  const handleLogTransaction = async (e: FormEvent<HTMLFormElement>) => {
+  const handleLogTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!activeTxItem) return;
     setPending(true);
-    const form = new FormData(e.currentTarget);
-    const body = {
-      itemId: activeTxItem.id,
-      type: form.get("type"),
-      quantity: Number(form.get("quantity")),
-      notes: form.get("notes"),
-    };
+    const fd = new FormData(e.currentTarget);
 
     try {
-      const res = await fetch("/api/inventory", {
+      const res = await fetch(`/api/inventory/${activeTxItem.id}/transaction`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          type: fd.get("type"),
+          quantity: parseFloat(fd.get("quantity") as string) || 0,
+          notes: fd.get("notes"),
+        }),
       });
+
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Failed to log transaction");
+        throw new Error(err.error || "Failed to record movement");
       }
-      toast.show("Inventory balance updated", "success");
+
+      toast.show("Stock movement recorded successfully!", "success");
       setActiveTxItem(null);
-      void loadInventory();
+      void loadItems();
     } catch (err: any) {
       toast.show(err.message || "Transaction error", "error");
     } finally {
       setPending(false);
     }
-  };
-
-  const categoryColor: Record<string, string> = {
-    FERTILIZER: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-    PESTICIDE: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-    SEED: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-    IRRIGATION: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-    PACKAGING: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-    TOOLS: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-    OTHER: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
   };
 
   const handleExportCsv = () => {
@@ -183,30 +182,39 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          padding: "16px 20px",
+        }}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Icons.Package className="w-6 h-6 text-emerald-400" />
-              Shed & Inventory Ledger
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <Icons.Package size={20} style={{ color: "var(--green)" }} />
+              Shed &amp; Inventory Ledger
             </h1>
-            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-              Owner Oversight
-            </span>
+            <span className="badge badge-green">Owner Oversight</span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>
             Real-time fertilizer, agro-chemical, seeds and equipment stock. Prevents input leakage and stock-outs.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {farms.length > 1 && (
             <select
               value={selectedFarmId}
               onChange={(e) => setSelectedFarmId(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm rounded-lg px-3 py-2 outline-none focus:border-emerald-500 transition-colors"
+              className="input-field"
+              style={{ fontSize: 12, padding: "6px 12px", width: "auto" }}
             >
               {farms.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -217,175 +225,187 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
           )}
 
           <button
+            type="button"
             onClick={handleExportCsv}
             disabled={items.length === 0}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm px-4 py-2 rounded-lg transition-colors border border-zinc-700 disabled:opacity-50"
+            className="btn btn-sm btn-secondary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 12px" }}
             title="Download CSV for warehouse audit & tax records"
           >
-            <Icons.FileText className="w-4 h-4" />
+            <Icons.FileText size={14} />
             Export CSV
           </button>
 
           <button
+            type="button"
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-sm"
+            className="btn btn-sm btn-primary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 14px" }}
           >
-            <Icons.Plus className="w-4 h-4" />
+            <Icons.Plus size={14} />
             Add SKU
           </button>
         </div>
       </div>
 
       {/* KPI Highlights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Total Tracked Items</span>
-            <Icons.Package className="w-4 h-4 text-zinc-500" />
-          </div>
-          <div className="text-2xl font-bold text-white mt-2">{totalSKUs} <span className="text-xs text-zinc-500 font-normal">items</span></div>
-          <div className="text-xs text-zinc-500 mt-1">Across chemicals, fertilizers, & seeds</div>
+      <div className="metric-summary-row">
+        <div className="metric-summary-item">
+          <span className="metric-label">Total Tracked Items</span>
+          <div className="metric-value font-mono">{totalSKUs}</div>
+          <div className="metric-sub">Across chemicals, fertilizers &amp; seeds</div>
         </div>
 
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Low Stock Reorders</span>
-            <Icons.AlertTriangle className={`w-4 h-4 ${lowStockCount > 0 ? "text-amber-400" : "text-zinc-500"}`} />
+        <div className="metric-summary-item">
+          <span className="metric-label">Low Stock Reorders</span>
+          <div className="metric-value font-mono" style={{ color: lowStockCount > 0 ? "var(--amber)" : "var(--green)" }}>
+            {lowStockCount}
           </div>
-          <div className={`text-2xl font-bold mt-2 ${lowStockCount > 0 ? "text-amber-400" : "text-white"}`}>
-            {lowStockCount} <span className="text-xs text-zinc-500 font-normal">below threshold</span>
-          </div>
-          <div className="text-xs text-zinc-500 mt-1">
+          <div className="metric-sub">
             {lowStockCount > 0 ? "Risk of farm operation disruption" : "Adequate safety stock available"}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Estimated Shed Valuation</span>
-            <Icons.Coins className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-400 mt-2">
+        <div className="metric-summary-item">
+          <span className="metric-label">Estimated Shed Valuation</span>
+          <div className="metric-value font-mono" style={{ color: "var(--green)" }}>
             ₹{totalValuation.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
           </div>
-          <div className="text-xs text-zinc-500 mt-1">Stored capital in shed warehouse</div>
+          <div className="metric-sub">Stored capital in shed warehouse</div>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-zinc-900/40 border border-zinc-800 rounded-xl">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          padding: "10px 16px",
+        }}
+      >
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
           {["ALL", "FERTILIZER", "PESTICIDE", "SEED", "IRRIGATION", "PACKAGING", "TOOLS", "OTHER"].map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                categoryFilter === cat
-                  ? "bg-zinc-700 text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
-              }`}
+              className={`btn btn-sm ${categoryFilter === cat ? "btn-primary" : "btn-ghost"}`}
+              style={{ fontSize: 11, padding: "4px 8px" }}
             >
               {cat.replace("_", " ")}
             </button>
           ))}
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer text-xs text-zinc-300 select-none">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <input
-            type="checkbox"
-            checked={showLowOnly}
-            onChange={(e) => setShowLowOnly(e.target.checked)}
-            className="rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-0"
+            type="text"
+            placeholder="Search SKU..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input-field"
+            style={{ fontSize: 12, padding: "4px 10px", width: 160 }}
           />
-          Show Low Stock Only
-        </label>
+
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink)", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={showLowOnly}
+              onChange={(e) => setShowLowOnly(e.target.checked)}
+            />
+            Low Stock Only
+          </label>
+        </div>
       </div>
 
       {/* Items Table */}
-      <div className="border border-zinc-800/80 rounded-xl overflow-hidden bg-zinc-900/60 backdrop-blur">
+      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
         {loading ? (
-          <div className="p-8 text-center text-zinc-400">
-            <Icons.Spinner className="w-6 h-6 animate-spin mx-auto text-emerald-500 mb-2" />
+          <div style={{ padding: 32, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+            <Icons.Spinner size={20} className="animate-spin" style={{ margin: "0 auto 8px", color: "var(--green)" }} />
             Loading shed inventory...
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="p-12 text-center">
-            <Icons.Package className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-            <div className="text-zinc-300 font-medium">No inventory items found</div>
-            <p className="text-xs text-zinc-500 mt-1">
+          <div style={{ padding: 48, textAlign: "center" }}>
+            <Icons.Package size={32} style={{ color: "var(--muted)", margin: "0 auto 12px" }} />
+            <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>No inventory items found</div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
               Add products or fertilizers used on this estate to monitor burn rate and stock depletion.
             </p>
             <button
+              type="button"
               onClick={() => setShowAddModal(true)}
-              className="mt-4 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-2 rounded-lg font-medium"
+              className="btn btn-sm btn-primary"
+              style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              <Icons.Plus className="w-3.5 h-3.5" />
+              <Icons.Plus size={14} />
               Add First Item
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-zinc-300">
-              <thead className="text-xs uppercase bg-zinc-800/50 text-zinc-400 border-b border-zinc-800">
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table" style={{ width: "100%", margin: 0 }}>
+              <thead>
                 <tr>
-                  <th className="px-4 py-3">Item Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3 text-right">Available Stock</th>
-                  <th className="px-4 py-3 text-right">Reorder Threshold</th>
-                  <th className="px-4 py-3 text-right">Unit Rate (₹)</th>
-                  <th className="px-4 py-3 text-right">Valuation (₹)</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th style={{ textAlign: "left" }}>Item Name</th>
+                  <th style={{ textAlign: "left" }}>Category</th>
+                  <th style={{ textAlign: "right" }}>Available Stock</th>
+                  <th style={{ textAlign: "right" }}>Reorder Threshold</th>
+                  <th style={{ textAlign: "right" }}>Unit Rate (₹)</th>
+                  <th style={{ textAlign: "right" }}>Valuation (₹)</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60">
+              <tbody>
                 {filteredItems.map((item) => {
                   const stockNum = Number(item.quantityInStock);
                   const costNum = Number(item.costPerUnit) || 0;
                   const itemValuation = stockNum * costNum;
 
                   return (
-                    <tr key={item.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-white flex items-center gap-2">
+                    <tr key={item.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
                           {item.name}
                           {item.isLowStock && (
-                            <span className="inline-flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded font-medium">
-                              <Icons.AlertTriangle className="w-2.5 h-2.5" /> Low Stock
+                            <span className="badge badge-amber font-mono" style={{ fontSize: 9 }}>
+                              Low Stock
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-zinc-500">Updated {formatDate(item.updatedAt)}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>Updated {formatDate(item.updatedAt)}</div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded border font-medium ${
-                            categoryColor[item.category] || categoryColor.OTHER
-                          }`}
-                        >
+                      <td>
+                        <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
                           {item.category}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className={`font-mono font-semibold ${item.isLowStock ? "text-amber-400" : "text-zinc-100"}`}>
+                      <td style={{ textAlign: "right" }}>
+                        <span style={{ fontFamily: "monospace", fontWeight: 700, color: item.isLowStock ? "var(--amber)" : "var(--ink)" }}>
                           {stockNum.toLocaleString()}
                         </span>{" "}
-                        <span className="text-xs text-zinc-400">{item.unit}</span>
+                        <span className="muted" style={{ fontSize: 11 }}>{item.unit}</span>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-zinc-400">
+                      <td style={{ textAlign: "right", fontFamily: "monospace", color: "var(--muted)" }}>
                         {item.reorderLevel ? `${Number(item.reorderLevel).toLocaleString()} ${item.unit}` : "-"}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-zinc-400">
+                      <td style={{ textAlign: "right", fontFamily: "monospace", color: "var(--muted)" }}>
                         {item.costPerUnit ? `₹${Number(item.costPerUnit).toLocaleString()}` : "-"}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-emerald-400 font-medium">
+                      <td style={{ textAlign: "right", fontFamily: "monospace", fontWeight: 700, color: "var(--green)" }}>
                         {itemValuation > 0 ? `₹${itemValuation.toLocaleString("en-IN", { maximumFractionDigits: 0 })}` : "-"}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td style={{ textAlign: "right" }}>
                         <button
+                          type="button"
                           onClick={() => setActiveTxItem(item)}
-                          className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors font-medium inline-flex items-center gap-1"
+                          className="btn btn-sm btn-secondary"
+                          style={{ fontSize: 11, padding: "4px 8px" }}
                         >
-                          <Icons.Clock className="w-3 h-3 text-zinc-400" />
                           Adjust Stock
                         </button>
                       </td>
@@ -400,115 +420,138 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Icons.Package className="w-5 h-5 text-emerald-400" />
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            backgroundColor: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="card"
+            style={{ width: "100%", maxWidth: 500, padding: 24, boxShadow: "var(--shadow-modal)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icons.Package size={18} style={{ color: "var(--green)" }} />
                 Add Shed Item (SKU)
               </h2>
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}
               >
-                <Icons.X className="w-5 h-5" />
+                <Icons.X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleAddItem} className="space-y-4 mt-4">
+            <form onSubmit={handleAddItem} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">Item / Product Name *</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Item / Product Name *</label>
                 <input
                   type="text"
                   name="name"
                   placeholder="e.g. NPK 19-19-19, Neem Oil, Drip Pipes"
                   required
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  className="input-field"
+                  style={{ width: "100%" }}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Category *</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Category *</label>
                   <select
                     name="category"
                     required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   >
                     <option value="FERTILIZER">Fertilizer</option>
                     <option value="PESTICIDE">Pesticide / Bio-control</option>
                     <option value="SEED">Seed / Planting Material</option>
                     <option value="IRRIGATION">Irrigation / Fittings</option>
                     <option value="PACKAGING">Packaging / Crates</option>
-                    <option value="TOOLS">Tools & Machinery</option>
+                    <option value="TOOLS">Tools &amp; Machinery</option>
                     <option value="OTHER">Other / Consumable</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Unit of Measure *</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Unit of Measure *</label>
                   <input
                     type="text"
                     name="unit"
                     defaultValue="KG"
                     placeholder="KG, L, BAGS, PCS"
                     required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Current Stock *</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Current Stock *</label>
                   <input
                     type="number"
                     step="0.01"
                     name="quantity"
                     placeholder="0"
                     required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Reorder Level</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Reorder Level</label>
                   <input
                     type="number"
                     step="0.01"
                     name="reorderLevel"
                     placeholder="Min qty alert"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Cost Per Unit (₹)</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Cost Per Unit (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     name="costPerUnit"
                     placeholder="₹ rate"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   />
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-800">
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                  className="btn btn-sm btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="btn btn-sm btn-primary"
                 >
-                  {pending && <Icons.Spinner className="w-3.5 h-3.5 animate-spin" />}
-                  Register Item
+                  {pending ? "Saving..." : "Register Item"}
                 </button>
               </div>
             </form>
@@ -518,31 +561,50 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
 
       {/* Adjust Stock Transaction Modal */}
       {activeTxItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            backgroundColor: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setActiveTxItem(null)}
+        >
+          <div
+            className="card"
+            style={{ width: "100%", maxWidth: 440, padding: 24, boxShadow: "var(--shadow-modal)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
               <div>
-                <h2 className="text-lg font-bold text-white">Log Stock Movement</h2>
-                <div className="text-xs text-zinc-400 mt-0.5">
-                  Item: <span className="text-emerald-400 font-semibold">{activeTxItem.name}</span> (Current:{" "}
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Log Stock Movement</h2>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                  Item: <strong style={{ color: "var(--green)" }}>{activeTxItem.name}</strong> (Current:{" "}
                   {Number(activeTxItem.quantityInStock)} {activeTxItem.unit})
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setActiveTxItem(null)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}
               >
-                <Icons.X className="w-5 h-5" />
+                <Icons.X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleLogTransaction} className="space-y-4 mt-4">
+            <form onSubmit={handleLogTransaction} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">Movement Type *</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Movement Type *</label>
                 <select
                   name="type"
                   required
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="input-field"
+                  style={{ width: "100%" }}
                 >
                   <option value="STOCK_OUT">Stock Out / Consumed on Plot (-)</option>
                   <option value="STOCK_IN">Stock In / New Purchase (+)</option>
@@ -551,7 +613,7 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
                   Quantity ({activeTxItem.unit}) *
                 </label>
                 <input
@@ -561,35 +623,36 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
                   name="quantity"
                   required
                   placeholder={`Amount in ${activeTxItem.unit}`}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  className="input-field"
+                  style={{ width: "100%" }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1">Reason / Notes / Batch</label>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Reason / Notes / Batch</label>
                 <input
                   type="text"
                   name="notes"
                   placeholder="e.g. Applied to Plot B for aphid treatment"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+                  className="input-field"
+                  style={{ width: "100%" }}
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-800">
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                 <button
                   type="button"
                   onClick={() => setActiveTxItem(null)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                  className="btn btn-sm btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="btn btn-sm btn-primary"
                 >
-                  {pending && <Icons.Spinner className="w-3.5 h-3.5 animate-spin" />}
-                  Record Movement
+                  {pending ? "Recording..." : "Record Movement"}
                 </button>
               </div>
             </form>

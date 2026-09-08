@@ -6,8 +6,6 @@ import { ToastProvider } from "@/components/ui/toast";
 export const metadata: Metadata = {
   title: "Agaate Farm Operations",
   description: "Farm operations and agronomy management platform",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Agaate" },
 };
 
 export const viewport: Viewport = {

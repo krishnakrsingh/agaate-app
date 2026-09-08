@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
@@ -23,6 +23,8 @@ type Plot = {
     startDate: string;
     endDate?: string | null;
   }[];
+  farmName?: string;
+  farmId?: string;
 };
 
 type Farm = {
@@ -38,32 +40,79 @@ type Farm = {
 export function PlotsExplorer({ farms }: { farms: Farm[] }) {
   const router = useRouter();
   const toast = useToast();
-  const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
+  const [selectedFarmId, setSelectedFarmId] = useState(farms.length > 1 ? "ALL" : farms[0]?.id || "");
   const [showAddModal, setShowAddModal] = useState(false);
   const [pending, setPending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "CULTIVATED" | "FALLOW">("ALL");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
+  const isAll = selectedFarmId === "ALL";
   const selectedFarm = farms.find((f) => f.id === selectedFarmId) || farms[0];
 
-  if (!selectedFarm) {
+  if (!selectedFarm && farms.length === 0) {
     return (
-      <div className="p-12 text-center text-zinc-400">
-        <Icons.AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-        No farm assigned to your account.
+      <div className="card" style={{ padding: 48, textAlign: "center" }}>
+        <Icons.AlertTriangle size={32} style={{ color: "var(--amber)", margin: "0 auto 12px" }} />
+        <p className="muted" style={{ fontSize: 13, margin: 0 }}>No farm assigned to your account.</p>
       </div>
     );
   }
 
-  const plots = selectedFarm.plots || [];
-  const totalPlotArea = plots.reduce((acc, p) => acc + Number(p.area), 0);
-  const activeCropsCount = plots.reduce(
+  // All plots across scope
+  const allScopedPlots: (Plot & { farmName: string; farmId: string })[] = useMemo(() => {
+    if (isAll) {
+      return farms.flatMap((f) =>
+        f.plots.map((p) => ({
+          ...p,
+          farmName: f.name,
+          farmId: f.id,
+        }))
+      );
+    }
+    return (selectedFarm?.plots || []).map((p) => ({
+      ...p,
+      farmName: selectedFarm.name,
+      farmId: selectedFarm.id,
+    }));
+  }, [isAll, selectedFarm, farms]);
+
+  // Filtered plots
+  const filteredPlots = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    return allScopedPlots.filter((plot) => {
+      const activeCycle = plot.cropCycles.find((c) => c.status === "ACTIVE");
+      const matchesSearch =
+        !q ||
+        plot.name.toLowerCase().includes(q) ||
+        plot.farmName.toLowerCase().includes(q) ||
+        (plot.soilType && plot.soilType.toLowerCase().includes(q)) ||
+        (activeCycle && activeCycle.cropName.toLowerCase().includes(q));
+
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "CULTIVATED" && !!activeCycle) ||
+        (statusFilter === "FALLOW" && !activeCycle);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [allScopedPlots, searchQuery, statusFilter]);
+
+  const totalPlotArea = allScopedPlots.reduce((acc, p) => acc + Number(p.area), 0);
+  const activeCropsCount = allScopedPlots.reduce(
     (acc, p) => acc + p.cropCycles.filter((c) => c.status === "ACTIVE").length,
     0
   );
+
+  const scopeCultivableArea = isAll
+    ? farms.reduce((acc, f) => acc + Number(f.cultivableArea || 0), 0)
+    : Number(selectedFarm?.cultivableArea || 0);
 
   const handleCreatePlot = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
     const form = new FormData(e.currentTarget);
+    const targetFarmId = isAll ? farms[0]?.id : selectedFarm.id;
 
     const body = {
       name: form.get("name"),
@@ -80,7 +129,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
     };
 
     try {
-      const res = await fetch(`/api/farms/${selectedFarm.id}/plots`, {
+      const res = await fetch(`/api/farms/${targetFarmId}/plots`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -102,31 +151,41 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          padding: "16px 20px",
+        }}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Icons.TrendingUp className="w-6 h-6 text-emerald-400" />
-              Estate Plots & Crop Registry
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <Icons.Layers size={20} style={{ color: "var(--green)" }} />
+              Estate Plots &amp; Crop Registry
             </h1>
-            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-              Land Parcels
-            </span>
+            <span className="badge badge-green font-mono">{allScopedPlots.length} Parcels</span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            Browse land zones, monitor vegetative stages, soil characteristics, and irrigation infrastructure.
+          <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>
+            Browse demarcated land zones, soil characteristics, irrigation telemetry, and active crop stages.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {farms.length > 1 && (
             <select
               value={selectedFarmId}
               onChange={(e) => setSelectedFarmId(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm rounded-lg px-3 py-2 outline-none focus:border-emerald-500 transition-colors"
+              className="input-field"
+              style={{ fontSize: 12, padding: "6px 12px", width: "auto" }}
             >
+              <option value="ALL">All Estates Portfolio ({farms.length} Estates)</option>
               {farms.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -136,101 +195,192 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
           )}
 
           <button
+            type="button"
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors shadow-sm"
+            className="btn btn-sm btn-primary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 14px" }}
           >
-            <Icons.Plus className="w-4 h-4" />
-            Add Plot
+            <Icons.Plus size={14} />
+            Demarcate Plot
           </button>
         </div>
       </div>
 
       {/* Farm Acreage KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Total Plots / Zones</span>
-          <div className="text-2xl font-bold text-white mt-2">{plots.length} <span className="text-xs text-zinc-500 font-normal">parcels</span></div>
-          <div className="text-xs text-zinc-500 mt-1">Allocated within {selectedFarm.name}</div>
-        </div>
-
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Area Utilization</span>
-          <div className="text-2xl font-bold text-emerald-400 mt-2">
-            {totalPlotArea.toFixed(1)} / {Number(selectedFarm.cultivableArea).toFixed(1)}{" "}
-            <span className="text-xs text-zinc-500 font-normal">Acres</span>
+      <div className="metric-summary-row">
+        <div className="metric-summary-item">
+          <span className="metric-label">Total Demarcated Zones</span>
+          <div className="metric-value font-mono">
+            {allScopedPlots.length} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>parcels</span>
           </div>
-          <div className="text-xs text-zinc-500 mt-1">
-            {Math.round((totalPlotArea / (Number(selectedFarm.cultivableArea) || 1)) * 100)}% cultivable area mapped
+          <div className="metric-sub">
+            {isAll ? `Across ${farms.length} client estates` : `Allocated within ${selectedFarm.name}`}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Active Plantings</span>
-          <div className="text-2xl font-bold text-emerald-400 mt-2">
-            {activeCropsCount} <span className="text-xs text-zinc-500 font-normal">cycles in ground</span>
+        <div className="metric-summary-item">
+          <span className="metric-label">Area Utilization</span>
+          <div className="metric-value font-mono" style={{ color: "var(--green)" }}>
+            {totalPlotArea.toFixed(1)} / {scopeCultivableArea.toFixed(1)}{" "}
+            <span style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>Acres</span>
           </div>
-          <div className="text-xs text-zinc-500 mt-1">Managed under active agronomy cycles</div>
+          <div className="metric-sub">
+            {Math.round((totalPlotArea / (scopeCultivableArea || 1)) * 100)}% cultivable area mapped
+          </div>
+        </div>
+
+        <div className="metric-summary-item">
+          <span className="metric-label">Active Plantings</span>
+          <div className="metric-value font-mono" style={{ color: "var(--green)" }}>
+            {activeCropsCount} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>in ground</span>
+          </div>
+          <div className="metric-sub">Managed under active agronomy cycles</div>
         </div>
       </div>
 
-      {/* Plots Grid */}
-      {plots.length === 0 ? (
-        <div className="border border-zinc-800/80 rounded-2xl p-12 text-center bg-zinc-900/40">
-          <Icons.Farm className="w-10 h-10 text-zinc-600 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-zinc-200">No plots demarcated yet</h3>
-          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-            Demarcate your estate into distinct agricultural plots (e.g. Zone A, Mango Orchard, Greenhouse 1) to track planting & harvest metrics.
-          </p>
+      {/* Toolbar: Search, Status Filters, View Mode */}
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          padding: "10px 16px",
+        }}
+      >
+        <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
           <button
-            onClick={() => setShowAddModal(true)}
-            className="mt-4 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-2 rounded-lg font-medium"
+            type="button"
+            onClick={() => setStatusFilter("ALL")}
+            className={`btn btn-sm ${statusFilter === "ALL" ? "btn-primary" : "btn-ghost"}`}
+            style={{ fontSize: 11, padding: "4px 8px" }}
           >
-            <Icons.Plus className="w-3.5 h-3.5" />
-            Demarcate First Plot
+            All ({allScopedPlots.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("CULTIVATED")}
+            className={`btn btn-sm ${statusFilter === "CULTIVATED" ? "btn-primary" : "btn-ghost"}`}
+            style={{ fontSize: 11, padding: "4px 8px" }}
+          >
+            Cultivated ({activeCropsCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("FALLOW")}
+            className={`btn btn-sm ${statusFilter === "FALLOW" ? "btn-primary" : "btn-ghost"}`}
+            style={{ fontSize: 11, padding: "4px 8px" }}
+          >
+            Fallow ({allScopedPlots.length - activeCropsCount})
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plots.map((plot) => {
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ position: "relative", width: 220 }}>
+            <input
+              type="text"
+              placeholder="Search plots, crops, soils…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input-field"
+              style={{ width: "100%", fontSize: 12, padding: "5px 24px 5px 10px" }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{ position: "absolute", right: 8, top: 7, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
+              >
+                &times;
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 3, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost"}`}
+              style={{ padding: "4px 8px" }}
+              title="Card Grid View"
+            >
+              <Icons.Layers size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`btn btn-sm ${viewMode === "table" ? "btn-primary" : "btn-ghost"}`}
+              style={{ padding: "4px 8px" }}
+              title="Dense Data Table View"
+            >
+              <Icons.ClipboardList size={13} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Plots Display */}
+      {filteredPlots.length === 0 ? (
+        <div className="card" style={{ padding: 48, textAlign: "center" }}>
+          <Icons.Layers size={32} style={{ color: "var(--muted)", margin: "0 auto 12px" }} />
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 4px" }}>No matching plots found</h3>
+          <p className="muted" style={{ fontSize: 12, maxWidth: 360, margin: "0 auto" }}>
+            Try adjusting your search query or demarcate a new parcel for your estate.
+          </p>
+        </div>
+      ) : viewMode === "grid" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+          {filteredPlots.map((plot) => {
             const activeCycle = plot.cropCycles.find((c) => c.status === "ACTIVE");
 
             return (
               <div
                 key={plot.id}
-                className="border border-zinc-800/80 rounded-xl bg-zinc-900/60 backdrop-blur p-5 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+                className="compact-card"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: 18,
+                  borderRadius: "var(--radius-md)",
+                  border: "1px solid var(--line)",
+                  backgroundColor: "var(--canvas)",
+                  gap: 12,
+                }}
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <h3 className="text-base font-bold text-white tracking-tight">{plot.name}</h3>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${
-                        activeCycle
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          : "bg-zinc-800 text-zinc-400 border-zinc-700"
-                      }`}
-                    >
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                    <div>
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>{plot.name}</h3>
+                      {isAll && (
+                        <span className="muted" style={{ fontSize: 11 }}>{plot.farmName}</span>
+                      )}
+                    </div>
+                    <span className={`badge ${activeCycle ? "badge-green" : "badge-muted"} font-mono`} style={{ fontSize: 9 }}>
                       {activeCycle ? "CULTIVATED" : "FALLOW"}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs py-2 border-y border-zinc-800/60 mb-3">
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12, padding: "8px 0", borderTop: "1px solid var(--stone)", borderBottom: "1px solid var(--stone)", marginBottom: 10 }}>
                     <div>
-                      <span className="text-zinc-500 block">Area</span>
-                      <span className="font-semibold text-zinc-200 font-mono">{Number(plot.area)} Acres</span>
+                      <span className="muted" style={{ fontSize: 10, display: "block" }}>Area</span>
+                      <strong style={{ fontFamily: "monospace", color: "var(--ink)" }}>{Number(plot.area)} Acres</strong>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block">Soil Type</span>
-                      <span className="font-semibold text-zinc-200">{plot.soilType || "Not specified"}</span>
+                      <span className="muted" style={{ fontSize: 10, display: "block" }}>Soil Type</span>
+                      <span style={{ color: "var(--ink)" }}>{plot.soilType || "Not specified"}</span>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block">Irrigation</span>
-                      <span className="font-semibold text-zinc-200">
+                      <span className="muted" style={{ fontSize: 10, display: "block" }}>Irrigation</span>
+                      <span style={{ color: "var(--ink)" }}>
                         {plot.irrigation.map((i) => i.type).join(", ") || "None"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block">GPS Center</span>
-                      <span className="font-mono text-zinc-400 text-[11px]">
+                      <span className="muted" style={{ fontSize: 10, display: "block" }}>GPS Center</span>
+                      <span className="muted font-mono" style={{ fontSize: 11 }}>
                         {Number(plot.latitude).toFixed(3)}, {Number(plot.longitude).toFixed(3)}
                       </span>
                     </div>
@@ -238,43 +388,46 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
 
                   {/* Active Crop Details */}
                   {activeCycle ? (
-                    <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-900/30 text-xs space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-emerald-400 font-bold">{activeCycle.cropName}</span>
+                    <div style={{ padding: 10, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", fontSize: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <strong style={{ color: "var(--green)" }}>{activeCycle.cropName}</strong>
                         {activeCycle.variety && (
-                          <span className="text-zinc-400 text-[11px]">({activeCycle.variety})</span>
+                          <span className="muted" style={{ fontSize: 11 }}>({activeCycle.variety})</span>
                         )}
                       </div>
-                      <div className="text-zinc-400 text-[11px] flex justify-between">
+                      <div className="muted" style={{ fontSize: 11, display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                         <span>Planted: {formatDate(activeCycle.startDate)}</span>
-                        {activeCycle.endDate && <span>Est. Harvest: {formatDate(activeCycle.endDate)}</span>}
+                        {activeCycle.endDate && <span>Est: {formatDate(activeCycle.endDate)}</span>}
                       </div>
                     </div>
                   ) : (
-                    <div className="p-3 rounded-lg bg-zinc-800/40 border border-zinc-800 text-xs text-zinc-400 text-center">
+                    <div style={{ padding: 8, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", fontSize: 11, color: "var(--muted)", textAlign: "center" }}>
                       No active crop cycle in ground.
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 mt-2 border-t border-zinc-800/60 flex items-center justify-between gap-2">
+                <div style={{ paddingTop: 10, borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <Link
                     href={`/plots/${plot.id}`}
-                    className="text-xs text-zinc-300 hover:text-white font-medium hover:underline flex items-center gap-1"
+                    className="btn btn-sm btn-ghost"
+                    style={{ fontSize: 11, padding: "4px 6px", color: "var(--muted)" }}
                   >
-                    Configure <Icons.ChevronRight className="w-3 h-3" />
+                    Configure &rarr;
                   </Link>
 
-                  <div className="flex items-center gap-2">
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <Link
                       href={`/plots/${plot.id}/crop-cycles/new`}
-                      className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium transition-colors"
+                      className="btn btn-sm btn-secondary"
+                      style={{ fontSize: 11, padding: "3px 8px" }}
                     >
                       New Cycle
                     </Link>
                     <Link
-                      href={`/owner/harvest`}
-                      className="text-xs px-2.5 py-1 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-medium transition-colors"
+                      href="/owner/harvest"
+                      className="btn btn-sm btn-primary"
+                      style={{ fontSize: 11, padding: "3px 8px" }}
                     >
                       Harvests
                     </Link>
@@ -284,127 +437,200 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
             );
           })}
         </div>
+      ) : (
+        /* Dense Table View */
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table" style={{ width: "100%", margin: 0 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left" }}>Plot / Zone</th>
+                  {isAll && <th style={{ textAlign: "left" }}>Estate</th>}
+                  <th style={{ textAlign: "right" }}>Area</th>
+                  <th style={{ textAlign: "left" }}>Status</th>
+                  <th style={{ textAlign: "left" }}>Active Crop</th>
+                  <th style={{ textAlign: "left" }}>Soil &amp; Irrigation</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPlots.map((plot) => {
+                  const activeCycle = plot.cropCycles.find((c) => c.status === "ACTIVE");
+                  return (
+                    <tr key={plot.id}>
+                      <td style={{ fontWeight: 600, color: "var(--ink)" }}>
+                        {plot.name}
+                      </td>
+                      {isAll && (
+                        <td className="muted">
+                          {plot.farmName}
+                        </td>
+                      )}
+                      <td style={{ textAlign: "right", fontFamily: "monospace", color: "var(--ink)" }}>
+                        {Number(plot.area)} Ac
+                      </td>
+                      <td>
+                        <span className={`badge ${activeCycle ? "badge-green" : "badge-muted"} font-mono`} style={{ fontSize: 9 }}>
+                          {activeCycle ? "CULTIVATED" : "FALLOW"}
+                        </span>
+                      </td>
+                      <td>
+                        {activeCycle ? (
+                          <div>
+                            <strong style={{ color: "var(--green)" }}>{activeCycle.cropName}</strong>
+                            {activeCycle.variety && (
+                              <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>({activeCycle.variety})</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="muted">None</span>
+                        )}
+                      </td>
+                      <td className="muted" style={{ fontSize: 11 }}>
+                        {plot.soilType || "Standard"} &bull; {plot.irrigation[0]?.type || "Drip"}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", gap: 6 }}>
+                          <Link
+                            href={`/plots/${plot.id}`}
+                            className="btn btn-sm btn-secondary"
+                            style={{ fontSize: 11, padding: "2px 8px" }}
+                          >
+                            Edit
+                          </Link>
+                          <Link
+                            href={`/plots/${plot.id}/crop-cycles/new`}
+                            className="btn btn-sm btn-primary"
+                            style={{ fontSize: 11, padding: "2px 8px" }}
+                          >
+                            Plant
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* Add Plot Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Icons.TrendingUp className="w-5 h-5 text-emerald-400" />
-                Demarcate New Plot on {selectedFarm.name}
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            backgroundColor: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="card"
+            style={{ width: "100%", maxWidth: 480, padding: 24, boxShadow: "var(--shadow-modal)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icons.Layers size={18} style={{ color: "var(--green)" }} />
+                Demarcate New Plot on {isAll ? farms[0]?.name : selectedFarm.name}
               </h2>
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}
               >
-                <Icons.X className="w-5 h-5" />
+                <Icons.X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleCreatePlot} className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Plot Name / Demarcation *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="e.g. Zone A - North Field, Polyhouse 1"
-                    required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Plot Area (Acres) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="area"
-                    placeholder="e.g. 2.5"
-                    required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Soil Type</label>
-                  <input
-                    type="text"
-                    name="soilType"
-                    placeholder="e.g. Red Loam, Black Cotton, Sandy"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+            <form onSubmit={handleCreatePlot} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 16 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+                  Plot Identifier / Zone Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="e.g. Block 4A - Alfonso Orchards"
+                  className="input-field"
+                  style={{ width: "100%" }}
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+                  Demarcated Area (Acres) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  name="area"
+                  required
+                  placeholder="e.g. 5.5"
+                  className="input-field"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Primary Irrigation *</label>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+                    Soil Texture
+                  </label>
                   <select
-                    name="irrigationType"
-                    required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                    name="soilType"
+                    className="input-field"
+                    style={{ width: "100%" }}
                   >
-                    <option value="Drip">Drip Irrigation</option>
-                    <option value="Sprinkler">Sprinkler</option>
-                    <option value="Rain Pipe">Rain Pipe</option>
-                    <option value="Flood">Flood / Channel</option>
-                    <option value="Other">Other</option>
+                    <option value="RED_LOAMY">Red Loamy</option>
+                    <option value="BLACK_CLAY">Black Cotton / Clay</option>
+                    <option value="SANDY_LOAM">Sandy Loam</option>
+                    <option value="ALLUVIAL">Alluvial Soil</option>
+                    <option value="LATERITE">Laterite Soil</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Irrigation Notes</label>
-                  <input
-                    type="text"
-                    name="irrigationDetails"
-                    placeholder="e.g. Inline 16mm, 40cm emitter"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
-                  />
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+                    Irrigation System
+                  </label>
+                  <select
+                    name="irrigationType"
+                    className="input-field"
+                    style={{ width: "100%" }}
+                  >
+                    <option value="Drip">Drip Irrigation</option>
+                    <option value="Sprinkler">Micro Sprinkler</option>
+                    <option value="Flood">Canal / Basin Flood</option>
+                    <option value="Rainfed">Natural Rainfed</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Latitude</label>
-                  <input
-                    type="number"
-                    step="0.000001"
-                    name="latitude"
-                    defaultValue={Number(selectedFarm.latitude)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">Longitude</label>
-                  <input
-                    type="number"
-                    step="0.000001"
-                    name="longitude"
-                    defaultValue={Number(selectedFarm.longitude)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3 border-t border-zinc-800">
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                  className="btn btn-sm btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="btn btn-sm btn-primary"
                 >
-                  {pending && <Icons.Spinner className="w-3.5 h-3.5 animate-spin" />}
-                  Create Plot
+                  {pending ? "Creating Plot..." : "Confirm & Save Plot"}
                 </button>
               </div>
             </form>

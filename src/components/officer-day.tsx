@@ -24,6 +24,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const [monitoringTaskId, setMonitoringTaskId] = useState<string | null>(null);
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [originFilter, setOriginFilter] = useState<string>("ALL");
+  const [statusTab, setStatusTab] = useState<"ALL" | "PENDING" | "COMPLETED">("ALL");
+  const [taskSearch, setTaskSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -57,14 +59,28 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
     }
   }
 
-  const filteredTasks = useMemo(() => {
-    if (originFilter === "ALL") return tasks;
-    return tasks.filter((t) => t.origin === originFilter);
-  }, [tasks, originFilter]);
-
   const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
+  const pendingCount = tasks.filter((t) => t.status !== "COMPLETED").length;
   const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
   const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+  const filteredTasks = useMemo(() => {
+    const q = taskSearch.toLowerCase().trim();
+    return tasks.filter((t) => {
+      const matchesOrigin = originFilter === "ALL" || t.origin === originFilter;
+      const matchesStatus =
+        statusTab === "ALL" ||
+        (statusTab === "PENDING" && t.status !== "COMPLETED") ||
+        (statusTab === "COMPLETED" && t.status === "COMPLETED");
+      const matchesSearch =
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        (t.plot?.name && t.plot.name.toLowerCase().includes(q)) ||
+        (t.cropCycle?.cropName && t.cropCycle.cropName.toLowerCase().includes(q)) ||
+        t.category.toLowerCase().includes(q);
+      return matchesOrigin && matchesStatus && matchesSearch;
+    });
+  }, [tasks, originFilter, statusTab, taskSearch]);
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -153,24 +169,110 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
         </div>
       )}
 
-      {/* FILTER TABS */}
-      <div className="tabs-nav" style={{ padding: 5, gap: 5 }}>
-        {["ALL", "AGRONOMIST", "SYSTEM", "DAILY_MONITORING"].map((org) => (
-          <button
-            key={org}
-            type="button"
-            className={`tab-btn ${originFilter === org ? "active" : ""}`}
-            onClick={() => setOriginFilter(org)}
-          >
-            {org === "ALL"
-              ? "All Operations"
-              : org === "SYSTEM"
-              ? "Milestones"
-              : org === "DAILY_MONITORING"
-              ? "Monitoring"
-              : "Agronomist Tasks"}
-          </button>
-        ))}
+      {/* FILTER TABS & SEARCH CONTROLS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div className="tabs-nav" style={{ padding: 4, gap: 4 }}>
+            {["ALL", "AGRONOMIST", "SYSTEM", "DAILY_MONITORING"].map((org) => (
+              <button
+                key={org}
+                type="button"
+                className={`tab-btn ${originFilter === org ? "active" : ""}`}
+                onClick={() => setOriginFilter(org)}
+              >
+                {org === "ALL"
+                  ? "All Operations"
+                  : org === "SYSTEM"
+                  ? "Milestones"
+                  : org === "DAILY_MONITORING"
+                  ? "Monitoring"
+                  : "Agronomist Tasks"}
+              </button>
+            ))}
+          </div>
+
+          {/* Quick status tabs: All / Pending / Done */}
+          <div style={{ display: "flex", gap: 4, background: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
+            <button
+              type="button"
+              onClick={() => setStatusTab("ALL")}
+              className="btn btn-sm"
+              style={{
+                background: statusTab === "ALL" ? "var(--canvas)" : "transparent",
+                color: statusTab === "ALL" ? "var(--ink)" : "var(--muted)",
+                fontWeight: statusTab === "ALL" ? 600 : 400,
+                boxShadow: statusTab === "ALL" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "3px 8px",
+              }}
+            >
+              All ({tasks.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusTab("PENDING")}
+              className="btn btn-sm"
+              style={{
+                background: statusTab === "PENDING" ? "var(--canvas)" : "transparent",
+                color: statusTab === "PENDING" ? "var(--amber)" : "var(--muted)",
+                fontWeight: statusTab === "PENDING" ? 600 : 400,
+                boxShadow: statusTab === "PENDING" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "3px 8px",
+              }}
+            >
+              Due ({pendingCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusTab("COMPLETED")}
+              className="btn btn-sm"
+              style={{
+                background: statusTab === "COMPLETED" ? "var(--canvas)" : "transparent",
+                color: statusTab === "COMPLETED" ? "var(--green)" : "var(--muted)",
+                fontWeight: statusTab === "COMPLETED" ? 600 : 400,
+                boxShadow: statusTab === "COMPLETED" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "3px 8px",
+              }}
+            >
+              Done ({completedCount})
+            </button>
+          </div>
+        </div>
+
+        {/* Task Search Bar */}
+        <div style={{ position: "relative" }}>
+          <input
+            type="text"
+            placeholder="Search operations by title, plot zone, crop, or category…"
+            value={taskSearch}
+            onChange={(e) => setTaskSearch(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: 32, fontSize: "13px", height: 36 }}
+          />
+          <div style={{ position: "absolute", left: 10, top: 10, color: "var(--muted)" }}>
+            <Icons.Search size={14} />
+          </div>
+          {taskSearch && (
+            <button
+              type="button"
+              onClick={() => setTaskSearch("")}
+              style={{
+                position: "absolute",
+                right: 10,
+                top: 8,
+                background: "none",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              &times;
+            </button>
+          )}
+        </div>
       </div>
 
       {loading && <CardSkeleton />}

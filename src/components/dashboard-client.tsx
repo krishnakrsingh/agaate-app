@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
@@ -13,6 +13,9 @@ type Farm = {
   name: string;
   location: string;
   ownerName: string;
+  clientPhone?: string | null;
+  soilType?: string | null;
+  waterSource?: string | null;
   status: string;
   totalArea: string;
   cultivableArea: string;
@@ -145,6 +148,11 @@ export function DashboardClient({
   const toast = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [soilFilter, setSoilFilter] = useState<string>("ALL");
+  const [sortBy, setSortBy] = useState<"name" | "acreage_desc" | "acreage_asc" | "plots" | "progress">("name");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   // Selfies lightbox modal
@@ -174,16 +182,47 @@ export function DashboardClient({
   >(actionItemsCount > 0 ? "ACTIONS" : "WORKFORCE");
 
   const filteredFarms = useMemo(() => {
-    return farms.filter((f) => {
+    const q = search.trim().toLowerCase();
+    const result = farms.filter((f) => {
       const matchStatus = statusFilter === "ALL" || f.status === statusFilter;
+      const matchSoil = soilFilter === "ALL" || (f.soilType && f.soilType === soilFilter);
       const matchSearch =
-        !search ||
-        f.name.toLowerCase().includes(search.toLowerCase()) ||
-        f.location.toLowerCase().includes(search.toLowerCase()) ||
-        f.adminName.toLowerCase().includes(search.toLowerCase());
-      return matchStatus && matchSearch;
+        !q ||
+        f.name.toLowerCase().includes(q) ||
+        f.location.toLowerCase().includes(q) ||
+        f.adminName.toLowerCase().includes(q) ||
+        f.ownerName.toLowerCase().includes(q) ||
+        (f.clientPhone && f.clientPhone.toLowerCase().includes(q)) ||
+        (f.soilType && f.soilType.toLowerCase().includes(q));
+      return matchStatus && matchSoil && matchSearch;
     });
-  }, [farms, statusFilter, search]);
+
+    result.sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "acreage_desc") return Number(b.cultivableArea) - Number(a.cultivableArea);
+      if (sortBy === "acreage_asc") return Number(a.cultivableArea) - Number(b.cultivableArea);
+      if (sortBy === "plots") return b.plots.length - a.plots.length;
+      if (sortBy === "progress") {
+        const progA = a.todayTasksTotal > 0 ? a.todayTasksCompleted / a.todayTasksTotal : 0;
+        const progB = b.todayTasksTotal > 0 ? b.todayTasksCompleted / b.todayTasksTotal : 0;
+        return progB - progA;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [farms, statusFilter, soilFilter, search, sortBy]);
+
+  const totalPages = Math.ceil(filteredFarms.length / pageSize) || 1;
+  const paginatedFarms = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredFarms.slice(start, start + pageSize);
+  }, [filteredFarms, page, pageSize]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, soilFilter, sortBy, pageSize]);
 
   const totalAcreage = farms
     .reduce((acc, f) => acc + Number(f.totalArea || 0), 0)
@@ -431,46 +470,133 @@ export function DashboardClient({
         </div>
 
         {activeConsoleTab === "ESTATES" && (
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <div className="tabs-nav" style={{ padding: 4, gap: 4 }}>
-              <button
-                type="button"
-                className={`tab-btn ${statusFilter === "ALL" ? "active" : ""}`}
-                onClick={() => setStatusFilter("ALL")}
-                style={{ padding: "6px 12px", fontSize: 12 }}
+          <div
+            className="card"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "10px 14px",
+            }}
+          >
+            {/* Left: Status filter pills & Search */}
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${statusFilter === "ALL" ? "btn-primary" : "btn-ghost"}`}
+                  style={{ fontSize: 11, padding: "4px 8px" }}
+                  onClick={() => setStatusFilter("ALL")}
+                >
+                  All ({farms.length})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${statusFilter === "ACTIVE" ? "btn-primary" : "btn-ghost"}`}
+                  style={{ fontSize: 11, padding: "4px 8px" }}
+                  onClick={() => setStatusFilter("ACTIVE")}
+                >
+                  Active ({metrics.activeFarms})
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${statusFilter === "SETUP" ? "btn-primary" : "btn-ghost"}`}
+                  style={{ fontSize: 11, padding: "4px 8px" }}
+                  onClick={() => setStatusFilter("SETUP")}
+                >
+                  Setup ({metrics.setupFarms})
+                </button>
+              </div>
+
+              {/* Live search input */}
+              <div style={{ position: "relative", width: 220 }}>
+                <input
+                  type="text"
+                  className="input-field"
+                  style={{ width: "100%", fontSize: 12, padding: "5px 28px 5px 26px" }}
+                  placeholder="Filter by estate, client..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <span style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)", pointerEvents: "none" }}>
+                  <Icons.Search size={12} />
+                </span>
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    style={{ position: "absolute", right: 8, top: 7, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
+                  >
+                    <Icons.X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* Soil Type filter */}
+              <select
+                value={soilFilter}
+                onChange={(e) => setSoilFilter(e.target.value)}
+                className="input-field"
+                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
               >
-                All ({farms.length})
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${statusFilter === "ACTIVE" ? "active" : ""}`}
-                onClick={() => setStatusFilter("ACTIVE")}
-                style={{ padding: "6px 12px", fontSize: 12 }}
+                <option value="ALL">All Soils</option>
+                <option value="RED_LOAMY">Red Loamy</option>
+                <option value="BLACK_CLAY">Black Clay</option>
+                <option value="SANDY_LOAM">Sandy Loam</option>
+                <option value="LATERITE">Laterite</option>
+                <option value="ALLUVIAL">Alluvial</option>
+              </select>
+
+              {/* Sort By */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="input-field"
+                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
               >
-                Active ({metrics.activeFarms})
-              </button>
-              <button
-                type="button"
-                className={`tab-btn ${statusFilter === "SETUP" ? "active" : ""}`}
-                onClick={() => setStatusFilter("SETUP")}
-                style={{ padding: "6px 12px", fontSize: 12 }}
-              >
-                Setup ({metrics.setupFarms})
-              </button>
+                <option value="name">Sort: Name (A-Z)</option>
+                <option value="acreage_desc">Sort: Acreage (High to Low)</option>
+                <option value="acreage_asc">Sort: Acreage (Low to High)</option>
+                <option value="plots">Sort: Plot Count</option>
+                <option value="progress">Sort: Task Progress</option>
+              </select>
             </div>
 
-            <div style={{ position: "relative", width: 220 }}>
-              <input
-                type="text"
+            {/* Right: View Mode & Page Size */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", gap: 3, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
+                <button
+                  type="button"
+                  title="Dense Table View"
+                  onClick={() => setViewMode("table")}
+                  className={`btn btn-sm ${viewMode === "table" ? "btn-primary" : "btn-ghost"}`}
+                  style={{ padding: "4px 8px" }}
+                >
+                  <Icons.ClipboardList size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Grid Cards View"
+                  onClick={() => setViewMode("grid")}
+                  className={`btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost"}`}
+                  style={{ padding: "4px 8px" }}
+                >
+                  <Icons.Layers size={13} />
+                </button>
+              </div>
+
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
                 className="input-field"
-                placeholder="Search estates…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ paddingLeft: 30, fontSize: 13, height: 38, borderRadius: "var(--radius-pill)" }}
-              />
-              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }}>
-                <Icons.Search size={14} />
-              </span>
+                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
+              >
+                <option value={20}>20 / page</option>
+                <option value={50}>50 / page</option>
+                <option value={100}>100 / page</option>
+              </select>
             </div>
           </div>
         )}
@@ -1020,15 +1146,200 @@ export function DashboardClient({
 
       {/* ── 6. CONSOLE VIEW 3: ESTATE PORTFOLIO ── */}
       {activeConsoleTab === "ESTATES" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {filteredFarms.length === 0 ? (
-            <EmptyState
-              title="No Estates Match"
-              description="No managed farms found matching your search or status filter."
-            />
+            <div className="card" style={{ padding: 48, textAlign: "center" }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", backgroundColor: "var(--stone)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                <Icons.Farm size={22} />
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 6px" }}>No Matching Estates Found</h3>
+              <p className="muted" style={{ fontSize: 12, maxWidth: 360, margin: "0 auto 16px" }}>
+                No estates found matching &ldquo;{search}&rdquo; with the selected status/soil filters.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("ALL");
+                  setSoilFilter("ALL");
+                }}
+                className="btn btn-sm btn-primary"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                Reset All Filters
+              </button>
+            </div>
+          ) : viewMode === "table" ? (
+            /* ── A. DENSE ENTERPRISE DATA TABLE ── */
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table className="data-table" style={{ width: "100%", margin: 0 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" }}>Estate &amp; Location</th>
+                      <th style={{ textAlign: "left" }}>Client / Owner</th>
+                      <th style={{ textAlign: "left" }}>Status</th>
+                      <th style={{ textAlign: "left" }}>Acreage &amp; Land</th>
+                      <th style={{ textAlign: "left" }}>Parcels &amp; Crops</th>
+                      <th style={{ textAlign: "left" }}>Today&apos;s Field Work</th>
+                      <th style={{ textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedFarms.map((f) => {
+                      const activeCrops = f.plots.flatMap((p) => p.cropCycles).filter((c) => c.status === "ACTIVE");
+                      const taskProgress = f.todayTasksTotal > 0
+                        ? Math.round((f.todayTasksCompleted / f.todayTasksTotal) * 100)
+                        : 0;
+
+                      return (
+                        <tr key={f.id}>
+                          {/* 1. Estate & Location */}
+                          <td>
+                            <Link
+                              href={`/farms/${f.id}`}
+                              style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", textDecoration: "none" }}
+                            >
+                              {f.name}
+                            </Link>
+                            <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginTop: 3 }}>
+                              <Icons.MapPin size={11} />
+                              <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.location}</span>
+                              {f.soilType && (
+                                <span className="badge badge-muted font-mono" style={{ fontSize: 9 }}>
+                                  {f.soilType.replace("_", " ")}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 2. Client / Owner */}
+                          <td>
+                            <div style={{ fontWeight: 600, color: "var(--ink)" }}>{f.ownerName}</div>
+                            {f.clientPhone ? (
+                              <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "monospace", marginTop: 2 }}>
+                                <span>{f.clientPhone}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(f.clientPhone!);
+                                    toast.success(`Copied ${f.ownerName}'s phone number`);
+                                  }}
+                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
+                                  title="Copy Phone Number"
+                                >
+                                  <Icons.Copy size={11} />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="muted font-mono" style={{ fontSize: 10 }}>Admin: {f.adminName}</span>
+                            )}
+                          </td>
+
+                          {/* 3. Status */}
+                          <td>
+                            <StatusBadge status={f.status} />
+                          </td>
+
+                          {/* 4. Acreage */}
+                          <td style={{ minWidth: 140 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", marginBottom: 4 }}>
+                              <strong style={{ color: "var(--ink)" }}>{f.cultivableArea} ac</strong>
+                              <span className="muted">of {f.totalArea} ac</span>
+                            </div>
+                            <div style={{ width: "100%", height: 6, backgroundColor: "var(--stone)", borderRadius: "var(--radius-pill)", overflow: "hidden" }}>
+                              <div
+                                style={{
+                                  height: "100%",
+                                  backgroundColor: "var(--green)",
+                                  borderRadius: "var(--radius-pill)",
+                                  width: `${Math.min(100, Math.round((Number(f.cultivableArea) / Math.max(1, Number(f.totalArea))) * 100))}%`,
+                                }}
+                              />
+                            </div>
+                          </td>
+
+                          {/* 5. Parcels & Crops */}
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
+                                {f.plots.length} {f.plots.length === 1 ? "Plot" : "Plots"}
+                              </span>
+                              {activeCrops.slice(0, 2).map((c, i) => (
+                                <span
+                                  key={`${c.id}-${i}`}
+                                  className="badge badge-green font-mono"
+                                  style={{ fontSize: 10 }}
+                                >
+                                  {c.cropName}
+                                </span>
+                              ))}
+                              {activeCrops.length > 2 && (
+                                <span className="muted font-mono" style={{ fontSize: 10 }}>
+                                  +{activeCrops.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 6. Today's Field Work */}
+                          <td>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                              {f.todayTasksTotal > 0 ? (
+                                <span className="badge badge-blue font-mono" style={{ fontSize: 10 }}>
+                                  Tasks: {f.todayTasksCompleted}/{f.todayTasksTotal} ({taskProgress}%)
+                                </span>
+                              ) : (
+                                <span className="muted font-mono" style={{ fontSize: 10 }}>No tasks today</span>
+                              )}
+                              {f.todayAttendanceCount > 0 && (
+                                <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                                  <span className="telemetry-live-dot" />
+                                  <span>{f.todayAttendanceCount} Workers On Duty</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 7. Actions */}
+                          <td style={{ textAlign: "right" }}>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                              <Link
+                                href={`/owner/calendar?farmId=${f.id}`}
+                                className="btn btn-sm btn-secondary"
+                                style={{ padding: "4px 8px" }}
+                                title="Operations Calendar"
+                              >
+                                <Icons.Calendar size={13} />
+                              </Link>
+                              <Link
+                                href={`/admin/attendance?farmId=${f.id}`}
+                                className="btn btn-sm btn-secondary"
+                                style={{ padding: "4px 8px" }}
+                                title="Attendance Muster"
+                              >
+                                <Icons.Users size={13} />
+                              </Link>
+                              <Link
+                                href={`/farms/${f.id}`}
+                                className="btn btn-sm btn-primary"
+                                style={{ padding: "4px 10px", fontSize: 11 }}
+                              >
+                                <span>Manage &rarr;</span>
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
-              {filteredFarms.map((f) => {
+            /* ── B. GRID CARDS VIEW ── */
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedFarms.map((f) => {
                 const activeCrops = f.plots.flatMap((p) => p.cropCycles).filter((c) => c.status === "ACTIVE");
                 const taskProgress = f.todayTasksTotal > 0
                   ? Math.round((f.todayTasksCompleted / f.todayTasksTotal) * 100)
@@ -1037,33 +1348,37 @@ export function DashboardClient({
                 return (
                   <div
                     key={f.id}
-                    className="compact-card hover-glow"
+                    className="compact-card"
                     style={{
-                      padding: 24,
-                      gap: 16,
-                      borderRadius: "var(--radius-md)",
-                      boxShadow: "var(--shadow-card)",
                       display: "flex",
                       flexDirection: "column",
                       justifyContent: "space-between",
+                      padding: 18,
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid var(--line)",
+                      backgroundColor: "var(--canvas)",
+                      gap: 14,
                     }}
                   >
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
                         <div>
                           <Link
                             href={`/farms/${f.id}`}
                             style={{
-                              fontSize: 18,
-                              fontWeight: 600,
+                              fontSize: 16,
+                              fontWeight: 700,
                               color: "var(--ink)",
                               textDecoration: "none",
                             }}
                           >
                             {f.name}
                           </Link>
-                          <div className="muted" style={{ fontSize: 13, marginTop: 3 }}>
-                            {f.location} &bull; Admin: {f.adminName}
+                          <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginTop: 4 }}>
+                            <Icons.MapPin size={12} />
+                            <span>{f.location}</span>
+                            <span>&bull;</span>
+                            <span>{f.ownerName}</span>
                           </div>
                         </div>
                         <StatusBadge status={f.status} />
@@ -1071,47 +1386,39 @@ export function DashboardClient({
 
                       {/* Cultivated Area Progress Bar */}
                       <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 }}>
-                          <span className="muted">Cultivated Area</span>
-                          <span style={{ fontWeight: 600, color: "var(--ink)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", marginBottom: 4, color: "var(--muted)" }}>
+                          <span>Cultivated Land</span>
+                          <span style={{ fontWeight: 700, color: "var(--ink)" }}>
                             {f.cultivableArea} of {f.totalArea} Acres
                           </span>
                         </div>
-                        <div
-                          style={{
-                            height: 6,
-                            backgroundColor: "var(--stone)",
-                            borderRadius: "var(--radius-pill)",
-                            overflow: "hidden",
-                          }}
-                        >
+                        <div style={{ height: 6, backgroundColor: "var(--stone)", borderRadius: "var(--radius-pill)", overflow: "hidden" }}>
                           <div
                             style={{
                               height: "100%",
-                              width: `${Math.min(100, Math.round((Number(f.cultivableArea) / Math.max(1, Number(f.totalArea))) * 100))}%`,
                               backgroundColor: "var(--green)",
                               borderRadius: "var(--radius-pill)",
+                              width: `${Math.min(100, Math.round((Number(f.cultivableArea) / Math.max(1, Number(f.totalArea))) * 100))}%`,
                             }}
                           />
                         </div>
                       </div>
 
-                      {/* Estate Metadata Badges */}
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
-                        <span className="badge badge-muted">
+                      {/* Metadata badges */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, fontSize: 11 }}>
+                        <span className="badge badge-muted font-mono">
                           {f.plots.length} Plots
                         </span>
-                        {activeCrops.length > 0 ? (
-                          <span className="badge badge-green">
-                            {activeCrops.length} Active Crop Cycles
+                        {activeCrops.map((c, idx) => (
+                          <span
+                            key={`${c.id}-${idx}`}
+                            className="badge badge-green font-mono"
+                          >
+                            {c.cropName}
                           </span>
-                        ) : (
-                          <span className="badge badge-muted">
-                            No Active Crops
-                          </span>
-                        )}
+                        ))}
                         {f.todayTasksTotal > 0 && (
-                          <span className="badge badge-blue">
+                          <span className="badge badge-blue font-mono">
                             Tasks: {f.todayTasksCompleted}/{f.todayTasksTotal} ({taskProgress}%)
                           </span>
                         )}
@@ -1119,23 +1426,13 @@ export function DashboardClient({
                     </div>
 
                     {/* Action Bar */}
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        borderTop: "1px solid var(--line)",
-                        paddingTop: 14,
-                        marginTop: 4,
-                      }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: "1px solid var(--line)" }}>
                       <Link
                         href={`/admin/attendance?farmId=${f.id}`}
                         className="btn btn-sm btn-secondary"
                         style={{ fontSize: 12, padding: "5px 12px", borderRadius: "var(--radius-pill)" }}
                       >
-                        <Icons.Users size={13} />
-                        <span>Roster</span>
+                        Roster
                       </Link>
 
                       <Link
@@ -1143,12 +1440,61 @@ export function DashboardClient({
                         className="btn btn-sm btn-primary"
                         style={{ fontSize: 12, padding: "5px 14px", borderRadius: "var(--radius-pill)" }}
                       >
-                        <span>Manage Estate &rarr;</span>
+                        Manage Estate &rarr;
                       </Link>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* ── PAGINATION CONTROLS (Both Table and Grid) ── */}
+          {filteredFarms.length > 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: "10px 16px",
+                backgroundColor: "var(--stone)",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--line)",
+                fontSize: 12,
+                color: "var(--muted)",
+              }}
+            >
+              <div style={{ fontFamily: "monospace" }}>
+                Showing <strong style={{ color: "var(--ink)" }}>{(page - 1) * pageSize + 1}</strong> to{" "}
+                <strong style={{ color: "var(--ink)" }}>{Math.min(page * pageSize, filteredFarms.length)}</strong> of{" "}
+                <strong style={{ color: "var(--ink)" }}>{filteredFarms.length.toLocaleString()}</strong> Estates
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="btn btn-sm btn-secondary"
+                  style={{ fontSize: 11, padding: "4px 10px" }}
+                >
+                  Previous
+                </button>
+                <span style={{ fontFamily: "monospace", padding: "0 6px" }}>
+                  Page <strong style={{ color: "var(--ink)" }}>{page}</strong> of <strong style={{ color: "var(--ink)" }}>{totalPages}</strong>
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="btn btn-sm btn-secondary"
+                  style={{ fontSize: 11, padding: "4px 10px" }}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>

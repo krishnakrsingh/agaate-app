@@ -207,14 +207,11 @@ export function OperationsCalendar({
     const firstDayOfMonth = new Date(year, month - 1, 1);
     const lastDayOfMonth = new Date(year, month, 0);
 
-    // Weekday of 1st day (0 = Sunday, 1 = Monday... 6 = Saturday)
-    // Convert to Monday = 0, Sunday = 6
     let startDayOfWeek = firstDayOfMonth.getDay() - 1;
     if (startDayOfWeek === -1) startDayOfWeek = 6;
 
     const daysInMonth = lastDayOfMonth.getDate();
 
-    // Previous month filler days
     const prevMonthLastDay = new Date(year, month - 1, 0).getDate();
     const cells = [];
 
@@ -230,7 +227,6 @@ export function OperationsCalendar({
       });
     }
 
-    // Current month days
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
       cells.push({
@@ -240,7 +236,6 @@ export function OperationsCalendar({
       });
     }
 
-    // Next month filler days to complete rows (up to 35 or 42)
     const totalCellsNeeded = cells.length > 35 ? 42 : 35;
     const remaining = totalCellsNeeded - cells.length;
     for (let d = 1; d <= remaining; d++) {
@@ -257,11 +252,9 @@ export function OperationsCalendar({
     return cells;
   }, [year, month]);
 
-  // If week view, calculate the 7 days of the currently selected week
   const weekCells = useMemo(() => {
     const selected = new Date(selectedDateStr + "T00:00:00");
     const dayOfWeek = selected.getDay();
-    // Monday as first day
     const diff = (dayOfWeek + 6) % 7;
     const monday = new Date(selected);
     monday.setDate(selected.getDate() - diff);
@@ -285,7 +278,6 @@ export function OperationsCalendar({
 
   const activeCells = viewMode === "month" ? calendarCells : weekCells;
 
-  // Selected date events
   const selectedDayEvents = useMemo(() => {
     const dayData = eventsByDate.get(selectedDateStr) || { tasks: [], incidents: [], harvests: [] };
     const q = searchQuery.toLowerCase().trim();
@@ -327,7 +319,6 @@ export function OperationsCalendar({
     };
   }, [eventsByDate, selectedDateStr, searchQuery]);
 
-  // Selected date formatted title
   const formattedSelectedDate = useMemo(() => {
     try {
       const parts = selectedDateStr.split("-").map(Number);
@@ -346,37 +337,63 @@ export function OperationsCalendar({
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <div className="space-y-6">
-      {/* ── Top Instrument Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-800">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* ── Top Header ── */}
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          padding: "16px 20px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 42,
+              height: 42,
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "var(--stone)",
+              color: "var(--green)",
+            }}
+          >
             <Icons.Calendar size={22} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white tracking-tight">Operations Calendar</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>
+                Operations Calendar
+              </h1>
               {loading && (
-                <span className="text-[11px] font-mono text-emerald-400 animate-pulse flex items-center gap-1">
+                <span style={{ fontSize: 11, fontFamily: "monospace", color: "var(--green)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icons.Refresh size={12} className="animate-spin" /> Syncing...
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400">
-              Complete chronological ledger of scheduled tasks, field executions & logged incidents.
+            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
+              Chronological schedule of farm tasks, field executions &amp; logged incidents.
             </p>
           </div>
         </div>
 
-        {/* Estate Switcher (if multiple) */}
+        {/* Estate Switcher */}
         {farms.length > 1 && (
-          <div className="flex items-center gap-2">
-            <label htmlFor="estate-select" className="text-xs text-slate-400 font-medium">Estate:</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label htmlFor="estate-select" style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>
+              Estate:
+            </label>
             <select
               id="estate-select"
               value={selectedFarmId}
               onChange={(e) => setSelectedFarmId(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ padding: "6px 12px", fontSize: 12, fontWeight: 600, width: "auto" }}
             >
               {farms.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -388,73 +405,85 @@ export function OperationsCalendar({
         )}
       </div>
 
-      {/* ── Calendar Controls Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
+      {/* ── Controls Bar ── */}
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          padding: "12px 16px",
+        }}
+      >
         {/* Month Navigator */}
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
+            type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            className="btn btn-sm btn-secondary"
+            style={{ padding: "6px 10px" }}
             title="Previous Month"
           >
             <Icons.ChevronLeft size={16} />
           </button>
 
-          <span className="text-sm font-bold text-white min-w-[150px] text-center">
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", minWidth: 160, textAlign: "center" }}>
             {monthNames[month - 1]} {year}
           </span>
 
           <button
+            type="button"
             onClick={handleNextMonth}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            className="btn btn-sm btn-secondary"
+            style={{ padding: "6px 10px" }}
             title="Next Month"
           >
             <Icons.ChevronRight size={16} />
           </button>
 
           <button
+            type="button"
             onClick={handleToday}
-            className="ml-2 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/20 transition"
+            className="btn btn-sm btn-secondary"
+            style={{ fontSize: 11, padding: "5px 12px", color: "var(--green)", fontWeight: 700 }}
           >
             Today
           </button>
         </div>
 
         {/* View Mode Toggle & Legend */}
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-3 text-[11px] text-slate-400 font-medium mr-2">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" /> Done Task
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--muted)" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--green)" }} /> Done Task
             </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-400" /> Pending Task
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--amber)" }} /> Due Task
             </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-500" /> Incident
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--danger)" }} /> Incident
             </span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-purple-400" /> Harvest
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--blue)" }} /> Harvest
             </span>
           </div>
 
-          <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
+          <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
             <button
+              type="button"
               onClick={() => setViewMode("month")}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-                viewMode === "month"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+              className={`btn btn-sm ${viewMode === "month" ? "btn-primary" : "btn-ghost"}`}
+              style={{ fontSize: 11, padding: "4px 10px" }}
             >
               Month View
             </button>
             <button
+              type="button"
               onClick={() => setViewMode("week")}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition ${
-                viewMode === "week"
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+              className={`btn btn-sm ${viewMode === "week" ? "btn-primary" : "btn-ghost"}`}
+              style={{ fontSize: 11, padding: "4px 10px" }}
             >
               Week View
             </button>
@@ -463,20 +492,27 @@ export function OperationsCalendar({
       </div>
 
       {/* ── Main Operations Layout (Grid on left, Day Drawer on right) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20, alignItems: "start" }}>
         {/* Calendar Grid (7 columns) */}
-        <div className="lg:col-span-8 bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3 sm:p-4 shadow-xl">
+        <div
+          className="card"
+          style={{
+            padding: 16,
+            gridColumn: "span 2",
+            minWidth: 0,
+          }}
+        >
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1.5 mb-2 text-center">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, marginBottom: 8, textAlign: "center" }}>
             {weekdays.map((wd) => (
-              <div key={wd} className="text-xs font-mono font-bold text-slate-400 py-1 uppercase tracking-wider">
+              <div key={wd} style={{ fontSize: 11, fontWeight: 700, fontFamily: "monospace", textTransform: "uppercase", color: "var(--muted)", padding: "4px 0" }}>
                 {wd}
               </div>
             ))}
           </div>
 
           {/* Day Cells Grid */}
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
             {activeCells.map((cell) => {
               const dayData = eventsByDate.get(cell.dateStr);
               const isSelected = cell.dateStr === selectedDateStr;
@@ -492,67 +528,90 @@ export function OperationsCalendar({
                 <div
                   key={cell.dateStr}
                   onClick={() => setSelectedDateStr(cell.dateStr)}
-                  className={`relative p-2 min-h-[90px] sm:min-h-[110px] rounded-xl border flex flex-col justify-between cursor-pointer transition-all duration-150 select-none ${
-                    isSelected
-                      ? "bg-emerald-500/10 border-emerald-500 shadow-md shadow-emerald-500/5 ring-1 ring-emerald-500/50"
-                      : isToday
-                      ? "bg-slate-800/40 border-slate-700 hover:border-slate-600"
-                      : cell.isCurrentMonth
-                      ? "bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/40"
-                      : "bg-slate-950/20 border-slate-900/60 opacity-40 hover:opacity-70"
-                  }`}
+                  style={{
+                    position: "relative",
+                    padding: 8,
+                    minHeight: 100,
+                    borderRadius: "var(--radius-xs)",
+                    border: isSelected ? "2px solid var(--green)" : isToday ? "1px solid var(--green)" : "1px solid var(--line)",
+                    backgroundColor: isSelected ? "var(--green-light)" : cell.isCurrentMonth ? "var(--canvas)" : "var(--stone)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    opacity: cell.isCurrentMonth ? 1 : 0.45,
+                  }}
                 >
                   {/* Day Number and Today badge */}
-                  <div className="flex items-center justify-between">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span
-                      className={`text-xs font-mono font-bold ${
-                        isToday
-                          ? "w-6 h-6 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-extrabold shadow"
-                          : isSelected
-                          ? "text-emerald-400"
-                          : cell.isCurrentMonth
-                          ? "text-slate-300"
-                          : "text-slate-600"
-                      }`}
+                      style={{
+                        fontSize: 12,
+                        fontFamily: "monospace",
+                        fontWeight: isToday || isSelected ? 800 : 600,
+                        color: isToday ? "#ffffff" : isSelected ? "var(--green-dark)" : "var(--ink)",
+                        width: isToday ? 22 : "auto",
+                        height: isToday ? 22 : "auto",
+                        borderRadius: isToday ? "50%" : 0,
+                        backgroundColor: isToday ? "var(--green)" : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                     >
                       {cell.dayNumber}
                     </span>
 
-                    {/* Total counter indicator */}
                     {(taskCount > 0 || incidentCount > 0 || harvestCount > 0) && (
-                      <span className="text-[10px] font-mono px-1 rounded bg-slate-800/80 text-slate-400">
+                      <span
+                        className="badge badge-muted font-mono"
+                        style={{ fontSize: 10, padding: "1px 5px" }}
+                      >
                         {taskCount + incidentCount + harvestCount}
                       </span>
                     )}
                   </div>
 
                   {/* Day activity pills */}
-                  <div className="space-y-1 mt-1">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 4 }}>
                     {completedTasks > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 truncate">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                        <span className="truncate">{completedTasks} Done</span>
+                      <div
+                        className="badge badge-green font-mono"
+                        style={{ fontSize: 10, padding: "2px 4px", display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: "var(--green)" }} />
+                        <span>{completedTasks} Done</span>
                       </div>
                     )}
 
                     {pendingTasks > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 truncate">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                        <span className="truncate">{pendingTasks} Due</span>
+                      <div
+                        className="badge badge-amber font-mono"
+                        style={{ fontSize: 10, padding: "2px 4px", display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: "var(--amber)" }} />
+                        <span>{pendingTasks} Due</span>
                       </div>
                     )}
 
                     {incidentCount > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 truncate">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                        <span className="truncate">{incidentCount} Alert{incidentCount > 1 ? "s" : ""}</span>
+                      <div
+                        className="badge badge-danger font-mono"
+                        style={{ fontSize: 10, padding: "2px 4px", display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: "var(--danger)" }} />
+                        <span>{incidentCount} Alert</span>
                       </div>
                     )}
 
                     {harvestCount > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 truncate">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
-                        <span className="truncate">Harvest</span>
+                      <div
+                        className="badge badge-blue font-mono"
+                        style={{ fontSize: 10, padding: "2px 4px", display: "flex", alignItems: "center", gap: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: "var(--blue)" }} />
+                        <span>Harvest</span>
                       </div>
                     )}
                   </div>
@@ -563,99 +622,100 @@ export function OperationsCalendar({
         </div>
 
         {/* ── Day Inspector / Details Panel ── */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-xl">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="card" style={{ padding: 18 }}>
             {/* Panel Header */}
-            <div className="pb-3 border-b border-slate-800 mb-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
+            <div style={{ paddingBottom: 12, borderBottom: "1px solid var(--line)", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--green)", fontWeight: 700 }}>
                   Inspected Operations
                 </span>
                 {selectedDateStr === todayStr && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="badge badge-green" style={{ fontSize: 10 }}>
                     TODAY
                   </span>
                 )}
               </div>
-              <h2 className="text-base font-bold text-white mt-1">
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "4px 0 2px" }}>
                 {formattedSelectedDate}
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="muted" style={{ fontSize: 12, margin: 0 }}>
                 {selectedDayEvents.totalCount} active items logged on this estate date
               </p>
             </div>
 
             {/* Quick Filter tabs & Search */}
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+              <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 4, borderRadius: "var(--radius-sm)" }}>
                 <button
+                  type="button"
                   onClick={() => setFilterType("all")}
-                  className={`flex-1 py-1 rounded-lg text-xs font-semibold transition ${
-                    filterType === "all" ? "bg-slate-800 text-white" : "text-slate-400 hover:text-slate-200"
-                  }`}
+                  className={`btn btn-sm ${filterType === "all" ? "btn-secondary" : "btn-ghost"}`}
+                  style={{ flex: 1, fontSize: 11, padding: "4px 6px" }}
                 >
                   All ({selectedDayEvents.totalCount})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterType("tasks")}
-                  className={`flex-1 py-1 rounded-lg text-xs font-semibold transition ${
-                    filterType === "tasks" ? "bg-slate-800 text-emerald-400" : "text-slate-400 hover:text-slate-200"
-                  }`}
+                  className={`btn btn-sm ${filterType === "tasks" ? "btn-secondary" : "btn-ghost"}`}
+                  style={{ flex: 1, fontSize: 11, padding: "4px 6px", color: filterType === "tasks" ? "var(--green)" : undefined }}
                 >
                   Tasks ({selectedDayEvents.tasks.length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterType("incidents")}
-                  className={`flex-1 py-1 rounded-lg text-xs font-semibold transition ${
-                    filterType === "incidents" ? "bg-slate-800 text-rose-400" : "text-slate-400 hover:text-slate-200"
-                  }`}
+                  className={`btn btn-sm ${filterType === "incidents" ? "btn-secondary" : "btn-ghost"}`}
+                  style={{ flex: 1, fontSize: 11, padding: "4px 6px", color: filterType === "incidents" ? "var(--danger)" : undefined }}
                 >
-                  Incidents ({selectedDayEvents.incidents.length})
+                  Alerts ({selectedDayEvents.incidents.length})
                 </button>
                 <button
+                  type="button"
                   onClick={() => setFilterType("harvests")}
-                  className={`flex-1 py-1 rounded-lg text-xs font-semibold transition ${
-                    filterType === "harvests" ? "bg-slate-800 text-purple-400" : "text-slate-400 hover:text-slate-200"
-                  }`}
+                  className={`btn btn-sm ${filterType === "harvests" ? "btn-secondary" : "btn-ghost"}`}
+                  style={{ flex: 1, fontSize: 11, padding: "4px 6px", color: filterType === "harvests" ? "var(--blue)" : undefined }}
                 >
-                  Harvest ({selectedDayEvents.harvests.length})
+                  Yield ({selectedDayEvents.harvests.length})
                 </button>
               </div>
 
               {/* Search input */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Filter by plot, title, officer..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
+              <input
+                type="text"
+                placeholder="Filter by plot, title, officer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-field"
+                style={{ fontSize: 12, padding: "6px 12px" }}
+              />
             </div>
 
             {/* Event List Container */}
-            <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 520, overflowY: "auto", paddingRight: 2 }}>
               {/* Empty state */}
               {selectedDayEvents.totalCount === 0 && (
-                <div className="text-center py-10 px-4 rounded-xl border border-dashed border-slate-800">
-                  <div className="w-10 h-10 rounded-full bg-slate-800/60 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                <div style={{ textAlign: "center", padding: "36px 16px", border: "1px dashed var(--line)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: "var(--stone)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 8px" }}>
                     <Icons.Calendar size={18} />
                   </div>
-                  <p className="text-xs font-semibold text-slate-300">No Operations Recorded</p>
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] mx-auto">
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", margin: 0 }}>No Operations Recorded</p>
+                  <p className="muted" style={{ fontSize: 11, marginTop: 4, maxWidth: 220, marginLeft: "auto", marginRight: "auto" }}>
                     No tasks scheduled or field incidents logged for {formattedSelectedDate}.
                   </p>
-                  <div className="mt-4 flex flex-col gap-2">
+                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
                     <Link
                       href="/tasks/new"
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 text-xs font-semibold border border-emerald-500/30 transition text-center"
+                      className="btn btn-sm btn-primary"
+                      style={{ fontSize: 11, padding: "6px 12px", textAlign: "center" }}
                     >
                       + Schedule New Task
                     </Link>
                     <Link
                       href="/officer/reports"
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition text-center"
+                      className="btn btn-sm btn-secondary"
+                      style={{ fontSize: 11, padding: "6px 12px", textAlign: "center" }}
                     >
                       + Log Field Incident
                     </Link>
@@ -670,47 +730,52 @@ export function OperationsCalendar({
                   return (
                     <div
                       key={task.id}
-                      className={`p-3 rounded-xl border transition ${
-                        isDone
-                          ? "bg-slate-950/70 border-emerald-900/40"
-                          : "bg-slate-950 border-slate-800"
-                      }`}
+                      className="compact-card"
+                      style={{
+                        padding: 12,
+                        borderRadius: "var(--radius-sm)",
+                        border: isDone ? "1px solid var(--line)" : "1px solid var(--line)",
+                        backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
+                        gap: 8,
+                      }}
                     >
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
                           {task.category.replace(/_/g, " ")}
                         </span>
-                        <div className="flex items-center gap-1.5">
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                            className={`badge ${
                               task.priority === "URGENT" || task.priority === "HIGH"
-                                ? "bg-rose-500/20 text-rose-300"
-                                : "bg-slate-800 text-slate-400"
+                                ? "badge-danger"
+                                : "badge-muted"
                             }`}
+                            style={{ fontSize: 9 }}
                           >
                             {task.priority}
                           </span>
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                              isDone
-                                ? "bg-emerald-500/20 text-emerald-400"
-                                : "bg-amber-500/20 text-amber-300"
-                            }`}
+                            className={`badge ${isDone ? "badge-green" : "badge-amber"}`}
+                            style={{ fontSize: 9 }}
                           >
                             {task.status}
                           </span>
                         </div>
                       </div>
 
-                      <h3 className="text-xs font-bold text-white leading-snug">{task.title}</h3>
-                      <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{task.description}</p>
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", margin: "4px 0 2px", lineHeight: 1.3 }}>
+                        {task.title}
+                      </h3>
+                      <p className="muted" style={{ fontSize: 11, margin: 0, lineHeight: 1.4 }}>
+                        {task.description}
+                      </p>
 
-                      <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-                        <span className="font-medium text-slate-300 truncate max-w-[140px]">
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "var(--muted)", paddingTop: 6, borderTop: "1px solid var(--line)", marginTop: 4 }}>
+                        <span style={{ fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
                           📍 {task.plotName} {task.cropName ? `(${task.cropName})` : ""}
                         </span>
                         {task.assignedOfficer && (
-                          <span className="text-slate-400 truncate max-w-[120px]">
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>
                             👤 {task.assignedOfficer.name}
                           </span>
                         )}
@@ -718,11 +783,13 @@ export function OperationsCalendar({
 
                       {/* Execution Details if done */}
                       {task.executions && task.executions.length > 0 && task.executions[0].remarks && (
-                        <div className="mt-2 p-2 rounded bg-slate-900/80 border border-slate-800 text-[10px] text-slate-300 space-y-0.5">
-                          <span className="font-semibold text-emerald-400 block">Execution Log:</span>
-                          <p>{task.executions[0].remarks}</p>
+                        <div style={{ marginTop: 6, padding: 8, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", fontSize: 10, color: "var(--ink)" }}>
+                          <span style={{ fontWeight: 700, color: "var(--green)", display: "block", marginBottom: 2 }}>
+                            Execution Log:
+                          </span>
+                          <p style={{ margin: 0 }}>{task.executions[0].remarks}</p>
                           {task.executions[0].labourHours > 0 && (
-                            <span className="text-slate-400 block">
+                            <span className="muted" style={{ display: "block", marginTop: 2 }}>
                               Labor Logged: {task.executions[0].labourHours} hrs
                             </span>
                           )}
@@ -737,20 +804,29 @@ export function OperationsCalendar({
                 selectedDayEvents.incidents.map((incident) => (
                   <div
                     key={incident.id}
-                    className="p-3 rounded-xl border border-rose-900/40 bg-rose-950/10 text-xs space-y-1.5"
+                    className="compact-card"
+                    style={{
+                      padding: 12,
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--danger)",
+                      backgroundColor: "var(--canvas)",
+                      gap: 6,
+                    }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <span className="badge badge-danger font-mono" style={{ fontSize: 10 }}>
                         ⚠️ {incident.type}
                       </span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                      <span className="badge badge-muted" style={{ fontSize: 9 }}>
                         {incident.status}
                       </span>
                     </div>
 
-                    <p className="text-white font-medium">{incident.description}</p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                      {incident.description}
+                    </p>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-rose-900/30">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "var(--muted)", paddingTop: 4, borderTop: "1px solid var(--line)" }}>
                       <span>📍 {incident.plotName}</span>
                       <span>By {incident.reporter.name}</span>
                     </div>
@@ -762,20 +838,27 @@ export function OperationsCalendar({
                 selectedDayEvents.harvests.map((harvest) => (
                   <div
                     key={harvest.id}
-                    className="p-3 rounded-xl border border-purple-900/40 bg-purple-950/10 text-xs space-y-1.5"
+                    className="compact-card"
+                    style={{
+                      padding: 12,
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--blue)",
+                      backgroundColor: "var(--canvas)",
+                      gap: 6,
+                    }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <span className="badge badge-blue font-mono" style={{ fontSize: 10 }}>
                         🌾 HARVEST: {harvest.cropName}
                       </span>
-                      <span className="text-xs font-mono font-bold text-emerald-400">
+                      <span style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: "var(--green)" }}>
                         {harvest.quantity.toLocaleString()} {harvest.unit}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "var(--muted)", paddingTop: 4, borderTop: "1px solid var(--line)" }}>
                       <span>📍 {harvest.plotName}</span>
-                      {harvest.grade ? <span className="text-purple-300">Grade {harvest.grade}</span> : null}
+                      {harvest.grade ? <span>Grade {harvest.grade}</span> : null}
                       {harvest.buyerOrMarket && <span>Market: {harvest.buyerOrMarket}</span>}
                     </div>
                   </div>

@@ -44,7 +44,6 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
     if (!selectedFarmId) return;
     setLoading(true);
     try {
-      // Fetch harvest, expenses, crew musters, inventory, and crops concurrently
       const [harvestRes, expRes, crewRes, invRes, plotRes] = await Promise.all([
         fetch(`/api/harvest?farmId=${selectedFarmId}`),
         fetch(`/api/expenses?farmId=${selectedFarmId}`),
@@ -63,14 +62,12 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
       const cutoffDays = timeRange === "7D" ? 7 : 30;
       const cutoffTime = now.getTime() - cutoffDays * 24 * 60 * 60 * 1000;
 
-      // Filter harvests in time range
       const recentHarvests = harvests.filter(
         (h: any) => new Date(h.harvestDate).getTime() >= cutoffTime
       );
       const totalHarvestKg = recentHarvests.reduce((acc: number, h: any) => acc + (Number(h.quantity) || 0), 0);
       const totalRevenue = recentHarvests.reduce((acc: number, h: any) => acc + (Number(h.totalAmount) || 0), 0);
 
-      // Filter expenses in time range
       const recentExpenses = (expData.expenses || []).filter(
         (e: any) => new Date(e.date).getTime() >= cutoffTime
       );
@@ -83,18 +80,15 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
         .reduce((acc: number, e: any) => acc + (Number(e.amount) || 0), 0);
       const otherSpend = totalSpend - labourSpend - materialsSpend;
 
-      // Crew shifts
       const recentMusters = crewMusters.filter(
         (m: any) => new Date(m.musterDate).getTime() >= cutoffTime
       );
       const labourShiftCount = recentMusters.reduce((acc: number, m: any) => acc + (m.totalLabourers || 0), 0);
 
-      // Low stock SKUs
       const lowStockItems = inventory
         .filter((i: any) => i.isLowStock)
         .map((i: any) => `${i.name} (${Number(i.quantityInStock)} ${i.unit})`);
 
-      // Active crops
       const activeCrops: any[] = [];
       plots.forEach((p: any) => {
         (p.cropCycles || []).forEach((c: any) => {
@@ -180,31 +174,40 @@ _Generated via Agaate Precision Farm Intelligence_`;
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div
+        className="card"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 16,
+          padding: "16px 20px",
+        }}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              <Icons.FileText className="w-6 h-6 text-emerald-400" />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <Icons.FileText size={20} style={{ color: "var(--green)" }} />
               Executive Estate Brief
             </h1>
-            <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-              Landowner Report
-            </span>
+            <span className="badge badge-green">Landowner Report</span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>
             Commercial burn rate, harvest realizations, crop progress, and WhatsApp summary digest.
           </p>
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           {farms.length > 1 && (
             <select
               value={selectedFarmId}
               onChange={(e) => setSelectedFarmId(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 text-zinc-100 text-xs rounded-lg px-3 py-2 outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ fontSize: 12, padding: "6px 12px", width: "auto" }}
             >
               {farms.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -214,70 +217,79 @@ _Generated via Agaate Precision Farm Intelligence_`;
             </select>
           )}
 
-          <div className="flex items-center p-0.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs">
+          <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
             <button
+              type="button"
               onClick={() => setTimeRange("7D")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-all ${
-                timeRange === "7D" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
-              }`}
+              className={`btn btn-sm ${timeRange === "7D" ? "btn-primary" : "btn-ghost"}`}
+              style={{ fontSize: 11, padding: "4px 10px" }}
             >
               Last 7 Days
             </button>
             <button
+              type="button"
               onClick={() => setTimeRange("30D")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-all ${
-                timeRange === "30D" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"
-              }`}
+              className={`btn btn-sm ${timeRange === "30D" ? "btn-primary" : "btn-ghost"}`}
+              style={{ fontSize: 11, padding: "4px 10px" }}
             >
               Last 30 Days
             </button>
           </div>
 
           <button
+            type="button"
             onClick={copyToClipboard}
-            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2 rounded-lg border border-zinc-700 transition-colors"
+            className="btn btn-sm btn-secondary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 12px" }}
           >
-            <Icons.ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
+            <Icons.ClipboardList size={14} style={{ color: "var(--green)" }} />
             Copy WhatsApp Text
           </button>
 
           <button
+            type="button"
             onClick={shareViaWhatsApp}
-            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-sm"
+            className="btn btn-sm btn-primary"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 14px" }}
           >
-            <Icons.Zap className="w-3.5 h-3.5" />
+            <Icons.Zap size={14} />
             Share WhatsApp
           </button>
         </div>
       </div>
 
       {loading || !data ? (
-        <div className="p-12 text-center text-zinc-400 border border-zinc-800 rounded-2xl bg-zinc-900/40">
-          <Icons.Spinner className="w-6 h-6 animate-spin mx-auto text-emerald-500 mb-2" />
+        <div className="card" style={{ padding: 48, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+          <Icons.Spinner size={24} className="animate-spin" style={{ margin: "0 auto 8px", color: "var(--green)" }} />
           Compiling executive estate telemetry...
         </div>
       ) : (
-        <div className="space-y-6">
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Executive Top Banner Card */}
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-zinc-950 border border-zinc-800 shadow-xl relative overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-800/80">
+          <div className="card" style={{ padding: 24, border: "1px solid var(--line)" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, paddingBottom: 20, borderBottom: "1px solid var(--line)" }}>
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                <span style={{ fontSize: 11, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--green)", fontWeight: 700 }}>
                   {data.periodLabel}
                 </span>
-                <h2 className="text-2xl font-black text-white tracking-tight mt-1">{data.farmName}</h2>
-                <div className="text-xs text-zinc-400 mt-0.5">
+                <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--ink)", margin: "4px 0 2px" }}>{data.farmName}</h2>
+                <div className="muted" style={{ fontSize: 12 }}>
                   Reporting Window: {formatDate(data.startDate)} – {formatDate(data.endDate)}
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-right">
-                <div className="p-3 rounded-xl bg-zinc-800/60 border border-zinc-700/60 text-right">
-                  <span className="text-[11px] text-zinc-400 block font-semibold uppercase">Net Operational Margin</span>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ padding: "10px 16px", backgroundColor: "var(--stone)", borderRadius: "var(--radius-sm)", border: "1px solid var(--line)" }}>
+                  <span className="muted" style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
+                    Net Operational Margin
+                  </span>
                   <span
-                    className={`text-xl font-mono font-bold ${
-                      data.netMargin >= 0 ? "text-emerald-400" : "text-rose-400"
-                    }`}
+                    style={{
+                      fontSize: 20,
+                      fontFamily: "monospace",
+                      fontWeight: 800,
+                      color: data.netMargin >= 0 ? "var(--green)" : "var(--danger)",
+                    }}
                   >
                     {data.netMargin >= 0 ? "+" : "-"}₹{Math.abs(data.netMargin).toLocaleString("en-IN")}
                   </span>
@@ -286,59 +298,59 @@ _Generated via Agaate Precision Farm Intelligence_`;
             </div>
 
             {/* Financial Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-              <div>
-                <span className="text-xs text-zinc-500 block font-medium uppercase">Gross Harvest Cut</span>
-                <span className="text-lg font-bold text-white font-mono">{data.totalHarvestKg.toLocaleString()} KG</span>
-                <span className="text-[11px] text-zinc-400 block mt-0.5">Weighed & Dispatched</span>
+            <div className="metric-summary-row" style={{ marginTop: 20 }}>
+              <div className="metric-summary-item">
+                <span className="metric-label">Gross Harvest Cut</span>
+                <div className="metric-value font-mono">{data.totalHarvestKg.toLocaleString()} KG</div>
+                <div className="metric-sub">Weighed &amp; Dispatched</div>
               </div>
 
-              <div>
-                <span className="text-xs text-zinc-500 block font-medium uppercase">Gross Harvest Revenue</span>
-                <span className="text-lg font-bold text-emerald-400 font-mono">
+              <div className="metric-summary-item">
+                <span className="metric-label">Gross Harvest Revenue</span>
+                <div className="metric-value font-mono" style={{ color: "var(--green)" }}>
                   ₹{data.totalRevenue.toLocaleString("en-IN")}
-                </span>
-                <span className="text-[11px] text-zinc-400 block mt-0.5">Realized from Buyers</span>
+                </div>
+                <div className="metric-sub">Realized from Buyers</div>
               </div>
 
-              <div>
-                <span className="text-xs text-zinc-500 block font-medium uppercase">Total Operations Burn</span>
-                <span className="text-lg font-bold text-rose-400 font-mono">
+              <div className="metric-summary-item">
+                <span className="metric-label">Total Operations Burn</span>
+                <div className="metric-value font-mono" style={{ color: "var(--danger)" }}>
                   ₹{data.totalSpend.toLocaleString("en-IN")}
-                </span>
-                <span className="text-[11px] text-zinc-400 block mt-0.5">Inputs, Labour & Diesel</span>
+                </div>
+                <div className="metric-sub">Inputs, Labour &amp; Diesel</div>
               </div>
 
-              <div>
-                <span className="text-xs text-zinc-500 block font-medium uppercase">Labour Shift Count</span>
-                <span className="text-lg font-bold text-amber-400 font-mono">{data.labourShiftCount} Shifts</span>
-                <span className="text-[11px] text-zinc-400 block mt-0.5">₹{data.labourSpend.toLocaleString("en-IN")} Payroll</span>
+              <div className="metric-summary-item">
+                <span className="metric-label">Labour Shift Count</span>
+                <div className="metric-value font-mono" style={{ color: "var(--amber)" }}>{data.labourShiftCount} Shifts</div>
+                <div className="metric-sub">₹{data.labourSpend.toLocaleString("en-IN")} Payroll</div>
               </div>
             </div>
           </div>
 
           {/* Active Crops & Operations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
             {/* Active Crops */}
-            <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <Icons.TrendingUp className="w-4 h-4 text-emerald-400" />
-                Active Crops & Phenology Status
+            <div className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+              <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+                <Icons.TrendingUp size={16} style={{ color: "var(--green)" }} />
+                Active Crops &amp; Phenology Status
               </h3>
 
               {data.activeCrops.length === 0 ? (
-                <div className="text-xs text-zinc-500 py-4 text-center">No active crop cycles recorded.</div>
+                <div className="muted" style={{ fontSize: 12, padding: "16px 0", textAlign: "center" }}>No active crop cycles recorded.</div>
               ) : (
-                <div className="divide-y divide-zinc-800/60">
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {data.activeCrops.map((c, idx) => (
-                    <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
+                    <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 12 }}>
                       <div>
-                        <div className="font-bold text-white">{c.cropName}</div>
-                        <div className="text-zinc-400 text-[11px]">{c.plotName}</div>
+                        <div style={{ fontWeight: 700, color: "var(--ink)" }}>{c.cropName}</div>
+                        <div className="muted" style={{ fontSize: 11 }}>{c.plotName}</div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono font-bold text-emerald-400">{c.daysInGround} Days</span>
-                        <div className="text-[10px] text-zinc-500">{c.stage}</div>
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 12, fontFamily: "monospace", fontWeight: 700, color: "var(--green)" }}>{c.daysInGround} Days</span>
+                        <div className="muted" style={{ fontSize: 10 }}>{c.stage}</div>
                       </div>
                     </div>
                   ))}
@@ -347,24 +359,25 @@ _Generated via Agaate Precision Farm Intelligence_`;
             </div>
 
             {/* Shed Alerts & Field Observations */}
-            <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <Icons.AlertTriangle className="w-4 h-4 text-amber-400" />
-                Shed Stock & Hazard Alerts
+            <div className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+                <Icons.AlertTriangle size={16} style={{ color: "var(--amber)" }} />
+                Shed Stock &amp; Hazard Alerts
               </h3>
 
               <div>
-                <span className="text-xs font-semibold text-zinc-300 block mb-1.5">Low Shed Inventory (Restock Needed):</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", display: "block", marginBottom: 6 }}>Low Shed Inventory (Restock Needed):</span>
                 {data.lowStockItems.length === 0 ? (
-                  <span className="text-xs text-emerald-400 flex items-center gap-1">
-                    <Icons.CheckCircle className="w-3.5 h-3.5" /> All warehouse inputs above reorder thresholds
+                  <span style={{ fontSize: 12, color: "var(--green)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icons.CheckCircle size={14} /> All warehouse inputs above reorder thresholds
                   </span>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {data.lowStockItems.map((sku, idx) => (
                       <span
                         key={idx}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium"
+                        className="badge badge-amber font-mono"
+                        style={{ fontSize: 11 }}
                       >
                         {sku}
                       </span>
@@ -373,15 +386,9 @@ _Generated via Agaate Precision Farm Intelligence_`;
                 )}
               </div>
 
-              <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-between text-xs">
-                <span className="text-zinc-400">Open Hazard / Pest Outbreaks:</span>
-                <span
-                  className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
-                    data.hazardsCount === 0
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                  }`}
-                >
+              <div style={{ paddingTop: 10, borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
+                <span className="muted">Open Hazard / Pest Outbreaks:</span>
+                <span className={`badge ${data.hazardsCount === 0 ? "badge-green" : "badge-danger"}`}>
                   {data.hazardsCount === 0 ? "Zero Open Hazards" : `${data.hazardsCount} Active Alerts`}
                 </span>
               </div>
@@ -389,21 +396,23 @@ _Generated via Agaate Precision Farm Intelligence_`;
           </div>
 
           {/* WhatsApp Preview Box */}
-          <div className="p-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                <Icons.Zap className="w-4 h-4 text-emerald-400" />
+          <div className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--green)", display: "flex", alignItems: "center", gap: 6 }}>
+                <Icons.Zap size={16} />
                 Live WhatsApp Message Preview
               </span>
               <button
+                type="button"
                 onClick={copyToClipboard}
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-medium hover:underline flex items-center gap-1"
+                className="btn btn-sm btn-ghost"
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--green)", fontWeight: 600 }}
               >
-                <Icons.ClipboardList className="w-3.5 h-3.5" /> Copy Text
+                <Icons.ClipboardList size={13} /> Copy Text
               </button>
             </div>
 
-            <pre className="p-4 rounded-xl bg-zinc-900 border border-zinc-800/80 text-xs font-mono text-zinc-300 whitespace-pre-wrap leading-relaxed overflow-x-auto">
+            <pre style={{ margin: 0, padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", fontSize: 12, fontFamily: "monospace", color: "var(--ink)", whiteSpace: "pre-wrap", lineHeight: 1.5, overflowX: "auto" }}>
               {generateWhatsAppText()}
             </pre>
           </div>

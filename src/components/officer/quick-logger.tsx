@@ -24,12 +24,12 @@ type InventoryItem = {
 };
 
 const CATEGORIES = [
-  { id: "IRRIGATION", label: "Irrigation Run", icon: "Sun", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
-  { id: "FERTIGATION", label: "Fertigation / Drenching", icon: "Coins", color: "text-amber-400 border-amber-500/30 bg-amber-500/10" },
-  { id: "SPRAYING", label: "Pest / Foliar Spray", icon: "Zap", color: "text-rose-400 border-rose-500/30 bg-rose-500/10" },
-  { id: "WEEDING", label: "Manual Weeding", icon: "TrendingUp", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
-  { id: "PRUNING", label: "Pruning / Trellising", icon: "ClipboardList", color: "text-purple-400 border-purple-500/30 bg-purple-500/10" },
-  { id: "FIELD_MAINTENANCE", label: "Pump / Shed Repair", icon: "Package", color: "text-orange-400 border-orange-500/30 bg-orange-500/10" },
+  { id: "IRRIGATION", label: "Irrigation Run" },
+  { id: "FERTIGATION", label: "Fertigation / Drenching" },
+  { id: "SPRAYING", label: "Pest / Foliar Spray" },
+  { id: "WEEDING", label: "Manual Weeding" },
+  { id: "PRUNING", label: "Pruning / Trellising" },
+  { id: "FIELD_MAINTENANCE", label: "Pump / Shed Repair" },
 ];
 
 export function QuickLogger({ farms }: { farms: Farm[] }) {
@@ -117,16 +117,27 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
   const selectedInventoryItem = inventoryItems.find((i) => i.id === selectedItemId);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Icons.Zap className="w-5 h-5" />
-          </span>
+      <div className="card" style={{ padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "var(--stone)",
+              color: "var(--green)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icons.Zap size={20} />
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Express Field Activity Logger</h1>
-            <p className="text-xs text-zinc-400">
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Express Field Activity Logger</h1>
+            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
               Instant 1-tap logging for unassigned daily ground work. Keeps your farm owner informed in real time.
             </p>
           </div>
@@ -134,19 +145,20 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
       </div>
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-5 bg-zinc-900/70 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Plot Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: farms.length > 1 ? "1fr 1fr" : "1fr", gap: 12 }}>
           {farms.length > 1 && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-400 mb-1">Select Farm</label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Select Farm</label>
               <select
                 value={selectedFarmId}
                 onChange={(e) => {
                   setSelectedFarmId(e.target.value);
                   setSelectedPlotId("");
                 }}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="input-field"
+                style={{ width: "100%" }}
               >
                 {farms.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -157,12 +169,13 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
             </div>
           )}
 
-          <div className={farms.length === 1 ? "col-span-2" : ""}>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Target Plot / Zone</label>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Target Plot / Zone</label>
             <select
               value={selectedPlotId}
               onChange={(e) => setSelectedPlotId(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             >
               {plots.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -175,8 +188,8 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
 
         {/* Activity Category Selection */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-2">What did you execute today?</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>What did you execute today?</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
@@ -184,13 +197,15 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`p-3 rounded-xl border text-left flex flex-col justify-between gap-2 transition-all ${
-                    isSelected
-                      ? `${cat.color} ring-1 ring-white/20 shadow-md`
-                      : "bg-zinc-800/40 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                  }`}
+                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
+                  style={{
+                    padding: "10px 12px",
+                    textAlign: "center",
+                    fontSize: 12,
+                    fontWeight: isSelected ? 700 : 500,
+                  }}
                 >
-                  <span className="text-xs font-bold leading-snug">{cat.label}</span>
+                  {cat.label}
                 </button>
               );
             })}
@@ -199,45 +214,46 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
 
         {/* Title */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">Activity Title</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Activity Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+            className="input-field"
+            style={{ width: "100%" }}
           />
         </div>
 
         {/* Duration presets */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">
-            Duration: <span className="text-emerald-400 font-bold">{durationMinutes} Minutes</span> ({ (durationMinutes / 60).toFixed(1) } Hours)
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
+            Duration: <strong style={{ color: "var(--green)" }}>{durationMinutes} Minutes</strong> ({ (durationMinutes / 60).toFixed(1) } Hours)
           </label>
-          <div className="flex items-center gap-2">
-            {[30, 60, 120, 180, 240, 360].map((mins) => (
-              <button
-                key={mins}
-                type="button"
-                onClick={() => setDurationMinutes(mins)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  durationMinutes === mins
-                    ? "bg-emerald-600 text-white border-emerald-500"
-                    : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white"
-                }`}
-              >
-                {mins < 60 ? `${mins}m` : `${mins / 60}h`}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {[30, 60, 120, 180, 240, 360].map((mins) => {
+              const isSelected = durationMinutes === mins;
+              return (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => setDurationMinutes(mins)}
+                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
+                  style={{ flex: 1, minWidth: 50, fontSize: 12, padding: "6px 8px" }}
+                >
+                  {mins < 60 ? `${mins}m` : `${mins / 60}h`}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Shed Stock Consumption (Optional) */}
         {(selectedCategory === "FERTIGATION" || selectedCategory === "SPRAYING" || inventoryItems.length > 0) && (
-          <div className="p-3.5 rounded-xl bg-zinc-800/40 border border-zinc-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                <Icons.Package className="w-3.5 h-3.5 text-amber-400" />
+          <div style={{ padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
+                <Icons.Package size={14} style={{ color: "var(--amber)" }} />
                 Did you consume any Shed Stock? (Optional)
               </span>
               {selectedItemId && (
@@ -247,18 +263,19 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                     setSelectedItemId("");
                     setItemQuantity("");
                   }}
-                  className="text-[11px] text-zinc-400 hover:text-rose-400"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", fontSize: 11, padding: 0 }}
                 >
                   Clear item
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div style={{ display: "grid", gridTemplateColumns: selectedItemId && selectedInventoryItem ? "1fr 1fr" : "1fr", gap: 8 }}>
               <select
                 value={selectedItemId}
                 onChange={(e) => setSelectedItemId(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                className="input-field"
+                style={{ width: "100%", fontSize: 12 }}
               >
                 <option value="">-- No stock consumed --</option>
                 {inventoryItems.map((item) => (
@@ -269,7 +286,7 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
               </select>
 
               {selectedItemId && selectedInventoryItem && (
-                <div className="flex items-center gap-2">
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <input
                     type="number"
                     step="0.01"
@@ -278,9 +295,10 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                     value={itemQuantity}
                     onChange={(e) => setItemQuantity(e.target.value)}
                     required
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                    className="input-field"
+                    style={{ flex: 1, fontSize: 12 }}
                   />
-                  <span className="text-xs text-zinc-400 font-medium px-2 py-1 bg-zinc-800 rounded border border-zinc-700">
+                  <span className="badge badge-muted font-mono">
                     {selectedInventoryItem.unit}
                   </span>
                 </div>
@@ -291,13 +309,14 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
 
         {/* Observations & Field Notes */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">Notes / Pressure / Observations</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Notes / Pressure / Observations</label>
           <textarea
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Pump pressure was 2.5 bar, emitter flow checked, slight weed growth along dripline."
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+            className="input-field"
+            style={{ width: "100%", resize: "vertical" }}
           />
         </div>
 
@@ -305,16 +324,14 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+          className="btn btn-primary"
+          style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}
         >
           {pending ? (
-            <>
-              <Icons.Spinner className="w-4 h-4 animate-spin" />
-              Logging Activity...
-            </>
+            "Logging Activity..."
           ) : (
             <>
-              <Icons.CheckCircle className="w-4 h-4" />
+              <Icons.CheckCircle size={16} />
               Submit Field Log
             </>
           )}

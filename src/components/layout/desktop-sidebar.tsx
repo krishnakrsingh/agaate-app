@@ -2,42 +2,33 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Icons } from "@/components/icons";
+import { FarmSwitcher } from "@/components/nav/farm-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-interface SidebarProps {
+interface NavLinkItem {
+  href: string;
+  label: string;
+  icon: keyof typeof Icons;
+  badge?: string;
+  isActive?: (path: string) => boolean;
+}
+
+interface NavSection {
+  title: string;
+  items: NavLinkItem[];
+}
+
+interface DesktopSidebarProps {
   role: string;
   userName?: string;
+  onOpenCommandPalette?: () => void;
 }
 
-interface NavGroup {
-  title: string;
-  items: {
-    href: string;
-    label: string;
-    icon: keyof typeof Icons;
-    badge?: string;
-    isActive?: (p: string) => boolean;
-  }[];
-}
-
-type FarmOption = { id: string; name: string; location: string; status: string };
-
-export function DesktopSidebar({ role, userName }: SidebarProps) {
+export function DesktopSidebar({ role, userName, onOpenCommandPalette }: DesktopSidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [timeStr, setTimeStr] = useState<string>("");
-  const [farms, setFarms] = useState<FarmOption[]>([]);
-  const [selectedFarmId, setSelectedFarmId] = useState<string>("");
-
-  useEffect(() => {
-    // Add body class for layout margin adjustment on desktop
-    document.body.classList.add("has-desktop-sidebar");
-    return () => {
-      document.body.classList.remove("has-desktop-sidebar");
-    };
-  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -51,258 +42,327 @@ export function DesktopSidebar({ role, userName }: SidebarProps) {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/farms")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((list: FarmOption[]) => {
-        setFarms(list);
-        if (list.length > 0 && !selectedFarmId) {
-          // Detect from URL if on a farm page
-          const m = pathname.match(/\/farms\/([^/]+)/);
-          const currentId = m ? m[1] : list[0].id;
-          setSelectedFarmId(currentId);
-        }
-      })
-      .catch(() => undefined);
-  }, [pathname, selectedFarmId]);
-
-  const handleFarmChange = (newFarmId: string) => {
-    setSelectedFarmId(newFarmId);
-    if (pathname.startsWith("/farms/")) {
-      router.push(`/farms/${newFarmId}`);
-    } else if (pathname.startsWith("/owner/calendar")) {
-      router.push(`/owner/calendar?farmId=${newFarmId}`);
-    } else if (pathname.startsWith("/owner/team")) {
-      router.push(`/owner/team?farmId=${newFarmId}`);
-    }
-  };
-
-  const handleLogout = async () => {
+  async function handleSignOut() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // ignore
+    } finally {
+      window.location.href = "/login";
     }
-    window.location.href = "/login";
+  }
+
+  const roleLabels: Record<string, string> = {
+    SUPER_ADMIN: "SUPER ADMIN",
+    FARM_ADMIN: "FARM OWNER",
+    AGRONOMIST: "AGRONOMIST",
+    FARM_OFFICER: "FARM MANAGER",
   };
 
-  const roleMeta: Record<string, { label: string; badge: string; color: string }> = {
-    SUPER_ADMIN: {
-      label: "AGAATE HQ",
-      badge: "SUPER ADMIN",
-      color: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
-    },
-    FARM_ADMIN: {
-      label: "ESTATE OWNER",
-      badge: "COCKPIT",
-      color: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
-    },
-    AGRONOMIST: {
-      label: "AGRONOMY LAB",
-      badge: "SPECIALIST",
-      color: "border-sky-500/40 text-sky-400 bg-sky-500/10",
-    },
-    FARM_OFFICER: {
-      label: "FIELD COMMAND",
-      badge: "MANAGER",
-      color: "border-amber-500/40 text-amber-400 bg-amber-500/10",
-    },
+  const roleHomeUrls: Record<string, string> = {
+    SUPER_ADMIN: "/dashboard",
+    FARM_ADMIN: "/owner/dashboard",
+    AGRONOMIST: "/agronomy/radar",
+    FARM_OFFICER: "/officer/day",
   };
 
-  const currentRoleMeta = roleMeta[role] || {
-    label: role,
-    badge: "USER",
-    color: "border-slate-700 text-slate-300 bg-slate-800",
-  };
-
-  // Construct Nav Groups per persona
-  const groups: NavGroup[] = [];
+  // Build role-tailored grouped navigation sections
+  const sections: NavSection[] = [];
 
   if (role === "SUPER_ADMIN") {
-    groups.push(
+    sections.push(
       {
-        title: "ESTATE COMMAND",
+        title: "HQ Command",
         items: [
-          { href: "/dashboard", label: "Overview", icon: "Farm", isActive: (p) => p === "/dashboard" },
-          { href: "/farms/new", label: "Onboard Farm", icon: "Plus", badge: "Wizard", isActive: (p) => p === "/farms/new" },
-          { href: "/owner/calendar", label: "Ops Calendar", icon: "Calendar", badge: "Timeline", isActive: (p) => p.startsWith("/owner/calendar") },
+          {
+            href: "/dashboard",
+            label: "Command Center",
+            icon: "Farm",
+            isActive: (p) => p === "/dashboard" || (p.startsWith("/farms") && !p.startsWith("/farms/new")),
+          },
+          {
+            href: "/owner/calendar",
+            label: "Ops Calendar",
+            icon: "Calendar",
+          },
+          {
+            href: "/tasks",
+            label: "Global Tasks",
+            icon: "ClipboardList",
+          },
         ],
       },
       {
-        title: "WORKFORCE & SECURITY",
+        title: "Client Portfolio",
         items: [
-          { href: "/admin/attendance", label: "Workforce", icon: "Activity", isActive: (p) => p.startsWith("/admin/attendance") },
-          { href: "/admin/approvals", label: "Approvals", icon: "Shield", isActive: (p) => p.startsWith("/admin/approvals") },
-          { href: "/admin/users", label: "Clients & Officers", icon: "Users", isActive: (p) => p.startsWith("/admin/users") },
-          { href: "/admin/audit", label: "Audit Logs", icon: "Activity", isActive: (p) => p.startsWith("/admin/audit") },
+          {
+            href: "/farms/new",
+            label: "Onboard Client & Farm",
+            icon: "Plus",
+            badge: "Setup",
+            isActive: (p) => p.startsWith("/farms/new"),
+          },
+          {
+            href: "/admin/attendance",
+            label: "Workforce Presence",
+            icon: "Activity",
+          },
+          {
+            href: "/admin/users",
+            label: "Clients & Directory",
+            icon: "Users",
+          },
         ],
       },
       {
-        title: "INTELLIGENCE & TASKS",
+        title: "Governance & Audit",
         items: [
-          { href: "/tasks", label: "Task Matrix", icon: "ClipboardList", isActive: (p) => p.startsWith("/tasks") },
-          { href: "/reports/daily", label: "Field Reports", icon: "FileText", isActive: (p) => p.startsWith("/reports") },
+          {
+            href: "/admin/approvals",
+            label: "Approvals Desk",
+            icon: "Shield",
+          },
+          {
+            href: "/admin/audit",
+            label: "Audit Trail",
+            icon: "FileText",
+          },
+          {
+            href: "/reports/daily",
+            label: "Shift Reports",
+            icon: "TrendingUp",
+          },
         ],
       }
     );
   } else if (role === "FARM_ADMIN") {
-    groups.push(
+    sections.push(
       {
-        title: "ESTATE COCKPIT",
+        title: "Estate Operations",
         items: [
-          { href: "/owner/dashboard", label: "Cockpit", icon: "Farm", isActive: (p) => p.startsWith("/owner/dashboard") || p === "/dashboard" },
-          { href: "/owner/calendar", label: "Ops Calendar", icon: "Calendar", badge: "Timeline", isActive: (p) => p.startsWith("/owner/calendar") },
-          { href: "/owner/plots", label: "Plots & Crops", icon: "TrendingUp", isActive: (p) => p.startsWith("/owner/plots") },
+          {
+            href: "/owner/dashboard",
+            label: "Cockpit",
+            icon: "Farm",
+            isActive: (p) => p.startsWith("/owner/dashboard") || p === "/dashboard",
+          },
+          {
+            href: "/owner/calendar",
+            label: "Ops Calendar",
+            icon: "Calendar",
+          },
+          {
+            href: "/owner/plots",
+            label: "Plots & Crops",
+            icon: "TrendingUp",
+            isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/plots"),
+          },
+          {
+            href: "/tasks",
+            label: "Field Tasks",
+            icon: "ClipboardList",
+          },
         ],
       },
       {
-        title: "FIELD & WORKFORCE",
+        title: "Logistics & Yield",
         items: [
-          { href: "/owner/team", label: "Team & Labor", icon: "Users", badge: "Vouchers", isActive: (p) => p.startsWith("/owner/team") },
-          { href: "/owner/harvest", label: "Harvest Logs", icon: "Truck", isActive: (p) => p.startsWith("/owner/harvest") },
-          { href: "/owner/inventory", label: "Shed Stock", icon: "Package", isActive: (p) => p.startsWith("/owner/inventory") },
-          { href: "/admin/attendance", label: "Attendance", icon: "Activity", isActive: (p) => p.startsWith("/admin/attendance") },
+          {
+            href: "/owner/harvest",
+            label: "Harvest Logistics",
+            icon: "Truck",
+          },
+          {
+            href: "/owner/inventory",
+            label: "Shed Stock",
+            icon: "Package",
+          },
+          {
+            href: "/admin/attendance",
+            label: "Workforce Presence",
+            icon: "Activity",
+          },
+          {
+            href: "/owner/team",
+            label: "Laborers & Team",
+            icon: "Users",
+          },
         ],
       },
       {
-        title: "FINANCIALS & REPORTS",
+        title: "Finance & Insights",
         items: [
-          { href: "/owner/financials", label: "P&L Financials", icon: "Coins", isActive: (p) => p.startsWith("/owner/financials") },
-          { href: "/reports/daily", label: "Field Reports", icon: "FileText", isActive: (p) => p.startsWith("/reports") },
+          {
+            href: "/owner/financials",
+            label: "Financials & P&L",
+            icon: "Coins",
+          },
+          {
+            href: "/owner/reports/brief",
+            label: "Executive Brief",
+            icon: "FileText",
+            badge: "PDF",
+          },
+          {
+            href: "/reports/daily",
+            label: "Daily Reports",
+            icon: "Calendar",
+          },
         ],
       }
     );
   } else if (role === "FARM_OFFICER") {
-    groups.push({
-      title: "FIELD OPERATIONS",
+    sections.push(
+      {
+        title: "Duty & Execution",
+        items: [
+          {
+            href: "/officer/day",
+            label: "My Day Desk",
+            icon: "Sun",
+            badge: "Live",
+            isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
+          },
+          {
+            href: "/officer/quick-log",
+            label: "Quick Event Log",
+            icon: "Zap",
+          },
+          {
+            href: "/officer/crew",
+            label: "Crew Muster",
+            icon: "Users",
+          },
+        ],
+      },
+      {
+        title: "Field Tracking",
+        items: [
+          {
+            href: "/officer/harvest",
+            label: "Harvest Logger",
+            icon: "Truck",
+          },
+          {
+            href: "/tasks",
+            label: "Assigned Tasks",
+            icon: "ClipboardList",
+          },
+          {
+            href: "/officer/reports",
+            label: "Visual Field Snaps",
+            icon: "Camera",
+          },
+        ],
+      }
+    );
+  } else {
+    // Default / Agronomist fallback
+    sections.push({
+      title: "Agronomy Suite",
       items: [
-        { href: "/officer/day", label: "My Day", icon: "Sun", isActive: (p) => p.startsWith("/officer/day") },
-        { href: "/officer/quick-log", label: "Quick Log", icon: "Zap", isActive: (p) => p.startsWith("/officer/quick-log") },
-        { href: "/officer/harvest", label: "Log Harvest", icon: "Truck", isActive: (p) => p.startsWith("/officer/harvest") },
-        { href: "/officer/crew", label: "Crew Muster", icon: "Users", isActive: (p) => p.startsWith("/officer/crew") },
-        { href: "/officer/reports", label: "Signals & Snaps", icon: "Camera", isActive: (p) => p.startsWith("/officer/reports") },
-      ],
-    });
-  } else if (role === "AGRONOMIST") {
-    groups.push({
-      title: "AGRONOMY SUITE",
-      items: [
-        { href: "/agronomy/radar", label: "Crop Radar", icon: "TrendingUp", isActive: (p) => p.startsWith("/agronomy/radar") },
-        { href: "/agronomy/planning", label: "Weekly Plan", icon: "Calendar", isActive: (p) => p.startsWith("/agronomy/planning") },
-        { href: "/agronomy/diagnostics", label: "Diagnostics", icon: "Stethoscope", isActive: (p) => p.startsWith("/agronomy/diagnostics") },
-        { href: "/tasks", label: "All Tasks", icon: "ClipboardList", isActive: (p) => p.startsWith("/tasks") },
-        { href: "/reports/daily", label: "Field Reports", icon: "FileText", isActive: (p) => p.startsWith("/reports") },
+        {
+          href: "/agronomy/radar",
+          label: "Crop Radar",
+          icon: "TrendingUp",
+          isActive: (p) => p.startsWith("/agronomy/radar") || p === "/dashboard",
+        },
+        {
+          href: "/agronomy/planning",
+          label: "Weekly Plan",
+          icon: "Calendar",
+        },
+        {
+          href: "/agronomy/diagnostics",
+          label: "Diagnostics",
+          icon: "Stethoscope",
+        },
+        {
+          href: "/tasks",
+          label: "Tasks Ledger",
+          icon: "ClipboardList",
+        },
+        {
+          href: "/reports/daily",
+          label: "Field Reports",
+          icon: "FileText",
+        },
       ],
     });
   }
 
-  const userInitials = (userName || "User")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = userName ? userName.trim().charAt(0).toUpperCase() : "U";
+  const userRoleLabel = roleLabels[role] ?? role.replaceAll("_", " ");
+  const homeHref = roleHomeUrls[role] ?? "/";
 
   return (
-    <aside
-      className="app-desktop-sidebar hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 bg-slate-950 border-r border-slate-800/80 z-40 select-none"
-      aria-label="Desktop Navigation Sidebar"
-    >
-      {/* 1. Header Brand & Mode Badge */}
-      <div className="p-4 pb-3 border-b border-slate-800/80">
-        <Link href="/" className="flex items-center gap-2.5 text-white group">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
-            <Icons.Sprout size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono text-sm font-extrabold tracking-widest text-white">AGAATE</span>
-              <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                PRO
-              </span>
-            </div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block -mt-0.5">
-              Precision Agriculture
+    <aside className="app-desktop-sidebar" aria-label="Desktop Application Sidebar">
+      {/* 1. Header: Brand, Estate Switcher, Quick Action Search */}
+      <div className="sidebar-header">
+        <div className="sidebar-brand-row">
+          <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
+            <span className="app-brand-mark">
+              <Icons.Sprout size={16} />
             </span>
-          </div>
-        </Link>
-
-        {/* Persona Authority Badge */}
-        <div className="mt-3 flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px]">
-          <span className="font-medium text-slate-300 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            {currentRoleMeta.label}
-          </span>
-          <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${currentRoleMeta.color}`}>
-            {currentRoleMeta.badge}
+            <div className="app-brand-text">
+              <span className="app-brand-word">AGAATE</span>
+              <span className="app-brand-tag">OPS CONSOLE</span>
+            </div>
+          </Link>
+          <span className="badge" style={{ fontSize: "10px", padding: "1px 6px" }}>
+            {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}
           </span>
         </div>
+
+        {/* Estate Switcher Instrument */}
+        <div className="sidebar-switcher">
+          <FarmSwitcher />
+        </div>
+
+        {/* Quick ⌘K Command Finder Trigger */}
+        {onOpenCommandPalette && (
+          <button
+            type="button"
+            className="sidebar-search-btn"
+            onClick={onOpenCommandPalette}
+            title="Search estates, navigation & actions (⌘K / Ctrl+K)"
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <Icons.Search size={13} />
+              <span>Quick Action...</span>
+            </span>
+            <kbd className="sidebar-search-badge">⌘K</kbd>
+          </button>
+        )}
       </div>
 
-      {/* 2. Farm Estate Switcher Instrument */}
-      {farms.length > 0 && (
-        <div className="px-3 pt-3 pb-2 border-b border-slate-900">
-          <label htmlFor="sidebar-farm-select" className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-1 px-1">
-            Active Agricultural Estate
-          </label>
-          <div className="relative">
-            <select
-              id="sidebar-farm-select"
-              value={selectedFarmId}
-              onChange={(e) => handleFarmChange(e.target.value)}
-              className="w-full bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 font-semibold focus:outline-none focus:border-emerald-500 transition cursor-pointer appearance-none pr-7"
-            >
-              {farms.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name} {f.location ? `• ${f.location}` : ""}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-2 top-2.5 pointer-events-none text-slate-400">
-              <Icons.ChevronDown size={12} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Categorized Nav Matrix */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
-        {groups.map((group) => (
-          <div key={group.title} className="space-y-1">
-            <div className="px-2 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              {group.title}
-            </div>
-            {group.items.map((item) => {
+      {/* 2. Navigation Container */}
+      <div className="sidebar-nav-container">
+        {sections.map((sec) => (
+          <div key={sec.title} className="sidebar-nav-section">
+            <div className="sidebar-section-title">{sec.title}</div>
+            {sec.items.map((item) => {
               const active = item.isActive
                 ? item.isActive(pathname)
-                : pathname === item.href || pathname.startsWith(item.href + "/");
-              const Icon = Icons[item.icon] || Icons.Layers;
+                : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+              const Icon = Icons[item.icon] ?? Icons.Layers;
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all ${
-                    active
-                      ? "bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30 shadow-sm"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent"
-                  }`}
+                  className={`sidebar-nav-link ${active ? "active" : ""}`}
                   aria-current={active ? "page" : undefined}
                 >
-                  <div className="flex items-center gap-2.5 truncate">
-                    <span className={active ? "text-emerald-400" : "text-slate-400"}>
-                      <Icon size={16} />
-                    </span>
-                    <span className="truncate">{item.label}</span>
-                  </div>
-
+                  <span className="sidebar-icon">
+                    <Icon size={16} />
+                  </span>
+                  <span>{item.label}</span>
                   {item.badge && (
                     <span
-                      className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                        active
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          : "bg-slate-800 text-slate-400"
-                      }`}
+                      className="sidebar-badge"
+                      style={{
+                        backgroundColor: active ? "var(--green)" : "var(--stone)",
+                        color: active ? "var(--on-dark)" : "var(--ink-muted)",
+                      }}
                     >
                       {item.badge}
                     </span>
@@ -314,41 +374,51 @@ export function DesktopSidebar({ role, userName }: SidebarProps) {
         ))}
       </div>
 
-      {/* 4. Footer: Telemetry, Profile & Theme */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 space-y-2">
-        {/* Real-time telemetry */}
-        <div className="flex items-center justify-between px-2 py-1 text-[10px] text-slate-400 font-mono">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="font-bold text-emerald-400">SYS LIVE</span>
-          </div>
-          <span suppressHydrationWarning>{timeStr}</span>
+      {/* 3. Footer: Telemetry Clock, Profile, Theme Toggle & Sign Out */}
+      <div className="sidebar-footer">
+        {/* Telemetry Status Line */}
+        <div className="sidebar-telemetry-row">
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <span className="telemetry-live-dot" />
+            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
+          </span>
+          {timeStr && (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px" }} suppressHydrationWarning>
+              {timeStr}
+            </span>
+          )}
         </div>
 
-        {/* User Card */}
-        <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-slate-800">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-[10px] font-bold shrink-0">
-              {userInitials}
-            </div>
-            <div className="min-w-0">
-              <span className="text-xs font-semibold text-white block truncate leading-tight">
-                {userName || "Farm Operator"}
+        {/* User Session Bar */}
+        <div className="sidebar-user-row">
+          <div className="sidebar-user-info">
+            <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
+            <div className="sidebar-user-text">
+              <span className="sidebar-user-name" title={userName ?? "Console User"}>
+                {userName ?? "Console User"}
               </span>
-              <span className="text-[10px] font-mono text-slate-400 block truncate">
-                {currentRoleMeta.badge}
-              </span>
+              <span className="sidebar-user-role">{userRoleLabel}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="sidebar-user-actions">
             <ThemeToggle />
             <button
-              onClick={handleLogout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
-              title="Sign Out"
+              type="button"
+              className="btn btn-ghost"
+              style={{
+                width: "28px",
+                height: "28px",
+                padding: 0,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: "var(--radius-xs)",
+                color: "var(--ink-muted)",
+              }}
+              onClick={handleSignOut}
+              title="Sign Out of Session"
             >
-              <Icons.LogOut size={15} />
+              <Icons.LogOut size={14} />
             </button>
           </div>
         </div>

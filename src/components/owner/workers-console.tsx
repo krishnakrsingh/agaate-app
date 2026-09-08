@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useMemo } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 
@@ -24,6 +24,10 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
   const toast = useToast();
   const [workers, setWorkers] = useState<FarmWorker[]>(initialWorkers);
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"ALL" | "SUPERVISOR" | "LABORER">("ALL");
+  const [activeOnly, setActiveOnly] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // New worker form
@@ -110,12 +114,14 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
     }
   };
 
-  const copyWorkerCredentials = (w: { name: string; phone: string; password: string }) => {
-    const text = "🌾 *Agaate Farm Laborer Credentials*\n\n" +
+  const copyWorkerCredentials = (w: { name: string; phone?: string | null; password?: string }) => {
+    const phoneDisplay = w.phone || "No phone registered";
+    const text =
+      "🌾 *Agaate Farm Laborer Credentials*\n\n" +
       "Farm: " + farmName + "\n" +
       "Name: " + w.name + "\n" +
-      "Login Phone: " + w.phone + "\n" +
-      "Password: " + w.password + "\n" +
+      "Login Phone: " + phoneDisplay + "\n" +
+      (w.password ? "Password: " + w.password + "\n" : "") +
       "Login Link: " + window.location.origin + "/login\n\n" +
       "_Open link on phone, enter phone and password to clock in and view daily field tasks._";
 
@@ -123,12 +129,16 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
     toast.show("Worker credentials copied to clipboard!", "success");
   };
 
-  const shareWorkerWhatsApp = (w: { name: string; phone: string; password: string }) => {
+  const shareWorkerWhatsApp = (w: { name: string; phone?: string | null; password?: string }) => {
+    if (!w.phone) {
+      toast.show("No phone number registered for this worker", "error");
+      return;
+    }
     const text = encodeURIComponent(
       "🌾 *Agaate Farm App Access*\n\n" +
       "Hello " + w.name + ", your login for *" + farmName + "* is ready.\n\n" +
       "*Login Phone*: " + w.phone + "\n" +
-      "*Password*: " + w.password + "\n" +
+      (w.password ? "*Password*: " + w.password + "\n" : "") +
       "*Link*: " + window.location.origin + "/login\n\n" +
       "Use this to clock in and log your daily work."
     );
@@ -136,26 +146,53 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
     window.open("https://wa.me/" + cleanPhone + "?text=" + text, "_blank");
   };
 
-  const filtered = workers.filter((w) => {
-    const q = searchTerm.toLowerCase();
-    return w.name.toLowerCase().includes(q) || (w.phone && w.phone.includes(q));
-  });
+  // Filter & Search
+  const filtered = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim();
+    return workers.filter((w) => {
+      const matchesSearch =
+        !q ||
+        w.name.toLowerCase().includes(q) ||
+        (w.phone && w.phone.includes(q)) ||
+        w.email.toLowerCase().includes(q);
+
+      const matchesRole =
+        roleFilter === "ALL" ||
+        (roleFilter === "SUPERVISOR" && w.isSupervisor) ||
+        (roleFilter === "LABORER" && !w.isSupervisor);
+
+      const matchesActive = !activeOnly || w.active;
+
+      return matchesSearch && matchesRole && matchesActive;
+    });
+  }, [workers, searchTerm, roleFilter, activeOnly]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedWorkers = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safeCurrentPage, pageSize]);
+
+  const supervisorsCount = workers.filter((w) => w.isSupervisor).length;
+  const laborersCount = workers.filter((w) => !w.isSupervisor).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Header & Quick Stats */}
+      {/* ── 1. HEADER & QUICK STATS ── */}
       <div className="compact-card" style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div>
             <div className="eyebrow" style={{ marginBottom: 4 }}>
               <span className="eyebrow-dot" />
-              <span>ESTATE WORKFORCE MANAGEMENT</span>
+              <span>ESTATE WORKFORCE MANAGEMENT • {farmName}</span>
             </div>
             <h1 className="page-title" style={{ margin: 0, fontSize: "22px" }}>
-              Farm Workers & Laborers Roster
+              Farm Workers &amp; Laborers Roster
             </h1>
             <p className="muted" style={{ margin: "4px 0 0", fontSize: "13px" }}>
-              Hire, manage, and credential up to 20 on-site farm workers with mobile phone login.
+              Provision, manage, and credential on-site farm workers with mobile phone login and daily muster assignment.
             </p>
           </div>
 
@@ -174,51 +211,79 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
 
         {/* Stats Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginTop: 20 }}>
-          <div style={{ padding: 12, borderRadius: "var(--radius-sm)", background: "var(--surface-muted)" }}>
-            <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>TOTAL WORKERS</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>{workers.length}</div>
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>TOTAL ROSTER</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{workers.length}</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Registered accounts</div>
           </div>
-          <div style={{ padding: 12, borderRadius: "var(--radius-sm)", background: "var(--surface-muted)" }}>
-            <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>FIELD SUPERVISORS</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: "#34d399" }}>
-              {workers.filter((w) => w.isSupervisor).length}
-            </div>
+
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--green)" }}>FIELD SUPERVISORS</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--green)", marginTop: 2 }}>{supervisorsCount}</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Task &amp; muster dispatch</div>
           </div>
-          <div style={{ padding: 12, borderRadius: "var(--radius-sm)", background: "var(--surface-muted)" }}>
-            <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>ACTIVE STATUS</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--fg)" }}>
+
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>FARM LABORERS</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{laborersCount}</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Field operation hands</div>
+          </div>
+
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>ACTIVE STATUS</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
               {workers.filter((w) => w.active).length} / {workers.length}
             </div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Ready for field work</div>
           </div>
         </div>
       </div>
 
-      {/* Recent Handover Card Alert */}
+      {/* ── 2. RECENT PROVISIONED WORKER ALERT BANNER ── */}
       {recentWorker && (
-        <div className="compact-card" style={{ padding: 20, border: "1px solid var(--brand)", background: "rgba(16, 185, 129, 0.05)" }}>
+        <div
+          className="compact-card"
+          style={{
+            padding: 18,
+            border: "1px solid var(--green)",
+            background: "rgba(36, 84, 58, 0.05)",
+          }}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--brand)", color: "#022c1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "var(--green)",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
                 <Icons.Check size={20} />
               </div>
               <div>
-                <div style={{ fontSize: "14px", fontWeight: 700 }}>
-                  Provisioned Worker: {recentWorker.name} {recentWorker.isSupervisor && "(Supervisor)"}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--muted-fg)", fontFamily: "monospace" }}>
-                  Mobile: <strong>{recentWorker.phone}</strong> | Password: <strong>{recentWorker.password}</strong>
+                <strong style={{ fontSize: "14px", color: "var(--ink)" }}>
+                  Newly Provisioned: {recentWorker.name} {recentWorker.isSupervisor && "(Supervisor)"}
+                </strong>
+                <div style={{ fontSize: "12px", color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
+                  Login Mobile: <strong style={{ color: "var(--ink)" }}>{recentWorker.phone}</strong> &bull; Temporary Password: <strong style={{ color: "var(--ink)" }}>{recentWorker.password}</strong>
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button
                 type="button"
                 onClick={() => copyWorkerCredentials(recentWorker)}
                 className="btn btn-sm btn-green"
               >
-                <Icons.Copy size={14} />
-                <span>Copy Voucher</span>
+                <Icons.Copy size={13} />
+                <span>Copy Credentials</span>
               </button>
               <button
                 type="button"
@@ -226,13 +291,14 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                 className="btn btn-sm btn-secondary"
                 style={{ color: "#25D366" }}
               >
-                <Icons.Send size={14} />
+                <Icons.Send size={13} />
                 <span>WhatsApp</span>
               </button>
               <button
                 type="button"
                 onClick={() => setRecentWorker(null)}
                 className="btn btn-sm btn-link"
+                style={{ color: "var(--muted)", fontSize: "12px" }}
               >
                 Dismiss
               </button>
@@ -241,26 +307,105 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
         </div>
       )}
 
-      {/* Roster Table & Search */}
-      <div className="compact-card" style={{ padding: 24, gap: 16 }}>
+      {/* ── 3. ROSTER TABLE WITH ADVANCED FILTERING & PAGINATION ── */}
+      <div className="compact-card" style={{ padding: 22, gap: 16 }}>
+        {/* Controls Toolbar */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <h2 className="section-title" style={{ margin: 0, fontSize: "16px" }}>
-            Active Farm Personnel
-          </h2>
-          <div style={{ width: 280, position: "relative" }}>
-            <input
-              type="text"
-              placeholder="Search worker by name or phone…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: 34, fontSize: "12px" }}
-            />
-            <div style={{ position: "absolute", left: 10, top: 10, color: "var(--muted-fg)" }}>
-              <Icons.Search size={14} />
+          {/* Role Filter Tabs */}
+          <div style={{ display: "flex", gap: 4, background: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
+            <button
+              type="button"
+              onClick={() => { setRoleFilter("ALL"); setCurrentPage(1); }}
+              className="btn btn-sm"
+              style={{
+                background: roleFilter === "ALL" ? "var(--canvas)" : "transparent",
+                color: roleFilter === "ALL" ? "var(--ink)" : "var(--muted)",
+                fontWeight: roleFilter === "ALL" ? 600 : 400,
+                boxShadow: roleFilter === "ALL" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "4px 10px",
+              }}
+            >
+              All ({workers.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRoleFilter("SUPERVISOR"); setCurrentPage(1); }}
+              className="btn btn-sm"
+              style={{
+                background: roleFilter === "SUPERVISOR" ? "var(--canvas)" : "transparent",
+                color: roleFilter === "SUPERVISOR" ? "var(--green)" : "var(--muted)",
+                fontWeight: roleFilter === "SUPERVISOR" ? 600 : 400,
+                boxShadow: roleFilter === "SUPERVISOR" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "4px 10px",
+              }}
+            >
+              Supervisors ({supervisorsCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRoleFilter("LABORER"); setCurrentPage(1); }}
+              className="btn btn-sm"
+              style={{
+                background: roleFilter === "LABORER" ? "var(--canvas)" : "transparent",
+                color: roleFilter === "LABORER" ? "var(--ink)" : "var(--muted)",
+                fontWeight: roleFilter === "LABORER" ? 600 : 400,
+                boxShadow: roleFilter === "LABORER" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                fontSize: "12px",
+                padding: "4px 10px",
+              }}
+            >
+              Laborers ({laborersCount})
+            </button>
+          </div>
+
+          {/* Search & Active Only Toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "12px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={activeOnly}
+                onChange={(e) => { setActiveOnly(e.target.checked); setCurrentPage(1); }}
+              />
+              <span>Active Only</span>
+            </label>
+
+            <div style={{ width: 240, position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search by name, mobile, email…"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="input-field"
+                style={{ paddingLeft: 30, fontSize: "12px", height: 34 }}
+              />
+              <div style={{ position: "absolute", left: 9, top: 9, color: "var(--muted)" }}>
+                <Icons.Search size={14} />
+              </div>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: 8,
+                    background: "none",
+                    border: "none",
+                    color: "var(--muted)",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  &times;
+                </button>
+              )}
             </div>
           </div>
         </div>
 
+        {/* Dense Table */}
         <div style={{ overflowX: "auto" }}>
           <table className="data-table" style={{ width: "100%", fontSize: "13px" }}>
             <thead>
@@ -270,65 +415,178 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                 <th>Authority Tier</th>
                 <th>Status</th>
                 <th>Date Added</th>
-                <th>Action</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((w) => (
+              {paginatedWorkers.map((w) => (
                 <tr key={w.id}>
-                  <td style={{ fontWeight: 600 }}>{w.name}</td>
-                  <td style={{ fontFamily: "monospace", color: "#34d399" }}>{w.phone || w.email}</td>
+                  <td>
+                    <strong style={{ color: "var(--ink)", display: "block" }}>{w.name}</strong>
+                    <span className="muted" style={{ fontSize: "11px" }}>{w.email}</span>
+                  </td>
+                  <td>
+                    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--ink)" }}>
+                      {w.phone || "No phone"}
+                    </span>
+                  </td>
                   <td>
                     {w.isSupervisor ? (
-                      <span className="badge badge-green" style={{ fontSize: "11px" }}>Field Supervisor</span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: "var(--green-dark)",
+                          background: "var(--green-light)",
+                          border: "1px solid rgba(36, 84, 58, 0.2)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-pill)",
+                        }}
+                      >
+                        Field Supervisor
+                      </span>
                     ) : (
-                      <span className="badge badge-neutral" style={{ fontSize: "11px" }}>Farm Laborer</span>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: "var(--muted)",
+                          background: "var(--stone)",
+                          border: "1px solid var(--line)",
+                          padding: "2px 8px",
+                          borderRadius: "var(--radius-pill)",
+                        }}
+                      >
+                        Farm Laborer
+                      </span>
                     )}
                   </td>
                   <td>
                     {w.active ? (
-                      <span style={{ color: "#10b981", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+                      <span style={{ color: "var(--green)", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 500 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }} />
                         Active
                       </span>
                     ) : (
-                      <span style={{ color: "var(--muted-fg)", fontSize: "12px" }}>Disabled</span>
+                      <span style={{ color: "var(--muted)", fontSize: "12px" }}>Disabled</span>
                     )}
                   </td>
-                  <td style={{ color: "var(--muted-fg)", fontSize: "12px" }}>
+                  <td style={{ color: "var(--muted)", fontSize: "12px" }}>
                     {new Date(w.createdAt).toLocaleDateString()}
                   </td>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => copyWorkerCredentials({ name: w.name, phone: w.phone || w.email, password: "(Set by Admin)" })}
-                      className="btn btn-sm btn-outline"
-                      style={{ fontSize: "11px", padding: "3px 8px" }}
-                    >
-                      Copy Info
-                    </button>
+                  <td style={{ textAlign: "right" }}>
+                    <div style={{ display: "inline-flex", gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={() => copyWorkerCredentials({ name: w.name, phone: w.phone || w.email })}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: "11px", padding: "3px 8px" }}
+                        title="Copy credentials info"
+                      >
+                        <Icons.Copy size={12} />
+                        <span>Copy</span>
+                      </button>
+                      {w.phone && (
+                        <button
+                          type="button"
+                          onClick={() => shareWorkerWhatsApp({ name: w.name, phone: w.phone })}
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: "11px", padding: "3px 8px", color: "#25D366" }}
+                          title="Share via WhatsApp"
+                        >
+                          <Icons.Send size={12} />
+                          <span>WhatsApp</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
+
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: 32, color: "var(--muted-fg)" }}>
-                    No workers found matching search.
+                  <td colSpan={6} style={{ textAlign: "center", padding: 36, color: "var(--muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <Icons.Users size={24} style={{ color: "var(--muted)" }} />
+                      <strong style={{ color: "var(--ink)" }}>No personnel found</strong>
+                      <span style={{ fontSize: "12px" }}>Try adjusting your search query or filters.</span>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filtered.length > pageSize && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingTop: 12,
+              borderTop: "1px solid var(--line)",
+              flexWrap: "wrap",
+              gap: 10,
+              fontSize: "12px",
+            }}
+          >
+            <span className="muted">
+              Showing {Math.min((safeCurrentPage - 1) * pageSize + 1, filtered.length)} to{" "}
+              {Math.min(safeCurrentPage * pageSize, filtered.length)} of {filtered.length} workers
+            </span>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="input-field"
+                style={{ fontSize: "11px", padding: "2px 6px", height: 28 }}
+              >
+                <option value={15}>15 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="btn btn-secondary btn-sm"
+                style={{ height: 28, padding: "0 8px" }}
+              >
+                &larr; Prev
+              </button>
+
+              <span style={{ fontWeight: 600, color: "var(--ink)", padding: "0 4px" }}>
+                Page {safeCurrentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage >= totalPages}
+                className="btn btn-secondary btn-sm"
+                style={{ height: 28, padding: "0 8px" }}
+              >
+                Next &rarr;
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Add Worker Modal */}
+      {/* ── 4. ADD WORKER MODAL ── */}
       {showAddModal && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.7)",
+            background: "rgba(0, 0, 0, 0.6)",
             backdropFilter: "blur(4px)",
             display: "flex",
             alignItems: "center",
@@ -340,93 +598,98 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
           <div className="compact-card" style={{ width: "100%", maxWidth: 480, padding: 24, gap: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>Add Farm Worker / Manager</h2>
-                <p className="muted" style={{ margin: "2px 0 0", fontSize: "12px" }}>
-                  Worker can log in on their mobile phone using their number and password.
-                </p>
+                <span className="mono-label" style={{ color: "var(--green)" }}>ON-BOARD WORKER</span>
+                <h3 style={{ fontSize: "18px", margin: "2px 0 0", color: "var(--ink)" }}>
+                  Add Farm Worker / Manager
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="btn btn-link"
-                style={{ padding: 4 }}
+                style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "var(--muted)" }}
               >
-                <Icons.X size={18} />
+                &times;
               </button>
             </div>
 
-            <form onSubmit={handleCreateWorker} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label htmlFor="w-name">Worker Full Name *</label>
+            <form onSubmit={handleCreateWorker} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>
+                  Worker Full Name *
+                </label>
                 <input
-                  id="w-name"
                   type="text"
                   required
-                  placeholder="e.g. Suresh Kumar"
+                  placeholder="e.g. Ramesh Kumar"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="input-field"
                 />
               </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
-                <label htmlFor="w-phone">Mobile Phone Number *</label>
+              <div>
+                <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>
+                  Mobile Phone Number (Login Credential) *
+                </label>
                 <input
-                  id="w-phone"
                   type="tel"
                   required
-                  placeholder="e.g. 9876543210 (Used for login)"
+                  placeholder="e.g. +91 9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  className="input-field"
                 />
-                <span className="form-hint">Worker logs in directly with this mobile number.</span>
+                <span className="muted" style={{ fontSize: "11px", marginTop: 2, display: "block" }}>
+                  Used directly by the worker to log into the mobile field app.
+                </span>
               </div>
 
-              <div className="form-group" style={{ margin: 0 }}>
+              <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <label htmlFor="w-pass" style={{ margin: 0 }}>Worker Password *</label>
+                  <label className="mono-label">Initial Password *</label>
                   <button
                     type="button"
                     onClick={generateSimplePassword}
-                    className="btn btn-link"
-                    style={{ fontSize: "11px", padding: 0 }}
+                    className="btn btn-sm btn-link"
+                    style={{ fontSize: "11px", color: "var(--green)" }}
                   >
-                    Generate Simple PIN
+                    Regenerate Simple PIN
                   </button>
                 </div>
                 <input
-                  id="w-pass"
                   type="text"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter or generate password"
+                  className="input-field"
+                  style={{ fontFamily: "var(--font-mono)" }}
                 />
               </div>
 
-              {/* Supervisor Toggle */}
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "12px 16px",
+                  padding: 12,
                   borderRadius: "var(--radius-sm)",
-                  background: "var(--surface-muted)",
-                  border: "1px solid var(--border-subtle)",
+                  background: "var(--stone)",
+                  border: "1px solid var(--line)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
                 }}
               >
-                <div>
-                  <div style={{ fontSize: "13px", fontWeight: 600 }}>Field Supervisor Authority</div>
-                  <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>
-                    Enable if this person manages other laborers and schedules tasks.
-                  </div>
-                </div>
                 <input
                   type="checkbox"
+                  id="supervisor-checkbox"
                   checked={isSupervisor}
                   onChange={(e) => setIsSupervisor(e.target.checked)}
-                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                  style={{ marginTop: 3 }}
                 />
+                <label htmlFor="supervisor-checkbox" style={{ fontSize: "12px", cursor: "pointer", color: "var(--ink)" }}>
+                  <strong>Field Supervisor Authority</strong>
+                  <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>
+                    Permits officer to review daily tasks, muster daily labor, and submit end-of-shift reports.
+                  </div>
+                </label>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
@@ -434,16 +697,15 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   className="btn btn-secondary"
-                  disabled={pending}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-green"
                   disabled={pending}
+                  className="btn btn-green"
                 >
-                  {pending ? "Provisioning…" : "Hire Worker & Generate Access"}
+                  {pending ? "Provisioning..." : "Confirm & Hire Worker"}
                 </button>
               </div>
             </form>

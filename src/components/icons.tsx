@@ -61,6 +61,7 @@ export const Icons = {
   ChevronRight: i(<path d="m9 18 6-6-6-6" />),
   ChevronDown: i(<path d="m6 9 6 6 6-6" />),
   X: i(<><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>),
+  Menu: i(<><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></>),
   ClipboardList: i(<><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></>),
   Activity: i(<path d="M22 12h-4l-3 9L9 3l-3 9H2" />),
   Eye: i(<><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>),
@@ -81,5 +82,7 @@ export const Icons = {
   Send: i(<><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>),
   Maximize2: i(<><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></>),
   Navigation: i(<polygon points="3 11 22 2 13 21 11 13 3 11" />),
+  LayoutGrid: i(<><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></>),
+  Table: i(<><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M3 15h18" /><path d="M9 3v18" /></>),
 };
 

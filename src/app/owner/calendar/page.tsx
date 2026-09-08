@@ -33,17 +33,17 @@ export default async function OperationsCalendarPage({ searchParams }: Props) {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell">
-          <div className="card text-center py-16 max-w-lg mx-auto mt-12">
-            <h2 className="text-xl font-bold text-white mb-2">No Active Estate Found</h2>
-            <p className="text-sm text-slate-400 mb-6">
+          <div className="card" style={{ textAlign: "center", padding: "64px 24px", maxWidth: 480, margin: "48px auto" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>No Active Estate Found</h2>
+            <p className="muted" style={{ fontSize: 14, marginBottom: 24 }}>
               You need an established farm to inspect scheduled operations and field calendars.
             </p>
             {session.role === "SUPER_ADMIN" ? (
-              <Link href="/farms/new" className="btn-primary inline-flex items-center gap-2">
+              <Link href="/farms/new" className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 Onboard New Client Farm
               </Link>
             ) : (
-              <p className="text-xs text-slate-400">
+              <p className="muted" style={{ fontSize: 12 }}>
                 Contact your Agaate account administrator to assign your farm.
               </p>
             )}

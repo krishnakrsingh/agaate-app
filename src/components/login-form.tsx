@@ -2,12 +2,88 @@
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
 
+interface TestProfile {
+  role: string;
+  roleLabel: string;
+  badge: string;
+  name: string;
+  title: string;
+  email: string;
+  target: string;
+  icon: typeof Icons.Shield;
+  badgeBg: string;
+  badgeColor: string;
+  accent: string;
+}
+
+const TEST_PROFILES: TestProfile[] = [
+  {
+    role: "SUPER_ADMIN",
+    roleLabel: "Super Admin",
+    badge: "Super Admin",
+    name: "Arjun Singhania",
+    title: "Global Operations & System Config",
+    email: "admin@agaate.local",
+    target: "/dashboard",
+    icon: Icons.Shield,
+    badgeBg: "var(--stone)",
+    badgeColor: "var(--ink)",
+    accent: "var(--green)",
+  },
+  {
+    role: "FARM_ADMIN",
+    roleLabel: "Farm Admin",
+    badge: "Estate Owner",
+    name: "Vikram Mehta",
+    title: "Estates, Plots & Workers Cockpit",
+    email: "farmadmin@agaate.local",
+    target: "/owner/dashboard",
+    icon: Icons.Farm,
+    badgeBg: "var(--amber-light)",
+    badgeColor: "var(--amber)",
+    accent: "var(--amber)",
+  },
+  {
+    role: "AGRONOMIST",
+    roleLabel: "Agronomist",
+    badge: "Agronomist",
+    name: "Dr. Ananya Rao",
+    title: "Agronomy Radar & Prescriptions",
+    email: "agronomist@agaate.local",
+    target: "/agronomy/radar",
+    icon: Icons.Leaf,
+    badgeBg: "var(--green-light)",
+    badgeColor: "var(--green)",
+    accent: "var(--green)",
+  },
+  {
+    role: "FARM_OFFICER",
+    roleLabel: "Field Officer",
+    badge: "Field Officer",
+    name: "Ramesh Patel",
+    title: "Daily Tasks & Attendance GPS",
+    email: "officer@agaate.local",
+    target: "/officer/day",
+    icon: Icons.User,
+    badgeBg: "var(--blue-light)",
+    badgeColor: "var(--blue)",
+    accent: "var(--blue)",
+  },
+];
+
+const ALTERNATIVE_OFFICERS = [
+  { name: "Suresh Kumar", region: "Mandya", email: "officer2@agaate.local" },
+  { name: "Pooja Deshmukh", region: "Nashik", email: "officer3@agaate.local" },
+];
+
 export function LoginForm() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [activeQuickEmail, setActiveQuickEmail] = useState<string | null>(null);
+  const [autoSubmit, setAutoSubmit] = useState(true);
 
   async function performLogin(loginId: string, loginPass: string) {
     if (pending) return;
@@ -25,6 +101,7 @@ export function LoginForm() {
 
       if (!response.ok) {
         setPending(false);
+        setActiveQuickEmail(null);
         setError(body.error ?? "Invalid mobile number, email, or password.");
         return;
       }
@@ -41,6 +118,7 @@ export function LoginForm() {
       window.location.replace(targetUrl);
     } catch {
       setPending(false);
+      setActiveQuickEmail(null);
       setError("Network connectivity error. Please check your connection and try again.");
     }
   }
@@ -50,9 +128,20 @@ export function LoginForm() {
     await performLogin(identifier, password);
   }
 
+  async function handleQuickLogin(email: string, fillOnly = false) {
+    if (pending) return;
+    setIdentifier(email);
+    setPassword("LocalAdminPassword-ChangeMe-123");
+
+    if (autoSubmit && !fillOnly) {
+      setActiveQuickEmail(email);
+      await performLogin(email, "LocalAdminPassword-ChangeMe-123");
+    }
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", maxWidth: 440, margin: "0 auto" }}>
-      <div className="compact-card" style={{ padding: 28, gap: 20, boxShadow: "var(--shadow-card)", borderRadius: "var(--radius-md)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", margin: "0 auto" }}>
+      <div className="compact-card" style={{ padding: "28px 24px", gap: 20, boxShadow: "var(--shadow-card)", borderRadius: "var(--radius-md)" }}>
         <div>
           <div className="eyebrow" style={{ marginBottom: 6 }}>
             <span className="eyebrow-dot" />
@@ -116,13 +205,191 @@ export function LoginForm() {
             type="submit"
             className="btn btn-green btn-lg"
             disabled={pending || !identifier || !password}
-            style={{ width: "100%", marginTop: 6 }}
+            style={{ width: "100%", marginTop: 4 }}
           >
-            <span>{pending ? "Authenticating…" : "Sign In to Operations"}</span>
-            <Icons.ArrowRight size={15} />
+            <span>{pending && !activeQuickEmail ? "Authenticating…" : "Sign In to Operations"}</span>
+            {pending && !activeQuickEmail ? (
+              <Icons.Spinner className="spin" size={15} />
+            ) : (
+              <Icons.ArrowRight size={15} />
+            )}
           </button>
         </form>
+
+        {/* Quick Sign-In For Testing */}
+        <div style={{
+          marginTop: 10,
+          paddingTop: 18,
+          borderTop: "1px dashed var(--line)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Icons.Zap size={14} style={{ color: "var(--green)" }} />
+              <span className="mono-label" style={{ fontSize: "11px", letterSpacing: "0.06em", color: "var(--ink)", fontWeight: 700 }}>
+                QUICK TEST PROFILES
+              </span>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "11px", cursor: "pointer", userSelect: "none", margin: 0 }} className="muted">
+              <input
+                type="checkbox"
+                checked={autoSubmit}
+                onChange={(e) => setAutoSubmit(e.target.checked)}
+                style={{ width: 13, height: 13, accentColor: "var(--green)", cursor: "pointer" }}
+              />
+              <span>1-Click Sign In</span>
+            </label>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 8,
+          }}>
+            {TEST_PROFILES.map((profile) => {
+              const Icon = profile.icon;
+              const isLoggingIn = activeQuickEmail === profile.email;
+              return (
+                <button
+                  key={profile.role}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => handleQuickLogin(profile.email)}
+                  title={`Sign in as ${profile.roleLabel} (${profile.name})`}
+                  style={{
+                    textAlign: "left",
+                    background: "var(--canvas)",
+                    border: isLoggingIn ? `1.5px solid ${profile.accent}` : "1px solid var(--line)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "10px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    transition: "all 0.15s ease",
+                    cursor: pending ? "not-allowed" : "pointer",
+                    boxShadow: isLoggingIn ? "0 0 0 2px rgba(36, 84, 58, 0.15)" : "none",
+                    opacity: pending && !isLoggingIn ? 0.6 : 1,
+                  }}
+                  className="hover-glow"
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                        background: profile.badgeBg,
+                        color: profile.badgeColor,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Icon size={11} />
+                      {profile.badge}
+                    </span>
+                    <span className="mono-label" style={{ fontSize: "9.5px", color: "var(--muted)" }}>
+                      {profile.target.replace("/", "")}
+                    </span>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: "12.5px", fontWeight: 650, color: "var(--ink)", lineHeight: 1.25 }}>
+                      {profile.name}
+                    </div>
+                    <div className="muted" style={{ fontSize: "10.5px", marginTop: 2, lineHeight: 1.2 }}>
+                      {profile.title}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    marginTop: 2,
+                    paddingTop: 6,
+                    borderTop: "1px solid var(--line)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    fontSize: "10.5px",
+                  }}>
+                    <span className="mono-label" style={{ color: "var(--muted)", fontSize: "9.5px" }}>
+                      {profile.email.split("@")[0]}
+                    </span>
+                    <span style={{
+                      fontWeight: 650,
+                      color: isLoggingIn ? "var(--green)" : "var(--green)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3,
+                    }}>
+                      {isLoggingIn ? (
+                        <>
+                          <Icons.Spinner className="spin" size={11} />
+                          <span>Entering…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{autoSubmit ? "Sign In" : "Fill"}</span>
+                          <Icons.ArrowRight size={10} />
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Regional Officers footer */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 6,
+            fontSize: "10.5px",
+            padding: "8px 10px",
+            background: "var(--stone)",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid var(--line)",
+            color: "var(--muted)",
+          }}>
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>Regional Officers:</span>
+            {ALTERNATIVE_OFFICERS.map((alt) => {
+              const isLoggingIn = activeQuickEmail === alt.email;
+              return (
+                <button
+                  key={alt.email}
+                  type="button"
+                  onClick={() => handleQuickLogin(alt.email)}
+                  disabled={pending}
+                  className="btn btn-link"
+                  style={{
+                    fontSize: "10.5px",
+                    padding: "2px 6px",
+                    background: "var(--canvas)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "3px",
+                    color: "var(--blue)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                  title={`Sign in as ${alt.name} (${alt.region})`}
+                >
+                  {isLoggingIn && <Icons.Spinner className="spin" size={9} />}
+                  <span>{alt.name.split(" ")[0]} ({alt.region})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

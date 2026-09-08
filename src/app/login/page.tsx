@@ -98,7 +98,7 @@ export default async function LoginPage() {
         <div style={{ position: "absolute", top: 20, right: 20 }}>
           <ThemeToggle />
         </div>
-        <div style={{ width: "100%", maxWidth: 460 }}>
+        <div style={{ width: "100%", maxWidth: 500 }}>
           <LoginForm />
         </div>
       </section>

@@ -29,17 +29,17 @@ export default async function OwnerTeamPage({ searchParams }: Props) {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell">
-          <div className="card text-center py-16 max-w-lg mx-auto mt-12">
-            <h2 className="text-xl font-bold text-white mb-2">No Active Farm Found</h2>
-            <p className="text-sm text-slate-400 mb-6">
+          <div className="card" style={{ textAlign: "center", padding: "64px 24px", maxWidth: 480, margin: "48px auto" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>No Active Farm Found</h2>
+            <p className="muted" style={{ fontSize: 14, marginBottom: 24 }}>
               You need an established farm before onboarding your labor crew and managers.
             </p>
             {session.role === "SUPER_ADMIN" ? (
-              <Link href="/farms/new" className="btn-primary inline-flex items-center gap-2">
+              <Link href="/farms/new" className="btn btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 Onboard New Client Farm
               </Link>
             ) : (
-              <p className="text-xs text-slate-400">
+              <p className="muted" style={{ fontSize: 12 }}>
                 Contact your Agaate account administrator to assign your farm.
               </p>
             )}
@@ -83,21 +83,23 @@ export default async function OwnerTeamPage({ searchParams }: Props) {
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         {farms.length > 1 && (
-          <div className="mb-6 flex items-center gap-3 overflow-x-auto pb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Select Estate:</span>
-            {farms.map((farm) => (
-              <Link
-                key={farm.id}
-                href={`/owner/team?farmId=${farm.id}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  farm.id === activeFarm.id
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                    : "bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800"
-                }`}
-              >
-                {farm.name}
-              </Link>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 20 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)" }}>
+              Select Estate:
+            </span>
+            {farms.map((farm) => {
+              const isSelected = farm.id === activeFarm.id;
+              return (
+                <Link
+                  key={farm.id}
+                  href={`/owner/team?farmId=${farm.id}`}
+                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
+                  style={{ fontSize: 12, padding: "5px 14px", borderRadius: "var(--radius-pill)" }}
+                >
+                  {farm.name}
+                </Link>
+              );
+            })}
           </div>
         )}
 

@@ -128,36 +128,48 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Icons.Truck className="w-5 h-5" />
-          </span>
+      <div className="card" style={{ padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "var(--stone)",
+              color: "var(--green)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icons.Truck size={20} />
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Record Daily Harvest Cut</h1>
-            <p className="text-xs text-zinc-400">
-              Field crate weighing & vehicle dispatch logging.
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Record Daily Harvest Cut</h1>
+            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
+              Field crate weighing &amp; vehicle dispatch logging.
             </p>
           </div>
         </div>
       </div>
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 bg-zinc-900/70 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Plot */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: farms.length > 1 ? "1fr 1fr" : "1fr", gap: 12 }}>
           {farms.length > 1 && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-400 mb-1">Farm</label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Farm</label>
               <select
                 value={selectedFarmId}
                 onChange={(e) => {
                   setSelectedFarmId(e.target.value);
                   setSelectedPlotId("");
                 }}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="input-field"
+                style={{ width: "100%" }}
               >
                 {farms.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -168,13 +180,14 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
             </div>
           )}
 
-          <div className={farms.length === 1 ? "col-span-2" : ""}>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Plot / Block</label>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Plot / Block</label>
             <select
               value={selectedPlotId}
               onChange={(e) => setSelectedPlotId(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             >
               {plots.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -186,14 +199,15 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
         </div>
 
         {/* Active Crop Cycle & Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Crop Cycle *</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Crop Cycle *</label>
             <select
               value={selectedCycleId}
               onChange={(e) => setSelectedCycleId(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             >
               {availableCrops.length === 0 ? (
                 <option value="">No active crop on this plot</option>
@@ -208,21 +222,22 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Harvest Date *</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Harvest Date *</label>
             <input
               type="date"
               value={harvestDate}
               onChange={(e) => setHarvestDate(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             />
           </div>
         </div>
 
         {/* Quantity & Unit */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Harvested Quantity *</label>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Harvested Quantity *</label>
             <input
               type="number"
               step="0.01"
@@ -231,16 +246,18 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="e.g. 450"
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Unit</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Unit</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             >
               <option value="KG">KG</option>
               <option value="CRATES">Crates</option>
@@ -253,64 +270,67 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
 
         {/* Grade Selection */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Quality Grade *</label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>Quality Grade *</label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {[
-              { id: "GRADE_A", label: "Grade A (Export/Prem)", color: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10" },
-              { id: "GRADE_B", label: "Grade B (Market)", color: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10" },
-              { id: "GRADE_C", label: "Grade C (Local)", color: "text-amber-400 border-amber-500/30 bg-amber-500/10" },
-              { id: "PROCESSING", label: "Processing / Cull", color: "text-zinc-400 border-zinc-700 bg-zinc-800" },
-            ].map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                onClick={() => setGrade(g.id)}
-                className={`p-2 rounded-lg border text-xs font-semibold transition-all text-center ${
-                  grade === g.id
-                    ? `${g.color} ring-1 ring-white/20`
-                    : "bg-zinc-800/40 border-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {g.label}
-              </button>
-            ))}
+              { id: "GRADE_A", label: "Grade A (Prem/Export)" },
+              { id: "GRADE_B", label: "Grade B (Market)" },
+              { id: "GRADE_C", label: "Grade C (Local)" },
+              { id: "PROCESSING", label: "Processing / Cull" },
+            ].map((g) => {
+              const isSelected = grade === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGrade(g.id)}
+                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
+                  style={{ fontSize: 11, padding: "8px 10px", textAlign: "center" }}
+                >
+                  {g.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Buyer & Vehicle */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Buyer / Mandi Destination</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Buyer / Mandi Destination</label>
             <input
               type="text"
               value={buyerOrMarket}
               onChange={(e) => setBuyerOrMarket(e.target.value)}
-              placeholder="e.g. APMC Hubli, BigBasket, Cold Storage"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              placeholder="e.g. APMC Hubli, Cold Storage"
+              className="input-field"
+              style={{ width: "100%" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Vehicle / Dispatch Number</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Vehicle / Dispatch Number</label>
             <input
               type="text"
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
               placeholder="e.g. KA-04-E-1234"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             />
           </div>
         </div>
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">Notes / Crate Count / Brix</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Notes / Crate Count / Brix</label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. 18 crates, sugar brix 12.5, picked before noon heat"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+            className="input-field"
+            style={{ width: "100%" }}
           />
         </div>
 
@@ -318,16 +338,14 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
         <button
           type="submit"
           disabled={pending || !availableCrops.length}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+          className="btn btn-primary"
+          style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}
         >
           {pending ? (
-            <>
-              <Icons.Spinner className="w-4 h-4 animate-spin" />
-              Recording Harvest...
-            </>
+            "Recording Harvest..."
           ) : (
             <>
-              <Icons.CheckCircle className="w-4 h-4" />
+              <Icons.CheckCircle size={16} />
               Confirm Harvest Cut
             </>
           )}
@@ -335,34 +353,34 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
       </form>
 
       {/* Recent Harvests on this estate */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          <Icons.Clock className="w-3.5 h-3.5 text-zinc-500" />
+      <div className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+        <h2 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+          <Icons.Clock size={14} />
           Recent Harvests on this Farm
         </h2>
 
         {loadingRecent ? (
-          <div className="text-xs text-zinc-500 py-3 text-center">Loading recent cuts...</div>
+          <div className="muted" style={{ fontSize: 12, padding: "16px 0", textAlign: "center" }}>Loading recent cuts...</div>
         ) : recentHarvests.length === 0 ? (
-          <div className="text-xs text-zinc-500 py-3 text-center">No harvest cuts logged recently.</div>
+          <div className="muted" style={{ fontSize: 12, padding: "16px 0", textAlign: "center" }}>No harvest cuts logged recently.</div>
         ) : (
-          <div className="divide-y divide-zinc-800/60">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {recentHarvests.map((h) => (
-              <div key={h.id} className="py-2 flex items-center justify-between text-xs">
+              <div key={h.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--stone)", fontSize: 12 }}>
                 <div>
-                  <span className="font-semibold text-white">{h.cropCycle.cropName}</span>
-                  <span className="text-zinc-500 ml-1.5 font-normal">
-                    ({h.plot.name} &bull; {formatDate(h.harvestDate)})
+                  <span style={{ fontWeight: 600, color: "var(--ink)" }}>{h.cropCycle.cropName}</span>
+                  <span className="muted" style={{ marginLeft: 6 }}>
+                    ({h.plot.name} • {formatDate(h.harvestDate)})
                   </span>
                   {h.buyerOrMarket && (
-                    <div className="text-[11px] text-zinc-400">To: {h.buyerOrMarket}</div>
+                    <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>To: {h.buyerOrMarket}</div>
                   )}
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-emerald-400 font-mono">
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 700, fontFamily: "monospace", color: "var(--green)", fontSize: 13 }}>
                     {Number(h.quantity).toLocaleString()} {h.unit}
                   </div>
-                  <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
+                  <span className="badge badge-muted font-mono" style={{ fontSize: 9 }}>
                     {h.grade.replace("_", " ")}
                   </span>
                 </div>

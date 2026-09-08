@@ -95,16 +95,27 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
   const calculatedTotalSpend = (Number(totalLabourers) || 0) * (Number(dailyWageRate) || 0);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Icons.Users className="w-5 h-5" />
-          </span>
+      <div className="card" style={{ padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "var(--radius-sm)",
+              backgroundColor: "var(--stone)",
+              color: "var(--green)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icons.Users size={20} />
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Daily Labour & Crew Muster</h1>
-            <p className="text-xs text-zinc-400">
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Daily Labour &amp; Crew Muster</h1>
+            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
               Track daily field hands, contractors, and wage outflow for your farm.
             </p>
           </div>
@@ -112,16 +123,17 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
       </div>
 
       {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 bg-zinc-900/70 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Date */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: farms.length > 1 ? "1fr 1fr" : "1fr", gap: 12 }}>
           {farms.length > 1 && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-400 mb-1">Farm</label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Farm</label>
               <select
                 value={selectedFarmId}
                 onChange={(e) => setSelectedFarmId(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                className="input-field"
+                style={{ width: "100%" }}
               >
                 {farms.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -132,83 +144,89 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
             </div>
           )}
 
-          <div className={farms.length === 1 ? "col-span-2" : ""}>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Muster Date *</label>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Muster Date *</label>
             <input
               type="date"
               value={musterDate}
               onChange={(e) => setMusterDate(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%" }}
             />
           </div>
         </div>
 
         {/* Headcounts */}
-        <div className="grid grid-cols-3 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Total Labourers *</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Total Labourers *</label>
             <input
               type="number"
               min="1"
               value={totalLabourers}
               onChange={(e) => setTotalLabourers(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Male Count</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Male Count</label>
             <input
               type="number"
               min="0"
               value={maleCount}
               onChange={(e) => setMaleCount(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Female Count</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Female Count</label>
             <input
               type="number"
               min="0"
               value={femaleCount}
               onChange={(e) => setFemaleCount(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
         </div>
 
         {/* Shift hours & Wage Rate */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Shift Duration (Hours)</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Shift (Hours)</label>
             <input
               type="number"
               step="0.5"
               value={hoursPerShift}
               onChange={(e) => setHoursPerShift(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Daily Wage / Person (₹)</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Daily Wage / Person (₹)</label>
             <input
               type="number"
               step="1"
               value={dailyWageRate}
               onChange={(e) => setDailyWageRate(e.target.value)}
               placeholder="e.g. 450"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+              className="input-field"
+              style={{ width: "100%", fontFamily: "monospace" }}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-400 mb-1">Calculated Daily Payout</label>
-            <div className="w-full bg-zinc-800/60 border border-zinc-700/80 rounded-lg px-3 py-2 text-sm text-emerald-400 font-mono font-bold">
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Daily Payout</label>
+            <div style={{ padding: "8px 12px", borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", fontSize: 14, fontFamily: "monospace", fontWeight: 700, color: "var(--green)" }}>
               ₹{calculatedTotalSpend.toLocaleString("en-IN")}
             </div>
           </div>
@@ -216,25 +234,27 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
 
         {/* Contractor Name */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">Labour Contractor / Gang Leader Name</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Labour Contractor / Gang Leader</label>
           <input
             type="text"
             value={contractorName}
             onChange={(e) => setContractorName(e.target.value)}
-            placeholder="e.g. Ramesh Maistry / Local Panchayat Gang"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+            placeholder="e.g. Ramesh Maistry / Local Gang"
+            className="input-field"
+            style={{ width: "100%" }}
           />
         </div>
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-zinc-400 mb-1">Work Description / Plot Assignments</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Work Description / Plot Assignments</label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. 6 weeding in Plot 1, 4 harvesting in Plot 3"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+            className="input-field"
+            style={{ width: "100%" }}
           />
         </div>
 
@@ -242,16 +262,14 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
         <button
           type="submit"
           disabled={pending}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 disabled:opacity-50"
+          className="btn btn-primary"
+          style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 6 }}
         >
           {pending ? (
-            <>
-              <Icons.Spinner className="w-4 h-4 animate-spin" />
-              Recording Muster...
-            </>
+            "Recording Muster..."
           ) : (
             <>
-              <Icons.CheckCircle className="w-4 h-4" />
+              <Icons.CheckCircle size={16} />
               Save Crew Muster
             </>
           )}
@@ -259,10 +277,10 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
       </form>
 
       {/* Recent Musters Table */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-            <Icons.Clock className="w-3.5 h-3.5 text-zinc-500" />
+      <div className="card" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)", display: "flex", alignItems: "center", gap: 6, margin: 0 }}>
+            <Icons.Clock size={14} />
             Recent Crew Musters
           </h2>
 
@@ -300,35 +318,36 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
               toast.show("Crew muster payroll exported to CSV!", "success");
             }}
             disabled={records.length === 0}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-40"
+            className="btn btn-sm btn-ghost"
+            style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)" }}
           >
-            <Icons.FileText className="w-3.5 h-3.5" />
+            <Icons.FileText size={13} />
             Export Payroll CSV
           </button>
         </div>
 
         {loading ? (
-          <div className="text-xs text-zinc-500 py-3 text-center">Loading muster records...</div>
+          <div className="muted" style={{ fontSize: 12, padding: "16px 0", textAlign: "center" }}>Loading muster records...</div>
         ) : records.length === 0 ? (
-          <div className="text-xs text-zinc-500 py-3 text-center">No crew muster records found.</div>
+          <div className="muted" style={{ fontSize: 12, padding: "16px 0", textAlign: "center" }}>No crew muster records found.</div>
         ) : (
-          <div className="divide-y divide-zinc-800/60">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {records.slice(0, 7).map((r) => (
-              <div key={r.id} className="py-2.5 flex items-center justify-between text-xs">
+              <div key={r.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--stone)", fontSize: 12 }}>
                 <div>
-                  <div className="font-semibold text-white">
+                  <div style={{ fontWeight: 600, color: "var(--ink)" }}>
                     {r.totalLabourers} Field Hands ({r.maleCount || 0}M / {r.femaleCount || 0}F)
                   </div>
-                  <div className="text-zinc-500 text-[11px]">
-                    {formatDate(r.musterDate)} {r.contractorName ? `&bull; Contractor: ${r.contractorName}` : ""}
+                  <div className="muted" style={{ fontSize: 11 }}>
+                    {formatDate(r.musterDate)} {r.contractorName ? `• Contractor: ${r.contractorName}` : ""}
                   </div>
-                  {r.notes && <div className="text-zinc-400 text-[11px] mt-0.5">{r.notes}</div>}
+                  {r.notes && <div style={{ fontSize: 11, color: "var(--ink-soft)", marginTop: 2 }}>{r.notes}</div>}
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-emerald-400 font-mono">
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 700, fontFamily: "monospace", color: "var(--green)", fontSize: 13 }}>
                     {r.totalWageCost ? `₹${Number(r.totalWageCost).toLocaleString("en-IN")}` : "-"}
                   </div>
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="muted" style={{ fontSize: 10 }}>
                     Logged by {r.recordedBy.name}
                   </span>
                 </div>
