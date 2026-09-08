@@ -38,3 +38,5 @@ For production, set managed MySQL 8 and S3 credentials in the deployment environ
 The implementation includes real schema-backed APIs and UI for users/access, farm and plot CRUD, irrigation, crop cycles/varieties/milestones/support activities, activation, planned/system/daily-monitoring tasks, executions/materials/labour, attendance/geofence exceptions, location change approvals, secure evidence uploads, monitoring, incidents and follow-up status, filtered dashboards, daily reports, audit records, live weather, and PWA installability.
 
 Run `npm test` for calculation rules. Integration and end-to-end tests require an isolated MySQL/S3 environment and configured secrets; they should be run in the deployment pipeline against those services.
+
+#
