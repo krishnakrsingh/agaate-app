@@ -33,3 +33,32 @@ export function canTransitionTask(from: string, to: string) { return taskTransit
 export function milestoneTemplates(input: { mulchEnabled: boolean; establishmentType: "NURSERY_TRANSPLANTATION" | "DIRECT_SOWING"; firstHarvestDate?: Date | null }) {
   return ["Land Preparation", input.mulchEnabled ? "Mulching & TP / Sowing Readiness" : "TP / Sowing Readiness", input.establishmentType === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing", "First Harvest"].map((name) => ({ name, targetDate: name === "First Harvest" && input.firstHarvestDate ? input.firstHarvestDate : null }));
 }
+
+export function formatTime(iso: string | Date | null | undefined): string {
+  if (!iso) return "--:--";
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  if (isNaN(d.getTime())) return "--:--";
+  let hours = d.getHours();
+  const minutes = d.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  return `${pad(hours)}:${pad(minutes)} ${ampm}`;
+}
+
+export function formatDate(iso: string | Date | null | undefined): string {
+  if (!iso) return "--";
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  if (isNaN(d.getTime())) return "--";
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  return `${months[d.getMonth()]} ${pad(d.getDate())}, ${d.getFullYear()}`;
+}
+
+export function formatDateTime(iso: string | Date | null | undefined): string {
+  if (!iso) return "--";
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  if (isNaN(d.getTime())) return "--";
+  return `${formatDate(d)} • ${formatTime(d)}`;
+}

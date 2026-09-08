@@ -33,10 +33,21 @@ export function TaskForm({
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    fetch("/api/farms").then((r) => r.ok ? r.json() : []).then((list) => {
-      setFarms(list);
-      if (!farmId && list.length > 0) setFarmId(list[0].id);
-    });
+    fetch("/api/farms")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: any[]) => {
+        // Sort ACTIVE estates first, then SETUP, then INACTIVE
+        const sorted = [...list].sort((a, b) => {
+          if (a.status === "ACTIVE" && b.status !== "ACTIVE") return -1;
+          if (a.status !== "ACTIVE" && b.status === "ACTIVE") return 1;
+          return 0;
+        });
+        setFarms(sorted);
+        if (!farmId && sorted.length > 0) {
+          const defaultActive = sorted.find((f) => f.status === "ACTIVE") || sorted[0];
+          setFarmId(defaultActive.id);
+        }
+      });
   }, [farmId]);
 
   useEffect(() => {
@@ -91,16 +102,45 @@ export function TaskForm({
         <div className="two-column" style={{ marginTop: 12 }}>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Target Farm</label>
-            <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCropCycleId(""); }} required>
-              {farms.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
+            <select
+              value={farmId}
+              onChange={(e) => {
+                setFarmId(e.target.value);
+                setPlotId("");
+                setCropCycleId("");
+              }}
+              required
+            >
+              {farms.map((f: any) => (
+                <option key={f.id} value={f.id}>
+                  {f.name} {f.status !== "ACTIVE" ? `(${f.status})` : ""}
+                </option>
+              ))}
             </select>
           </div>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Assign to Officer</label>
             <select name="assignedOfficerId" required>
-              <option value="">Select Farm Officer…</option>
-              {access.map((a) => (<option key={a.user.id} value={a.user.id}>{a.user.name}</option>))}
+              {access.length > 0 ? (
+                <>
+                  <option value="">Select Farm Officer…</option>
+                  {access.map((a) => (
+                    <option key={a.user.id} value={a.user.id}>
+                      {a.user.name}
+                    </option>
+                  ))}
+                </>
+              ) : (
+                <option value="" disabled>
+                  ⚠ No officers assigned to this farm
+                </option>
+              )}
             </select>
+            {access.length === 0 && (
+              <p style={{ margin: "4px 0 0", fontSize: "11px", color: "var(--amber)", lineHeight: 1.3 }}>
+                ⚠ No field officers assigned to this estate. Switch to an active estate like <strong>Greenfield Precision Estate</strong> or assign officers in settings.
+              </p>
+            )}
           </div>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Target Plot (Optional)</label>

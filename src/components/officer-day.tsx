@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { TaskCompletionForm } from "@/components/task-completion-form";
 import { FieldReports } from "@/components/field-reports";
+import { IncidentReportForm } from "@/components/incident-report-form";
 import { Icons } from "./icons";
 import { StatusBadge, PriorityBadge } from "./ui/badge";
 import { CardSkeleton } from "./ui/skeleton";
@@ -67,43 +68,93 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* SHIFT PROGRESS BAR */}
-      <div className="compact-card" style={{ padding: 20, gap: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
+      {/* SHIFT PROGRESS BAR CARD */}
+      <div
+        className="compact-card"
+        style={{
+          padding: 24,
+          gap: 16,
+          borderRadius: "var(--radius-md)",
+          boxShadow: "var(--shadow-card)",
+          backgroundColor: "var(--canvas)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
           <div>
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
+            <div className="eyebrow" style={{ color: "var(--green)" }}>
+              <span className="eyebrow-dot" style={{ backgroundColor: "var(--green)" }} />
               <span>TODAY&apos;S OPERATIONS QUEUE</span>
             </div>
-            <h2 className="section-title" style={{ fontSize: "20px", marginTop: 4 }}>
+            <h2 className="section-title" style={{ fontSize: "22px", marginTop: 4 }}>
               {completedCount} of {tasks.length} Operations Completed ({progressPercent}%)
             </h2>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => setShowIncidentModal(!showIncidentModal)}>
-              <Icons.AlertTriangle size={14} />
-              <span>{showIncidentModal ? "Close" : "Report Incident"}</span>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => setShowIncidentModal(!showIncidentModal)}
+              style={{ borderRadius: "var(--radius-pill)", padding: "8px 16px" }}
+            >
+              <Icons.AlertTriangle size={15} />
+              <span>{showIncidentModal ? "Close Form" : "Report Hazard / Incident"}</span>
             </button>
-            <button type="button" className="btn btn-sm btn-secondary" onClick={load}>
-              <Icons.Activity size={14} />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={load}
+              style={{ borderRadius: "var(--radius-pill)", padding: "8px 16px" }}
+            >
+              <Icons.Activity size={15} />
               <span>Refresh</span>
             </button>
           </div>
         </div>
 
-        <div style={{ width: "100%", height: 4, backgroundColor: "var(--line)", borderRadius: "var(--radius-none)", overflow: "hidden" }}>
-          <div style={{ width: `${progressPercent}%`, height: "100%", backgroundColor: "var(--green)", transition: "width 0.3s ease" }} />
+        <div
+          style={{
+            width: "100%",
+            height: 8,
+            backgroundColor: "var(--stone)",
+            borderRadius: "var(--radius-pill)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${progressPercent}%`,
+              height: "100%",
+              backgroundColor: "var(--green)",
+              borderRadius: "var(--radius-pill)",
+              transition: "width 0.4s ease",
+            }}
+          />
         </div>
       </div>
 
       {showIncidentModal && (
-        <div style={{ background: "var(--canvas)", border: "1px solid var(--line)", padding: 20, borderRadius: "var(--radius-sm)" }}>
-          <FieldReports initialTab="incident" hideTabs={true} onSuccess={() => { setShowIncidentModal(false); toast.success("Incident reported."); }} onCancel={() => setShowIncidentModal(false)} />
+        <div
+          style={{
+            background: "var(--canvas)",
+            border: "1px solid var(--line)",
+            padding: 20,
+            borderRadius: "var(--radius-md)",
+            boxShadow: "var(--shadow-lg)",
+          }}
+        >
+          <IncidentReportForm
+            onSuccess={() => {
+              setShowIncidentModal(false);
+              toast.success("Field incident logged with photos.");
+              void load();
+            }}
+            onCancel={() => setShowIncidentModal(false)}
+          />
         </div>
       )}
 
       {/* FILTER TABS */}
-      <div className="tabs-nav">
+      <div className="tabs-nav" style={{ padding: 5, gap: 5 }}>
         {["ALL", "AGRONOMIST", "SYSTEM", "DAILY_MONITORING"].map((org) => (
           <button
             key={org}
@@ -111,15 +162,21 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
             className={`tab-btn ${originFilter === org ? "active" : ""}`}
             onClick={() => setOriginFilter(org)}
           >
-            {org === "ALL" ? "All Operations" : org === "SYSTEM" ? "Milestones" : org === "DAILY_MONITORING" ? "Monitoring" : "Agronomist Tasks"}
+            {org === "ALL"
+              ? "All Operations"
+              : org === "SYSTEM"
+              ? "Milestones"
+              : org === "DAILY_MONITORING"
+              ? "Monitoring"
+              : "Agronomist Tasks"}
           </button>
         ))}
       </div>
 
       {loading && <CardSkeleton />}
 
-      {/* TASK EXECUTION ROWS / CARDS */}
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      {/* TASK EXECUTION CARDS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {filteredTasks.map((task) => {
           const isDone = task.status === "COMPLETED";
           const isStarted = task.status === "IN_PROGRESS";
@@ -128,20 +185,23 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           return (
             <article
               key={task.id}
-              className="data-row"
+              className="compact-card"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "stretch",
-                gap: 12,
-                padding: "18px 20px",
+                gap: 14,
+                padding: "22px 24px",
+                borderRadius: "var(--radius-md)",
+                boxShadow: "var(--shadow-card)",
                 backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
+                opacity: isDone ? 0.85 : 1,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <span className="item-title">{task.title}</span>
+                    <span style={{ fontSize: "16px", fontWeight: 600, color: "var(--ink)" }}>{task.title}</span>
                     <StatusBadge status={task.status} />
                     <PriorityBadge priority={task.priority} />
                   </div>
@@ -151,30 +211,68 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                 </div>
               </div>
 
-              {task.description && <p style={{ margin: 0, fontSize: "14px", color: "var(--ink)" }}>{task.description}</p>}
+              {task.description && (
+                <p style={{ margin: 0, fontSize: "14px", color: "var(--ink)", lineHeight: 1.5 }}>
+                  {task.description}
+                </p>
+              )}
 
               {task.instructions && (
-                <div className="callout" style={{ padding: "10px 14px", fontSize: "13px" }}>
-                  <span className="mono-label" style={{ color: "var(--green-dark)" }}>Operational Guidance:</span>
-                  <span style={{ color: "var(--ink)" }}>{task.instructions}</span>
+                <div
+                  className="callout"
+                  style={{
+                    padding: "12px 16px",
+                    fontSize: "13px",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                >
+                  <span className="mono-label" style={{ color: "var(--green-dark)", fontWeight: 600 }}>
+                    Operational Guidance:
+                  </span>
+                  <span style={{ color: "var(--ink)", marginTop: 2, display: "block" }}>{task.instructions}</span>
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 4, borderTop: "1px solid var(--line)", paddingTop: 12, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                  marginTop: 6,
+                  borderTop: "1px solid var(--line)",
+                  paddingTop: 14,
+                  flexWrap: "wrap",
+                }}
+              >
                 {!isDone && !isStarted && !isMonitoring && (
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => start(task.id)} style={{ minHeight: 40 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => start(task.id)}
+                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
+                  >
                     <Icons.Zap size={14} />
                     <span>Start Activity</span>
                   </button>
                 )}
                 {!isDone && isMonitoring && (
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setMonitoringTaskId(monitoringTaskId === task.id ? null : task.id)} style={{ minHeight: 40 }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setMonitoringTaskId(monitoringTaskId === task.id ? null : task.id)}
+                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
+                  >
                     <Icons.Camera size={14} />
                     <span>{monitoringTaskId === task.id ? "Close Log" : "Capture Monitoring Photo"}</span>
                   </button>
                 )}
                 {!isDone && (
-                  <button type="button" className="btn btn-green btn-sm" onClick={() => setCompletionId(completionId === task.id ? null : task.id)} style={{ minHeight: 40 }}>
+                  <button
+                    type="button"
+                    className="btn btn-green"
+                    onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
+                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
+                  >
                     <Icons.CheckCircle size={14} />
                     <span>Complete Task</span>
                   </button>
@@ -182,14 +280,29 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
               </div>
 
               {monitoringTaskId === task.id && (
-                <div style={{ marginTop: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-                  <FieldReports initialFarmId={task.farm.id} initialPlotId={task.plot?.id} initialCropCycleId={task.cropCycle?.id} initialTab="monitoring" hideTabs={true} onSuccess={() => { setMonitoringTaskId(null); void load(); }} onCancel={() => setMonitoringTaskId(null)} />
+                <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                  <FieldReports
+                    initialFarmId={task.farm.id}
+                    initialPlotId={task.plot?.id}
+                    initialCropCycleId={task.cropCycle?.id}
+                    initialTab="monitoring"
+                    hideTabs={true}
+                    onSuccess={() => { setMonitoringTaskId(null); void load(); }}
+                    onCancel={() => setMonitoringTaskId(null)}
+                  />
                 </div>
               )}
 
               {completionId === task.id && (
-                <div style={{ marginTop: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-                  <TaskCompletionForm taskId={task.id} farmId={task.farm.id} taskTitle={task.title} milestoneName={task.milestone?.name} onComplete={() => { setCompletionId(null); void load(); }} onCancel={() => setCompletionId(null)} />
+                <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+                  <TaskCompletionForm
+                    taskId={task.id}
+                    farmId={task.farm.id}
+                    taskTitle={task.title}
+                    milestoneName={task.milestone?.name}
+                    onComplete={() => { setCompletionId(null); void load(); }}
+                    onCancel={() => setCompletionId(null)}
+                  />
                 </div>
               )}
             </article>

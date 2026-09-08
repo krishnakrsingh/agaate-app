@@ -1,6 +1,5 @@
 import { requireSession } from "@/lib/auth";
-import { FieldReports } from "@/components/field-reports";
-import { LocationRequestForm } from "@/components/location-request-form";
+import { OfficerSignalsConsole } from "@/components/officer-signals-console";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -14,7 +13,7 @@ export default async function OfficerReportsPage() {
       <Navbar role={session.role} userName={session.name} />
 
       <main className="shell narrow">
-        <Breadcrumbs items={[{ label: "Field Signals" }]} />
+        <Breadcrumbs items={[{ label: "Field Signals & Incidents" }]} />
 
         <div className="page-header">
           <div className="page-header-content">
@@ -22,15 +21,14 @@ export default async function OfficerReportsPage() {
               <span className="eyebrow-dot"></span>
               FIELD INTELLIGENCE &bull; {session.name}
             </div>
-            <h1>Field Signals & Incident Logs</h1>
+            <h1 className="page-title">Field Signals &amp; Incident Intelligence</h1>
             <p className="muted">
-              Submit daily visual crop health updates and report positive or negative field incidents.
+              Document field hazards, upload photographic evidence, track mitigation progress, and log crop observations.
             </p>
           </div>
         </div>
 
-        <FieldReports />
-        <LocationRequestForm />
+        <OfficerSignalsConsole />
       </main>
     </>
   );

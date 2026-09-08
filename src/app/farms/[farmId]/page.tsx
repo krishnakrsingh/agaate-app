@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { downloadUrl } from "@/lib/storage";
 import { FarmHubClient } from "@/components/farm-hub-client";
 import { Navbar } from "@/components/navbar";
 
@@ -32,6 +33,10 @@ export default async function FarmDetailPage({
         },
         incidents: {
           orderBy: { createdAt: "desc" },
+          include: {
+            media: true,
+            reporter: { select: { name: true } },
+          },
         },
         plots: {
           where: { deletedAt: null },
@@ -121,16 +126,30 @@ export default async function FarmDetailPage({
       remarks: m.remarks,
       createdAt: m.createdAt.toISOString(),
     })),
-    incidents: farm.incidents.map((i) => ({
-      id: i.id,
-      type: i.type,
-      level: i.level,
-      severity: i.severity,
-      status: i.status,
-      description: i.description,
-      impactPercent: i.impactPercent ? i.impactPercent.toString() : null,
-      createdAt: i.createdAt.toISOString(),
-    })),
+    incidents: await Promise.all(
+      farm.incidents.map(async (i) => {
+        let imageUrl: string | null = null;
+        if (i.media && i.media.length > 0) {
+          try {
+            imageUrl = await downloadUrl(i.media[0].storageKey);
+          } catch {
+            imageUrl = null;
+          }
+        }
+        return {
+          id: i.id,
+          type: i.type,
+          level: i.level,
+          severity: i.severity,
+          status: i.status,
+          description: i.description,
+          impactPercent: i.impactPercent ? i.impactPercent.toString() : null,
+          reporterName: i.reporter?.name || "Field Officer",
+          imageUrl,
+          createdAt: i.createdAt.toISOString(),
+        };
+      })
+    ),
     access: farm.access.map((a) => ({
       id: a.id,
       user: {

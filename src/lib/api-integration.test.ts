@@ -718,6 +718,25 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(data.attendance.status).toBe("COMPLETED");
       expect(data.attendance.endAt).toBeDefined();
     });
+
+    it("completes End Day clock-out without requiring selfieMediaId or explicit farmId (auto-resolves active shift)", async () => {
+      const req = createJsonRequest(
+        "http://localhost:3000/api/attendance",
+        "POST",
+        {
+          action: "END",
+          latitude: Number(testFarmB.latitude),
+          longitude: Number(testFarmB.longitude),
+        },
+        officerBCookie
+      );
+      const res = await withAuth(officerBCookie, () => postAttendanceHandler(req));
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.attendance.status).toBe("COMPLETED");
+      expect(data.attendance.endAt).toBeDefined();
+    });
   });
 
   // =========================================================================

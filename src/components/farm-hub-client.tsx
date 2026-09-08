@@ -17,7 +17,19 @@ import { EmptyState } from "./ui/empty-state";
 type Milestone = { id: string; name: string; targetDate: string; status: string };
 type CropCycle = { id: string; cropName: string; startDate: string; status: string; varieties: { name: string }[]; milestones: Milestone[] };
 type Plot = { id: string; name: string; area: string; status: string; soilType: string | null; irrigation: { type: string; details: string | null }[]; cropCycles: CropCycle[] };
-type Incident = { id: string; type: string; level: string; severity: string | null; status: string; description: string; impactPercent: string | null; createdAt: string; reporter?: { name: string } | null };
+type Incident = {
+  id: string;
+  type: string;
+  level: string;
+  severity: string | null;
+  status: string;
+  description: string;
+  impactPercent: string | null;
+  createdAt: string;
+  imageUrl?: string | null;
+  reporterName?: string;
+  reporter?: { name: string } | null;
+};
 type Monitoring = { id: string; status: string; stage: string; impactPercent: string | null; remarks: string | null; createdAt: string; reporter?: { name: string } | null };
 type Farm = {
   id: string; name: string; ownerName: string; location: string; address: string | null;
@@ -28,6 +40,7 @@ type Farm = {
 export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: string; canManage: boolean }) {
   const [tab, setTab] = useState<"plots" | "weather" | "team" | "signals" | "settings">("plots");
   const [showAddPlot, setShowAddPlot] = useState(false);
+  const [selectedIncidentPhoto, setSelectedIncidentPhoto] = useState<string | null>(null);
 
   const isSetup = farm.status === "SETUP";
   const hasPlots = farm.plots.length > 0;
@@ -131,41 +144,64 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
           )}
 
           {/* SPATIAL PLOT GRID */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
             {farm.plots.map((plot) => (
-              <article key={plot.id} className="compact-card" style={{ padding: 20, gap: 14 }}>
+              <article
+                key={plot.id}
+                className="compact-card hover-glow"
+                style={{
+                  padding: 24,
+                  gap: 16,
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-card)",
+                  backgroundColor: "var(--canvas)",
+                }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                   <div>
-                    <h3 className="item-title">{plot.name}</h3>
-                    <span className="muted" style={{ fontSize: "13px" }}>
-                      <span className="data">{plot.area}</span> acres &bull; {plot.soilType || "Soil Not Specified"}
-                    </span>
+                    <h3 style={{ fontSize: "17px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>{plot.name}</h3>
+                    <div className="muted" style={{ fontSize: "13px", marginTop: 3 }}>
+                      <strong style={{ color: "var(--ink)" }}>{plot.area}</strong> acres &bull; {plot.soilType || "Soil Not Specified"}
+                    </div>
                   </div>
                   <StatusBadge status={plot.status} />
                 </div>
 
                 {/* Irrigation tags */}
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {plot.irrigation.map((irr, idx) => (
-                    <span key={idx} className="mono-label" style={{ background: "var(--stone)", padding: "3px 8px", border: "1px solid var(--line)" }}>
+                    <span
+                      key={idx}
+                      className="badge badge-muted"
+                      style={{ fontSize: "11px", padding: "3px 9px" }}
+                    >
                       {irr.type}
                     </span>
                   ))}
                 </div>
 
                 {/* Crop Cycles list */}
-                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div className="mono-label" style={{ color: "var(--muted)" }}>Active Crop Cycles ({plot.cropCycles.length})</div>
+                <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div className="mono-label" style={{ color: "var(--muted)", fontWeight: 600 }}>Active Crop Cycles ({plot.cropCycles.length})</div>
                   {plot.cropCycles.map((cycle) => (
                     <Link
                       key={cycle.id}
                       href={`/plots/${plot.id}/crop-cycles/${cycle.id}`}
-                      className="data-row"
-                      style={{ padding: "10px 12px", minHeight: "auto", border: "1px solid var(--line)", textDecoration: "none", color: "inherit" }}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "var(--radius-sm)",
+                        backgroundColor: "var(--stone)",
+                        textDecoration: "none",
+                        color: "inherit",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        transition: "background-color 0.15s ease",
+                      }}
                     >
                       <div>
-                        <div style={{ fontWeight: 550, fontSize: "13px" }}>🌱 {cycle.cropName}</div>
-                        <div className="muted" style={{ fontSize: "11px" }}>Started: {new Date(cycle.startDate).toLocaleDateString()}</div>
+                        <div style={{ fontWeight: 600, fontSize: "13px" }}>🌱 {cycle.cropName}</div>
+                        <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Started: {new Date(cycle.startDate).toLocaleDateString()}</div>
                       </div>
                       <StatusBadge status={cycle.status} />
                     </Link>
@@ -173,13 +209,21 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                   {!plot.cropCycles.length && <p className="muted" style={{ fontSize: "12px", margin: 0 }}>No active crop cycles in this plot.</p>}
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
-                  <Link href={`/plots/${plot.id}`} className="btn btn-secondary btn-sm">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+                  <Link
+                    href={`/plots/${plot.id}`}
+                    className="btn btn-secondary btn-sm"
+                    style={{ borderRadius: "var(--radius-pill)", padding: "5px 14px" }}
+                  >
                     <Icons.Edit size={13} />
                     <span>Inspect Plot</span>
                   </Link>
                   {canManage && (
-                    <Link href={`/plots/${plot.id}/crop-cycles/new`} className="btn btn-green btn-sm">
+                    <Link
+                      href={`/plots/${plot.id}/crop-cycles/new`}
+                      className="btn btn-green btn-sm"
+                      style={{ borderRadius: "var(--radius-pill)", padding: "5px 14px" }}
+                    >
                       <Icons.Plus size={13} />
                       <span>Launch Crop Cycle</span>
                     </Link>
@@ -227,18 +271,104 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
             {farm.incidents.map((inc) => (
               <div
                 key={inc.id}
-                className="compact-card"
-                style={{ padding: 16, borderLeft: inc.severity === "CRITICAL" ? "2px solid var(--red)" : "2px solid var(--amber)", gap: 10 }}
+                className="compact-card hover-glow"
+                style={{
+                  padding: 20,
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-card)",
+                  gap: 14,
+                }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <strong style={{ fontSize: "14px", color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--ink)" }}>{inc.type}</strong>
-                    {inc.severity && <PriorityBadge priority={inc.severity} />}
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  {/* Photo Thumbnail */}
+                  {inc.imageUrl ? (
+                    <div
+                      style={{
+                        width: 90,
+                        height: 90,
+                        minWidth: 90,
+                        borderRadius: "var(--radius-xs)",
+                        overflow: "hidden",
+                        border: "1px solid var(--line)",
+                        backgroundColor: "#000",
+                        cursor: "pointer",
+                        position: "relative",
+                      }}
+                      onClick={() => setSelectedIncidentPhoto(inc.imageUrl || null)}
+                      title="Click to view full photo"
+                    >
+                      <img
+                        src={inc.imageUrl}
+                        alt={inc.type}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <span
+                        style={{
+                          position: "absolute",
+                          bottom: 2,
+                          right: 2,
+                          backgroundColor: "rgba(0,0,0,0.65)",
+                          color: "#fff",
+                          borderRadius: 2,
+                          padding: "1px 4px",
+                          fontSize: 9,
+                        }}
+                      >
+                        <Icons.Eye size={9} />
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        width: 90,
+                        height: 90,
+                        minWidth: 90,
+                        borderRadius: "var(--radius-xs)",
+                        border: "1px solid var(--line)",
+                        backgroundColor: "var(--canvas)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                        color: "var(--muted)",
+                        fontSize: 10,
+                      }}
+                    >
+                      <Icons.AlertTriangle size={20} style={{ color: "var(--amber)" }} />
+                      <span>No Photo</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <strong style={{ fontSize: "14px", color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--ink)" }}>
+                          {inc.type}
+                        </strong>
+                        {inc.severity && <PriorityBadge priority={inc.severity} />}
+                        <span className="muted" style={{ fontSize: "11px" }}>
+                          &bull; Level: {inc.level}
+                        </span>
+                      </div>
+                      {canManage ? <IncidentStatusControl incidentId={inc.id} status={inc.status} /> : <StatusBadge status={inc.status} />}
+                    </div>
+
+                    <p style={{ margin: 0, fontSize: "13px", color: "var(--ink)" }}>{inc.description}</p>
+
+                    <div className="muted" style={{ fontSize: "11px", display: "flex", gap: 12, flexWrap: "wrap" }}>
+                      <span>Reported {new Date(inc.createdAt).toLocaleDateString()}</span>
+                      {inc.impactPercent && (
+                        <span style={{ color: "var(--amber)", fontWeight: 600 }}>
+                          Yield Impact: {inc.impactPercent}%
+                        </span>
+                      )}
+                      {inc.reporterName && <span>By {inc.reporterName}</span>}
+                    </div>
+
+                    <IncidentFollowUp incidentId={inc.id} />
                   </div>
-                  {canManage ? <IncidentStatusControl incidentId={inc.id} status={inc.status} /> : <StatusBadge status={inc.status} />}
                 </div>
-                <p style={{ margin: 0, fontSize: "13px" }}>{inc.description}</p>
-                <IncidentFollowUp incidentId={inc.id} />
               </div>
             ))}
             {!farm.incidents.length && (
@@ -248,6 +378,54 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                 description="Field operations and crop monitoring signals are operating within standard parameters."
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* PHOTO LIGHTBOX MODAL */}
+      {selectedIncidentPhoto && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: 20,
+          }}
+          onClick={() => setSelectedIncidentPhoto(null)}
+        >
+          <div
+            className="compact-card"
+            style={{
+              maxWidth: 600,
+              width: "100%",
+              padding: 16,
+              gap: 12,
+              backgroundColor: "var(--canvas)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>Field Evidence Photo</span>
+              <button
+                type="button"
+                className="btn btn-sm btn-secondary"
+                onClick={() => setSelectedIncidentPhoto(null)}
+              >
+                <Icons.X size={14} />
+              </button>
+            </div>
+            <img
+              src={selectedIncidentPhoto}
+              alt="Incident evidence"
+              style={{ width: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: "var(--radius-xs)" }}
+            />
           </div>
         </div>
       )}

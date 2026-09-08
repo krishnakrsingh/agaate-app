@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getSession, clearSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/login-form";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,7 +8,18 @@ import { ThemeToggle } from "@/components/theme-toggle";
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
-  if (await getSession()) redirect("/dashboard");
+  const session = await getSession();
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, active: true },
+    });
+    if (user?.active) {
+      redirect("/dashboard");
+    } else {
+      await clearSession();
+    }
+  }
 
   return (
     <main className="auth-shell">

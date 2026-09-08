@@ -38,6 +38,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Shield: Icons.Shield,
     Users: Icons.Users,
     Camera: Icons.Camera,
+    Activity: Icons.Activity,
   };
 
   const roleLabels: Record<string, string> = {

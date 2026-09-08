@@ -1,121 +1,154 @@
 import bcrypt from "bcryptjs";
-import { PrismaClient, Role, FarmStatus, PlotStatus, EstablishmentType, CropCycleStatus, MilestoneStatus, TaskOrigin, TaskStatus, AttendanceStatus, ApprovalStatus, HealthStatus, IncidentLevel, IncidentStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  FarmStatus,
+  PlotStatus,
+  EstablishmentType,
+  CropCycleStatus,
+  MilestoneStatus,
+  TaskOrigin,
+  TaskStatus,
+  AttendanceStatus,
+  ApprovalStatus,
+  HealthStatus,
+  IncidentLevel,
+  IncidentStatus,
+  MediaKind,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding ultra-rich Agaate agricultural operations demo data...");
+  console.log("==========================================================");
+  console.log("🌱 AGAATE PRECISION AGROTECH — PRODUCTION DEMO SEED ENGINE");
+  console.log("==========================================================");
 
-  const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || "LocalAdminPassword-ChangeMe-123";
-  const passwordHash = await bcrypt.hash(defaultPassword, 12);
+  // -------------------------------------------------------------------------
+  // STEP 1: CLEAN SLATE WIPE (Remove all legacy and test slop data)
+  // -------------------------------------------------------------------------
+  console.log("\n[1/7] Wiping all existing database records...");
+  await prisma.auditLog.deleteMany({});
+  await prisma.mediaAsset.deleteMany({});
+  await prisma.materialUsage.deleteMany({});
+  await prisma.labourUsage.deleteMany({});
+  await prisma.taskExecution.deleteMany({});
+  await prisma.task.deleteMany({});
+  await prisma.incidentFollowUp.deleteMany({});
+  await prisma.incident.deleteMany({});
+  await prisma.cropMonitoring.deleteMany({});
+  await prisma.locationChangeRequest.deleteMany({});
+  await prisma.attendanceException.deleteMany({});
+  await prisma.attendance.deleteMany({});
+  await prisma.agronomyPlan.deleteMany({});
+  await prisma.milestone.deleteMany({});
+  await prisma.cropVariety.deleteMany({});
+  await prisma.cropCycle.deleteMany({});
+  await prisma.irrigationConfiguration.deleteMany({});
+  await prisma.plot.deleteMany({});
+  await prisma.farmAccess.deleteMany({});
+  await prisma.farm.deleteMany({});
+  await prisma.user.deleteMany({});
+  console.log("✓ Database cleanly wiped.");
 
-  // 1. Create Core Hierarchy Users
-  const superAdmin = await prisma.user.upsert({
-    where: { email: "admin@agaate.local" },
-    update: { name: "Super Admin (Global Director)", role: "SUPER_ADMIN", active: true, passwordHash },
-    create: {
-      name: "Super Admin (Global Director)",
-      email: "admin@agaate.local",
-      passwordHash,
-      role: "SUPER_ADMIN",
-      active: true,
-    },
-  });
-
-  const farmAdmin = await prisma.user.upsert({
-    where: { email: "farmadmin@agaate.local" },
-    update: { name: "Vikram Mehta (Farm Admin)", role: "FARM_ADMIN", active: true, passwordHash },
-    create: {
-      name: "Vikram Mehta (Farm Admin)",
-      email: "farmadmin@agaate.local",
-      passwordHash,
-      role: "FARM_ADMIN",
-      active: true,
-    },
-  });
-
-  const agronomist = await prisma.user.upsert({
-    where: { email: "agronomist@agaate.local" },
-    update: { name: "Dr. Ananya Rao (Senior Agronomist)", role: "AGRONOMIST", active: true, passwordHash },
-    create: {
-      name: "Dr. Ananya Rao (Senior Agronomist)",
-      email: "agronomist@agaate.local",
-      passwordHash,
-      role: "AGRONOMIST",
-      active: true,
-    },
-  });
-
-  const officer = await prisma.user.upsert({
-    where: { email: "officer@agaate.local" },
-    update: { name: "Ramesh Patel (Lead Farm Officer)", role: "FARM_OFFICER", active: true, passwordHash },
-    create: {
-      name: "Ramesh Patel (Lead Farm Officer)",
-      email: "officer@agaate.local",
-      passwordHash,
-      role: "FARM_OFFICER",
-      active: true,
-    },
-  });
-
-  const officer2 = await prisma.user.upsert({
-    where: { email: "officer2@agaate.local" },
-    update: { name: "Suresh Kumar (Field Officer - Mandya)", role: "FARM_OFFICER", active: true, passwordHash },
-    create: {
-      name: "Suresh Kumar (Field Officer - Mandya)",
-      email: "officer2@agaate.local",
-      passwordHash,
-      role: "FARM_OFFICER",
-      active: true,
-    },
-  });
-
-  const officer3 = await prisma.user.upsert({
-    where: { email: "officer3@agaate.local" },
-    update: { name: "Pooja Deshmukh (Field Officer - Nashik)", role: "FARM_OFFICER", active: true, passwordHash },
-    create: {
-      name: "Pooja Deshmukh (Field Officer - Nashik)",
-      email: "officer3@agaate.local",
-      passwordHash,
-      role: "FARM_OFFICER",
-      active: true,
-    },
-  });
-
-  console.log("Core users ready:", [superAdmin.email, farmAdmin.email, agronomist.email, officer.email, officer2.email]);
-
-  // Helper date calculators
+  // Helper date generators (relative to execution time so the demo is always fresh today)
   const now = new Date();
   const dateOffset = (days: number, hour = 8, min = 0) => {
     const d = new Date(now);
-    d.setDate(d.getDate() + days);
-    d.setHours(hour, min, 0, 0);
+    d.setUTCDate(d.getUTCDate() + days);
+    d.setUTCHours(hour, min, 0, 0);
     return d;
   };
   const dateOnly = (days: number) => {
     const d = new Date(now);
-    d.setDate(d.getDate() + days);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    d.setUTCDate(d.getUTCDate() + days);
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   };
 
-  // 2. Create 4 Distinct Agricultural Estates
-  const greenfieldFarm = await prisma.farm.upsert({
-    where: { id: "farm-greenfield-01" },
-    update: {
-      name: "Greenfield Precision Estate",
-      ownerName: "Somnath Agrotech Ltd",
-      location: "Hosur, Tamil Nadu",
-      address: "Survey No. 48/2, Denkanikottai Road, Hosur",
-      latitude: 12.5284,
-      longitude: 77.8341,
-      totalArea: 15.5,
-      cultivableArea: 13.0,
-      waterSource: "2x 20HP Borewells + 200kL Rainwater Pond",
-      geofenceRadiusMeters: 600,
-      status: "ACTIVE" as FarmStatus,
+  const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || "LocalAdminPassword-ChangeMe-123";
+  const passwordHash = await bcrypt.hash(defaultPassword, 12);
+
+  // -------------------------------------------------------------------------
+  // STEP 2: CORE HIERARCHY USERS (All 4 Distinct User Roles)
+  // -------------------------------------------------------------------------
+  console.log("\n[2/7] Seeding core users across all 4 operational tiers...");
+
+  const superAdmin = await prisma.user.create({
+    data: {
+      id: "user-superadmin-01",
+      name: "Arjun Singhania (Global Operations Director)",
+      email: "admin@agaate.local",
+      passwordHash,
+      role: Role.SUPER_ADMIN,
+      active: true,
     },
-    create: {
+  });
+
+  const farmAdmin = await prisma.user.create({
+    data: {
+      id: "user-farmadmin-02",
+      name: "Vikram Mehta (Estate Operations Manager)",
+      email: "farmadmin@agaate.local",
+      passwordHash,
+      role: Role.FARM_ADMIN,
+      active: true,
+    },
+  });
+
+  const agronomist = await prisma.user.create({
+    data: {
+      id: "user-agronomist-03",
+      name: "Dr. Ananya Rao (Chief Agronomist & Soil Scientist)",
+      email: "agronomist@agaate.local",
+      passwordHash,
+      role: Role.AGRONOMIST,
+      active: true,
+    },
+  });
+
+  const officer1 = await prisma.user.create({
+    data: {
+      id: "user-officer-04",
+      name: "Ramesh Patel (Lead Field Officer - Hosur)",
+      email: "officer@agaate.local",
+      passwordHash,
+      role: Role.FARM_OFFICER,
+      active: true,
+    },
+  });
+
+  const officer2 = await prisma.user.create({
+    data: {
+      id: "user-officer-05",
+      name: "Suresh Kumar (Field Officer - Mandya)",
+      email: "officer2@agaate.local",
+      passwordHash,
+      role: Role.FARM_OFFICER,
+      active: true,
+    },
+  });
+
+  const officer3 = await prisma.user.create({
+    data: {
+      id: "user-officer-06",
+      name: "Pooja Deshmukh (Vineyard Officer - Nashik)",
+      email: "officer3@agaate.local",
+      passwordHash,
+      role: Role.FARM_OFFICER,
+      active: true,
+    },
+  });
+
+  console.log("✓ 6 Core users created (Password: LocalAdminPassword-ChangeMe-123).");
+
+  // -------------------------------------------------------------------------
+  // STEP 3: ESTATES PORTFOLIO (Active, Setup Wizard, Inactive)
+  // -------------------------------------------------------------------------
+  console.log("\n[3/7] Seeding 5 distinct agricultural estates across India...");
+
+  // Estate 1: Greenfield Precision Estate (Hosur, Tamil Nadu) - ACTIVE High-Tech Polyhouse
+  const greenfieldFarm = await prisma.farm.create({
+    data: {
       id: "farm-greenfield-01",
       name: "Greenfield Precision Estate",
       ownerName: "Somnath Agrotech Ltd",
@@ -123,61 +156,35 @@ async function main() {
       address: "Survey No. 48/2, Denkanikottai Road, Hosur",
       latitude: 12.5284,
       longitude: 77.8341,
-      totalArea: 15.5,
-      cultivableArea: 13.0,
-      waterSource: "2x 20HP Borewells + 200kL Rainwater Pond",
+      totalArea: 16.0,
+      cultivableArea: 14.5,
+      waterSource: "2x 20HP Borewells + 250kL Rainwater Harvesting Pond",
       geofenceRadiusMeters: 600,
-      status: "ACTIVE" as FarmStatus,
+      status: FarmStatus.ACTIVE,
     },
   });
 
-  const valleyFarm = await prisma.farm.upsert({
-    where: { id: "farm-valley-02" },
-    update: {
-      name: "Cauvery Valley Orchards",
-      ownerName: "Narayana Swamy",
-      location: "Mandya, Karnataka",
-      address: "Village Srirangapatna Taluk, Mandya",
-      latitude: 12.4181,
-      longitude: 76.6947,
-      totalArea: 25.0,
-      cultivableArea: 22.5,
-      waterSource: "Cauvery River Canal + Drip Automation Station",
-      geofenceRadiusMeters: 800,
-      status: "ACTIVE" as FarmStatus,
-    },
-    create: {
+  // Estate 2: Cauvery Valley Orchards (Mandya, Karnataka) - ACTIVE River Canal Fruit Orchard
+  const valleyFarm = await prisma.farm.create({
+    data: {
       id: "farm-valley-02",
       name: "Cauvery Valley Orchards",
-      ownerName: "Narayana Swamy",
+      ownerName: "Narayana Swamy & Sons",
       location: "Mandya, Karnataka",
       address: "Village Srirangapatna Taluk, Mandya",
       latitude: 12.4181,
       longitude: 76.6947,
       totalArea: 25.0,
       cultivableArea: 22.5,
-      waterSource: "Cauvery River Canal + Drip Automation Station",
+      waterSource: "Cauvery River Canal + Automated Drip Filtration Station",
       geofenceRadiusMeters: 800,
-      status: "ACTIVE" as FarmStatus,
+      status: FarmStatus.ACTIVE,
     },
   });
 
-  const sunriseFarm = await prisma.farm.upsert({
-    where: { id: "farm-sunrise-03" },
-    update: {
-      name: "Sunrise Organic Vineyards",
-      ownerName: "Priyanka Deshmukh",
-      location: "Nashik, Maharashtra",
-      address: "Gat No. 112, Dindori Road, Nashik",
-      latitude: 20.011,
-      longitude: 73.7903,
-      totalArea: 8.0,
-      cultivableArea: 6.5,
-      waterSource: "Open Well + Solar Pump Automation",
-      geofenceRadiusMeters: 500,
-      status: "ACTIVE" as FarmStatus,
-    },
-    create: {
+  // Estate 3: Sunrise Organic Vineyards (Nashik, Maharashtra) - ACTIVE Export Table Grapes
+  const sunriseFarm = await prisma.farm.create({
+    data: {
       id: "farm-sunrise-03",
       name: "Sunrise Organic Vineyards",
       ownerName: "Priyanka Deshmukh",
@@ -185,30 +192,17 @@ async function main() {
       address: "Gat No. 112, Dindori Road, Nashik",
       latitude: 20.011,
       longitude: 73.7903,
-      totalArea: 8.0,
-      cultivableArea: 6.5,
-      waterSource: "Open Well + Solar Pump Automation",
+      totalArea: 10.0,
+      cultivableArea: 8.5,
+      waterSource: "Open Irrigation Well + 10HP Solar Pump Array",
       geofenceRadiusMeters: 500,
-      status: "ACTIVE" as FarmStatus,
+      status: FarmStatus.ACTIVE,
     },
   });
 
-  const deccanFarm = await prisma.farm.upsert({
-    where: { id: "farm-deccan-04" },
-    update: {
-      name: "Deccan Plateau High-Tech Nursery",
-      ownerName: "Dr. K. R. Soundarajan",
-      location: "Dharmapuri, Tamil Nadu",
-      address: "SF 210, Palacode Highway, Dharmapuri",
-      latitude: 12.1211,
-      longitude: 78.1582,
-      totalArea: 12.0,
-      cultivableArea: 10.0,
-      waterSource: "Submersible Pump 15HP + Deep Borewell",
-      geofenceRadiusMeters: 500,
-      status: "SETUP" as FarmStatus,
-    },
-    create: {
+  // Estate 4: Deccan Plateau High-Tech Nursery (Dharmapuri, Tamil Nadu) - SETUP (Gatekeeper Demo)
+  const deccanFarm = await prisma.farm.create({
+    data: {
       id: "farm-deccan-04",
       name: "Deccan Plateau High-Tech Nursery",
       ownerName: "Dr. K. R. Soundarajan",
@@ -220,859 +214,1049 @@ async function main() {
       cultivableArea: 10.0,
       waterSource: "Submersible Pump 15HP + Deep Borewell",
       geofenceRadiusMeters: 500,
-      status: "SETUP" as FarmStatus,
+      status: FarmStatus.SETUP, // Triggers Setup Wizard Checklist on Farm Hub
     },
   });
 
-  // 3. Assign Multi-Estate Access
-  const accessAssignments = [
+  // Estate 5: Nilgiri Foothills Tea & Spices (Ooty, Tamil Nadu) - INACTIVE (Winter Maintenance)
+  const nilgiriFarm = await prisma.farm.create({
+    data: {
+      id: "farm-nilgiri-05",
+      name: "Nilgiri Foothills Tea & Spices",
+      ownerName: "Highland Agro Holdings",
+      location: "Ooty, Tamil Nadu",
+      address: "Kotagiri Estate Road, Nilgiris",
+      latitude: 11.4285,
+      longitude: 76.8652,
+      totalArea: 18.0,
+      cultivableArea: 15.0,
+      waterSource: "Natural Mountain Stream Gravity Reservoir",
+      geofenceRadiusMeters: 1000,
+      status: FarmStatus.INACTIVE, // Demonstrates inactive status filter
+    },
+  });
+
+  // Assign Farm Access permissions
+  const accesses = [
+    // Farm Admin manages all farms
     { userId: farmAdmin.id, farmId: greenfieldFarm.id, canManage: true },
     { userId: farmAdmin.id, farmId: valleyFarm.id, canManage: true },
     { userId: farmAdmin.id, farmId: sunriseFarm.id, canManage: true },
     { userId: farmAdmin.id, farmId: deccanFarm.id, canManage: true },
+    { userId: farmAdmin.id, farmId: nilgiriFarm.id, canManage: true },
+    // Agronomist assigned across all farming estates
     { userId: agronomist.id, farmId: greenfieldFarm.id, canManage: false },
     { userId: agronomist.id, farmId: valleyFarm.id, canManage: false },
     { userId: agronomist.id, farmId: sunriseFarm.id, canManage: false },
-    { userId: officer.id, farmId: greenfieldFarm.id, canManage: false },
+    { userId: agronomist.id, farmId: deccanFarm.id, canManage: false },
+    { userId: agronomist.id, farmId: nilgiriFarm.id, canManage: false },
+    // Field Officers per Estate (with regional cross-coverage)
+    { userId: officer1.id, farmId: greenfieldFarm.id, canManage: false },
+    { userId: officer1.id, farmId: deccanFarm.id, canManage: false },
     { userId: officer2.id, farmId: valleyFarm.id, canManage: false },
+    { userId: officer2.id, farmId: nilgiriFarm.id, canManage: false },
     { userId: officer3.id, farmId: sunriseFarm.id, canManage: false },
+    { userId: officer3.id, farmId: nilgiriFarm.id, canManage: false },
+  ];
+  for (const acc of accesses) {
+    await prisma.farmAccess.create({ data: acc });
+  }
+
+  // -------------------------------------------------------------------------
+  // STEP 4: PLOTS & IRRIGATION ARCHITECTURE
+  // -------------------------------------------------------------------------
+  console.log("\n[4/7] Seeding land plots with multi-irrigation systems...");
+
+  // Greenfield Plots
+  const plotGf1 = await prisma.plot.create({
+    data: {
+      id: "plot-gf-01",
+      farmId: greenfieldFarm.id,
+      name: "Plot 1 - North Polyhouse Ridge",
+      area: 4.5,
+      latitude: 12.5286,
+      longitude: 77.8343,
+      soilType: "Red Sandy Loam (pH 6.4, EC 0.38 dS/m)",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [
+          { type: "Drip Automation (2.2 LPH PC Drippers)", details: "Pressure compensating automated lateral lines" },
+          { type: "Overhead Climate Misters", details: "Micro-foggers for summer temperature drop" },
+        ],
+      },
+    },
+  });
+
+  const plotGf2 = await prisma.plot.create({
+    data: {
+      id: "plot-gf-02",
+      farmId: greenfieldFarm.id,
+      name: "Plot 2 - South Shade Net Terrace",
+      area: 3.5,
+      latitude: 12.528,
+      longitude: 77.8338,
+      soilType: "Clay Loam with High Organic Carbon (1.4%)",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [
+          { type: "In-line Drip Fertigation", details: "Dual lateral per 90cm raised bed" },
+        ],
+      },
+    },
+  });
+
+  const plotGf3 = await prisma.plot.create({
+    data: {
+      id: "plot-gf-03",
+      farmId: greenfieldFarm.id,
+      name: "Plot 3 - East Precision Open Field",
+      area: 6.5,
+      latitude: 12.5288,
+      longitude: 77.8352,
+      soilType: "Alluvial Red Soil with Drip Bedding",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [
+          { type: "Sub-Surface Drip Irrigation", details: "16mm drip tube buried at 15cm depth" },
+          { type: "Micro-Sprinklers", details: "360-degree perimeter coverage" },
+        ],
+      },
+    },
+  });
+
+  // Valley Plots (Mandya)
+  const plotVal1 = await prisma.plot.create({
+    data: {
+      id: "plot-val-01",
+      farmId: valleyFarm.id,
+      name: "Plot A - Riverside Sweet Lime Block",
+      area: 12.0,
+      latitude: 12.4185,
+      longitude: 76.695,
+      soilType: "Deep River Silt & Loam (pH 7.2)",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [{ type: "Basin Ring Drip Irrigation", details: "4 drippers per mature citrus tree" }],
+      },
+    },
+  });
+
+  const plotVal2 = await prisma.plot.create({
+    data: {
+      id: "plot-val-02",
+      farmId: valleyFarm.id,
+      name: "Plot B - Pomegranate Plateau",
+      area: 10.5,
+      latitude: 12.4178,
+      longitude: 76.6942,
+      soilType: "Red Gravelly Well-Drained Loam",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [{ type: "Automated Drip Fertigation", details: "Venturi injection with EC/pH sensor station" }],
+      },
+    },
+  });
+
+  // Sunrise Plots (Nashik)
+  const plotSun1 = await prisma.plot.create({
+    data: {
+      id: "plot-sun-01",
+      farmId: sunriseFarm.id,
+      name: "Plot 1 - Thompson Seedless Vineyard",
+      area: 5.0,
+      latitude: 20.0112,
+      longitude: 73.7905,
+      soilType: "Black Basaltic Loam with Gravel",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [{ type: "Overhead Trellis Drip", details: "Suspended drip lines on Y-trellis system" }],
+      },
+    },
+  });
+
+  const plotSun2 = await prisma.plot.create({
+    data: {
+      id: "plot-sun-02",
+      farmId: sunriseFarm.id,
+      name: "Plot 2 - Crimson Seedless Block",
+      area: 3.5,
+      latitude: 20.0108,
+      longitude: 73.7901,
+      soilType: "Well-Drained Sandy Loam",
+      status: PlotStatus.ACTIVE,
+      irrigation: {
+        create: [{ type: "Drip Automation", details: "1.6 LPH anti-siphon emitters" }],
+      },
+    },
+  });
+
+  // Deccan Plots (Dharmapuri - Nursery in SETUP)
+  await prisma.plot.create({
+    data: {
+      id: "plot-dec-01",
+      farmId: deccanFarm.id,
+      name: "Nursery Block 1 - Germination Bay",
+      area: 4.0,
+      latitude: 12.1213,
+      longitude: 78.1584,
+      soilType: "Sterilized Cocopeat & Vermiculite Media",
+      status: PlotStatus.SETUP,
+      irrigation: {
+        create: [{ type: "Automated Boom Sprayer", details: "Overhead motorized misting boom" }],
+      },
+    },
+  });
+
+  await prisma.plot.create({
+    data: {
+      id: "plot-dec-02",
+      farmId: deccanFarm.id,
+      name: "Nursery Block 2 - Hardening Yard",
+      area: 6.0,
+      latitude: 12.1209,
+      longitude: 78.158,
+      soilType: "Organic Nursery Potting Soil",
+      status: PlotStatus.SETUP,
+      irrigation: {
+        create: [{ type: "Micro-Sprinklers", details: "Automated cycle every 3 hours" }],
+      },
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // STEP 5: CROP CYCLES, BED MATH & 4-MILESTONE PLANS
+  // -------------------------------------------------------------------------
+  console.log("\n[5/7] Seeding precision crop cycles with agronomy milestones...");
+
+  // Cycle 1: Color Bell Pepper / Capsicum (Indra F1) in Greenfield Plot 1
+  const cycleCapsicum = await prisma.cropCycle.create({
+    data: {
+      id: "cycle-capsicum-01",
+      plotId: plotGf1.id,
+      cropName: "Color Bell Pepper / Capsicum (Indra F1)",
+      startDate: dateOnly(-28),
+      expectedFirstHarvestDate: dateOnly(45),
+      establishmentType: EstablishmentType.NURSERY_TRANSPLANTATION,
+      status: CropCycleStatus.ACTIVE,
+      bedPreparationEnabled: true,
+      bedWidthCm: 90,
+      bedCenterDistanceCm: 150,
+      expectedBedsPerAcre: 290,
+      expectedTotalBeds: 1305,
+      actualBedsCreated: 1300,
+      mulchEnabled: true,
+      mulchHolePattern: "Zig-Zag 40cm x 50cm Double Row",
+      plantDistanceCm: 45,
+      expectedPlantsPerAcre: 7700,
+      expectedPlants: 34650,
+      actualPlants: 34500,
+      varieties: {
+        create: [
+          { name: "Indra Red F1 (Syngenta)" },
+          { name: "Bachata Yellow F1 (Rijk Zwaan)" },
+          { name: "Pasarella Orange F1" },
+        ],
+      },
+      milestones: {
+        create: [
+          {
+            name: "Deep Tillage & Basal Fertigation",
+            targetDate: dateOnly(-26),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-25, 17, 30),
+            remarks: "Applied 25 tons well-decomposed FYM + 250kg Neem Cake + 50kg Single Super Phosphate.",
+          },
+          {
+            name: "Raised Bed Making & Silver-Black Mulch Laying",
+            targetDate: dateOnly(-20),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-19, 16, 0),
+            remarks: "1300 beds shaped to 90cm top width with 25-micron UV stabilized mulch film.",
+          },
+          {
+            name: "Seedling Transplantation & Bio-Drenching",
+            targetDate: dateOnly(-14),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-13, 11, 45),
+            remarks: "34,500 35-day-old hardened seedlings transplanted and drenched with Humic Acid + Trichoderma.",
+          },
+          {
+            name: "Vegetative Trellising & First Flower Pinching",
+            targetDate: dateOnly(5),
+            status: MilestoneStatus.IN_PROGRESS,
+            remarks: "Vertical string trellising initiated in Block A. Pinching crown flowers to boost vegetative canopy.",
+          },
+          {
+            name: "Commercial Fruit Harvest & Grading",
+            targetDate: dateOnly(45),
+            status: MilestoneStatus.PENDING,
+            remarks: "Anticipated first picking of 4-lobed premium blocky fruits (180g-220g caliber).",
+          },
+        ],
+      },
+    },
+  });
+
+  // Cycle 2: English Greenhouse Cucumber (Kian F1) in Greenfield Plot 2
+  const cycleCucumber = await prisma.cropCycle.create({
+    data: {
+      id: "cycle-cucumber-02",
+      plotId: plotGf2.id,
+      cropName: "English Greenhouse Cucumber (Kian F1)",
+      startDate: dateOnly(-21),
+      expectedFirstHarvestDate: dateOnly(20),
+      establishmentType: EstablishmentType.NURSERY_TRANSPLANTATION,
+      status: CropCycleStatus.ACTIVE,
+      bedPreparationEnabled: true,
+      bedWidthCm: 80,
+      bedCenterDistanceCm: 140,
+      expectedBedsPerAcre: 310,
+      expectedTotalBeds: 1085,
+      actualBedsCreated: 1080,
+      mulchEnabled: true,
+      mulchHolePattern: "Single Row 30cm",
+      plantDistanceCm: 30,
+      expectedPlantsPerAcre: 9500,
+      expectedPlants: 33250,
+      actualPlants: 33100,
+      varieties: {
+        create: [{ name: "Kian F1 Parthenocarpic" }, { name: "Hilton F1" }],
+      },
+      milestones: {
+        create: [
+          {
+            name: "Soil Solarization & Bed Disinfection",
+            targetDate: dateOnly(-20),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-19, 18, 0),
+          },
+          {
+            name: "Transplanting & Initial Drip Calibration",
+            targetDate: dateOnly(-14),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-14, 12, 0),
+          },
+          {
+            name: "Overhead Vine Lowering & Shoot De-leafing",
+            targetDate: dateOnly(3),
+            status: MilestoneStatus.IN_PROGRESS,
+          },
+          {
+            name: "Continuous Daily Picking & Cold Storage",
+            targetDate: dateOnly(20),
+            status: MilestoneStatus.PENDING,
+          },
+        ],
+      },
+    },
+  });
+
+  // Cycle 3: Icebox Watermelon (Direct Sowing) in Greenfield Plot 3
+  const cycleWatermelon = await prisma.cropCycle.create({
+    data: {
+      id: "cycle-watermelon-03",
+      plotId: plotGf3.id,
+      cropName: "Icebox Watermelon (Sugar Baby & Black Pearl)",
+      startDate: dateOnly(-35),
+      expectedFirstHarvestDate: dateOnly(30),
+      establishmentType: EstablishmentType.DIRECT_SOWING,
+      status: CropCycleStatus.ACTIVE,
+      bedPreparationEnabled: true,
+      bedWidthCm: 120,
+      bedCenterDistanceCm: 250,
+      expectedBedsPerAcre: 160,
+      expectedTotalBeds: 1040,
+      actualBedsCreated: 1040,
+      mulchEnabled: true,
+      mulchHolePattern: "Staggered 60cm",
+      plantDistanceCm: 60,
+      expectedPlantsPerAcre: 2900,
+      expectedPlants: 18850,
+      actualPlants: 18800,
+      varieties: {
+        create: [{ name: "Sugar Baby Classic" }, { name: "Black Pearl Seedless F1" }],
+      },
+      milestones: {
+        create: [
+          {
+            name: "Laser Land Levelling & Basal Organic Enrichment",
+            targetDate: dateOnly(-34),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-33, 17, 0),
+          },
+          {
+            name: "Precision Direct Seed Sowing",
+            targetDate: dateOnly(-28),
+            status: MilestoneStatus.COMPLETED,
+            completedAt: dateOffset(-28, 14, 0),
+          },
+          {
+            name: "Vine Spreading & Fruit Setting Boron Spray",
+            targetDate: dateOnly(2),
+            status: MilestoneStatus.IN_PROGRESS,
+          },
+          {
+            name: "Brix Sugar Index Verification & Bulk Dispatch",
+            targetDate: dateOnly(30),
+            status: MilestoneStatus.PENDING,
+          },
+        ],
+      },
+    },
+  });
+
+  // Cycle 4: Pomegranate (Bhagwa) in Mandya Plot B
+  const cyclePomegranate = await prisma.cropCycle.create({
+    data: {
+      id: "cycle-pomegranate-04",
+      plotId: plotVal2.id,
+      cropName: "Bhagwa Pomegranate High-Density Orchard",
+      startDate: dateOnly(-60),
+      expectedFirstHarvestDate: dateOnly(60),
+      establishmentType: EstablishmentType.NURSERY_TRANSPLANTATION,
+      status: CropCycleStatus.ACTIVE,
+      bedPreparationEnabled: false,
+      varieties: {
+        create: [{ name: "Super Bhagwa (Arakta Selection)" }],
+      },
+      milestones: {
+        create: [
+          { name: "Bahar Treatment & Water Stress Withholding", targetDate: dateOnly(-55), status: MilestoneStatus.COMPLETED, completedAt: dateOffset(-54, 18, 0) },
+          { name: "Flowering Induction & Micronutrient Drenching", targetDate: dateOnly(-20), status: MilestoneStatus.COMPLETED, completedAt: dateOffset(-19, 16, 0) },
+          { name: "Fruit Setting & Paper Bagging", targetDate: dateOnly(10), status: MilestoneStatus.IN_PROGRESS },
+          { name: "Aril Color Development & Final Export Harvest", targetDate: dateOnly(60), status: MilestoneStatus.PENDING },
+        ],
+      },
+    },
+  });
+
+  // Cycle 5: Table Grapes (Thompson Seedless) in Nashik Plot 1
+  const cycleGrapes = await prisma.cropCycle.create({
+    data: {
+      id: "cycle-grapes-05",
+      plotId: plotSun1.id,
+      cropName: "Thompson Seedless Export Table Grapes",
+      startDate: dateOnly(-45),
+      expectedFirstHarvestDate: dateOnly(50),
+      establishmentType: EstablishmentType.NURSERY_TRANSPLANTATION,
+      status: CropCycleStatus.ACTIVE,
+      bedPreparationEnabled: false,
+      varieties: {
+        create: [{ name: "Thompson Seedless Clone 2A" }, { name: "Sonaka" }],
+      },
+      milestones: {
+        create: [
+          { name: "October Forward Pruning & Hydrogen Cyanamide Application", targetDate: dateOnly(-42), status: MilestoneStatus.COMPLETED, completedAt: dateOffset(-41, 17, 0) },
+          { name: "Shoot Thinning & Sub-Cane Selection", targetDate: dateOnly(-18), status: MilestoneStatus.COMPLETED, completedAt: dateOffset(-17, 15, 0) },
+          { name: "Berry Thinning & GA3 Cluster Dipping", targetDate: dateOnly(4), status: MilestoneStatus.IN_PROGRESS },
+          { name: "Brix Verification & Cold Storage Pre-Cooling", targetDate: dateOnly(50), status: MilestoneStatus.PENDING },
+        ],
+      },
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // STEP 6: DYNAMIC 7-DAY ROLLING AGRONOMY WORK ORDERS & OPERATIONS MATRIX
+  // -------------------------------------------------------------------------
+  console.log("\n[6/7] Seeding 7-day rolling work orders and field execution tasks...");
+
+  // Agronomy Plan for Today
+  const todayPlan = await prisma.agronomyPlan.create({
+    data: {
+      id: "plan-today-01",
+      farmId: greenfieldFarm.id,
+      planDate: dateOnly(0),
+      notes: "High solar radiation day. Complete morning fertigation prior to 09:30 AM. Monitor polyhouse humidity levels.",
+      manualTemperature: 29.4,
+      manualHumidity: 62.0,
+      manualWindSpeed: 10.5,
+      manualRainForecast: 0.0,
+      manualWeatherRemarks: "Clear sunny skies. Moderate evaporation rate expected.",
+      createdById: agronomist.id,
+    },
+  });
+
+  // OVERDUE TASK (Due Yesterday, In-Progress -> Triggers Delayed Alerts Metric)
+  const taskOverdue = await prisma.task.create({
+    data: {
+      id: "task-overdue-01",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf2.id,
+      cropCycleId: cycleCucumber.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Irrigation & Sanitization",
+      title: "Urgent Drip Line Flushing & Nitric Acid Descaling",
+      description: "Perform 0.2% nitric acid line wash to clear mineral scale deposits from cucumber emitter laterals.",
+      instructions: "Run system at 2.0 bar pressure. Flush sub-mains for 15 minutes until clear water discharges from flush valves.",
+      priority: "URGENT",
+      dueDate: dateOnly(-1), // Due yesterday
+      status: TaskStatus.IN_PROGRESS,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+    },
+  });
+
+  // PAST COMPLETED TASK (Completed Yesterday with Materials & Labour Telemetry)
+  const taskPastCompleted = await prisma.task.create({
+    data: {
+      id: "task-past-comp-02",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Soil Health & Drenching",
+      title: "Rootzone Biological Inoculation: Trichoderma + VAM Mycorrhiza",
+      description: "Drenching 1300 capsicum beds with beneficial bio-fungicide to prevent Pythium root rot.",
+      instructions: "Mix 2kg Trichoderma Viride and 5kg VAM powder in 200L water tank. Deliver via venture injector at 1.8 bar.",
+      priority: "HIGH",
+      dueDate: dateOnly(-1),
+      status: TaskStatus.COMPLETED,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+      executions: {
+        create: {
+          officerId: officer1.id,
+          status: TaskStatus.COMPLETED,
+          startedAt: dateOffset(-1, 8, 30),
+          completedAt: dateOffset(-1, 12, 15),
+          remarks: "Successfully drenched all 1300 beds in Plot 1. Moisture sensor confirmed uniform depth penetration.",
+          labour: {
+            create: {
+              labourers: 3,
+              hours: 3.75,
+              labourHours: 11.25,
+            },
+          },
+          materials: {
+            create: [
+              { materialName: "Trichoderma Viride Bio-Fungicide (2x10^8 CFU/g)", quantity: 2.0, unit: "kg" },
+              { materialName: "Vesicular Arbuscular Mycorrhiza (VAM)", quantity: 5.0, unit: "kg" },
+              { materialName: "Liquid Humic Acid Extract (12%)", quantity: 3.0, unit: "Litre" },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  // TODAY'S TASKS (For Ramesh Patel's "My Day" Dashboard on /officer/day)
+  // Task 1: In-Progress Fertigation
+  const taskToday1 = await prisma.task.create({
+    data: {
+      id: "task-today-01",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      planId: todayPlan.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Fertigation",
+      title: "Morning Fertigation: 12:61:00 Mono Ammonium Phosphate + Micro-Nutrients",
+      description: "Inject root-strengthening phosphorus boost to support early flowering in Plot 1 polyhouse.",
+      instructions: "Dissolve 15kg 12:61:00 MAP + 500g Chelated Micronutrient Combo in Tank A. Maintain EC at 1.8 mS/cm.",
+      priority: "URGENT",
+      dueDate: dateOnly(0),
+      status: TaskStatus.IN_PROGRESS,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+    },
+  });
+
+  // Task 2: Daily Monitoring Task with Camera Trigger
+  const taskToday2 = await prisma.task.create({
+    data: {
+      id: "task-today-02",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      origin: TaskOrigin.DAILY_MONITORING,
+      category: "Scouting",
+      title: "Daily Monitoring · Color Bell Pepper / Capsicum (Indra F1)",
+      description: "Examine foliage for thrips, whiteflies, and rootzone moisture consistency across polyhouse bays 1 to 4.",
+      instructions: "Take 2 reference photos of underside leaves. Record crown flower count and aphid status.",
+      priority: "MEDIUM",
+      dueDate: dateOnly(0),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+    },
+  });
+
+  // Task 3: Support Activity ready to start
+  const taskToday3 = await prisma.task.create({
+    data: {
+      id: "task-today-03",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf2.id,
+      cropCycleId: cycleCucumber.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Canopy Management",
+      title: "Support Activity: Overhead Trellis String Tensioning & Vine Clips",
+      description: "Fasten growing cucumber main stems to overhead galvanized support wires using plastic vine clips.",
+      instructions: "Remove lower secondary lateral shoots up to node 5. Avoid pinching apical growing tip.",
+      priority: "MEDIUM",
+      dueDate: dateOnly(0),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+    },
+  });
+
+  // Task 4: Completed Milestone Task (Shows 1 of 4 completed in queue)
+  const taskToday4 = await prisma.task.create({
+    data: {
+      id: "task-today-04",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf3.id,
+      cropCycleId: cycleWatermelon.id,
+      origin: TaskOrigin.SYSTEM,
+      category: "Milestone Execution",
+      title: "Milestone: Vine Spreading & Fruit Setting Boron Spray",
+      description: "Apply foliar Boron 20% spray to improve pollen viability and prevent hollow heart in watermelon.",
+      instructions: "Spray 1.5g Boron per litre water. Target flowers during active bee visitation hours (07:00-09:30 AM).",
+      priority: "HIGH",
+      dueDate: dateOnly(0),
+      status: TaskStatus.COMPLETED,
+      assignedOfficerId: officer1.id,
+      createdById: agronomist.id,
+      executions: {
+        create: {
+          officerId: officer1.id,
+          status: TaskStatus.COMPLETED,
+          startedAt: dateOffset(0, 6, 30),
+          completedAt: dateOffset(0, 8, 45),
+          remarks: "Sprayed entire 6.5 acres of Plot 3. Uniform coverage achieved without leaf scorch.",
+          labour: {
+            create: { labourers: 2, hours: 2.25, labourHours: 4.5 },
+          },
+          materials: {
+            create: [
+              { materialName: "Solubor Disodium Octaborate Tetrahydrate (20% B)", quantity: 2.5, unit: "kg" },
+              { materialName: "Non-Ionic Silicon Spreader Sticking Agent", quantity: 300.0, unit: "ml" },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  // FUTURE ROLLING DAYS WORK ORDERS (Days +1 to +6)
+  const futureTasks = [
+    {
+      id: "task-future-01",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Foliar Nutrition",
+      title: "Foliar Spray: Calcium Boron Chelate & Cold-Water Seaweed Extract",
+      description: "Prevent blossom end rot in developing capsicum fruits and strengthen cell wall elasticity.",
+      instructions: "Apply 2.5ml/L Chelate Cal-Bor. Spray during overcast or early morning hours.",
+      priority: "HIGH",
+      dueDate: dateOnly(1),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
+    {
+      id: "task-future-02",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf2.id,
+      cropCycleId: cycleCucumber.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Maintenance",
+      title: "Canopy Irrigation & Sand Media Filter Automatic Backwash",
+      description: "Perform backwash cycle on dual vertical sand filters to purge accumulated organic algae.",
+      instructions: "Record inlet and outlet pressure gauges. Differential pressure must drop below 0.3 bar.",
+      priority: "MEDIUM",
+      dueDate: dateOnly(2),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
+    {
+      id: "task-future-03",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Bio-Protection",
+      title: "Preventive Bio-Pesticide Spray: Cold Pressed Neem Oil 10,000 PPM",
+      description: "Ecological barrier spray against thrips and whitefly nymphs. Audit yellow/blue sticky traps.",
+      instructions: "Maintain spray tank agitation. Ensure coverage on abaxial leaf surfaces.",
+      priority: "MEDIUM",
+      dueDate: dateOnly(3),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
+    {
+      id: "task-future-04",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf3.id,
+      cropCycleId: cycleWatermelon.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Fertigation",
+      title: "Fertigation Boost: 00:00:50 Potassium Sulphate (SOP) + Magnesium Sulphate",
+      description: "High potassium feeding to accelerate sugar accumulation (Brix >= 12.0) in watermelons.",
+      instructions: "Inject 20kg SOP per acre over 45 minutes of drip cycle.",
+      priority: "HIGH",
+      dueDate: dateOnly(4),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
+    {
+      id: "task-future-05",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf2.id,
+      cropCycleId: cycleCucumber.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Sanitation",
+      title: "Inter-Row Manual Weeding & Drip Emitter Discharge Audit",
+      description: "Catch-can test 20 drippers along row 4 and remove volunteer weeds along shade-net edges.",
+      instructions: "Clean clogged micro-tubes using vinegar solution if discharge variance > 10%.",
+      priority: "LOW",
+      dueDate: dateOnly(5),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
+    {
+      id: "task-future-06",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      origin: TaskOrigin.AGRONOMIST,
+      category: "Soil Science",
+      title: "Weekly Soil Profile Audit: EC, pH & Volumetric Moisture Mapping",
+      description: "Probe sensor measurements at 15cm and 30cm root depths in all 3 polyhouse bays.",
+      instructions: "Log readings in agronomy portal. Notify Dr. Rao if EC exceeds 2.2 mS/cm.",
+      priority: "HIGH",
+      dueDate: dateOnly(6),
+      status: TaskStatus.ASSIGNED,
+      assignedOfficerId: officer1.id,
+    },
   ];
 
-  for (const a of accessAssignments) {
-    await prisma.farmAccess.upsert({
-      where: { userId_farmId: { userId: a.userId, farmId: a.farmId } },
-      update: { canManage: a.canManage },
-      create: a,
+  for (const t of futureTasks) {
+    await prisma.task.create({
+      data: {
+        ...t,
+        createdById: agronomist.id,
+      },
     });
   }
 
-  // 4. Create Plots with Varied Soil & Irrigation Configurations
-  const plot1 = await prisma.plot.upsert({
-    where: { id: "plot-gf-01" },
-    update: {
-      name: "Plot 1 - North Ridge",
-      area: 4.5,
-      latitude: 12.5286,
-      longitude: 77.8343,
-      soilType: "Red Sandy Loam (pH 6.8, EC 0.35 dS/m)",
-      status: "ACTIVE" as PlotStatus,
-    },
-    create: {
-      id: "plot-gf-01",
+  // -------------------------------------------------------------------------
+  // STEP 7: SHIFTS, ATTENDANCE, ACTION CENTER EXCEPTIONS & INCIDENTS
+  // -------------------------------------------------------------------------
+  console.log("\n[7/7] Seeding attendance rosters, action center approvals, and incident evidence photos...");
+
+  // Verified High-Res Working Photo URLs (Unsplash CDN permanently accessible)
+  const PHOTO_PIPELINE_BURST = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80"; // Irrigation pipeline burst repair
+  const PHOTO_PEST_BLIGHT = "https://images.unsplash.com/photo-1592417817098-8f3d6eb22509?auto=format&fit=crop&w=1200&q=80"; // Blight / pest on crop foliage
+  const PHOTO_POWDERY_MILDEW = "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1200&q=80"; // Vineyard foliage disease
+  const PHOTO_HEALTHY_CAPSICUM = "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=1200&q=80"; // Healthy capsicum on vine
+  const PHOTO_HEALTHY_CUCUMBER = "https://images.unsplash.com/photo-1449339854873-750e6913301b?auto=format&fit=crop&w=1200&q=80"; // Greenhouse crop
+  const PHOTO_OFFICER_SELFIE = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80"; // Lead Officer portrait
+  const PHOTO_OFFICER_SURESH = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80"; // Mandya Officer portrait
+  const PHOTO_OFFICER_POOJA = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"; // Nashik Officer portrait
+
+  // 1. ATTENDANCE: Ramesh Patel (Hosur) - UNSTARTED TODAY (Ready for live clock-in demo!)
+  // Past attendance records for Ramesh (to show historical compliance)
+  await prisma.attendance.create({
+    data: {
+      userId: officer1.id,
       farmId: greenfieldFarm.id,
-      name: "Plot 1 - North Ridge",
-      area: 4.5,
-      latitude: 12.5286,
-      longitude: 77.8343,
-      soilType: "Red Sandy Loam (pH 6.8, EC 0.35 dS/m)",
-      status: "ACTIVE" as PlotStatus,
-    },
-  });
-
-  const plot2 = await prisma.plot.upsert({
-    where: { id: "plot-gf-02" },
-    update: {
-      name: "Plot 2 - South Terrace",
-      area: 3.5,
-      latitude: 12.528,
-      longitude: 77.8338,
-      soilType: "Clay Loam with High Organic Carbon (1.2%)",
-      status: "ACTIVE" as PlotStatus,
-    },
-    create: {
-      id: "plot-gf-02",
-      farmId: greenfieldFarm.id,
-      name: "Plot 2 - South Terrace",
-      area: 3.5,
-      latitude: 12.528,
-      longitude: 77.8338,
-      soilType: "Clay Loam with High Organic Carbon (1.2%)",
-      status: "ACTIVE" as PlotStatus,
-    },
-  });
-
-  const plot3 = await prisma.plot.upsert({
-    where: { id: "plot-gf-03" },
-    update: {
-      name: "Plot 3 - East Valley",
-      area: 5.0,
-      latitude: 12.5288,
-      longitude: 77.8352,
-      soilType: "Alluvial Red Soil with Drip Fertigation Bedding",
-      status: "ACTIVE" as PlotStatus,
-    },
-    create: {
-      id: "plot-gf-03",
-      farmId: greenfieldFarm.id,
-      name: "Plot 3 - East Valley",
-      area: 5.0,
-      latitude: 12.5288,
-      longitude: 77.8352,
-      soilType: "Alluvial Red Soil with Drip Fertigation Bedding",
-      status: "ACTIVE" as PlotStatus,
-    },
-  });
-
-  const plotValley1 = await prisma.plot.upsert({
-    where: { id: "plot-val-01" },
-    update: {
-      name: "Plot A - Riverside Citrus Block",
-      area: 12.0,
-      latitude: 12.4185,
-      longitude: 76.695,
-      soilType: "Deep River Silt & Loam (pH 7.2)",
-      status: "ACTIVE" as PlotStatus,
-    },
-    create: {
-      id: "plot-val-01",
-      farmId: valleyFarm.id,
-      name: "Plot A - Riverside Citrus Block",
-      area: 12.0,
-      latitude: 12.4185,
-      longitude: 76.695,
-      soilType: "Deep River Silt & Loam (pH 7.2)",
-      status: "ACTIVE" as PlotStatus,
-    },
-  });
-
-  const plotSunrise1 = await prisma.plot.upsert({
-    where: { id: "plot-sun-01" },
-    update: {
-      name: "Plot 1 - Vineyard North",
-      area: 4.0,
-      latitude: 20.0112,
-      longitude: 73.7905,
-      soilType: "Black Basaltic Loam with Gravel",
-      status: "ACTIVE" as PlotStatus,
-    },
-    create: {
-      id: "plot-sun-01",
-      farmId: sunriseFarm.id,
-      name: "Plot 1 - Vineyard North",
-      area: 4.0,
-      latitude: 20.0112,
-      longitude: 73.7905,
-      soilType: "Black Basaltic Loam with Gravel",
-      status: "ACTIVE" as PlotStatus,
-    },
-  });
-
-  // Plot Irrigation Configurations
-  await prisma.irrigationConfiguration.deleteMany({
-    where: { plotId: { in: [plot1.id, plot2.id, plot3.id, plotValley1.id, plotSunrise1.id] } },
-  });
-  await prisma.irrigationConfiguration.createMany({
-    data: [
-      { plotId: plot1.id, type: "Drip", details: "Inline dripper 2.0 LPH @ 40cm spacing, 16mm lateral" },
-      { plotId: plot1.id, type: "Rain Pipe", details: "Overhead micro-sprinkler for micro-climate humidity control" },
-      { plotId: plot2.id, type: "Drip", details: "Pressure compensating drippers 2.4 LPH @ 50cm" },
-      { plotId: plot3.id, type: "Drip", details: "Double lateral drip line per bed (16mm heavy duty)" },
-      { plotId: plotValley1.id, type: "Drip", details: "Automated sub-surface drip manifold with fertilizer venturi" },
-      { plotId: plotValley1.id, type: "Micro Sprinkler", details: "Under-tree canopy cooling sprinklers" },
-      { plotId: plotSunrise1.id, type: "Drip", details: "Trellised suspended drip line with anti-drain valves" },
-    ],
-  });
-
-  // 5. Create Realistic Crop Cycles & Milestones
-  const cycleWatermelon = await prisma.cropCycle.upsert({
-    where: { id: "cycle-watermelon-01" },
-    update: {
-      cropName: "Watermelon (Icebox Variety)",
-      startDate: dateOnly(-28),
-      expectedFirstHarvestDate: dateOnly(62),
-      establishmentType: "NURSERY_TRANSPLANTATION" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 90,
-      bedCenterDistanceCm: 150,
-      expectedBedsPerAcre: 200,
-      actualBedsCreated: 890,
-      mulchEnabled: true,
-      mulchHolePattern: "DOUBLE_LINE_ZIGZAG",
-      plantDistanceCm: 45,
-      expectedPlantsPerAcre: 6000,
-      expectedPlants: 27000,
-      actualPlants: 26800,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-    create: {
-      id: "cycle-watermelon-01",
-      plotId: plot1.id,
-      cropName: "Watermelon (Icebox Variety)",
-      startDate: dateOnly(-28),
-      expectedFirstHarvestDate: dateOnly(62),
-      establishmentType: "NURSERY_TRANSPLANTATION" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 90,
-      bedCenterDistanceCm: 150,
-      expectedBedsPerAcre: 200,
-      actualBedsCreated: 890,
-      mulchEnabled: true,
-      mulchHolePattern: "DOUBLE_LINE_ZIGZAG",
-      plantDistanceCm: 45,
-      expectedPlantsPerAcre: 6000,
-      expectedPlants: 27000,
-      actualPlants: 26800,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-  });
-
-  const cycleCapsicum = await prisma.cropCycle.upsert({
-    where: { id: "cycle-capsicum-02" },
-    update: {
-      cropName: "Color Bell Pepper / Capsicum (Indra F1)",
-      startDate: dateOnly(-45),
-      expectedFirstHarvestDate: dateOnly(35),
-      establishmentType: "NURSERY_TRANSPLANTATION" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 80,
-      bedCenterDistanceCm: 140,
-      expectedBedsPerAcre: 220,
-      actualBedsCreated: 760,
-      mulchEnabled: true,
-      mulchHolePattern: "DOUBLE_LINE_ZIGZAG",
-      plantDistanceCm: 40,
-      expectedPlantsPerAcre: 7200,
-      expectedPlants: 25200,
-      actualPlants: 25000,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-    create: {
-      id: "cycle-capsicum-02",
-      plotId: plot2.id,
-      cropName: "Color Bell Pepper / Capsicum (Indra F1)",
-      startDate: dateOnly(-45),
-      expectedFirstHarvestDate: dateOnly(35),
-      establishmentType: "NURSERY_TRANSPLANTATION" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 80,
-      bedCenterDistanceCm: 140,
-      expectedBedsPerAcre: 220,
-      actualBedsCreated: 760,
-      mulchEnabled: true,
-      mulchHolePattern: "DOUBLE_LINE_ZIGZAG",
-      plantDistanceCm: 40,
-      expectedPlantsPerAcre: 7200,
-      expectedPlants: 25200,
-      actualPlants: 25000,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-  });
-
-  const cycleCucumber = await prisma.cropCycle.upsert({
-    where: { id: "cycle-cucumber-03" },
-    update: {
-      cropName: "English Greenhouse Cucumber (Kian F1)",
-      startDate: dateOnly(-14),
-      expectedFirstHarvestDate: dateOnly(28),
-      establishmentType: "DIRECT_SOWING" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 75,
-      bedCenterDistanceCm: 130,
-      expectedBedsPerAcre: 240,
-      actualBedsCreated: 1180,
-      mulchEnabled: true,
-      mulchHolePattern: "SINGLE_LINE",
-      plantDistanceCm: 30,
-      expectedPlantsPerAcre: 8500,
-      expectedPlants: 42500,
-      actualPlants: 42000,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-    create: {
-      id: "cycle-cucumber-03",
-      plotId: plot3.id,
-      cropName: "English Greenhouse Cucumber (Kian F1)",
-      startDate: dateOnly(-14),
-      expectedFirstHarvestDate: dateOnly(28),
-      establishmentType: "DIRECT_SOWING" as EstablishmentType,
-      bedPreparationEnabled: true,
-      bedWidthCm: 75,
-      bedCenterDistanceCm: 130,
-      expectedBedsPerAcre: 240,
-      actualBedsCreated: 1180,
-      mulchEnabled: true,
-      mulchHolePattern: "SINGLE_LINE",
-      plantDistanceCm: 30,
-      expectedPlantsPerAcre: 8500,
-      expectedPlants: 42500,
-      actualPlants: 42000,
-      status: "ACTIVE" as CropCycleStatus,
-    },
-  });
-
-  // Crop Varieties
-  await prisma.cropVariety.deleteMany({
-    where: { cropCycleId: { in: [cycleWatermelon.id, cycleCapsicum.id, cycleCucumber.id] } },
-  });
-  await prisma.cropVariety.createMany({
-    data: [
-      { cropCycleId: cycleWatermelon.id, name: "Arka Manik (High Sugar)" },
-      { cropCycleId: cycleWatermelon.id, name: "Black Magic F1" },
-      { cropCycleId: cycleCapsicum.id, name: "Indra Red F1" },
-      { cropCycleId: cycleCapsicum.id, name: "Bachata Yellow F1" },
-      { cropCycleId: cycleCucumber.id, name: "Kian Parthenocarpic F1" },
-    ],
-  });
-
-  // Milestones
-  await prisma.milestone.deleteMany({
-    where: { cropCycleId: { in: [cycleWatermelon.id, cycleCapsicum.id, cycleCucumber.id] } },
-  });
-  await prisma.milestone.createMany({
-    data: [
-      // Watermelon Milestones
-      { cropCycleId: cycleWatermelon.id, name: "Land Tillage & Basal Fertilizer Application", targetDate: dateOnly(-28), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-27) },
-      { cropCycleId: cycleWatermelon.id, name: "Raised Bed Formation & Drip Laying", targetDate: dateOnly(-24), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-23) },
-      { cropCycleId: cycleWatermelon.id, name: "Silver-Black Mulch Film Laying & Punching", targetDate: dateOnly(-20), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-19) },
-      { cropCycleId: cycleWatermelon.id, name: "Nursery Seedling Transplantation (25-day old)", targetDate: dateOnly(-15), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-14) },
-      { cropCycleId: cycleWatermelon.id, name: "First Vine Training & Lateral Pruning", targetDate: dateOnly(5), status: "PENDING" as MilestoneStatus },
-      { cropCycleId: cycleWatermelon.id, name: "Peak Flowering & Bee Pollination Window", targetDate: dateOnly(20), status: "PENDING" as MilestoneStatus },
-      { cropCycleId: cycleWatermelon.id, name: "First Commercial Harvest", targetDate: dateOnly(62), status: "PENDING" as MilestoneStatus },
-
-      // Capsicum Milestones
-      { cropCycleId: cycleCapsicum.id, name: "Basal Manuring (Vermicompost + Neem Cake)", targetDate: dateOnly(-45), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-44) },
-      { cropCycleId: cycleCapsicum.id, name: "Transplantation & Starter Fertigation (19:19:19)", targetDate: dateOnly(-40), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-39) },
-      { cropCycleId: cycleCapsicum.id, name: "Trellising & 4-Stem Pruning Setup", targetDate: dateOnly(-20), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-18) },
-      { cropCycleId: cycleCapsicum.id, name: "Mid-Season Calcium Nitrate & Boron Injection", targetDate: dateOnly(2), status: "PENDING" as MilestoneStatus },
-      { cropCycleId: cycleCapsicum.id, name: "First Color Break Harvesting", targetDate: dateOnly(35), status: "PENDING" as MilestoneStatus },
-
-      // Cucumber Milestones
-      { cropCycleId: cycleCucumber.id, name: "Direct Seed Sowing & Drip Germination Soak", targetDate: dateOnly(-14), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-13) },
-      { cropCycleId: cycleCucumber.id, name: "Vertical Trellis Wire Clip Attachment", targetDate: dateOnly(-5), status: "COMPLETED" as MilestoneStatus, completedAt: dateOffset(-4) },
-      { cropCycleId: cycleCucumber.id, name: "First Continuous Flush Harvest", targetDate: dateOnly(28), status: "PENDING" as MilestoneStatus },
-    ],
-  });
-
-  // 6. Agronomy Plans with Micro-Climate Overrides
-  await prisma.agronomyPlan.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id, sunriseFarm.id] } },
-  });
-
-  const planToday = await prisma.agronomyPlan.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      planDate: dateOnly(0),
-      notes: "High morning solar radiation expected. Shift fertigation injection cycle to 07:30 AM before rootzone temperature exceeds 28°C.",
-      manualTemperature: 31.5,
-      manualHumidity: 65.0,
-      manualWindSpeed: 14.2,
-      manualRainForecast: 20.0,
-      manualWeatherRemarks: "Morning humidity favor early powdery mildew check. Dew evaporated by 08:30 AM.",
-      createdById: agronomist.id,
-    },
-  });
-
-  const planYesterday = await prisma.agronomyPlan.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      planDate: dateOnly(-1),
-      notes: "Post-irrigation EC recorded at 1.4 dS/m. Normal range.",
-      manualTemperature: 30.2,
-      manualHumidity: 68.0,
-      manualWindSpeed: 11.5,
-      manualRainForecast: 10.0,
-      manualWeatherRemarks: "Clear sky with mild afternoon gusts.",
-      createdById: agronomist.id,
-    },
-  });
-
-  // 7. Full 7-Day Rolling Agronomy Task Matrix
-  await prisma.task.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id, sunriseFarm.id] } },
-  });
-
-  // Historical Completed Tasks (-2 Days)
-  const taskPast2 = await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot1.id,
-      cropCycleId: cycleWatermelon.id,
-      title: "Basal Fertigation: 19:19:19 (Polyfeed) + Micronutrients",
-      description: "Inject 5 kg/acre water soluble NPK 19:19:19 with 250g Chelated Zinc EDTA via Venturi.",
-      instructions: "Operate at 2.2 bar mainline pressure. Run 15-min pre-flush before chemical injection.",
-      category: "FERTIGATION",
-      priority: "HIGH",
-      status: "COMPLETED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(-2),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  const execPast2 = await prisma.taskExecution.create({
-    data: {
-      taskId: taskPast2.id,
-      officerId: officer.id,
-      status: "COMPLETED" as TaskStatus,
-      startedAt: dateOffset(-2, 7, 30),
-      completedAt: dateOffset(-2, 10, 0),
-      remarks: "Applied 5.0 kg 19:19:19 across entire Plot 1. Mainline filter cleared of fine sand before cycle.",
-    },
-  });
-
-  await prisma.materialUsage.createMany({
-    data: [
-      { executionId: execPast2.id, materialName: "Water Soluble NPK 19:19:19", quantity: 5.0, unit: "kg" },
-      { executionId: execPast2.id, materialName: "Chelated Zinc (Zn-EDTA 12%)", quantity: 0.25, unit: "kg" },
-    ],
-  });
-
-  await prisma.labourUsage.create({
-    data: { executionId: execPast2.id, labourers: 2, hours: 2.5, labourHours: 5.0 },
-  });
-
-  // Historical Completed Task (-1 Day)
-  const taskPast1 = await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot2.id,
-      cropCycleId: cycleCapsicum.id,
-      planId: planYesterday.id,
-      title: "Preventive Bio-Pesticide Spray: Neem Oil 10,000 PPM + Sticky Trap Audit",
-      description: "Spray 3.0 ml/L Cold Pressed Neem Oil emulsified with bio-wetting agent.",
-      instructions: "Cover both upper and lower leaf surface. Check yellow sticky trap count for thrips density.",
-      category: "SPRAYING",
-      priority: "MEDIUM",
-      status: "COMPLETED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(-1),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  const execPast1 = await prisma.taskExecution.create({
-    data: {
-      taskId: taskPast1.id,
-      officerId: officer.id,
-      status: "COMPLETED" as TaskStatus,
-      startedAt: dateOffset(-1, 8, 0),
-      completedAt: dateOffset(-1, 11, 30),
-      remarks: "Complete canopy coverage achieved. Installed 30 new yellow sticky traps across South Terrace.",
-    },
-  });
-
-  await prisma.materialUsage.createMany({
-    data: [
-      { executionId: execPast1.id, materialName: "Cold Pressed Neem Oil (10,000 PPM)", quantity: 0.5, unit: "L" },
-      { executionId: execPast1.id, materialName: "Bio-Wetting Sticker Agent", quantity: 0.1, unit: "L" },
-      { executionId: execPast1.id, materialName: "Yellow Sticky Insect Traps", quantity: 30.0, unit: "pcs" },
-    ],
-  });
-
-  await prisma.labourUsage.create({
-    data: { executionId: execPast1.id, labourers: 3, hours: 3.5, labourHours: 10.5 },
-  });
-
-  // TODAY'S TASKS (Day 0) - Active Work Queue
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot1.id,
-      cropCycleId: cycleWatermelon.id,
-      planId: planToday.id,
-      title: "Morning Fertigation: 12:61:00 Mono Ammonium Phosphate (MAP) + Humic Acid",
-      description: "Inject 4.5 kg/acre MAP with 500ml liquid humic acid (12%) through venturi unit over 45 minutes.",
-      instructions: "Check EC & pH of drain dripper water. Target EC: 1.4 dS/m, target pH: 6.2.",
-      category: "FERTIGATION",
-      priority: "URGENT",
-      status: "IN_PROGRESS" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(0),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot2.id,
-      cropCycleId: cycleCapsicum.id,
-      planId: planToday.id,
-      title: "Foliar Spray: Calcium Boron Chelate & Seaweed Extract",
-      description: "Apply 2.5 ml/L liquid calcium-boron with 1.5 ml/L Ascophyllum Nodosum extract.",
-      instructions: "Spray before 10:00 AM. Calibrate boom nozzle pressure to 3.5 bar.",
-      category: "FOLIAR_NUTRITION",
-      priority: "HIGH",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(0),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot3.id,
-      cropCycleId: cycleCucumber.id,
-      planId: planToday.id,
-      title: "Daily Crop Health & Pest Scouting (Plot 3 East Valley)",
-      description: "Inspect 30 random plants for powdery mildew spots on bottom leaves and aphid colonies.",
-      instructions: "Record photo signals in mobile console if disease severity exceeds 5%.",
-      category: "CROP_MONITORING",
-      priority: "MEDIUM",
-      status: "AVAILABLE" as TaskStatus,
-      origin: "DAILY_MONITORING" as TaskOrigin,
-      dueDate: dateOnly(0),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot2.id,
-      cropCycleId: cycleCapsicum.id,
-      title: "Support Activity: Trellis Wire Tightening & Vine Clip Attachment",
-      description: "Reinforce vertical support nylon twine for 4-stem capsicum canopy to prevent lodging under fruit load.",
-      category: "SUPPORT_ACTIVITY",
-      priority: "MEDIUM",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(0),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  // Cauvery Valley Farm Tasks for Today
-  await prisma.task.create({
-    data: {
-      farmId: valleyFarm.id,
-      plotId: plotValley1.id,
-      title: "Canopy Irrigation & Sand Media Filter Backwash",
-      description: "Perform 15-minute high pressure sand filter backwash and run 90-minute sub-surface drip cycle.",
-      category: "IRRIGATION",
-      priority: "HIGH",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(0),
-      createdById: agronomist.id,
-      assignedOfficerId: officer2.id,
-    },
-  });
-
-  // FUTURE DISPATCH TASKS (+1 to +4 Days)
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot1.id,
-      cropCycleId: cycleWatermelon.id,
-      title: "Foliar Spray: Potassium Silicate (Armor-K) for Thermal Stress Protection",
-      description: "Apply 2.0 g/L Potassium Silicate to strengthen epidermal cell walls against midday heat.",
-      category: "FOLIAR_NUTRITION",
-      priority: "HIGH",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(1),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot2.id,
-      cropCycleId: cycleCapsicum.id,
-      title: "Soil Drench: Trichoderma Viride + Pseudomonas Fluorescens",
-      description: "Apply 2.0 kg/acre biocontrol drench via venturi to protect rootzone against Phytophthora rot.",
-      category: "BIO_CONTROL",
-      priority: "MEDIUM",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(2),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot1.id,
-      cropCycleId: cycleWatermelon.id,
-      title: "Fertigation Boost: 00:00:50 Potassium Sulphate (SOP) + Magnesium Sulphate",
-      description: "Inject 6.0 kg/acre SOP with 2.5 kg/acre Epsom salt during vegetative surge.",
-      category: "FERTIGATION",
-      priority: "HIGH",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(3),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot3.id,
-      cropCycleId: cycleCucumber.id,
-      title: "Inter-Row Manual Weeding & Drip Line Alignment Inspection",
-      description: "Clear emerging broadleaf weeds along bed shoulders and ensure dripper emitter alignment.",
-      category: "WEEDING",
-      priority: "LOW",
-      status: "ASSIGNED" as TaskStatus,
-      origin: "AGRONOMIST" as TaskOrigin,
-      dueDate: dateOnly(4),
-      createdById: agronomist.id,
-      assignedOfficerId: officer.id,
-    },
-  });
-
-  // 8. Realistic Incidents with Actionable Follow-up Plans
-  await prisma.incident.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id, sunriseFarm.id] } },
-  });
-
-  const incident1 = await prisma.incident.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot1.id,
-      cropCycleId: cycleWatermelon.id,
-      reporterId: officer.id,
-      level: "PLOT" as IncidentLevel,
-      type: "PEST_OUTBREAK",
-      description: "Thrips (Thrips tabaci) infestation detected on Plot 1 North Ridge. Leaf curling and silvering visible on 15% of vine shoot tips.",
-      severity: "HIGH",
-      impactPercent: 12.5,
-      status: "OPEN" as IncidentStatus,
-      createdAt: dateOffset(-1, 14, 20),
-    },
-  });
-
-  await prisma.incidentFollowUp.createMany({
-    data: [
-      {
-        incidentId: incident1.id,
-        authorId: agronomist.id,
-        action: "Agronomist Prescription Dispatched",
-        remarks: "Prescribed immediate application of 5% Cold Pressed Neem Oil wash and blue sticky traps. Targeted Bio-insecticide (Spinosad) scheduled.",
-        createdAt: dateOffset(-1, 16, 0),
-      },
-      {
-        incidentId: incident1.id,
-        authorId: officer.id,
-        action: "Physical Traps Installed",
-        remarks: "Installed 25 yellow & blue sticky sheets across affected rows 4 to 12. Monitoring trap density twice daily.",
-        createdAt: dateOffset(0, 7, 45),
-      },
-    ],
-  });
-
-  const incident2 = await prisma.incident.create({
-    data: {
-      farmId: greenfieldFarm.id,
-      plotId: plot2.id,
-      cropCycleId: cycleCapsicum.id,
-      reporterId: officer.id,
-      level: "PLOT" as IncidentLevel,
-      type: "EQUIPMENT_FAILURE",
-      description: "Submain 2 manifold pressure release valve gasket cracked, causing localized water ponding and 0.4 bar pressure loss.",
-      severity: "MEDIUM",
-      impactPercent: 4.0,
-      status: "ACKNOWLEDGED" as IncidentStatus,
-      createdAt: dateOffset(-2, 11, 15),
-    },
-  });
-
-  await prisma.incidentFollowUp.create({
-    data: {
-      incidentId: incident2.id,
-      authorId: farmAdmin.id,
-      action: "Plumbing Repair Dispatched",
-      remarks: "Procured 2-inch CPVC valve assembly from Hosur spare depot. Maintenance technician on site replacing gasket.",
-      createdAt: dateOffset(-1, 9, 30),
-    },
-  });
-
-  const incident3 = await prisma.incident.create({
-    data: {
-      farmId: valleyFarm.id,
-      plotId: plotValley1.id,
-      reporterId: officer2.id,
-      level: "FARM" as IncidentLevel,
-      type: "POSITIVE_SIGNAL",
-      description: "High brix potential (11.5° Bx) and uniform bloom setting observed across 12-acre citrus block following fertigation cycle.",
-      severity: "LOW",
-      impactPercent: 0.0,
-      status: "RESOLVED" as IncidentStatus,
-      createdAt: dateOffset(-3, 16, 45),
-    },
-  });
-
-  await prisma.incidentFollowUp.create({
-    data: {
-      incidentId: incident3.id,
-      authorId: agronomist.id,
-      action: "Agronomy Benchmark Recorded",
-      remarks: "Nutrient protocol validated for commercial scaling across Cauvery Valley orchards.",
-      createdAt: dateOffset(-2, 10, 0),
-    },
-  });
-
-  // 9. Crop Monitoring Signals & Field Telemetry
-  await prisma.cropMonitoring.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id, sunriseFarm.id] } },
-  });
-
-  await prisma.cropMonitoring.createMany({
-    data: [
-      {
-        farmId: greenfieldFarm.id,
-        plotId: plot1.id,
-        cropCycleId: cycleWatermelon.id,
-        officerId: officer.id,
-        status: "POOR" as HealthStatus,
-        stage: "VEGETATIVE_BRANCHING",
-        impactPercent: 12.0,
-        remarks: "Shoot tip silvering from thrips pressure. Interveinal chlorosis under control post-iron chelate.",
-        createdAt: dateOffset(-1, 14, 0),
-      },
-      {
-        farmId: greenfieldFarm.id,
-        plotId: plot2.id,
-        cropCycleId: cycleCapsicum.id,
-        officerId: officer.id,
-        status: "GOOD" as HealthStatus,
-        stage: "FLOWERING_AND_FRUIT_SET",
-        impactPercent: 0.0,
-        remarks: "Uniform dark green foliage, healthy node elongation, flower drop below 2%.",
-        createdAt: dateOffset(-1, 15, 30),
-      },
-      {
-        farmId: greenfieldFarm.id,
-        plotId: plot3.id,
-        cropCycleId: cycleCucumber.id,
-        officerId: officer.id,
-        status: "GOOD" as HealthStatus,
-        stage: "EARLY_VEGETATIVE",
-        impactPercent: 0.0,
-        remarks: "100% direct seed germination, first true leaf emergence vigorous across all beds.",
-        createdAt: dateOffset(0, 8, 15),
-      },
-      {
-        farmId: valleyFarm.id,
-        plotId: plotValley1.id,
-        cropCycleId: cycleWatermelon.id,
-        officerId: officer2.id,
-        status: "GOOD" as HealthStatus,
-        stage: "FRUIT_DEVELOPMENT",
-        impactPercent: 0.0,
-        remarks: "Canopy lush, high photosynthetic activity recorded on chlorophyll SPAD meter (48.5).",
-        createdAt: dateOffset(-2, 11, 0),
-      },
-    ],
-  });
-
-  // 10. Verified Field Attendance & Governance Exception Queues
-  await prisma.attendance.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id, sunriseFarm.id] } },
-  });
-
-  // Ramesh Patel Active Attendance Today
-  const attendanceToday = await prisma.attendance.create({
-    data: {
-      userId: officer.id,
-      farmId: greenfieldFarm.id,
-      attendanceDate: dateOnly(0),
-      status: "OPEN" as AttendanceStatus,
-      startAt: dateOffset(0, 7, 15),
+      attendanceDate: dateOnly(-1),
+      status: AttendanceStatus.COMPLETED,
+      startAt: dateOffset(-1, 7, 30),
+      endAt: dateOffset(-1, 17, 15),
       startLatitude: 12.5284,
       startLongitude: 77.8341,
+      startSelfieKey: PHOTO_OFFICER_SELFIE,
     },
   });
 
-  // Historical Verified Attendance for Ramesh (Past 3 Days)
-  await prisma.attendance.createMany({
-    data: [
-      {
-        userId: officer.id,
-        farmId: greenfieldFarm.id,
-        attendanceDate: dateOnly(-1),
-        status: "COMPLETED" as AttendanceStatus,
-        startAt: dateOffset(-1, 7, 30),
-        endAt: dateOffset(-1, 16, 45),
-        startLatitude: 12.5285,
-        startLongitude: 77.8342,
-        endLatitude: 12.5283,
-        endLongitude: 77.834,
-      },
-      {
-        userId: officer.id,
-        farmId: greenfieldFarm.id,
-        attendanceDate: dateOnly(-2),
-        status: "COMPLETED" as AttendanceStatus,
-        startAt: dateOffset(-2, 7, 20),
-        endAt: dateOffset(-2, 17, 0),
-        startLatitude: 12.5284,
-        startLongitude: 77.8341,
-        endLatitude: 12.5284,
-        endLongitude: 77.8341,
-      },
-      {
-        userId: officer.id,
-        farmId: greenfieldFarm.id,
-        attendanceDate: dateOnly(-3),
-        status: "COMPLETED" as AttendanceStatus,
-        startAt: dateOffset(-3, 7, 40),
-        endAt: dateOffset(-3, 16, 30),
-        startLatitude: 12.5283,
-        startLongitude: 77.8343,
-        endLatitude: 12.5282,
-        endLongitude: 77.8342,
-      },
-    ],
+  await prisma.attendance.create({
+    data: {
+      userId: officer1.id,
+      farmId: greenfieldFarm.id,
+      attendanceDate: dateOnly(-2),
+      status: AttendanceStatus.COMPLETED,
+      startAt: dateOffset(-2, 7, 40),
+      endAt: dateOffset(-2, 17, 0),
+      startLatitude: 12.5284,
+      startLongitude: 77.8341,
+      startSelfieKey: PHOTO_OFFICER_SELFIE,
+    },
   });
 
-  // Attendance Exception for Approvals Queue Demo
+  // 2. ATTENDANCE: Suresh Kumar (Mandya) - CLOCKED IN OUTSIDE GEOFENCE TODAY (Pending Approval in Action Center!)
   const exceptionAttendance = await prisma.attendance.create({
     data: {
-      userId: officer.id,
-      farmId: greenfieldFarm.id,
-      attendanceDate: dateOnly(-4),
-      status: "EXCEPTION_PENDING" as AttendanceStatus,
-      startAt: dateOffset(-4, 8, 10),
-      startLatitude: 12.536, // ~850m outside geofence boundary
-      startLongitude: 77.841,
-      exceptionReason: "Main canal road under heavy mud-dredging. Parked farm utility vehicle at East electrical sub-station.",
+      userId: officer2.id,
+      farmId: valleyFarm.id,
+      attendanceDate: dateOnly(0),
+      status: AttendanceStatus.EXCEPTION_PENDING,
+      startAt: dateOffset(0, 8, 15),
+      endAt: null,
+      startLatitude: 12.4285, // 1,420m away from 800m geofence
+      startLongitude: 76.7025,
+      startSelfieKey: PHOTO_OFFICER_SURESH,
+      exceptionReason: "Procuring emergency replacement 15HP submersible pump capacitors and suction valves from Mandya Agricultural Machinery Depot. Gatekeeper informed.",
+      exception: {
+        create: {
+          distanceMeters: 1420.0,
+          reason: "Procuring emergency replacement 15HP submersible pump capacitors and suction valves from Mandya Agricultural Machinery Depot. Gatekeeper informed.",
+          status: ApprovalStatus.PENDING,
+        },
+      },
     },
   });
 
-  await prisma.attendanceException.create({
+  // 3. ATTENDANCE: Pooja Deshmukh (Nashik) - COMPLETED SHIFT TODAY
+  await prisma.attendance.create({
     data: {
-      attendanceId: exceptionAttendance.id,
-      distanceMeters: 850.0,
-      reason: "Main canal road under heavy mud-dredging. Parked farm utility vehicle at East electrical sub-station.",
-      status: "PENDING" as ApprovalStatus,
+      userId: officer3.id,
+      farmId: sunriseFarm.id,
+      attendanceDate: dateOnly(0),
+      status: AttendanceStatus.COMPLETED,
+      startAt: dateOffset(0, 6, 30),
+      endAt: dateOffset(0, 14, 45), // Clocked out after 8h 15m
+      startLatitude: 20.011,
+      startLongitude: 73.7903,
+      startSelfieKey: PHOTO_OFFICER_POOJA,
     },
   });
 
-  // 11. Location Change Request for Governance Approvals Queue
-  await prisma.locationChangeRequest.deleteMany({
-    where: { farmId: { in: [greenfieldFarm.id, valleyFarm.id] } },
-  });
-
+  // 4. GOVERNANCE: LOCATION CHANGE REQUEST (Pending Approval in Action Center)
   await prisma.locationChangeRequest.create({
     data: {
-      farmId: valleyFarm.id,
+      farmId: sunriseFarm.id,
       requesterId: farmAdmin.id,
-      proposedLatitude: 12.4195,
-      proposedLongitude: 76.6962,
-      reason: "Estate entrance and solar automated pump station relocated to North gate boundary following canal levee expansion.",
-      status: "PENDING" as ApprovalStatus,
+      proposedLatitude: 20.0135,
+      proposedLongitude: 73.7925,
+      reason: "Incorporating newly acquired 1.5-acre parcel on northern perimeter for solar cold room and pre-cooling grading facility. Expanding geofence radius.",
+      status: ApprovalStatus.PENDING,
       createdAt: dateOffset(-1, 10, 30),
     },
   });
 
-  // 12. Audit Trail
-  await prisma.auditLog.deleteMany({});
+  // 5. CRITICAL INCIDENT: Irrigation Main Line Burst (In Action Center with Lightbox photo)
+  const incidentCritical = await prisma.incident.create({
+    data: {
+      id: "incident-crit-01",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      reporterId: officer1.id,
+      level: IncidentLevel.PLOT,
+      type: "Irrigation Main Line Burst & Pressure Collapse",
+      severity: "CRITICAL",
+      impactPercent: 18.5,
+      description: "Sub-main 63mm PVC distribution pipe ruptured near solenoid manifold 4. Water line pressure collapsed from 2.8 bar to 0.4 bar across Plot 1 polyhouse.",
+      status: IncidentStatus.OPEN,
+      createdAt: dateOffset(0, 7, 50),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_PIPELINE_BURST}&asset=incident-crit-01`,
+            kind: MediaKind.INCIDENT_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 1284500,
+            farmId: greenfieldFarm.id,
+            uploadedById: officer1.id,
+            verifiedAt: dateOffset(0, 7, 52),
+          },
+        ],
+      },
+      followUps: {
+        create: [
+          {
+            authorId: farmAdmin.id,
+            action: "EMERGENCY_DISPATCH",
+            remarks: "Pump station power isolated immediately. Plumber and spare 63mm PN-10 couplers dispatched on site.",
+            createdAt: dateOffset(0, 8, 10),
+          },
+        ],
+      },
+    },
+  });
+
+  // 6. HIGH INCIDENT: Pomegranate Bacterial Blight Outbreak
+  const incidentHigh = await prisma.incident.create({
+    data: {
+      id: "incident-high-02",
+      farmId: valleyFarm.id,
+      plotId: plotVal2.id,
+      cropCycleId: cyclePomegranate.id,
+      reporterId: officer2.id,
+      level: IncidentLevel.CROP,
+      type: "Bacterial Blight (Xanthomonas axonopodis pv. punicae)",
+      severity: "HIGH",
+      impactPercent: 14.0,
+      description: "Oily dark brown water-soaked angular spots identified on developing fruit and twigs in rows 14-18. Rapid spread observed post evening rains.",
+      status: IncidentStatus.OPEN,
+      createdAt: dateOffset(-1, 15, 30),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_PEST_BLIGHT}&asset=incident-high-02`,
+            kind: MediaKind.INCIDENT_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 1492000,
+            farmId: valleyFarm.id,
+            uploadedById: officer2.id,
+            verifiedAt: dateOffset(-1, 15, 32),
+          },
+        ],
+      },
+      followUps: {
+        create: [
+          {
+            authorId: agronomist.id,
+            action: "AGRONOMY_PRESCRIPTION",
+            remarks: "Prescribed immediate copper oxychloride 50 WP (2.5g/L) + Streptocycline (0.5g/L) spray. Discontinue overhead sprinkling.",
+            createdAt: dateOffset(-1, 16, 45),
+          },
+        ],
+      },
+    },
+  });
+
+  // 7. RESOLVED INCIDENT: Minor Drip Lateral Silt Clogging
+  await prisma.incident.create({
+    data: {
+      id: "incident-res-03",
+      farmId: greenfieldFarm.id,
+      plotId: plotGf3.id,
+      cropCycleId: cycleWatermelon.id,
+      reporterId: officer1.id,
+      level: IncidentLevel.PLOT,
+      type: "Drip Lateral Silt Deposition",
+      severity: "LOW",
+      impactPercent: 2.0,
+      description: "Silt deposit reduced discharge in laterals 8 to 11 in watermelon Plot 3.",
+      status: IncidentStatus.RESOLVED,
+      createdAt: dateOffset(-3, 11, 0),
+      followUps: {
+        create: [
+          {
+            authorId: officer1.id,
+            action: "LINE_FLUSH_COMPLETED",
+            remarks: "Flushed end plugs and normalized flow rate to 2.2 LPH.",
+            createdAt: dateOffset(-3, 14, 0),
+          },
+        ],
+      },
+    },
+  });
+
+  // 8. CROP MONITORING SIGNALS: POOR HEALTH ALERTS (In Action Center)
+  await prisma.cropMonitoring.create({
+    data: {
+      farmId: sunriseFarm.id,
+      plotId: plotSun1.id,
+      cropCycleId: cycleGrapes.id,
+      officerId: officer3.id,
+      status: HealthStatus.POOR,
+      stage: "Berry Bulking & Cane Lignification",
+      impactPercent: 8.5,
+      remarks: "Severe powdery mildew white fungal coating visible on young grape clusters and shoot tips. High RH (82%) recorded.",
+      createdAt: dateOffset(-1, 11, 20),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_POWDERY_MILDEW}&asset=monitoring-grapes-poor`,
+            kind: MediaKind.CROP_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 1102000,
+            farmId: sunriseFarm.id,
+            uploadedById: officer3.id,
+            verifiedAt: dateOffset(-1, 11, 22),
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.cropMonitoring.create({
+    data: {
+      farmId: greenfieldFarm.id,
+      plotId: plotGf1.id,
+      cropCycleId: cycleCapsicum.id,
+      officerId: officer1.id,
+      status: HealthStatus.POOR,
+      stage: "Flowering & Early Fruit Set",
+      impactPercent: 6.0,
+      remarks: "Early aphid colonization and leaf curling detected along eastern sidewall vents of polyhouse bay 1.",
+      createdAt: dateOffset(0, 7, 30),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_PEST_BLIGHT}&asset=monitoring-capsicum-aphids`,
+            kind: MediaKind.CROP_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 1154000,
+            farmId: greenfieldFarm.id,
+            uploadedById: officer1.id,
+            verifiedAt: dateOffset(0, 7, 32),
+          },
+        ],
+      },
+    },
+  });
+
+  // 9. CROP MONITORING SIGNALS: GOOD HEALTH OBSERVATIONS
+  await prisma.cropMonitoring.create({
+    data: {
+      farmId: greenfieldFarm.id,
+      plotId: plotGf2.id,
+      cropCycleId: cycleCucumber.id,
+      officerId: officer1.id,
+      status: HealthStatus.GOOD,
+      stage: "Active Vegetative & Flowering",
+      remarks: "Exceptional dark green foliage vigor, uniform internode spacing (12cm), and 100% female flower set.",
+      createdAt: dateOffset(-1, 9, 15),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_HEALTHY_CUCUMBER}&asset=monitoring-cucumber-good`,
+            kind: MediaKind.CROP_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 980000,
+            farmId: greenfieldFarm.id,
+            uploadedById: officer1.id,
+            verifiedAt: dateOffset(-1, 9, 17),
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.cropMonitoring.create({
+    data: {
+      farmId: greenfieldFarm.id,
+      plotId: plotGf3.id,
+      cropCycleId: cycleWatermelon.id,
+      officerId: officer1.id,
+      status: HealthStatus.GOOD,
+      stage: "Vine Spreading & Fruit Bulking",
+      remarks: "High canopy coverage (92%), zero weed infestation through silver-black mulch, excellent fruit elongation.",
+      createdAt: dateOffset(-2, 10, 0),
+      media: {
+        create: [
+          {
+            storageKey: `${PHOTO_HEALTHY_CAPSICUM}&asset=monitoring-watermelon-good`,
+            kind: MediaKind.CROP_PHOTO,
+            mimeType: "image/jpeg",
+            sizeBytes: 1045000,
+            farmId: greenfieldFarm.id,
+            uploadedById: officer1.id,
+            verifiedAt: dateOffset(-2, 10, 2),
+          },
+        ],
+      },
+    },
+  });
+
+  // 10. GOVERNANCE AUDIT TRAIL LOGS (/audit)
   await prisma.auditLog.createMany({
     data: [
       {
@@ -1080,45 +1264,73 @@ async function main() {
         action: "ESTATE_ACTIVATION",
         entityType: "Farm",
         entityId: greenfieldFarm.id,
-        metadata: { name: greenfieldFarm.name, totalArea: "15.5" },
+        metadata: { name: greenfieldFarm.name, totalArea: 16.0, cultivableArea: 14.5 },
         createdAt: dateOffset(-30, 9, 0),
       },
       {
         actorId: agronomist.id,
-        action: "CROP_CYCLE_CREATED",
+        action: "CROP_CYCLE_LAUNCHED",
         entityType: "CropCycle",
-        entityId: cycleWatermelon.id,
-        metadata: { cropName: "Watermelon (Icebox)", plotId: plot1.id },
+        entityId: cycleCapsicum.id,
+        metadata: { cropName: "Color Bell Pepper / Capsicum (Indra F1)", plotId: plotGf1.id },
         createdAt: dateOffset(-28, 10, 30),
       },
       {
         actorId: farmAdmin.id,
-        action: "TASK_GENERATION",
+        action: "ROSTER_DISPATCH",
         entityType: "Task",
-        entityId: taskPast1.id,
-        metadata: { count: 6, origin: "7_DAY_DISPATCH" },
-        createdAt: dateOffset(-2, 6, 0),
+        entityId: taskToday1.id,
+        metadata: { count: 7, origin: "7_DAY_DISPATCH" },
+        createdAt: dateOffset(0, 6, 0),
       },
       {
-        actorId: officer.id,
+        actorId: officer1.id,
+        action: "START_DAY",
+        entityType: "Attendance",
+        entityId: greenfieldFarm.id,
+        metadata: { status: "OPEN", withinGeofence: true },
+        createdAt: dateOffset(0, 7, 45),
+      },
+      {
+        actorId: officer2.id,
+        action: "START_DAY_EXCEPTION",
+        entityType: "Attendance",
+        entityId: exceptionAttendance.id,
+        metadata: { distanceMeters: 1420.0, outside: true },
+        createdAt: dateOffset(0, 8, 15),
+      },
+      {
+        actorId: officer1.id,
         action: "INCIDENT_REPORTED",
         entityType: "Incident",
-        entityId: incident1.id,
-        metadata: { severity: "HIGH", type: "PEST_OUTBREAK" },
-        createdAt: dateOffset(-1, 14, 20),
+        entityId: incidentCritical.id,
+        metadata: { severity: "CRITICAL", type: "Irrigation Main Line Burst" },
+        createdAt: dateOffset(0, 7, 50),
       },
       {
-        actorId: superAdmin.id,
-        action: "LOGIN",
-        entityType: "User",
-        entityId: superAdmin.id,
-        metadata: { ip: "127.0.0.1", role: "SUPER_ADMIN" },
-        createdAt: dateOffset(0, 7, 0),
+        actorId: agronomist.id,
+        action: "INCIDENT_FOLLOWUP",
+        entityType: "Incident",
+        entityId: incidentHigh.id,
+        metadata: { prescription: "Copper oxychloride + Streptocycline" },
+        createdAt: dateOffset(-1, 16, 45),
       },
     ],
   });
 
-  console.log("Ultra-rich seeding complete! All 4 estates, crop cycles, task matrix, incidents, attendance, and governance queues are populated.");
+  console.log("✓ Audit trail and governance records created.");
+
+  console.log("\n==========================================================");
+  console.log("🎉 SEEDING COMPLETE! THE PLATFORM IS 100% READY FOR THE DEMO.");
+  console.log("==========================================================");
+  console.log("Demo Credentials:");
+  console.log("  • Super Admin:  admin@agaate.local      / LocalAdminPassword-ChangeMe-123");
+  console.log("  • Farm Admin:   farmadmin@agaate.local  / LocalAdminPassword-ChangeMe-123");
+  console.log("  • Agronomist:   agronomist@agaate.local / LocalAdminPassword-ChangeMe-123");
+  console.log("  • Lead Officer: officer@agaate.local    / LocalAdminPassword-ChangeMe-123");
+  console.log("  • Mandya Off.:  officer2@agaate.local   / LocalAdminPassword-ChangeMe-123");
+  console.log("  • Nashik Off.:  officer3@agaate.local   / LocalAdminPassword-ChangeMe-123");
+  console.log("==========================================================");
 }
 
 main()

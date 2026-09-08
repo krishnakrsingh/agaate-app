@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "./icons";
+import { IncidentReportForm } from "./incident-report-form";
 
 type Cycle = { id: string; cropName: string };
 type Plot = { id: string; name: string; cropCycles: Cycle[] };
@@ -247,55 +248,16 @@ export function FieldReports({
 
       {/* FORM: INCIDENT */}
       {tab === "incident" && (
-        <form onSubmit={submitIncident} className="compact-card" style={{ padding: 22, gap: 16 }}>
-          <div className="form-section-title" style={{ color: "var(--red)" }}>Report Agricultural Incident</div>
-
-          <div className="two-column">
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Incident Level</label>
-              <select value={incidentLevel} onChange={(e: any) => setIncidentLevel(e.target.value)}>
-                <option value="CROP">Crop Specific</option>
-                <option value="PLOT">Plot Infrastructure</option>
-                <option value="FARM">Estate Wide</option>
-              </select>
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label>Severity</label>
-              <select name="severity" defaultValue="HIGH">
-                <option value="CRITICAL">Critical (Immediate Stop)</option>
-                <option value="HIGH">High (Action Needed 24h)</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
-              </select>
-            </div>
-            <div className="form-group wide" style={{ margin: 0 }}>
-              <label>Incident Classification</label>
-              <select name="type" required>{incidentTypes.map((t) => (<option key={t} value={t}>{t}</option>))}</select>
-            </div>
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Incident Details</label>
-            <textarea name="description" rows={3} placeholder="Describe the issue, affected beds, and immediate mitigation." required />
-          </div>
-
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Incident Evidence Photos (Optional)</label>
-            <input type="file" name="photos" accept="image/*" multiple onChange={(e) => setIncidentPhotos(Array.from(e.target.files ?? []).map((f) => URL.createObjectURL(f)))} />
-            {incidentPhotos.length > 0 && (
-              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                {incidentPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }} />))}
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
-            {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
-            <button type="submit" className="btn btn-danger btn-lg" disabled={pending}>
-              <Icons.AlertTriangle size={16} /><span>{pending ? "Logging…" : "Log Field Incident"}</span>
-            </button>
-          </div>
-        </form>
+        <IncidentReportForm
+          initialFarmId={farmId}
+          initialPlotId={plotId}
+          initialCropCycleId={cycleId}
+          onSuccess={() => {
+            setMessage("Field incident logged with visual evidence.");
+            onSuccess?.();
+          }}
+          onCancel={onCancel}
+        />
       )}
     </div>
   );
