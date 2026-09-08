@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
@@ -20,6 +20,187 @@ type HandoverData = {
   farmId: string;
 };
 
+type FormState = {
+  farmName: string;
+  location: string;
+  address: string;
+  waterSource: string;
+  totalArea: string;
+  cultivableArea: string;
+  latitude: string;
+  longitude: string;
+  geofenceRadius: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPassword: string;
+  agronomistId: string;
+  initialPlotName: string;
+  initialPlotArea: string;
+  initialIrrigationType: string;
+};
+
+const DRAFT_KEY = "agaate_onboard_draft";
+
+const STEPS = [
+  { id: "estate", label: "Estate Basics" },
+  { id: "land", label: "Land & Location" },
+  { id: "owner", label: "Owner Access" },
+  { id: "agronomy", label: "Team & First Plot" },
+  { id: "review", label: "Review & Provision" },
+];
+
+const STEP_META = [
+  {
+    eyebrow: "ESTATE IDENTITY",
+    title: "Let's start with the basics",
+    subtitle:
+      "Tell us about the property you're onboarding. These details can be refined later from the estate console.",
+  },
+  {
+    eyebrow: "LAND & LOCATION",
+    title: "How much land are we working with?",
+    subtitle:
+      "We use this to power field presence checks, area planning, and agronomy recommendations. The GPS pin can be captured automatically.",
+  },
+  {
+    eyebrow: "CLIENT OWNER ACCESS",
+    title: "Who will run this estate?",
+    subtitle:
+      "This person becomes the Farm Owner and signs in with these credentials. You'll hand them the keys once provisioning is complete.",
+  },
+  {
+    eyebrow: "TEAM & FIRST PLOT",
+    title: "Set up the team & first plot",
+    subtitle:
+      "Optional but recommended — assign a dedicated agronomist and demarcate the first plot so agronomy work can begin immediately.",
+  },
+  {
+    eyebrow: "FINAL REVIEW",
+    title: "Everything look right?",
+    subtitle:
+      "Review the details below, then provision the estate. Owner credentials will be issued in the handover voucher.",
+  },
+];
+
+const emptyForm: FormState = {
+  farmName: "",
+  location: "",
+  address: "",
+  waterSource: "",
+  totalArea: "",
+  cultivableArea: "",
+  latitude: "",
+  longitude: "",
+  geofenceRadius: "500",
+  ownerName: "",
+  ownerEmail: "",
+  ownerPassword: "",
+  agronomistId: "",
+  initialPlotName: "",
+  initialPlotArea: "",
+  initialIrrigationType: "Drip",
+};
+
+function validateStep(step: number, f: FormState): Record<string, string> {
+  const e: Record<string, string> = {};
+
+  if (step === 0) {
+    if (!f.farmName.trim() || f.farmName.trim().length < 2) {
+      e.farmName = "Give the estate a name (at least 2 characters).";
+    }
+    if (!f.location.trim() || f.location.trim().length < 2) {
+      e.location = "Add a region so field teams can locate the estate.";
+    }
+  }
+
+  if (step === 1) {
+    const total = Number(f.totalArea);
+    const cultivable = Number(f.cultivableArea);
+    const lat = Number(f.latitude);
+    const lng = Number(f.longitude);
+    const radius = Number(f.geofenceRadius);
+
+    if (!f.totalArea || isNaN(total) || total <= 0) {
+      e.totalArea = "Enter the total estate acreage.";
+    }
+    if (!f.cultivableArea || isNaN(cultivable) || cultivable <= 0) {
+      e.cultivableArea = "Enter the cultivable acreage.";
+    }
+    if (cultivable > total) {
+      e.cultivableArea = "Cultivable area can't exceed the total estate acreage.";
+    }
+    if (f.latitude === "" || isNaN(lat) || lat < -90 || lat > 90) {
+      e.latitude = "Latitude must be between -90 and 90.";
+    }
+    if (f.longitude === "" || isNaN(lng) || lng < -180 || lng > 180) {
+      e.longitude = "Longitude must be between -180 and 180.";
+    }
+    if (f.geofenceRadius === "" || isNaN(radius) || radius < 100 || radius > 5000) {
+      e.geofenceRadius = "Use a radius between 100 and 5,000 metres.";
+    }
+  }
+
+  if (step === 2) {
+    if (!f.ownerName.trim() || f.ownerName.trim().length < 2) {
+      e.ownerName = "Enter the client's full name.";
+    }
+    if (!f.ownerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.ownerEmail.trim())) {
+      e.ownerEmail = "Enter a valid email address.";
+    }
+    if (!f.ownerPassword || f.ownerPassword.length < 8) {
+      e.ownerPassword = "Use at least 8 characters for the temporary password.";
+    }
+  }
+
+  if (step === 3) {
+    const hasName = Boolean(f.initialPlotName.trim());
+    const hasArea = Boolean(f.initialPlotArea.trim());
+    if (hasName !== hasArea) {
+      e.initialPlotName = "Add both a name and an area for the initial plot, or leave both empty.";
+    }
+    if (hasArea) {
+      const area = Number(f.initialPlotArea);
+      const cultivable = Number(f.cultivableArea);
+      if (isNaN(area) || area <= 0) {
+        e.initialPlotArea = "Enter a valid plot area.";
+      } else if (cultivable && area > cultivable) {
+        e.initialPlotArea = "Plot area can't exceed the cultivable acreage.";
+      }
+    }
+  }
+
+  return e;
+}
+
+function Field({
+  id,
+  label,
+  hint,
+  error,
+  children,
+}: {
+  id: string;
+  label: ReactNode;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="onboarding-field">
+      <label className="ob-label" htmlFor={id}>
+        {label}
+      </label>
+      {children}
+      {hint && <div className="ob-helper">{hint}</div>}
+      {error && (
+        <div className="field-error" role="alert">
+          <Icons.AlertCircle size={12} /> {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ClientOnboardingWizard({
   agronomists = [],
 }: {
@@ -28,85 +209,152 @@ export function ClientOnboardingWizard({
   const router = useRouter();
   const toast = useToast();
 
-  // Form states
-  const [farmName, setFarmName] = useState("");
-  const [location, setLocation] = useState("");
-  const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState("12.9716");
-  const [longitude, setLongitude] = useState("77.5946");
-  const [totalArea, setTotalArea] = useState("10");
-  const [cultivableArea, setCultivableArea] = useState("8.5");
-  const [waterSource, setWaterSource] = useState("2x 15HP Borewells with automated filtration");
-  const [geofenceRadius, setGeofenceRadius] = useState("600");
-
-  // Client Owner Credentials
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [ownerPassword, setOwnerPassword] = useState("");
-
-  // Agronomist & Initial Plot
-  const [agronomistId, setAgronomistId] = useState(agronomists[0]?.id || "");
-  const [initialPlotName, setInitialPlotName] = useState("Zone A - Primary Block");
-  const [initialPlotArea, setInitialPlotArea] = useState("4.0");
-  const [initialIrrigationType, setInitialIrrigationType] = useState("Drip");
-
-  // Submission & Handover states
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [step, setStep] = useState(0);
+  const [maxStep, setMaxStep] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
   const [handover, setHandover] = useState<HandoverData | null>(null);
+  const [draftInfo, setDraftInfo] = useState<{ savedAt: number } | null>(null);
 
-  const generatePassword = () => {
+  const isLast = step === STEPS.length - 1;
+
+  useEffect(() => {
+    const restore = () => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (d && d.form) {
+          setForm((prev) => ({ ...prev, ...d.form }));
+          setDraftInfo({ savedAt: d.savedAt || Date.now() });
+        }
+      } catch {
+        // ignore malformed drafts
+      }
+    };
+    const id = requestAnimationFrame(restore);
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
+  function update<K extends keyof FormState>(name: K, value: string) {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => {
+      if (!(name in prev)) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
+  }
+
+  function focusField(name: string) {
+    requestAnimationFrame(() => {
+      document.getElementById(`ob-${name}`)?.focus();
+    });
+  }
+
+  function jumpTo(i: number) {
+    if (i > maxStep) return;
+    setErrors({});
+    setStep(i);
+  }
+
+  function goBack() {
+    if (step === 0) return;
+    setErrors({});
+    setStep((s) => s - 1);
+  }
+
+  function handleNext(e: FormEvent) {
+    e.preventDefault();
+    if (isLast) {
+      void submit();
+      return;
+    }
+    const errs = validateStep(step, form);
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      focusField(Object.keys(errs)[0]);
+      return;
+    }
+    setErrors({});
+    const next = step + 1;
+    setStep(next);
+    setMaxStep((m) => Math.max(m, next));
+  }
+
+  function saveAndExit() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, savedAt: Date.now() }));
+    } catch {
+      // storage unavailable — just exit
+    }
+    toast.success("Progress saved — you can resume anytime.");
+    router.push("/dashboard");
+  }
+
+  function discardDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+    setDraftInfo(null);
+    setForm(emptyForm);
+    setErrors({});
+  }
+
+  function generatePassword() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$";
     let pass = "";
     for (let i = 0; i < 12; i++) {
       pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setOwnerPassword(pass);
-  };
+    update("ownerPassword", pass);
+  }
 
-  const captureGps = () => {
+  function captureGps() {
     if (!navigator.geolocation) {
-      toast.show("Geolocation is not supported by your browser", "error");
+      toast.error("Geolocation isn't supported by this browser.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLatitude(pos.coords.latitude.toFixed(6));
-        setLongitude(pos.coords.longitude.toFixed(6));
-        toast.show("Captured GPS coordinates from current location", "success");
+        update("latitude", pos.coords.latitude.toFixed(6));
+        update("longitude", pos.coords.longitude.toFixed(6));
+        toast.success("Current GPS position captured.");
       },
       () => {
-        toast.show("Unable to capture GPS location. Enter coordinates manually.", "error");
+        toast.error("Couldn't capture GPS. Enter coordinates manually.");
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
-  };
+  }
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (Number(cultivableArea) > Number(totalArea)) {
-      toast.show("Cultivable area cannot exceed total estate acreage.", "error");
-      return;
-    }
-
+  async function submit() {
     setPending(true);
     try {
       const body = {
-        farmName,
-        location,
-        address,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-        totalArea: Number(totalArea),
-        cultivableArea: Number(cultivableArea),
-        waterSource,
-        geofenceRadiusMeters: Number(geofenceRadius),
-        ownerName,
-        ownerEmail,
-        ownerPassword,
-        agronomistId: agronomistId || null,
-        initialPlotName,
-        initialPlotArea: initialPlotArea ? Number(initialPlotArea) : null,
-        initialIrrigationType,
+        farmName: form.farmName.trim(),
+        location: form.location.trim(),
+        address: form.address.trim() || undefined,
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
+        totalArea: Number(form.totalArea),
+        cultivableArea: Number(form.cultivableArea),
+        waterSource: form.waterSource.trim() || undefined,
+        geofenceRadiusMeters: Number(form.geofenceRadius || 500),
+        ownerName: form.ownerName.trim(),
+        ownerEmail: form.ownerEmail.trim().toLowerCase(),
+        ownerPassword: form.ownerPassword,
+        agronomistId: form.agronomistId || null,
+        initialPlotName: form.initialPlotName.trim() || null,
+        initialPlotArea: form.initialPlotArea ? Number(form.initialPlotArea) : null,
+        initialIrrigationType: form.initialIrrigationType,
       };
 
       const res = await fetch("/api/admin/onboard-client", {
@@ -115,23 +363,28 @@ export function ClientOnboardingWizard({
         body: JSON.stringify(body),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to onboard client estate");
+        throw new Error(data.message || data.error || "Provisioning failed. Check the details and try again.");
       }
 
-      const data = await res.json();
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        // ignore
+      }
+
       setHandover({
         ...data.handover,
         farmId: data.farm.id,
       });
-      toast.show("Estate onboarded and client credentials provisioned!", "success");
+      toast.success("Estate provisioned — client credentials issued!");
     } catch (err: any) {
-      toast.show(err.message || "Onboarding failed", "error");
+      toast.error(err.message || "Provisioning failed.");
     } finally {
       setPending(false);
     }
-  };
+  }
 
   const copyHandoverText = () => {
     if (!handover) return;
@@ -155,319 +408,562 @@ Your estate *${handover.estateName}* has been officially provisioned on the Agaa
 Welcome aboard!`;
 
     navigator.clipboard.writeText(text);
-    toast.show("Client Handover Card copied to clipboard!", "success");
+    toast.success("Client Handover Card copied to clipboard!");
   };
 
   if (handover) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
-            <Icons.CheckCircle className="w-6 h-6" />
+      <div className="onboarding-handover">
+        <div className="onboarding-handover-head">
+          <div className="ob-handover-icon">
+            <Icons.CheckCircle size={28} />
           </div>
-          <h2 className="text-xl font-bold text-white">Client Estate Provisioned Successfully!</h2>
-          <p className="text-xs text-zinc-400">
-            The farm is active, initial plot is demarcated, and client owner credentials are live.
+          <h2>Estate provisioned successfully!</h2>
+          <p>
+            The farm is active, the first plot is demarcated, and client owner credentials are live.
           </p>
         </div>
 
-        {/* Handover Card */}
-        <div className="p-5 rounded-xl bg-zinc-950 border border-zinc-800 space-y-3 font-mono text-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-            <span className="text-emerald-400 font-bold uppercase tracking-wider">Client Handover Voucher</span>
-            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
-              Ready to Share
-            </span>
+        <div className="onboarding-handover-card">
+          <div className="handover-title">
+            <span>Client Handover Voucher</span>
+            <span className="badge badge-green">Ready to Share</span>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 text-zinc-300">
+          <div className="handover-grid">
             <div>
-              <span className="text-zinc-500 block text-[11px]">Estate Name</span>
-              <span className="font-semibold text-white">{handover.estateName}</span>
+              <span>Estate Name</span>
+              <strong>{handover.estateName}</strong>
             </div>
             <div>
-              <span className="text-zinc-500 block text-[11px]">Client Owner</span>
-              <span className="font-semibold text-white">{handover.clientName}</span>
+              <span>Client Owner</span>
+              <strong>{handover.clientName}</strong>
             </div>
             <div>
-              <span className="text-zinc-500 block text-[11px]">Login Email</span>
-              <span className="font-semibold text-emerald-400">{handover.clientEmail}</span>
+              <span>Login Email</span>
+              <strong>{handover.clientEmail}</strong>
             </div>
             <div>
-              <span className="text-zinc-500 block text-[11px]">Initial Password</span>
-              <span className="font-semibold text-amber-400">{handover.initialPassword}</span>
+              <span>Initial Password</span>
+              <strong>{handover.initialPassword}</strong>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            onClick={copyHandoverText}
-            className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 border border-zinc-700 transition-colors"
-          >
-            <Icons.ClipboardList className="w-4 h-4 text-emerald-400" />
-            Copy for WhatsApp / Email
+        <div className="onboarding-handover-actions">
+          <button type="button" className="btn btn-secondary" onClick={copyHandoverText}>
+            <Icons.ClipboardList size={15} />
+            <span>Copy for WhatsApp / Email</span>
           </button>
-
-          <Link
-            href={`/farms/${handover.farmId}`}
-            className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 transition-colors shadow-sm text-center"
-          >
-            Manage Estate <Icons.ArrowRight className="w-4 h-4" />
+          <Link href={`/farms/${handover.farmId}`} className="btn btn-green">
+            <span>Manage Estate</span>
+            <Icons.ArrowRight size={15} />
+          </Link>
+          <Link href="/dashboard" className="btn btn-ghost">
+            <span>Return to Dashboard</span>
           </Link>
         </div>
       </div>
     );
   }
 
+  const agronomistName =
+    agronomists.find((a) => a.id === form.agronomistId)?.name || "Assign later";
+
+  const reviewRows = [
+    {
+      section: "Estate",
+      items: [
+        { label: "Name", value: form.farmName || "—" },
+        { label: "Region", value: form.location || "—" },
+        { label: "Water source", value: form.waterSource || "—" },
+        { label: "Address", value: form.address || "—" },
+      ],
+    },
+    {
+      section: "Land & location",
+      items: [
+        { label: "Total area", value: form.totalArea ? `${form.totalArea} acres` : "—" },
+        { label: "Cultivable", value: form.cultivableArea ? `${form.cultivableArea} acres` : "—" },
+        { label: "Coordinates", value: form.latitude && form.longitude ? `${form.latitude}, ${form.longitude}` : "—" },
+        { label: "Presence radius", value: form.geofenceRadius ? `${form.geofenceRadius} m` : "—" },
+      ],
+    },
+    {
+      section: "Owner access",
+      items: [
+        { label: "Owner", value: form.ownerName || "—" },
+        { label: "Login email", value: form.ownerEmail || "—" },
+        { label: "Temporary password", value: form.ownerPassword || "—" },
+      ],
+    },
+    {
+      section: "Team & first plot",
+      items: [
+        { label: "Agronomist", value: agronomistName },
+        {
+          label: "Initial plot",
+          value:
+            form.initialPlotName && form.initialPlotArea
+              ? `${form.initialPlotName} · ${form.initialPlotArea} acres`
+              : "Not set — add later",
+        },
+      ],
+    },
+  ];
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <Icons.Farm className="w-5 h-5" />
-          </span>
-          <div>
-            <h1 className="text-xl font-bold text-white">Client Estate Provisioning Wizard</h1>
-            <p className="text-xs text-zinc-400">
-              Agaate Super Admin portal: Onboard client land, provision owner credentials, and assign agronomy oversight.
-            </p>
+    <div className="onboarding">
+      {/* Top bar: save & exit · progress · spacer */}
+      <div className="onboarding-topbar">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={saveAndExit}>
+          <Icons.X size={14} />
+          <span>Save and exit</span>
+        </button>
+
+        <div className="onboarding-progress-wrap">
+          <div
+            className="onboarding-progress"
+            role="progressbar"
+            aria-valuenow={step + 1}
+            aria-valuemin={1}
+            aria-valuemax={STEPS.length}
+            aria-label="Onboarding progress"
+          >
+            {STEPS.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`seg ${i < step ? "done" : i === step ? "current" : ""}`}
+                onClick={() => jumpTo(i)}
+                aria-label={`Go to step ${i + 1}: ${s.label}`}
+                aria-current={i === step ? "step" : undefined}
+                tabIndex={i <= maxStep ? 0 : -1}
+                title={s.label}
+              />
+            ))}
+          </div>
+          <div className="onboarding-step-label">
+            Step {step + 1} of {STEPS.length} &middot; {STEPS[step].label}
           </div>
         </div>
+
+        <span className="onboarding-topbar-spacer" aria-hidden />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 bg-zinc-900/70 border border-zinc-800 rounded-2xl p-6 shadow-xl">
-        {/* Section 1: Estate Identity */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-800 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <span>Step 1: Estate Identity & Acreage</span>
+      {draftInfo && (
+        <div className="onboarding-draft-banner" role="status">
+          <Icons.Refresh size={14} />
+          <span>
+            Resumed a saved draft from{" "}
+            <strong>{new Date(draftInfo.savedAt).toLocaleDateString()}</strong>. Anything you save
+            keeps it safe for later.
+          </span>
+          <button type="button" className="text-action" onClick={discardDraft}>
+            Discard draft
+          </button>
+        </div>
+      )}
+
+      <form className="onboarding-form" onSubmit={handleNext} noValidate>
+        <section className="onboarding-step" key={step}>
+          <div className="onboarding-heading">
+            <div className="eyebrow">
+              <span className="eyebrow-dot" />
+              <span>{STEP_META[step].eyebrow}</span>
+            </div>
+            <h2>{STEP_META[step].title}</h2>
+            <p>{STEP_META[step].subtitle}</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Estate / Farmland Name *</label>
-              <input
-                type="text"
-                value={farmName}
-                onChange={(e) => setFarmName(e.target.value)}
-                placeholder="e.g. Kaveri Green Agro Farms"
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">District / Region *</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Mandya, Karnataka"
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Total Land (Acres) *</label>
-              <input
-                type="number"
-                step="0.1"
-                value={totalArea}
-                onChange={(e) => setTotalArea(e.target.value)}
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Cultivable (Acres) *</label>
-              <input
-                type="number"
-                step="0.1"
-                value={cultivableArea}
-                onChange={(e) => setCultivableArea(e.target.value)}
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Latitude</label>
-              <input
-                type="number"
-                step="0.000001"
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Longitude</label>
-              <div className="flex items-center gap-1.5">
+          {/* STEP 1 — Estate basics */}
+          {step === 0 && (
+            <div className="onboarding-fields">
+              <Field
+                id="ob-farmName"
+                label="Estate name"
+                hint="The property's official name in your portfolio."
+                error={errors.farmName}
+              >
                 <input
-                  type="number"
-                  step="0.000001"
-                  value={longitude}
-                  onChange={(e) => setLongitude(e.target.value)}
-                  required
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
+                  id="ob-farmName"
+                  type="text"
+                  className={errors.farmName ? "invalid" : ""}
+                  placeholder="e.g. Kaveri Green Agro Farms"
+                  value={form.farmName}
+                  onChange={(e) => update("farmName", e.target.value)}
+                  autoFocus
                 />
-                <button
-                  type="button"
-                  onClick={captureGps}
-                  title="Capture current device location"
-                  className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg border border-zinc-700"
+              </Field>
+
+              <div className="two-column">
+                <Field
+                  id="ob-location"
+                  label="Region"
+                  hint="City or district helps field teams find the estate."
+                  error={errors.location}
                 >
-                  <Icons.Zap className="w-4 h-4 text-emerald-400" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                  <input
+                    id="ob-location"
+                    type="text"
+                    className={errors.location ? "invalid" : ""}
+                    placeholder="e.g. Mandya, Karnataka"
+                    value={form.location}
+                    onChange={(e) => update("location", e.target.value)}
+                  />
+                </Field>
 
-        {/* Section 2: Client Owner Credentials */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-800 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <span>Step 2: Client Owner (Farm Admin) Credentials</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Client Full Name *</label>
-              <input
-                type="text"
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-                placeholder="e.g. Ramesh Patel"
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Client Email (Login ID) *</label>
-              <input
-                type="email"
-                value={ownerEmail}
-                onChange={(e) => setOwnerEmail(e.target.value)}
-                placeholder="e.g. ramesh@clientfarm.com"
-                required
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-zinc-300">Initial Password *</label>
-                <button
-                  type="button"
-                  onClick={generatePassword}
-                  className="text-[10px] text-emerald-400 hover:underline"
+                <Field
+                  id="ob-waterSource"
+                  label="Primary water source"
+                  hint="e.g. Borewell, farm pond, canal — optional for now."
                 >
-                  Generate
-                </button>
+                  <input
+                    id="ob-waterSource"
+                    type="text"
+                    placeholder="e.g. Borewell (20 HP)"
+                    value={form.waterSource}
+                    onChange={(e) => update("waterSource", e.target.value)}
+                  />
+                </Field>
               </div>
-              <input
-                type="text"
-                value={ownerPassword}
-                onChange={(e) => setOwnerPassword(e.target.value)}
-                placeholder="Min 8 characters"
-                required
-                minLength={8}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Section 3: Dedicated Agronomist & Initial Plot */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-zinc-800 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <span>Step 3: Agronomist Assignment & Initial Plot</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Assign Dedicated Agronomist</label>
-              <select
-                value={agronomistId}
-                onChange={(e) => setAgronomistId(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+              <Field
+                id="ob-address"
+                label="Full address / landmark"
+                hint="Survey numbers and landmarks help your team locate the estate on the ground."
               >
-                <option value="">-- Assign Later --</option>
-                {agronomists.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name} ({a.email})
-                  </option>
-                ))}
-              </select>
+                <textarea
+                  id="ob-address"
+                  rows={3}
+                  placeholder="Survey No. 42/1, Denkanikottai Road…"
+                  value={form.address}
+                  onChange={(e) => update("address", e.target.value)}
+                />
+              </Field>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Initial Plot Name</label>
-              <input
-                type="text"
-                value={initialPlotName}
-                onChange={(e) => setInitialPlotName(e.target.value)}
-                placeholder="e.g. Block A - Polyhouse 1"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Initial Plot Area (Acres)</label>
-              <input
-                type="number"
-                step="0.1"
-                value={initialPlotArea}
-                onChange={(e) => setInitialPlotArea(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Primary Irrigation</label>
-              <select
-                value={initialIrrigationType}
-                onChange={(e) => setInitialIrrigationType(e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-              >
-                <option value="Drip">Drip Irrigation</option>
-                <option value="Sprinkler">Sprinkler</option>
-                <option value="Rain Pipe">Rain Pipe</option>
-                <option value="Flood">Flood / Channel</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 disabled:opacity-50"
-        >
-          {pending ? (
-            <>
-              <Icons.Spinner className="w-4 h-4 animate-spin" />
-              Provisioning Client Farmland...
-            </>
-          ) : (
-            <>
-              <Icons.CheckCircle className="w-4 h-4" />
-              Provision Estate &amp; Issue Client Credentials
-            </>
           )}
-        </button>
+
+          {/* STEP 2 — Land & location */}
+          {step === 1 && (
+            <div className="onboarding-fields">
+              <div className="two-column">
+                <Field
+                  id="ob-totalArea"
+                  label="Total land area"
+                  hint="The full estate acreage."
+                  error={errors.totalArea}
+                >
+                  <div className="ob-input-group">
+                    <input
+                      id="ob-totalArea"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className={errors.totalArea ? "invalid" : ""}
+                      placeholder="e.g. 10.0"
+                      value={form.totalArea}
+                      onChange={(e) => update("totalArea", e.target.value)}
+                    />
+                    <span className="ob-suffix">acres</span>
+                  </div>
+                </Field>
+
+                <Field
+                  id="ob-cultivableArea"
+                  label="Cultivable area"
+                  hint="Land that can actually be farmed."
+                  error={errors.cultivableArea}
+                >
+                  <div className="ob-input-group">
+                    <input
+                      id="ob-cultivableArea"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className={errors.cultivableArea ? "invalid" : ""}
+                      placeholder="e.g. 8.5"
+                      value={form.cultivableArea}
+                      onChange={(e) => update("cultivableArea", e.target.value)}
+                    />
+                    <span className="ob-suffix">acres</span>
+                  </div>
+                </Field>
+              </div>
+
+              <div className="two-column">
+                <Field id="ob-latitude" label="Latitude" error={errors.latitude}>
+                  <input
+                    id="ob-latitude"
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    className={errors.latitude ? "invalid" : ""}
+                    placeholder="e.g. 12.5284"
+                    value={form.latitude}
+                    onChange={(e) => update("latitude", e.target.value)}
+                  />
+                </Field>
+
+                <Field id="ob-longitude" label="Longitude" error={errors.longitude}>
+                  <input
+                    id="ob-longitude"
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    className={errors.longitude ? "invalid" : ""}
+                    placeholder="e.g. 77.8341"
+                    value={form.longitude}
+                    onChange={(e) => update("longitude", e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div className="onboarding-coords-actions">
+                <button type="button" className="text-action" onClick={captureGps}>
+                  <Icons.MapPin size={14} />
+                  <span>Capture current GPS position</span>
+                </button>
+              </div>
+
+              <Field
+                id="ob-geofenceRadius"
+                label="Presence radius"
+                hint="How close an officer must be to the estate pin for a verified clock-in. Defaults to 500 metres."
+                error={errors.geofenceRadius}
+              >
+                <div className="ob-input-group">
+                  <input
+                    id="ob-geofenceRadius"
+                    type="number"
+                    min="100"
+                    max="5000"
+                    step="50"
+                    className={errors.geofenceRadius ? "invalid" : ""}
+                    value={form.geofenceRadius}
+                    onChange={(e) => update("geofenceRadius", e.target.value)}
+                  />
+                  <span className="ob-suffix">metres</span>
+                </div>
+              </Field>
+            </div>
+          )}
+
+          {/* STEP 3 — Owner access */}
+          {step === 2 && (
+            <div className="onboarding-fields">
+              <Field
+                id="ob-ownerName"
+                label="Client owner name"
+                hint="This person becomes the Farm Owner account."
+                error={errors.ownerName}
+              >
+                <input
+                  id="ob-ownerName"
+                  type="text"
+                  className={errors.ownerName ? "invalid" : ""}
+                  placeholder="e.g. Ramesh Patel"
+                  value={form.ownerName}
+                  onChange={(e) => update("ownerName", e.target.value)}
+                />
+              </Field>
+
+              <div className="two-column">
+                <Field id="ob-ownerEmail" label="Login email" error={errors.ownerEmail}>
+                  <input
+                    id="ob-ownerEmail"
+                    type="email"
+                    className={errors.ownerEmail ? "invalid" : ""}
+                    placeholder="owner@clientfarm.com"
+                    value={form.ownerEmail}
+                    onChange={(e) => update("ownerEmail", e.target.value)}
+                  />
+                </Field>
+
+                <Field
+                  id="ob-ownerPassword"
+                  label="Temporary password"
+                  hint="Minimum 8 characters. The owner can change it after first login."
+                  error={errors.ownerPassword}
+                >
+                  <div className="ob-input-group">
+                    <input
+                      id="ob-ownerPassword"
+                      type="text"
+                      className={errors.ownerPassword ? "invalid" : ""}
+                      placeholder="Min 8 characters"
+                      value={form.ownerPassword}
+                      onChange={(e) => update("ownerPassword", e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="ob-inline-action"
+                      onClick={generatePassword}
+                      title="Generate a secure password"
+                    >
+                      <Icons.Sparkles size={13} />
+                      <span>Generate</span>
+                    </button>
+                  </div>
+                </Field>
+              </div>
+
+              <div className="callout">
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <Icons.Key size={16} style={{ marginTop: 2, color: "var(--green)" }} />
+                  <div style={{ fontSize: "13px", lineHeight: 1.5, color: "var(--ink)" }}>
+                    The client owner signs in at <code>/login</code> with this email and temporary
+                    password. A handover voucher is generated at the end of this flow so you can
+                    share the credentials safely.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 — Team & first plot */}
+          {step === 3 && (
+            <div className="onboarding-fields">
+              <Field
+                id="ob-agronomistId"
+                label="Assign a dedicated agronomist"
+                hint="They'll get access to issue crop prescriptions and monitor this estate."
+              >
+                <select
+                  id="ob-agronomistId"
+                  value={form.agronomistId}
+                  onChange={(e) => update("agronomistId", e.target.value)}
+                >
+                  <option value="">-- Assign later --</option>
+                  {agronomists.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({a.email})
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <div className="onboarding-divider-label">First plot · optional</div>
+
+              <div className="two-column">
+                <Field
+                  id="ob-initialPlotName"
+                  label="Plot name"
+                  error={errors.initialPlotName}
+                >
+                  <input
+                    id="ob-initialPlotName"
+                    type="text"
+                    className={errors.initialPlotName ? "invalid" : ""}
+                    placeholder="e.g. Block A — Polyhouse 1"
+                    value={form.initialPlotName}
+                    onChange={(e) => update("initialPlotName", e.target.value)}
+                  />
+                </Field>
+
+                <Field
+                  id="ob-initialPlotArea"
+                  label="Plot area"
+                  error={errors.initialPlotArea}
+                >
+                  <div className="ob-input-group">
+                    <input
+                      id="ob-initialPlotArea"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className={errors.initialPlotArea ? "invalid" : ""}
+                      placeholder="e.g. 4.0"
+                      value={form.initialPlotArea}
+                      onChange={(e) => update("initialPlotArea", e.target.value)}
+                    />
+                    <span className="ob-suffix">acres</span>
+                  </div>
+                </Field>
+              </div>
+
+              <Field id="ob-initialIrrigationType" label="Primary irrigation">
+                <select
+                  id="ob-initialIrrigationType"
+                  value={form.initialIrrigationType}
+                  onChange={(e) => update("initialIrrigationType", e.target.value)}
+                >
+                  <option value="Drip">Drip Irrigation</option>
+                  <option value="Sprinkler">Sprinkler</option>
+                  <option value="Rain Pipe">Rain Pipe</option>
+                  <option value="Flood">Flood / Channel</option>
+                  <option value="Other">Other</option>
+                </select>
+              </Field>
+            </div>
+          )}
+
+          {/* STEP 5 — Review & provision */}
+          {step === 4 && (
+            <div className="onboarding-fields">
+              <div className="onboarding-review-grid">
+                {reviewRows.map((r) => (
+                  <div className="onboarding-review-card" key={r.section}>
+                    <div className="mono-label" style={{ color: "var(--green)" }}>
+                      {r.section}
+                    </div>
+                    {r.items.map((it) => (
+                      <div className="review-row" key={it.label}>
+                        <span className="review-key">{it.label}</span>
+                        <span className="review-val">{it.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div className="callout">
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <Icons.CheckCircle size={16} style={{ marginTop: 2, color: "var(--green)" }} />
+                  <div style={{ fontSize: "13px", lineHeight: 1.5, color: "var(--ink)" }}>
+                    Provisioning creates the estate, issues the client owner account, and — where
+                    set — assigns the agronomist and demarcates the first plot. This is
+                    irreversible.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Footer actions */}
+        <div className="onboarding-footer">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={goBack}
+            disabled={step === 0}
+            style={{ visibility: step === 0 ? "hidden" : "visible" }}
+          >
+            <Icons.ArrowLeft size={14} />
+            <span>Back</span>
+          </button>
+
+          <button type="submit" className="btn btn-green" disabled={pending}>
+            {pending ? (
+              <>
+                <Icons.Spinner size={15} className="spin" />
+                <span>{isLast ? "Provisioning…" : "Saving…"}</span>
+              </>
+            ) : isLast ? (
+              <>
+                <span>Provision Estate</span>
+                <Icons.CheckCircle size={15} />
+              </>
+            ) : (
+              <>
+                <span>Continue</span>
+                <Icons.ArrowRight size={15} />
+              </>
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
