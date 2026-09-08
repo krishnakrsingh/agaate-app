@@ -8,7 +8,10 @@ const urls = [
 ];
 
 async function auditViewport(width, label) {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    headless: true
+  });
   const context = await browser.newContext({ viewport: { width, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   const page = await context.newPage();
   console.log(`\n=== VIEWPORT ${width} ${label} ===`);

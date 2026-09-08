@@ -150,7 +150,7 @@ export function ApprovalsConsole() {
           </div>
 
           {exceptions.length ? (
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -226,7 +226,7 @@ export function ApprovalsConsole() {
           </div>
 
           {locations.length ? (
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -298,7 +298,7 @@ export function ApprovalsConsole() {
           </div>
 
           {attendance.length ? (
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-container">
               <table className="data-table">
                 <thead>
                   <tr>
