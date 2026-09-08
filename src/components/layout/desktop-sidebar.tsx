@@ -299,15 +299,15 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       <div className="sidebar-header">
         <div className="sidebar-brand-row">
           <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
-            <span className="app-brand-mark">
+            <span className="sidebar-brand-mark">
               <Icons.Sprout size={16} />
             </span>
             <div className="app-brand-text">
-              <span className="app-brand-word">AGAATE</span>
-              <span className="app-brand-tag">OPS CONSOLE</span>
+              <span className="sidebar-brand-word">AGAATE</span>
+              <span className="sidebar-brand-tag">OPS CONSOLE</span>
             </div>
           </Link>
-          <span className="badge" style={{ fontSize: "10px", padding: "1px 6px" }}>
+          <span className="sidebar-role-badge">
             {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}
           </span>
         </div>
@@ -352,18 +352,14 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
                   className={`sidebar-nav-link ${active ? "active" : ""}`}
                   aria-current={active ? "page" : undefined}
                 >
-                  <span className="sidebar-icon">
-                    <Icon size={16} />
+                  <span className="sidebar-link-main">
+                    <span className="sidebar-icon">
+                      <Icon size={16} />
+                    </span>
+                    <span className="sidebar-label">{item.label}</span>
                   </span>
-                  <span>{item.label}</span>
                   {item.badge && (
-                    <span
-                      className="sidebar-badge"
-                      style={{
-                        backgroundColor: active ? "var(--green)" : "var(--stone)",
-                        color: active ? "var(--on-dark)" : "var(--ink-muted)",
-                      }}
-                    >
+                    <span className="sidebar-badge">
                       {item.badge}
                     </span>
                   )}
@@ -389,8 +385,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           )}
         </div>
 
-        {/* User Session Bar */}
-        <div className="sidebar-user-row">
+        {/* User Session Card */}
+        <div className="sidebar-user-card">
           <div className="sidebar-user-info">
             <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
             <div className="sidebar-user-text">
@@ -405,20 +401,11 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             <ThemeToggle />
             <button
               type="button"
-              className="btn btn-ghost"
-              style={{
-                width: "28px",
-                height: "28px",
-                padding: 0,
-                display: "grid",
-                placeItems: "center",
-                borderRadius: "var(--radius-xs)",
-                color: "var(--ink-muted)",
-              }}
+              className="sidebar-logout-btn"
               onClick={handleSignOut}
               title="Sign Out of Session"
             >
-              <Icons.LogOut size={14} />
+              <Icons.LogOut size={13} />
             </button>
           </div>
         </div>
