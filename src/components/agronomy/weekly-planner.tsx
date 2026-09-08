@@ -3,6 +3,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { PrintableSpraySheet } from "./printable-spray-sheet";
 
 type Plot = {
   id: string;
@@ -72,6 +73,7 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showPrintSheet, setShowPrintSheet] = useState(false);
   const [targetDayIndex, setTargetDayIndex] = useState(0);
   const [pending, setPending] = useState(false);
 
@@ -247,6 +249,16 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
               <Icons.ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPrintSheet(true)}
+            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+            title="Open printable physical spray & chemical schedule"
+          >
+            <Icons.FileText className="w-4 h-4 text-emerald-400" />
+            Print Spray Chart
+          </button>
         </div>
       </div>
 
@@ -472,6 +484,26 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
             </form>
           </div>
         </div>
+      )}
+
+      {showPrintSheet && (
+        <PrintableSpraySheet
+          farmName={selectedFarm?.name || "Estate"}
+          location="Main Operational Sector"
+          weekRange={`${weekDays[0].formatted} — ${weekDays[6].formatted}`}
+          tasks={tasks.map((t) => ({
+            id: t.id,
+            dateStr: t.dateStr,
+            plotName: t.plotName,
+            cropName: t.cropName,
+            category: t.category,
+            title: t.title,
+            instructions: t.instructions,
+            priority: t.priority,
+            officerName: t.officerName,
+          }))}
+          onClose={() => setShowPrintSheet(false)}
+        />
       )}
     </div>
   );

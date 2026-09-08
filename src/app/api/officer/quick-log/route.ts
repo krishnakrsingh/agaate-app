@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { utcDateOnly } from "@/lib/business";
+import { sendNotification } from "@/lib/notifications";
 
 const quickLogSchema = z.object({
   farmId: z.string().min(1),
@@ -117,6 +118,34 @@ export async function POST(request: NextRequest) {
       category: input.category,
       farmId: input.farmId,
     });
+
+    // Check if consumed item dropped below safety reorder threshold
+    if (input.inventoryItemId && input.inventoryQuantity) {
+      const updatedItem = await prisma.inventoryItem.findUnique({
+        where: { id: input.inventoryItemId },
+        include: { farm: { select: { name: true } } },
+      });
+
+      if (
+        updatedItem &&
+        updatedItem.reorderLevel != null &&
+        Number(updatedItem.quantityInStock) <= Number(updatedItem.reorderLevel)
+      ) {
+        await sendNotification({
+          type: "LOW_STOCK_ALERT",
+          recipientEmail: actor.email,
+          recipientName: "Farm Owner & Procurement",
+          title: `Low Stock Alert: ${updatedItem.name} at ${updatedItem.farm.name}`,
+          message: `Remaining stock for ${updatedItem.name} is ${updatedItem.quantityInStock} ${updatedItem.unit} (Threshold: ${updatedItem.reorderLevel} ${updatedItem.unit}). Please arrange reorder.`,
+          metadata: {
+            farmId: input.farmId,
+            itemId: updatedItem.id,
+            remainingStock: updatedItem.quantityInStock,
+            unit: updatedItem.unit,
+          },
+        });
+      }
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

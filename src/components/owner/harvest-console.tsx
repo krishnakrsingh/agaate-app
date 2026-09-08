@@ -3,6 +3,7 @@ import { useEffect, useState, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { downloadCsv } from "@/lib/export";
 
 type Farm = {
   id: string;
@@ -103,6 +104,40 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
   const gradeBCount = logs.filter((l) => l.grade === "GRADE_B").reduce((acc, l) => acc + Number(l.quantity || 0), 0);
   const totalValue = logs.reduce((acc, l) => acc + Number(l.totalAmount || 0), 0);
 
+  const handleExportCsv = () => {
+    const farmName = selectedFarm?.name || "Estate";
+    const headers = [
+      "Harvest Date",
+      "Plot",
+      "Crop",
+      "Quantity",
+      "Unit",
+      "Grade",
+      "Price Per Unit (INR)",
+      "Total Amount (INR)",
+      "Buyer / Mandi",
+      "Vehicle No",
+      "Recorded By",
+      "Role",
+    ];
+    const rows = logs.map((l) => [
+      l.harvestDate.slice(0, 10),
+      l.plot.name,
+      l.cropCycle.cropName,
+      l.quantity,
+      l.unit,
+      l.grade,
+      l.pricePerUnit || "",
+      l.totalAmount || "",
+      l.buyerOrMarket || "N/A",
+      l.vehicleNumber || "N/A",
+      l.createdBy.name,
+      l.createdBy.role,
+    ]);
+    downloadCsv(`harvest-ledger-${farmName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    toast.success("Harvest & Mandi records exported to CSV!");
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* ── 1. HEADER & FARM SELECTOR ── */}
@@ -133,6 +168,17 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
               ))}
             </select>
           )}
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExportCsv}
+            disabled={logs.length === 0}
+            title="Download CSV for buyer reconciliation & accounting"
+          >
+            <Icons.FileText size={15} />
+            <span>Export CSV</span>
+          </button>
 
           <button
             type="button"

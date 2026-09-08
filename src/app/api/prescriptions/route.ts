@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { parseUtcDate } from "@/lib/business";
+import { sendNotification } from "@/lib/notifications";
 
 const prescriptionSchema = z.object({
   farmId: z.string().min(1),
@@ -115,6 +116,25 @@ export async function POST(request: NextRequest) {
       targetIssue: input.targetIssue,
       farmId: input.farmId,
     });
+
+    if (input.priority === "HIGH" || input.priority === "EMERGENCY") {
+      const farm = await prisma.farm.findUnique({
+        where: { id: input.farmId },
+        select: { name: true },
+      });
+      await sendNotification({
+        type: "EMERGENCY_RX",
+        recipientEmail: actor.email,
+        recipientName: "On-Site Farm Management Team",
+        title: `[${input.priority}] Agronomy Prescription Dispatched: ${input.targetIssue}`,
+        message: `Agaate Agronomist ${actor.name} has dispatched a prescription for ${farm?.name || "the estate"}: "${input.instructions}"`,
+        metadata: {
+          farmId: input.farmId,
+          plotId: input.plotId,
+          priority: input.priority,
+        },
+      });
+    }
 
     return NextResponse.json(prescription, { status: 201 });
   } catch (error) {

@@ -9,7 +9,7 @@ import { parseUtcDate } from "@/lib/business";
 const createSchema = z.object({
   farmId: z.string().min(1),
   plotId: z.string().min(1),
-  cropCycleId: z.string().min(1),
+  cropCycleId: z.string().optional().nullable(),
   harvestDate: z.string().min(1),
   quantity: z.coerce.number().positive(),
   unit: z.string().min(1).default("KG"),
@@ -61,13 +61,40 @@ export async function POST(request: NextRequest) {
 
     await requireFarmAccess(input.farmId);
 
+    let cropCycleId = input.cropCycleId;
+    if (!cropCycleId) {
+      const activeCycle = await prisma.cropCycle.findFirst({
+        where: { plotId: input.plotId, status: "ACTIVE" },
+        orderBy: { startDate: "desc" },
+      }) || await prisma.cropCycle.findFirst({
+        where: { plotId: input.plotId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (activeCycle) {
+        cropCycleId = activeCycle.id;
+      } else {
+        const plot = await prisma.plot.findUnique({ where: { id: input.plotId } });
+        const autoCycle = await prisma.cropCycle.create({
+          data: {
+            plotId: input.plotId,
+            cropName: plot?.name ? `${plot.name} Crop` : "Commercial Harvest",
+            establishmentType: "DIRECT_SOWING",
+            startDate: new Date(),
+            status: "ACTIVE",
+          },
+        });
+        cropCycleId = autoCycle.id;
+      }
+    }
+
     const totalAmount = input.pricePerUnit ? input.quantity * input.pricePerUnit : null;
 
     const log = await prisma.harvestLog.create({
       data: {
         farmId: input.farmId,
         plotId: input.plotId,
-        cropCycleId: input.cropCycleId,
+        cropCycleId,
         harvestDate: parseUtcDate(input.harvestDate),
         quantity: input.quantity,
         unit: input.unit.toUpperCase(),

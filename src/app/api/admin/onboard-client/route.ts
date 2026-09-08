@@ -5,6 +5,7 @@ import { currentActor, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
+import { sendNotification } from "@/lib/notifications";
 
 const onboardSchema = z.object({
   // Estate / Farm Details
@@ -157,6 +158,20 @@ export async function POST(request: NextRequest) {
       onboarding: true,
       ownerId: result.owner.id,
       agronomistId: result.agronomist?.id,
+    });
+
+    // Dispatch instant client credential handover alert
+    await sendNotification({
+      type: "CLIENT_CREDENTIALS",
+      recipientEmail: result.owner.email,
+      recipientName: result.owner.name,
+      title: `Welcome to Agaate — Your Farm "${result.farm.name}" is Provisioned`,
+      message: `Your agricultural operations portal is ready. Login at /login with email: ${result.owner.email} using your secure credentials.`,
+      metadata: {
+        farmId: result.farm.id,
+        farmName: result.farm.name,
+        cultivableAcreage: result.farm.cultivableArea,
+      },
     });
 
     return NextResponse.json({

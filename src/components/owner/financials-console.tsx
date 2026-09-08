@@ -3,6 +3,7 @@ import { useEffect, useState, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { downloadCsv } from "@/lib/export";
 
 type Farm = {
   id: string;
@@ -81,6 +82,21 @@ export function FinancialsConsole({ farms }: { farms: Farm[] }) {
     }
   }
 
+  const handleExportCsv = () => {
+    const farmName = farms.find((f) => f.id === selectedFarmId)?.name || "Estate";
+    const headers = ["Date", "Category", "Amount (INR)", "Description", "Recorded By", "Role"];
+    const rows = expenses.map((e) => [
+      e.date.slice(0, 10),
+      e.category,
+      e.amount,
+      e.description,
+      e.recordedBy?.name || "N/A",
+      e.recordedBy?.role || "N/A",
+    ]);
+    downloadCsv(`financial-ledger-${farmName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    toast.success("Financial ledger exported to CSV!");
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* ── 1. HEADER & FARM SELECTOR ── */}
@@ -111,6 +127,17 @@ export function FinancialsConsole({ farms }: { farms: Farm[] }) {
               ))}
             </select>
           )}
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleExportCsv}
+            disabled={expenses.length === 0}
+            title="Download CSV for chartered accountant & tax records"
+          >
+            <Icons.FileText size={15} />
+            <span>Export CSV</span>
+          </button>
 
           <button
             type="button"

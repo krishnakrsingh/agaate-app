@@ -3,6 +3,7 @@ import { useEffect, useState, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { downloadCsv } from "@/lib/export";
 
 type Farm = {
   id: string;
@@ -153,6 +154,34 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
     OTHER: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
   };
 
+  const handleExportCsv = () => {
+    const farmName = farms.find((f) => f.id === selectedFarmId)?.name || "Estate";
+    const headers = [
+      "SKU Name",
+      "Category",
+      "Current Stock",
+      "Unit",
+      "Unit Cost (INR)",
+      "Total Valuation (INR)",
+      "Reorder Level",
+      "Low Stock Alert",
+      "Last Updated",
+    ];
+    const rows = items.map((i) => [
+      i.name,
+      i.category,
+      i.quantityInStock,
+      i.unit,
+      i.costPerUnit || "",
+      ((Number(i.quantityInStock) || 0) * (Number(i.costPerUnit) || 0)).toFixed(2),
+      i.reorderLevel || "",
+      i.isLowStock ? "YES" : "NO",
+      i.updatedAt.slice(0, 10),
+    ]);
+    downloadCsv(`shed-inventory-${farmName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
+    toast.show("Shed inventory exported to CSV!", "success");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,6 +215,16 @@ export function InventoryConsole({ farms }: { farms: Farm[] }) {
               ))}
             </select>
           )}
+
+          <button
+            onClick={handleExportCsv}
+            disabled={items.length === 0}
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-sm px-4 py-2 rounded-lg transition-colors border border-zinc-700 disabled:opacity-50"
+            title="Download CSV for warehouse audit & tax records"
+          >
+            <Icons.FileText className="w-4 h-4" />
+            Export CSV
+          </button>
 
           <button
             onClick={() => setShowAddModal(true)}

@@ -3,6 +3,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { downloadCsv } from "@/lib/export";
 
 type Farm = {
   id: string;
@@ -259,10 +260,52 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
 
       {/* Recent Musters Table */}
       <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          <Icons.Clock className="w-3.5 h-3.5 text-zinc-500" />
-          Recent Crew Musters
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+            <Icons.Clock className="w-3.5 h-3.5 text-zinc-500" />
+            Recent Crew Musters
+          </h2>
+
+          <button
+            type="button"
+            onClick={() => {
+              const farmName = farms.find((f) => f.id === selectedFarmId)?.name || "Estate";
+              const headers = [
+                "Muster Date",
+                "Farm",
+                "Total Labourers",
+                "Male",
+                "Female",
+                "Hours/Shift",
+                "Daily Wage Rate (INR)",
+                "Total Wage Cost (INR)",
+                "Contractor / Gang",
+                "Recorded By",
+                "Notes",
+              ];
+              const rows = records.map((r) => [
+                r.musterDate.slice(0, 10),
+                r.farm.name,
+                r.totalLabourers,
+                r.maleCount ?? "",
+                r.femaleCount ?? "",
+                r.hoursPerShift,
+                r.dailyWageRate ?? "",
+                r.totalWageCost ?? "",
+                r.contractorName ?? "N/A",
+                r.recordedBy.name,
+                r.notes ?? "",
+              ]);
+              downloadCsv(`crew-payroll-${farmName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}`, headers, rows);
+              toast.show("Crew muster payroll exported to CSV!", "success");
+            }}
+            disabled={records.length === 0}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors disabled:opacity-40"
+          >
+            <Icons.FileText className="w-3.5 h-3.5" />
+            Export Payroll CSV
+          </button>
+        </div>
 
         {loading ? (
           <div className="text-xs text-zinc-500 py-3 text-center">Loading muster records...</div>

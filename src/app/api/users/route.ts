@@ -11,6 +11,7 @@ const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
   role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]),
+  farmId: z.string().optional(),
   farmIds: z.array(z.string().min(1)).default([]),
   managesFarmIds: z.array(z.string().min(1)).default([]),
 });
@@ -81,14 +82,15 @@ export async function POST(request: NextRequest) {
       });
       const accessibleFarmIds = new Set(accessibleFarms.map((f) => f.id));
 
-      for (const farmId of input.farmIds) {
+      const targetFarms = [...new Set([...input.farmIds, ...(input.farmId ? [input.farmId] : [])])];
+      for (const farmId of targetFarms) {
         if (!accessibleFarmIds.has(farmId)) {
           throw new Error("You do not have administrative authority over one of the selected farms.");
         }
       }
     }
 
-    const farmIds = [...new Set([...input.farmIds, ...input.managesFarmIds])];
+    const farmIds = [...new Set([...input.farmIds, ...(input.farmId ? [input.farmId] : []), ...input.managesFarmIds])];
     if (farmIds.length) {
       const count = await prisma.farm.count({ where: { id: { in: farmIds } } });
       if (count !== farmIds.length) throw new Error("A selected farm no longer exists.");
