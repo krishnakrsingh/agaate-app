@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
+import { BrandLogo } from "./brand-logo";
 
 interface TestProfile {
   role: string;
@@ -76,14 +77,15 @@ const ALTERNATIVE_OFFICERS = [
   { name: "Pooja Deshmukh", region: "Nashik", email: "officer3@agaate.local" },
 ];
 
+const SHOW_DEMO_PROFILES = process.env.NEXT_PUBLIC_ALLOW_DEMO_LOGIN === "true";
+
 export function LoginForm() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [activeQuickEmail, setActiveQuickEmail] = useState<string | null>(null);
-  const [autoSubmit, setAutoSubmit] = useState(true);
+  const [, setActiveQuickEmail] = useState<string | null>(null);
 
   async function performLogin(loginId: string, loginPass: string) {
     if (pending) return;
@@ -128,28 +130,27 @@ export function LoginForm() {
     await performLogin(identifier, password);
   }
 
-  async function handleQuickLogin(email: string, fillOnly = false) {
-    if (pending) return;
+  async function handleQuickLogin(email: string) {
+    if (pending || !SHOW_DEMO_PROFILES) return;
+    // Fill-only: never embed passwords or auto-submit from the client bundle.
     setIdentifier(email);
-    setPassword("LocalAdminPassword-ChangeMe-123");
-
-    if (autoSubmit && !fillOnly) {
-      setActiveQuickEmail(email);
-      await performLogin(email, "LocalAdminPassword-ChangeMe-123");
-    }
+    setActiveQuickEmail(null);
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", margin: "0 auto" }}>
       <div className="compact-card" style={{ padding: "28px 24px", gap: 20, boxShadow: "var(--shadow-card)", borderRadius: "var(--radius-md)" }}>
         <div>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>
-            <span className="eyebrow-dot" />
-            <span>AUTHENTICATED ACCESS</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <BrandLogo height={26} />
+            <div className="eyebrow" style={{ margin: 0 }}>
+              <span className="eyebrow-dot" />
+              <span>ACCESS PORTAL</span>
+            </div>
           </div>
-          <h2 className="section-title" style={{ margin: "0 0 4px", fontSize: "20px" }}>Sign in to Agaate</h2>
+          <h2 className="section-title" style={{ margin: "0 0 4px", fontSize: "19px" }}>Sign in to your account</h2>
           <p className="muted" style={{ margin: 0, fontSize: "13px" }}>
-            Precision farm operations and management portal.
+            Precision farm operations and agronomy management.
           </p>
         </div>
 
@@ -207,8 +208,8 @@ export function LoginForm() {
             disabled={pending || !identifier || !password}
             style={{ width: "100%", marginTop: 4 }}
           >
-            <span>{pending && !activeQuickEmail ? "Authenticating…" : "Sign In to Operations"}</span>
-            {pending && !activeQuickEmail ? (
+            <span>{pending ? "Authenticating…" : "Sign In to Operations"}</span>
+            {pending ? (
               <Icons.Spinner className="spin" size={15} />
             ) : (
               <Icons.ArrowRight size={15} />
@@ -216,7 +217,8 @@ export function LoginForm() {
           </button>
         </form>
 
-        {/* Quick Sign-In For Testing */}
+        {/* Quick Sign-In For Testing — dev only, fill email, never auto-login */}
+        {SHOW_DEMO_PROFILES && (
         <div style={{
           marginTop: 10,
           paddingTop: 18,
@@ -232,15 +234,6 @@ export function LoginForm() {
                 QUICK TEST PROFILES
               </span>
             </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "11px", cursor: "pointer", userSelect: "none", margin: 0 }} className="muted">
-              <input
-                type="checkbox"
-                checked={autoSubmit}
-                onChange={(e) => setAutoSubmit(e.target.checked)}
-                style={{ width: 13, height: 13, accentColor: "var(--green)", cursor: "pointer" }}
-              />
-              <span>1-Click Sign In</span>
-            </label>
           </div>
 
           <div style={{
@@ -250,18 +243,17 @@ export function LoginForm() {
           }}>
             {TEST_PROFILES.map((profile) => {
               const Icon = profile.icon;
-              const isLoggingIn = activeQuickEmail === profile.email;
               return (
                 <button
                   key={profile.role}
                   type="button"
                   disabled={pending}
                   onClick={() => handleQuickLogin(profile.email)}
-                  title={`Sign in as ${profile.roleLabel} (${profile.name})`}
+                  title={`Fill ${profile.roleLabel} email`}
                   style={{
                     textAlign: "left",
                     background: "var(--canvas)",
-                    border: isLoggingIn ? `1.5px solid ${profile.accent}` : "1px solid var(--line)",
+                    border: "1px solid var(--line)",
                     borderRadius: "var(--radius-sm)",
                     padding: "10px 12px",
                     display: "flex",
@@ -269,8 +261,7 @@ export function LoginForm() {
                     gap: 6,
                     transition: "all 0.15s ease",
                     cursor: pending ? "not-allowed" : "pointer",
-                    boxShadow: isLoggingIn ? "0 0 0 2px rgba(36, 84, 58, 0.15)" : "none",
-                    opacity: pending && !isLoggingIn ? 0.6 : 1,
+                    opacity: pending ? 0.6 : 1,
                   }}
                   className="hover-glow"
                 >
@@ -322,22 +313,15 @@ export function LoginForm() {
                     </span>
                     <span style={{
                       fontWeight: 650,
-                      color: isLoggingIn ? "var(--green)" : "var(--green)",
+                      color: "var(--green)",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 3,
                     }}>
-                      {isLoggingIn ? (
-                        <>
-                          <Icons.Spinner className="spin" size={11} />
-                          <span>Entering…</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>{autoSubmit ? "Sign In" : "Fill"}</span>
-                          <Icons.ArrowRight size={10} />
-                        </>
-                      )}
+                      <>
+                        <span>Fill</span>
+                        <Icons.ArrowRight size={10} />
+                      </>
                     </span>
                   </div>
                 </button>
@@ -360,7 +344,6 @@ export function LoginForm() {
           }}>
             <span style={{ fontWeight: 600, color: "var(--ink)" }}>Regional Officers:</span>
             {ALTERNATIVE_OFFICERS.map((alt) => {
-              const isLoggingIn = activeQuickEmail === alt.email;
               return (
                 <button
                   key={alt.email}
@@ -379,15 +362,15 @@ export function LoginForm() {
                     alignItems: "center",
                     gap: 4,
                   }}
-                  title={`Sign in as ${alt.name} (${alt.region})`}
+                  title={`Fill ${alt.name} email`}
                 >
-                  {isLoggingIn && <Icons.Spinner className="spin" size={9} />}
                   <span>{alt.name.split(" ")[0]} ({alt.region})</span>
                 </button>
               );
             })}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

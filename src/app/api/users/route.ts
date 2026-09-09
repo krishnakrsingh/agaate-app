@@ -8,9 +8,9 @@ import { apiError, paginationParams } from "@/lib/api";
 
 const createUserSchema = z.object({
   name: z.string().min(2).max(100),
-  email: z.string().optional().nullable(),
+  email: z.string().email().max(254).optional().nullable(),
   phone: z.string().max(30).optional().nullable(),
-  password: z.string().min(6).max(128),
+  password: z.string().min(12).max(128),
   role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
   isSupervisor: z.boolean().default(false),
   farmId: z.string().optional(),
@@ -87,6 +87,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN"]);
     const input = createUserSchema.parse(await request.json());
@@ -117,7 +119,12 @@ export async function POST(request: NextRequest) {
       if (count !== farmIds.length) throw new Error("A selected farm no longer exists.");
     }
 
-    const normalizedPhone = input.phone ? input.phone.replace(/[^\d+]/g, "") : null;
+    const rawPhone = input.phone ? input.phone.replace(/[^\d+]/g, "") : null;
+    const digits = rawPhone?.replace(/[^\d]/g, "") ?? "";
+    const normalizedPhone = rawPhone && digits.length >= 10 && digits.length <= 15 ? rawPhone : null;
+    if (!input.email && !normalizedPhone) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
     const normalizedEmail = (input.email && input.email.trim())
       ? input.email.trim().toLowerCase()
       : `${(normalizedPhone || "worker").replace(/[^\d]/g, "")}@worker.agaate.ag`;

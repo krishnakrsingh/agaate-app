@@ -3,6 +3,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { MobileCrewMuster } from "@/components/officer/mobile-crew-muster";
 
 type Plot = {
   id: string;
@@ -30,6 +31,7 @@ type RecentHarvest = {
 
 export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
   const toast = useToast();
+  const [activeLogTab, setActiveLogTab] = useState<"HARVEST" | "CREW">("HARVEST");
   const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
   const [selectedPlotId, setSelectedPlotId] = useState("");
   const [selectedCycleId, setSelectedCycleId] = useState("");
@@ -128,35 +130,74 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
   };
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header */}
-      <div className="card" style={{ padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "var(--radius-sm)",
-              backgroundColor: "var(--stone)",
-              color: "var(--green)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icons.Truck size={20} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Record Daily Harvest Cut</h1>
-            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
-              Field crate weighing &amp; vehicle dispatch logging.
-            </p>
-          </div>
-        </div>
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Segmented Top Control: Harvest Weighing vs Crew Muster */}
+      <div
+        style={{
+          display: "flex",
+          background: "var(--stone)",
+          padding: 4,
+          borderRadius: "var(--radius-pill)",
+          gap: 6,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setActiveLogTab("HARVEST")}
+          style={{
+            flex: 1,
+            borderRadius: "var(--radius-pill)",
+            border: "none",
+            background: activeLogTab === "HARVEST" ? "var(--green)" : "transparent",
+            color: activeLogTab === "HARVEST" ? "#ffffff" : "var(--ink-soft)",
+            fontWeight: 700,
+            padding: "9px 16px",
+            fontSize: "13px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            boxShadow: activeLogTab === "HARVEST" ? "0 2px 8px rgba(36, 84, 58, 0.28)" : "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Icons.Truck size={15} />
+          <span>Harvest Cut Weighing</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveLogTab("CREW")}
+          style={{
+            flex: 1,
+            borderRadius: "var(--radius-pill)",
+            border: "none",
+            background: activeLogTab === "CREW" ? "var(--green)" : "transparent",
+            color: activeLogTab === "CREW" ? "#ffffff" : "var(--ink-soft)",
+            fontWeight: 700,
+            padding: "9px 16px",
+            fontSize: "13px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            boxShadow: activeLogTab === "CREW" ? "0 2px 8px rgba(36, 84, 58, 0.28)" : "none",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Icons.Users size={15} />
+          <span>Daily Crew Muster</span>
+        </button>
       </div>
 
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+      {activeLogTab === "CREW" ? (
+        <MobileCrewMuster farms={farms} />
+      ) : (
+        <>
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Plot */}
         <div style={{ display: "grid", gridTemplateColumns: farms.length > 1 ? "1fr 1fr" : "1fr", gap: 12 }}>
           {farms.length > 1 && (
@@ -234,49 +275,107 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
           </div>
         </div>
 
-        {/* Quantity & Unit */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Harvested Quantity *</label>
+        {/* Quantity, Unit & Accelerators */}
+        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--line-strong)", display: "grid", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <label style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)", margin: 0 }}>
+              Harvest Weight / Volume *
+            </label>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["KG", "CRATES", "QUINTAL", "TONNE"].map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  onClick={() => setUnit(u)}
+                  style={{
+                    fontSize: "11px",
+                    padding: "3px 8px",
+                    borderRadius: "var(--radius-xs)",
+                    border: unit === u ? "1.5px solid var(--green)" : "1px solid var(--line)",
+                    background: unit === u ? "var(--green)" : "var(--canvas)",
+                    color: unit === u ? "#ffffff" : "var(--ink-soft)",
+                    fontWeight: unit === u ? 700 : 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setQuantity(String(Math.max(0, (Number(quantity) || 0) - (unit === "CRATES" ? 1 : 10))))}
+              style={{ width: 44, height: 44, fontSize: "20px", fontWeight: 700 }}
+            >
+              &minus;
+            </button>
             <input
               type="number"
-              step="0.01"
+              step="0.1"
               min="0.01"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="e.g. 450"
+              placeholder="0.00"
               required
               className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
+              style={{
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: "22px",
+                fontWeight: 800,
+                height: 44,
+                backgroundColor: "var(--canvas)",
+              }}
             />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setQuantity(String((Number(quantity) || 0) + (unit === "CRATES" ? 1 : 10)))}
+              style={{ width: 44, height: 44, fontSize: "20px", fontWeight: 700 }}
+            >
+              +
+            </button>
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Unit</label>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              className="input-field"
-              style={{ width: "100%" }}
-            >
-              <option value="KG">KG</option>
-              <option value="CRATES">Crates</option>
-              <option value="QUINTAL">Quintal</option>
-              <option value="TONNE">Tonne</option>
-              <option value="BOXES">Boxes</option>
-            </select>
+          {/* Quick Increment Chips */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+            {(unit === "CRATES" ? [1, 5, 10, 25] : [10, 25, 50, 100]).map((addVal) => (
+              <button
+                key={addVal}
+                type="button"
+                onClick={() => setQuantity(String((Number(quantity) || 0) + addVal))}
+                style={{
+                  fontSize: "11px",
+                  padding: "3px 10px",
+                  borderRadius: "var(--radius-pill)",
+                  border: "1px solid var(--line)",
+                  background: "var(--canvas)",
+                  color: "var(--ink)",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                +{addVal} {unit}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Grade Selection */}
+        {/* Grade Selection with Visual Quality Badges */}
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>Quality Grade *</label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>
+            Quality Classification *
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
             {[
-              { id: "GRADE_A", label: "Grade A (Prem/Export)" },
-              { id: "GRADE_B", label: "Grade B (Market)" },
-              { id: "GRADE_C", label: "Grade C (Local)" },
-              { id: "PROCESSING", label: "Processing / Cull" },
+              { id: "GRADE_A", label: "Grade A", desc: "Premium / Export / Retail", color: "var(--green)", bg: "var(--green-light)" },
+              { id: "GRADE_B", label: "Grade B", desc: "Domestic APMC Mandi", color: "var(--amber)", bg: "var(--amber-light)" },
+              { id: "GRADE_C", label: "Grade C", desc: "Local Market / Secondary", color: "var(--blue)", bg: "var(--blue-light)" },
+              { id: "PROCESSING", label: "Processing", desc: "Pulp / Factory / Cull", color: "var(--ink-soft)", bg: "var(--stone)" },
             ].map((g) => {
               const isSelected = grade === g.id;
               return (
@@ -284,10 +383,26 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
                   key={g.id}
                   type="button"
                   onClick={() => setGrade(g.id)}
-                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
-                  style={{ fontSize: 11, padding: "8px 10px", textAlign: "center" }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    border: isSelected ? `2px solid ${g.color}` : "1px solid var(--line)",
+                    background: isSelected ? g.bg : "var(--canvas)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    boxShadow: isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                    transition: "all 0.15s ease",
+                  }}
                 >
-                  {g.label}
+                  <span style={{ fontSize: "13px", fontWeight: 750, color: isSelected ? g.color : "var(--ink)" }}>
+                    {g.label}
+                  </span>
+                  <span style={{ fontSize: "10px", color: "var(--muted)" }}>
+                    {g.desc}
+                  </span>
                 </button>
               );
             })}
@@ -389,6 +504,8 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -33,6 +33,15 @@ export function acquireRateLimitSlot(
 }
 
 /**
+ * Generic throttle for authenticated write endpoints (uploads, attendance,
+ * task completion). In-memory per-process: correct on single-instance, best
+ * effort behind multiple instances — pair with a shared store (Redis) when scaling.
+ */
+export function throttle(key: string, maxAttempts = 30, windowMs = 60_000) {
+  return acquireRateLimitSlot(key, maxAttempts, windowMs);
+}
+
+/**
  * Resets the rate limit counter upon successful authentication.
  */
 export function resetRateLimit(key: string): void {

@@ -188,14 +188,15 @@ export function WorkforceAttendanceConsole({
   };
 
   const openSelfieLightbox = async (
-    key: string,
+    attendanceId: string,
     title: string,
     officer: string,
-    time: string
+    time: string,
+    slot: "start" | "end" = "start"
   ) => {
     setViewingSelfie({ url: null, title, officer, time, loading: true });
     try {
-      const res = await fetch(`/api/attendance/selfie?key=${encodeURIComponent(key)}`);
+      const res = await fetch(`/api/attendance/selfie?attendanceId=${encodeURIComponent(attendanceId)}&slot=${slot}`);
       if (!res.ok) throw new Error("Could not retrieve secure selfie photo.");
       const data = await res.json();
       setViewingSelfie({ url: data.url, title, officer, time, loading: false });
@@ -639,17 +640,18 @@ export function WorkforceAttendanceConsole({
 
                     {/* SELFIE PROOFS */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {item.startSelfieKey && (
+                      {item.startSelfieKey && item.attendanceId && (
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
                           style={{ padding: "4px 8px", fontSize: 11 }}
                           onClick={() =>
                             openSelfieLightbox(
-                              item.startSelfieKey!,
+                              item.attendanceId!,
                               "Clock-In Verification Selfie",
                               item.officerName,
-                              formatTime(item.startAt)
+                              formatTime(item.startAt),
+                              "start"
                             )
                           }
                         >
@@ -658,17 +660,18 @@ export function WorkforceAttendanceConsole({
                         </button>
                       )}
 
-                      {item.endSelfieKey && (
+                      {item.endSelfieKey && item.attendanceId && (
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
                           style={{ padding: "4px 8px", fontSize: 11 }}
                           onClick={() =>
                             openSelfieLightbox(
-                              item.endSelfieKey!,
+                              item.attendanceId!,
                               "Clock-Out Verification Selfie",
                               item.officerName,
-                              formatTime(item.endAt)
+                              formatTime(item.endAt),
+                              "end"
                             )
                           }
                         >

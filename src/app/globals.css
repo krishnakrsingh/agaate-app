@@ -496,6 +496,35 @@ a:hover {
   flex-shrink: 0;
 }
 
+/* --- Brand Logo Switching (Theme-aware) --- */
+.brand-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brand-logo-img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.brand-logo-light {
+  display: inline-block !important;
+}
+
+.brand-logo-dark {
+  display: none !important;
+}
+
+[data-theme="dark"] .brand-logo-light {
+  display: none !important;
+}
+
+[data-theme="dark"] .brand-logo-dark {
+  display: inline-block !important;
+}
+
 .sidebar-brand-row {
   display: flex;
   align-items: center;
@@ -505,9 +534,13 @@ a:hover {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-decoration: none;
   color: var(--ink);
+}
+
+.sidebar-brand:hover {
+  opacity: 0.92;
 }
 
 .sidebar-brand-mark {
@@ -536,6 +569,10 @@ a:hover {
   letter-spacing: 0.08em;
   color: var(--green);
   text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background-color: var(--green-light);
+  border: 1px solid rgba(36, 84, 58, 0.15);
 }
 
 .sidebar-role-badge {
@@ -906,16 +943,20 @@ a:hover {
 .app-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--ink);
   text-decoration: none;
   flex-shrink: 0;
 }
 
+.app-brand:hover {
+  opacity: 0.92;
+}
+
 .app-brand-mark {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-xs);
+  border-radius: 10px;
   background-color: var(--green);
   color: var(--on-dark);
   display: grid;
@@ -939,11 +980,15 @@ a:hover {
 
 .app-brand-tag {
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-size: 8.5px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--green);
   text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background-color: var(--green-light);
+  border: 1px solid rgba(36, 84, 58, 0.15);
 }
 
 @media (max-width: 640px) {
@@ -1110,8 +1155,8 @@ a:hover {
   gap: 8px;
   background-color: var(--stone);
   border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  padding: 5px 12px;
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
@@ -1643,61 +1688,61 @@ a:hover {
   background-color: var(--red-light);
 }
 
-/* Mobile Bottom Dock */
+/* Mobile Floating Pill Dock */
 .app-mobile-dock {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background-color: var(--canvas);
-  border-top: 1px solid var(--line);
-  height: calc(56px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background-color: rgba(23, 25, 24, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-pill);
+  height: 54px;
+  padding: 4px 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.12);
+  width: auto;
+  min-width: 280px;
+  max-width: calc(100vw - 32px);
 }
 
 .app-mobile-dock-inner {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 4px;
   height: 100%;
-  padding: 0 4px;
 }
 
 .app-mobile-item {
-  flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  height: 100%;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  color: #AEB4AD;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
   text-decoration: none;
-  min-height: 44px;
-  position: relative;
+  min-height: 42px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .app-mobile-item.active {
-  color: var(--green);
-  font-weight: 600;
+  background-color: var(--green);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(36, 84, 58, 0.4);
 }
 
 .app-mobile-item.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12px;
-  right: 12px;
-  height: 2px;
-  background-color: var(--green);
+  display: none;
 }
 
 /* --- 5. Buttons & Action Triggers --- */
@@ -3255,6 +3300,174 @@ textarea::placeholder {
   .onboarding-review-grid,
   .handover-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   FARM OFFICER — FIELD MOBILE INTERFACE UPGRADES
+   ========================================================================== */
+
+.officer-field-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.officer-field-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.officer-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.officer-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green-light);
+  display: inline-block;
+}
+
+.officer-role-tag {
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.officer-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.officer-estate {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.officer-telemetry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.officer-time {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.officer-custom-badge {
+  background-color: var(--green-light);
+  color: var(--green);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+}
+
+.officer-field-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.officer-field-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.officer-field-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+
+/* Ensure mobile shell has comfortable clearance above the bottom dock */
+@media (max-width: 1023px) {
+  .shell.narrow {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Toast Notification System */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 90vw;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justifyContent: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background-color: var(--ink);
+  color: #FFFFFF;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  animation: toast-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.success {
+  background-color: #173B29;
+  border: 1px solid #24543A;
+  color: #EAF1EA;
+}
+
+.toast.error {
+  background-color: #451A1A;
+  border: 1px solid #8C2C2C;
+  color: #FDE8E8;
+}
+
+.toast.info {
+  background-color: #1E2320;
+  border: 1px solid #373E39;
+  color: #FFFFFF;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

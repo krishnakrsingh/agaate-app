@@ -24,12 +24,12 @@ type InventoryItem = {
 };
 
 const CATEGORIES = [
-  { id: "IRRIGATION", label: "Irrigation Run" },
-  { id: "FERTIGATION", label: "Fertigation / Drenching" },
-  { id: "SPRAYING", label: "Pest / Foliar Spray" },
-  { id: "WEEDING", label: "Manual Weeding" },
-  { id: "PRUNING", label: "Pruning / Trellising" },
-  { id: "FIELD_MAINTENANCE", label: "Pump / Shed Repair" },
+  { id: "IRRIGATION", label: "Irrigation Run", icon: "💧" },
+  { id: "FERTIGATION", label: "Fertigation / Drenching", icon: "🧪" },
+  { id: "SPRAYING", label: "Pest / Foliar Spray", icon: "🚿" },
+  { id: "WEEDING", label: "Manual Weeding", icon: "🌿" },
+  { id: "PRUNING", label: "Pruning / Trellising", icon: "✂️" },
+  { id: "FIELD_MAINTENANCE", label: "Pump / Shed Repair", icon: "🔧" },
 ];
 
 export function QuickLogger({ farms }: { farms: Farm[] }) {
@@ -117,33 +117,7 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
   const selectedInventoryItem = inventoryItems.find((i) => i.id === selectedItemId);
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header */}
-      <div className="card" style={{ padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "var(--radius-sm)",
-              backgroundColor: "var(--stone)",
-              color: "var(--green)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icons.Zap size={20} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Express Field Activity Logger</h1>
-            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
-              Instant 1-tap logging for unassigned daily ground work. Keeps your farm owner informed in real time.
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Plot Selection */}
@@ -188,8 +162,10 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
 
         {/* Activity Category Selection */}
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>What did you execute today?</label>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>
+            What operation did you execute? *
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
@@ -197,15 +173,25 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
                   style={{
-                    padding: "10px 12px",
-                    textAlign: "center",
-                    fontSize: 12,
-                    fontWeight: isSelected ? 700 : 500,
+                    padding: "12px 14px",
+                    borderRadius: "var(--radius-sm)",
+                    border: isSelected ? "2px solid var(--green)" : "1.5px solid var(--line)",
+                    background: isSelected ? "var(--green-light)" : "var(--canvas)",
+                    color: isSelected ? "var(--green-dark)" : "var(--ink)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    boxShadow: isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                    transition: "all 0.15s ease",
                   }}
                 >
-                  {cat.label}
+                  <span style={{ fontSize: 20 }}>{cat.icon}</span>
+                  <span style={{ fontSize: 13, fontWeight: isSelected ? 750 : 600, lineHeight: 1.2 }}>
+                    {cat.label}
+                  </span>
                 </button>
               );
             })}

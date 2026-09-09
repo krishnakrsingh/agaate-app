@@ -50,17 +50,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     const body = await request.json();
     const input = musterSchema.parse(body);
+    if (input.maleCount != null && input.femaleCount != null && input.maleCount + input.femaleCount !== input.totalLabourers) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
 
-    await requireFarmAccess(input.farmId);
+    await requireFarmAccess(input.farmId, true);
 
     const date = parseUtcDate(input.musterDate);
     const totalWageCost = input.dailyWageRate
-      ? input.totalLabourers * input.dailyWageRate
+      ? Math.round(input.totalLabourers * input.dailyWageRate * 100) / 100
       : null;
 
+    const existing = await prisma.dailyCrewMuster.findUnique({ where: { farmId_musterDate: { farmId: input.farmId, musterDate: date } }, select: { id: true } });
     const muster = await prisma.dailyCrewMuster.upsert({
       where: {
         farmId_musterDate: {
@@ -97,12 +103,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await audit(actor.id, "UPDATE", "DailyCrewMuster", muster.id, {
+    await audit(actor.id, existing ? "UPDATE" : "CREATE", "DailyCrewMuster", muster.id, {
       totalLabourers: input.totalLabourers,
       farmId: input.farmId,
     });
 
-    return NextResponse.json(muster, { status: 201 });
+    return NextResponse.json(muster, { status: existing ? 200 : 201 });
   } catch (error) {
     return apiError(error);
   }

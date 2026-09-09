@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { MobileHarvestLogger } from "@/components/officer/mobile-harvest-logger";
 
+import { MobileOfficerHeader } from "@/components/officer/mobile-officer-header";
+
 export const dynamic = "force-dynamic";
 
 export default async function OfficerHarvestPage() {
@@ -44,6 +46,11 @@ export default async function OfficerHarvestPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell narrow">
+        <MobileOfficerHeader
+          title="Field Operations Logs"
+          subtitle="Unified daily ledger for harvest crate weighing, grading, and crew muster headcount."
+          officerName={session.name}
+        />
         <MobileHarvestLogger farms={serialized} />
       </main>
     </>

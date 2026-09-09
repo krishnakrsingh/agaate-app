@@ -75,16 +75,19 @@ export function PrintableSpraySheet({
         <div className="space-y-4 text-xs">
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-zinc-900 pb-3">
-            <div>
-              <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-800">
-                AGAATE PRECISION AGRONOMY &bull; CHEMICAL &amp; SPRAY RECORD
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Agaate" style={{ height: "38px", width: "auto", objectFit: "contain" }} />
+              <div>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-800">
+                  AGAATE PRECISION AGRONOMY &bull; CHEMICAL &amp; SPRAY RECORD
+                </div>
+                <h1 className="text-xl font-black tracking-tight text-zinc-900 uppercase mt-0.5">
+                  {farmName} — Weekly Field Spray Chart
+                </h1>
+                <p className="text-xs text-zinc-600">
+                  Estate Location: <strong>{location}</strong> &bull; Schedule Period: <strong>{weekRange}</strong>
+                </p>
               </div>
-              <h1 className="text-xl font-black tracking-tight text-zinc-900 uppercase mt-0.5">
-                {farmName} — Weekly Field Spray Chart
-              </h1>
-              <p className="text-xs text-zinc-600">
-                Estate Location: <strong>{location}</strong> &bull; Schedule Period: <strong>{weekRange}</strong>
-              </p>
             </div>
             <div className="text-right text-[11px] text-zinc-700">
               <div>Notice: <strong>Mandatory PPE Enforced</strong></div>

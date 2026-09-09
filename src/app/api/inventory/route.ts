@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess } from "@/lib/access";
+import { currentActor, requireFarmAccess, HttpError } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
@@ -71,39 +71,43 @@ export async function POST(request: NextRequest) {
 
     // Check if it's creating an item or a transaction
     if (body.itemId) {
+      const { assertSameOrigin } = await import("@/lib/security");
+      assertSameOrigin(request);
       const input = transactionSchema.parse(body);
-      const item = await prisma.inventoryItem.findUniqueOrThrow({
-        where: { id: input.itemId },
-      });
+      const item = await prisma.inventoryItem.findUnique({ where: { id: input.itemId } });
+      if (!item) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
 
-      await requireFarmAccess(item.farmId);
+      await requireFarmAccess(item.farmId, true);
 
-      const delta = input.type === "STOCK_OUT" ? -input.quantity : input.quantity;
-      const newQuantity = Number(item.quantityInStock) + delta;
-
-      if (newQuantity < 0) {
-        throw new Error(`Insufficient stock in shed. Current stock: ${item.quantityInStock} ${item.unit}`);
-      }
-
+      const roundedQty = Math.round(input.quantity * 100) / 100;
       const updated = await prisma.$transaction(async (tx) => {
+        const fresh = await tx.inventoryItem.findUnique({ where: { id: input.itemId } });
+        if (!fresh) throw new HttpError(404, "The requested record was not found.");
+        const current = Number(fresh.quantityInStock);
+        const next = input.type === "STOCK_OUT" ? current - roundedQty : current + roundedQty;
+        if (input.type === "STOCK_OUT" && next < 0) {
+          throw new HttpError(409, "Insufficient stock in shed.");
+        }
+        // Atomic guard: only write if stock hasn't moved under us.
+        const write = await tx.inventoryItem.updateMany({
+          where: { id: input.itemId, quantityInStock: fresh.quantityInStock },
+          data: { quantityInStock: Math.round(next * 100) / 100 },
+        });
+        if (!write.count) throw new HttpError(409, "Insufficient stock in shed.");
         await tx.inventoryTransaction.create({
           data: {
             itemId: input.itemId,
             type: input.type,
-            quantity: input.quantity,
+            quantity: roundedQty,
             notes: input.notes || null,
           },
         });
-
-        return tx.inventoryItem.update({
-          where: { id: input.itemId },
-          data: { quantityInStock: newQuantity },
-        });
+        return tx.inventoryItem.findUniqueOrThrow({ where: { id: input.itemId } });
       });
 
       await audit(actor.id, input.type, "InventoryItem", item.id, {
-        quantity: input.quantity,
-        newBalance: newQuantity,
+        quantity: roundedQty,
+        newBalance: Number(updated.quantityInStock),
       });
 
       return NextResponse.json(updated);
@@ -111,7 +115,11 @@ export async function POST(request: NextRequest) {
 
     // Creating a new inventory item in the shed
     const input = createItemSchema.parse(body);
-    await requireFarmAccess(input.farmId);
+    {
+      const { assertSameOrigin } = await import("@/lib/security");
+      assertSameOrigin(request);
+    }
+    await requireFarmAccess(input.farmId, true);
 
     const item = await prisma.inventoryItem.create({
       data: {

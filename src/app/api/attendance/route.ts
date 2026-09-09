@@ -9,11 +9,13 @@ import { apiError } from "@/lib/api";
 const schema = z.object({
   farmId: z.string().optional(),
   action: z.enum(["START", "END"]),
-  latitude: z.coerce.number().gte(-90).lte(90).optional(),
-  longitude: z.coerce.number().gte(-180).lte(180).optional(),
+  latitude: z.number().gte(-90).lte(90).optional(),
+  longitude: z.number().gte(-180).lte(180).optional(),
   selfieMediaId: z.string().optional(),
-  reason: z.string().min(5).max(1000).optional(),
+  reason: z.string().min(3).max(1000).optional(),
 });
+
+const SELFIE_FRESH_MS = 30 * 60 * 1000;
 
 const today = () => utcDateOnly(new Date());
 
@@ -39,8 +41,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin, getClientIp } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["FARM_OFFICER", "SUPER_ADMIN"]);
+    const { throttle } = await import("@/lib/rate-limit");
+    const clockSlot = throttle(`attendance:${getClientIp(request.headers)}:${actor.id}`, 30, 60_000);
+    if (!clockSlot.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     const input = schema.parse(await request.json());
 
     // ── ACTION: START SHIFT ──
@@ -61,11 +68,21 @@ export async function POST(request: NextRequest) {
         where: {
           id: input.selfieMediaId,
           uploadedById: actor.id,
+          farmId: input.farmId,
           kind: "SELFIE",
           verifiedAt: { not: null },
         },
       });
-      if (!media) throw new Error("A valid uploaded selfie is required.");
+      if (!media?.verifiedAt) throw new Error("A valid uploaded selfie is required.");
+      // One-time fresh binding: selfies expire after 30 min and can't be replayed.
+      if (Date.now() - new Date(media.verifiedAt).getTime() > SELFIE_FRESH_MS || Date.now() - new Date(media.createdAt).getTime() > SELFIE_FRESH_MS) {
+        throw new Error("A valid uploaded selfie is required.");
+      }
+      const reused = await prisma.attendance.findFirst({
+        where: { userId: actor.id, attendanceDate: today(), OR: [{ startSelfieKey: media.storageKey }, { endSelfieKey: media.storageKey }] },
+        select: { id: true },
+      });
+      if (reused) throw new Error("A valid uploaded selfie is required.");
 
       const distance = distanceMeters(
         { latitude: Number(farm.latitude), longitude: Number(farm.longitude) },
@@ -156,30 +173,46 @@ export async function POST(request: NextRequest) {
     await requireFarmAccess(targetFarmId);
     const farm = existing.farm ?? (await prisma.farm.findUniqueOrThrow({ where: { id: targetFarmId } }));
 
-    // Optional selfie on clock out
+    // Optional selfie on clock out (same freshness + farm binding as clock-in)
     let endSelfieKey: string | null = null;
     if (input.selfieMediaId) {
       const media = await prisma.mediaAsset.findFirst({
         where: {
           id: input.selfieMediaId,
           uploadedById: actor.id,
+          farmId: targetFarmId,
           kind: "SELFIE",
           verifiedAt: { not: null },
         },
       });
-      if (media) endSelfieKey = media.storageKey;
+      if (media?.verifiedAt && Date.now() - new Date(media.verifiedAt).getTime() <= SELFIE_FRESH_MS && Date.now() - new Date(media.createdAt).getTime() <= SELFIE_FRESH_MS) {
+        const reusedEnd = await prisma.attendance.findFirst({
+          where: { userId: actor.id, attendanceDate: today(), OR: [{ startSelfieKey: media.storageKey }, { endSelfieKey: media.storageKey }] },
+          select: { id: true },
+        });
+        if (!reusedEnd) endSelfieKey = media.storageKey;
+      }
     }
 
-    // Location determination: use provided coordinates or fallback to shift start/farm coordinates
-    const endLat = input.latitude ?? (existing.startLatitude != null ? Number(existing.startLatitude) : Number(farm.latitude));
-    const endLng = input.longitude ?? (existing.startLongitude != null ? Number(existing.startLongitude) : Number(farm.longitude));
+    // GPS is mandatory on clock-out: no fallback to start/farm coords (clock-out-from-anywhere).
+    if (input.latitude == null || input.longitude == null) {
+      return NextResponse.json({ error: "GPS location is required to verify end-of-shift presence." }, { status: 422 });
+    }
+    const endLat = input.latitude;
+    const endLng = input.longitude;
 
     const distance = distanceMeters(
       { latitude: Number(farm.latitude), longitude: Number(farm.longitude) },
       { latitude: endLat, longitude: endLng }
     );
     const outside = distance > farm.geofenceRadiusMeters;
-    const reason = input.reason || (outside ? (existing.exceptionReason || "Clocked out outside geofence") : undefined);
+    if (outside && !input.reason) {
+      return NextResponse.json(
+        { error: "A reason is required outside the farm geofence.", distanceMeters: distance },
+        { status: 422 }
+      );
+    }
+    const reason = input.reason || undefined;
 
     const attendance = await prisma.$transaction(async (tx) => {
       const endStatus = outside

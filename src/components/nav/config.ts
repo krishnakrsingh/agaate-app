@@ -3,7 +3,7 @@ import type { Role } from "@prisma/client";
 export type NavItem = {
   href: string;
   label: string;
-  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap";
+  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap" | "User" | "AlertTriangle";
   roles: Role[];
   isActive?: (pathname: string) => boolean;
 };
@@ -77,38 +77,24 @@ export const NAV_ITEMS: NavItem[] = [
   // ── 2. ON-SITE FARM MANAGER (FARM_OFFICER) ──
   {
     href: "/officer/day",
-    label: "My Day",
-    icon: "Sun",
+    label: "Tasks",
+    icon: "ClipboardList",
     roles: ["FARM_OFFICER"],
     isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
   },
   {
-    href: "/officer/quick-log",
-    label: "Quick Log",
-    icon: "Zap",
-    roles: ["FARM_OFFICER"],
-    isActive: (p) => p.startsWith("/officer/quick-log"),
-  },
-  {
-    href: "/officer/harvest",
-    label: "Log Harvest",
-    icon: "Truck",
-    roles: ["FARM_OFFICER"],
-    isActive: (p) => p.startsWith("/officer/harvest"),
-  },
-  {
-    href: "/officer/crew",
-    label: "Crew Muster",
-    icon: "Users",
-    roles: ["FARM_OFFICER"],
-    isActive: (p) => p.startsWith("/officer/crew"),
-  },
-  {
     href: "/officer/reports",
-    label: "Signals & Snaps",
-    icon: "Camera",
+    label: "Incidents",
+    icon: "AlertTriangle",
     roles: ["FARM_OFFICER"],
     isActive: (p) => p.startsWith("/officer/reports"),
+  },
+  {
+    href: "/officer/profile",
+    label: "Profile",
+    icon: "User",
+    roles: ["FARM_OFFICER"],
+    isActive: (p) => p.startsWith("/officer/profile"),
   },
 
   // ── 3. CENTRAL AGRONOMIST ──
@@ -213,7 +199,7 @@ export function getMobileNavForRole(role: Role): NavItem[] {
     return all.filter((i) => ["/owner/dashboard", "/owner/team", "/owner/calendar", "/owner/harvest", "/owner/financials"].includes(i.href));
   }
   if (role === "FARM_OFFICER") {
-    return all.filter((i) => ["/officer/day", "/officer/quick-log", "/officer/harvest", "/officer/crew", "/officer/reports"].includes(i.href));
+    return all.filter((i) => ["/officer/day", "/officer/reports", "/officer/profile"].includes(i.href));
   }
   return all.slice(0, 5);
 }

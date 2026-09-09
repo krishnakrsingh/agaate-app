@@ -11,14 +11,14 @@ const createSchema = z.object({
   plotId: z.string().min(1),
   cropCycleId: z.string().optional().nullable(),
   harvestDate: z.string().min(1),
-  quantity: z.coerce.number().positive(),
-  unit: z.string().min(1).default("KG"),
-  grade: z.string().min(1).default("GRADE_A"),
-  buyerOrMarket: z.string().optional().nullable(),
-  vehicleNumber: z.string().optional().nullable(),
-  pricePerUnit: z.coerce.number().positive().optional().nullable(),
+  quantity: z.coerce.number().positive().max(1000000),
+  unit: z.enum(["KG", "CRATE", "CRATES", "QUINTAL", "TONNE", "BAG", "PIECE"]).default("KG"),
+  grade: z.enum(["GRADE_A", "GRADE_B", "GRADE_C", "PROCESSING", "UNGRADED"]).default("GRADE_A"),
+  buyerOrMarket: z.string().max(200).optional().nullable(),
+  vehicleNumber: z.string().max(30).optional().nullable(),
+  pricePerUnit: z.coerce.number().positive().max(10000000).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
-  photoKey: z.string().optional().nullable(),
+  photoKey: z.string().max(512).optional().nullable(),
 });
 
 export async function GET(request: NextRequest) {
@@ -55,56 +55,63 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     const body = await request.json();
     const input = createSchema.parse(body);
 
-    await requireFarmAccess(input.farmId);
+    await requireFarmAccess(input.farmId, true);
+    const plot = await prisma.plot.findUnique({ where: { id: input.plotId }, select: { farmId: true } });
+    if (!plot || plot.farmId !== input.farmId) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
 
     let cropCycleId = input.cropCycleId;
-    if (!cropCycleId) {
+    if (cropCycleId) {
+      const cycle = await prisma.cropCycle.findUnique({ where: { id: cropCycleId }, select: { plotId: true, plot: { select: { farmId: true } } } });
+      if (!cycle || cycle.plotId !== input.plotId || cycle.plot.farmId !== input.farmId) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      }
+    } else {
       const activeCycle = await prisma.cropCycle.findFirst({
         where: { plotId: input.plotId, status: "ACTIVE" },
         orderBy: { startDate: "desc" },
-      }) || await prisma.cropCycle.findFirst({
-        where: { plotId: input.plotId },
-        orderBy: { createdAt: "desc" },
       });
-
-      if (activeCycle) {
-        cropCycleId = activeCycle.id;
-      } else {
-        const plot = await prisma.plot.findUnique({ where: { id: input.plotId } });
-        const autoCycle = await prisma.cropCycle.create({
-          data: {
-            plotId: input.plotId,
-            cropName: plot?.name ? `${plot.name} Crop` : "Commercial Harvest",
-            establishmentType: "DIRECT_SOWING",
-            startDate: new Date(),
-            status: "ACTIVE",
-          },
-        });
-        cropCycleId = autoCycle.id;
+      if (!activeCycle) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
       }
+      cropCycleId = activeCycle.id;
     }
 
-    const totalAmount = input.pricePerUnit ? input.quantity * input.pricePerUnit : null;
+    let photoKey: string | null = null;
+    if (input.photoKey) {
+      const photo = (await prisma.mediaAsset.findUnique({ where: { id: input.photoKey } })) ?? (await prisma.mediaAsset.findUnique({ where: { storageKey: input.photoKey } }));
+      if (!photo?.verifiedAt || photo.farmId !== input.farmId) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      }
+      photoKey = photo.storageKey;
+    }
+
+    const quantity = Math.round(input.quantity * 100) / 100;
+    const price = input.pricePerUnit != null ? Math.round(input.pricePerUnit * 100) / 100 : null;
+    const totalAmount = price != null ? Math.round(quantity * price * 100) / 100 : null;
 
     const log = await prisma.harvestLog.create({
       data: {
         farmId: input.farmId,
         plotId: input.plotId,
-        cropCycleId,
+        cropCycleId: cropCycleId!,
         harvestDate: parseUtcDate(input.harvestDate),
-        quantity: input.quantity,
-        unit: input.unit.toUpperCase(),
-        grade: input.grade.toUpperCase(),
+        quantity,
+        unit: input.unit,
+        grade: input.grade,
         buyerOrMarket: input.buyerOrMarket || null,
         vehicleNumber: input.vehicleNumber || null,
-        pricePerUnit: input.pricePerUnit || null,
+        pricePerUnit: price,
         totalAmount,
         notes: input.notes || null,
-        photoKey: input.photoKey || null,
+        photoKey,
         createdById: actor.id,
       },
       include: {

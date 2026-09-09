@@ -429,6 +429,7 @@ export function PhotoUploadZone({
 
 /**
  * Upload helper: Presigns, PUTs to S3, and verifies completion on server.
+ * Resiliently falls back to direct server upload endpoint if S3 is unavailable.
  */
 export async function uploadEvidencePhotos(
   farmId: string,
@@ -444,47 +445,61 @@ export async function uploadEvidencePhotos(
     // Compress photo to eliminate timeout errors on mobile devices
     const compressed = await compressImage(item.file);
 
-    // 1. Presign upload URL
-    const presignRes = await fetch("/api/uploads/presign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        farmId,
-        kind,
-        mimeType: compressed.type || "image/jpeg",
-        sizeBytes: compressed.size,
-      }),
-    });
+    try {
+      // 1. Presign upload URL
+      const presignRes = await fetch("/api/uploads/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          farmId,
+          kind,
+          mimeType: compressed.type || "image/jpeg",
+          sizeBytes: compressed.size,
+        }),
+      });
 
-    if (!presignRes.ok) {
-      const err = await presignRes.json().catch(() => ({}));
-      throw new Error(err.error || `Could not prepare upload for photo ${i + 1}`);
+      if (!presignRes.ok) throw new Error("Presign failed");
+      const { uploadUrl, mediaId } = await presignRes.json();
+
+      // 2. Direct S3 PUT
+      const s3Res = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": compressed.type || "image/jpeg" },
+        body: compressed,
+      });
+
+      if (!s3Res.ok) throw new Error("S3 PUT failed");
+
+      // 3. Server-side verification
+      const completeRes = await fetch(`/api/uploads/${mediaId}/complete`, {
+        method: "POST",
+      });
+
+      if (!completeRes.ok) {
+        const err = await completeRes.json().catch(() => ({}));
+        throw new Error(err.error || "Verification failed");
+      }
+      mediaIds.push(mediaId);
+    } catch {
+      // Resilient fallback: direct server upload endpoint
+      const formData = new FormData();
+      formData.append("file", compressed);
+      formData.append("farmId", farmId);
+      formData.append("kind", kind);
+
+      const directRes = await fetch("/api/uploads/direct", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!directRes.ok) {
+        const err = await directRes.json().catch(() => ({}));
+        throw new Error(err.error || `Upload failed for photo ${i + 1}`);
+      }
+
+      const { mediaId } = await directRes.json();
+      mediaIds.push(mediaId);
     }
-
-    const { uploadUrl, mediaId } = await presignRes.json();
-
-    // 2. Direct S3 PUT
-    const s3Res = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": compressed.type || "image/jpeg" },
-      body: compressed,
-    });
-
-    if (!s3Res.ok) {
-      throw new Error(`S3 upload failed for photo ${i + 1}.`);
-    }
-
-    // 3. Server-side verification
-    const completeRes = await fetch(`/api/uploads/${mediaId}/complete`, {
-      method: "POST",
-    });
-
-    if (!completeRes.ok) {
-      const err = await completeRes.json().catch(() => ({}));
-      throw new Error(err.error || `Upload verification failed for photo ${i + 1}`);
-    }
-
-    mediaIds.push(mediaId);
   }
 
   return mediaIds;

@@ -2,8 +2,10 @@ export const DEFAULT_GEOFENCE_RADIUS_METERS = 500;
 const EARTH_RADIUS_METERS = 6_371_000;
 const radians = (degrees: number) => degrees * Math.PI / 180;
 export function distanceMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
+  if (!Number.isFinite(a.latitude) || !Number.isFinite(a.longitude) || !Number.isFinite(b.latitude) || !Number.isFinite(b.longitude)) return Number.POSITIVE_INFINITY;
   const dLat = radians(b.latitude - a.latitude); const dLon = radians(b.longitude - a.longitude);
-  const x = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(dLon / 2) ** 2;
+  const raw = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(dLon / 2) ** 2;
+  const x = Math.min(1, Math.max(0, raw));
   return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
 export function calculatedInfrastructure(plotArea: number, bedsPerAcre?: number | null, plantsPerAcre?: number | null) {

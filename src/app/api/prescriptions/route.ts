@@ -60,6 +60,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["AGRONOMIST", "SUPER_ADMIN", "FARM_ADMIN"]);
 
@@ -67,6 +69,18 @@ export async function POST(request: NextRequest) {
     const input = prescriptionSchema.parse(body);
 
     await requireFarmAccess(input.farmId);
+    const plot = await prisma.plot.findUnique({ where: { id: input.plotId }, select: { farmId: true } });
+    if (!plot || plot.farmId !== input.farmId) return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    const cycle = await prisma.cropCycle.findUnique({ where: { id: input.cropCycleId }, select: { plotId: true, plot: { select: { farmId: true } } } });
+    if (!cycle || cycle.plotId !== input.plotId || cycle.plot.farmId !== input.farmId) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
+    if (input.assignedOfficerId) {
+      const officer = await prisma.user.findUnique({ where: { id: input.assignedOfficerId }, select: { role: true, active: true } });
+      if (!officer?.active || officer.role !== "FARM_OFFICER") return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      const hasAccess = await prisma.farmAccess.findUnique({ where: { userId_farmId: { userId: input.assignedOfficerId, farmId: input.farmId } } });
+      if (!hasAccess) return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
 
     const appDate = parseUtcDate(input.applicationDate);
 
@@ -120,20 +134,26 @@ export async function POST(request: NextRequest) {
     if (input.priority === "HIGH" || input.priority === "EMERGENCY") {
       const farm = await prisma.farm.findUnique({
         where: { id: input.farmId },
-        select: { name: true },
+        select: { name: true, access: { where: { canManage: true }, include: { user: { select: { email: true, name: true } } } } },
       });
-      await sendNotification({
-        type: "EMERGENCY_RX",
-        recipientEmail: actor.email,
-        recipientName: "On-Site Farm Management Team",
-        title: `[${input.priority}] Agronomy Prescription Dispatched: ${input.targetIssue}`,
-        message: `Agaate Agronomist ${actor.name} has dispatched a prescription for ${farm?.name || "the estate"}: "${input.instructions}"`,
-        metadata: {
-          farmId: input.farmId,
-          plotId: input.plotId,
-          priority: input.priority,
-        },
-      });
+      const assignee = input.assignedOfficerId ? await prisma.user.findUnique({ where: { id: input.assignedOfficerId }, select: { email: true, name: true } }) : null;
+      const manager = farm?.access[0]?.user;
+      const recipientEmail = assignee?.email ?? manager?.email;
+      const recipientName = assignee?.name ?? manager?.name ?? "On-Site Farm Management Team";
+      if (recipientEmail) {
+        await sendNotification({
+          type: "EMERGENCY_RX",
+          recipientEmail,
+          recipientName,
+          title: `[${input.priority}] Agronomy Prescription Dispatched: ${input.targetIssue}`,
+          message: `Agaate Agronomist ${actor.name} has dispatched a prescription for ${farm?.name || "the estate"}: "${input.instructions}"`,
+          metadata: {
+            farmId: input.farmId,
+            plotId: input.plotId,
+            priority: input.priority,
+          },
+        });
+      }
     }
 
     return NextResponse.json(prescription, { status: 201 });

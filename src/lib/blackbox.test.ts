@@ -471,6 +471,11 @@ describe.sequential("Black-Box E2E Product Validation", ()=>{
     // Cleanup fresh farm
     await prisma.task.deleteMany({where:{farmId: freshFarmId}});
     await prisma.agronomyPlan.deleteMany({where:{farmId: freshFarmId}});
+    await prisma.agronomyPrescription.deleteMany({where:{farmId: freshFarmId}});
+    await prisma.harvestLog.deleteMany({where:{farmId: freshFarmId}});
+    await prisma.dailyCrewMuster.deleteMany({where:{farmId: freshFarmId}});
+    await prisma.expenseLog.deleteMany({where:{farmId: freshFarmId}});
+    await prisma.inventoryItem.deleteMany({where:{farmId: freshFarmId}});
     await prisma.attendance.deleteMany({where:{farmId: freshFarmId}});
     await prisma.cropMonitoring.deleteMany({where:{farmId: freshFarmId}});
     await prisma.incident.deleteMany({where:{farmId: freshFarmId}});

@@ -9,6 +9,7 @@ import { ProfileMenu } from "./nav/profile-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { CommandPalette } from "./nav/command-palette";
 import { DesktopSidebar } from "./layout/desktop-sidebar";
+import { BrandLogo } from "./brand-logo";
 
 type Role = "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
 
@@ -48,6 +49,8 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Stethoscope: Icons.Stethoscope,
     TrendingUp: Icons.TrendingUp,
     Zap: Icons.Zap,
+    User: Icons.User,
+    AlertTriangle: Icons.AlertTriangle,
   };
 
   return (
@@ -73,13 +76,8 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
           {/* Left: Brand & Farm Switcher Instrument */}
           <div className="app-header-left">
             <Link href="/" className="app-brand" aria-label="Agaate Precision Agriculture Home">
-              <span className="app-brand-mark">
-                <Icons.Sprout size={16} />
-              </span>
-              <div className="app-brand-text">
-                <span className="app-brand-word">AGAATE</span>
-                <span className="app-brand-tag">OPS CONSOLE</span>
-              </div>
+              <BrandLogo height={26} priority />
+              <span className="app-brand-tag">OPS</span>
             </Link>
 
             <div className="app-header-sep" aria-hidden />
@@ -126,11 +124,13 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
             {/* Quick 1-Click Theme Toggle */}
             <ThemeToggle />
 
-            {/* Separator */}
-            <div className="app-header-sep" aria-hidden />
-
-            {/* Profile Dropdown */}
-            <ProfileMenu role={role} userName={userName} />
+            {/* Profile Dropdown (Only for roles without dedicated bottom Profile tab) */}
+            {role !== "FARM_OFFICER" && (
+              <>
+                <div className="app-header-sep" aria-hidden />
+                <ProfileMenu role={role} userName={userName} />
+              </>
+            )}
           </div>
         </div>
       </header>

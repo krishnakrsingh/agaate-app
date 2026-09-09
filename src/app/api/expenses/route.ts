@@ -65,20 +65,30 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     const body = await request.json();
     const input = createSchema.parse(body);
 
-    await requireFarmAccess(input.farmId);
+    await requireFarmAccess(input.farmId, true);
+    let receiptKey: string | null = null;
+    if (input.receiptKey) {
+      const receipt = (await prisma.mediaAsset.findUnique({ where: { id: input.receiptKey } })) ?? (await prisma.mediaAsset.findUnique({ where: { storageKey: input.receiptKey } }));
+      if (!receipt?.verifiedAt || receipt.farmId !== input.farmId || !["ACTIVITY_EVIDENCE", "CROP_PHOTO", "INCIDENT_PHOTO"].includes(receipt.kind)) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      }
+      receiptKey = receipt.storageKey;
+    }
 
     const expense = await prisma.expenseLog.create({
       data: {
         farmId: input.farmId,
         date: parseUtcDate(input.date),
         category: input.category,
-        amount: input.amount,
+        amount: Math.round(input.amount * 100) / 100,
         description: input.description,
-        receiptKey: input.receiptKey || null,
+        receiptKey,
         recordedById: actor.id,
       },
       include: {

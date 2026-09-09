@@ -48,6 +48,14 @@ export async function GET(
 ) {
   try {
     const { plotId } = await params;
+    // Fetch farm scope first so existence isn't oracle-able: no access => 404.
+    const scope = await prisma.plot.findUnique({ where: { id: plotId }, select: { farmId: true } });
+    if (!scope) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    try {
+      await requireFarmAccess(scope.farmId);
+    } catch {
+      return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    }
     const plot = await prisma.plot.findUniqueOrThrow({
       where: { id: plotId },
       include: {
@@ -56,7 +64,6 @@ export async function GET(
         farm: { select: { id: true, name: true } },
       },
     });
-    await requireFarmAccess(plot.farmId);
     return NextResponse.json(plot);
   } catch (error) {
     return apiError(error);
@@ -69,11 +76,14 @@ export async function PATCH(
 ) {
   try {
     const { plotId } = await params;
-    const existing = await prisma.plot.findUniqueOrThrow({
-      where: { id: plotId },
-      include: { farm: { select: { totalArea: true, cultivableArea: true } } },
-    });
-    const actor = await requireFarmAccess(existing.farmId, true);
+    const existing = await prisma.plot.findUnique({ where: { id: plotId }, include: { farm: { select: { totalArea: true, cultivableArea: true } } } });
+    if (!existing) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    let actor;
+    try {
+      actor = await requireFarmAccess(existing.farmId, true);
+    } catch {
+      return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    }
     const input = schema.parse(await request.json());
 
     if (existing.status === "ARCHIVED") {
@@ -133,8 +143,14 @@ export async function DELETE(
 ) {
   try {
     const { plotId } = await params;
-    const plot = await prisma.plot.findUniqueOrThrow({ where: { id: plotId } });
-    const actor = await requireFarmAccess(plot.farmId, true);
+    const plot = await prisma.plot.findUnique({ where: { id: plotId } });
+    if (!plot) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    let actor;
+    try {
+      actor = await requireFarmAccess(plot.farmId, true);
+    } catch {
+      return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    }
     const active = await prisma.cropCycle.count({
       where: { plotId, status: { in: ["PLANNED", "ACTIVE"] } },
     });

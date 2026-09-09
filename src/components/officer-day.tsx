@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { TaskCompletionForm } from "@/components/task-completion-form";
 import { FieldReports } from "@/components/field-reports";
-import { IncidentReportForm } from "@/components/incident-report-form";
+import { CreateTaskModal } from "@/components/officer/create-task-modal";
 import { Icons } from "./icons";
 import { StatusBadge, PriorityBadge } from "./ui/badge";
 import { CardSkeleton } from "./ui/skeleton";
@@ -11,10 +11,20 @@ import { EmptyState } from "./ui/empty-state";
 import { useToast } from "./ui/toast";
 
 type Task = {
-  id: string; title: string; description: string; instructions?: string | null; status: string;
-  origin: "AGRONOMIST" | "SYSTEM" | "DAILY_MONITORING"; priority: string; category: string;
-  farm: { id: string; name: string }; plot?: { id?: string; name: string } | null;
-  cropCycle?: { id?: string; cropName: string } | null; milestone?: { id: string; name: string } | null;
+  id: string;
+  title: string;
+  description: string;
+  instructions?: string | null;
+  status: string;
+  origin: "AGRONOMIST" | "SYSTEM" | "DAILY_MONITORING";
+  priority: string;
+  category: string;
+  dueDate?: string;
+  farm: { id: string; name: string };
+  plot?: { id?: string; name: string } | null;
+  cropCycle?: { id?: string; cropName: string } | null;
+  milestone?: { id: string; name: string } | null;
+  executions?: Array<{ id: string; status: string; completedAt: string | null; remarks: string | null }>;
 };
 
 export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
@@ -22,9 +32,9 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completionId, setCompletionId] = useState<string | null>(null);
   const [monitoringTaskId, setMonitoringTaskId] = useState<string | null>(null);
-  const [showIncidentModal, setShowIncidentModal] = useState(false);
-  const [originFilter, setOriginFilter] = useState<string>("ALL");
-  const [statusTab, setStatusTab] = useState<"ALL" | "PENDING" | "COMPLETED">("ALL");
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"TODAY" | "TOMORROW" | "WEEK" | "COMPLETED" | "ALL">("TODAY");
+  const [showSearch, setShowSearch] = useState(false);
   const [taskSearch, setTaskSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -32,22 +42,29 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
     setLoading(true);
     try {
       await fetch("/api/tasks/generate-daily", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: new Date().toISOString().slice(0, 10) }),
       }).catch(() => undefined);
-      const r = await fetch(`/api/tasks?date=${new Date().toISOString().slice(0, 10)}`);
-      if (r.ok) setTasks(await r.json());
+
+      const r = await fetch("/api/tasks");
+      if (r.ok) {
+        setTasks(await r.json());
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { void load(); }, [refreshKey]);
+  useEffect(() => {
+    void load();
+  }, [refreshKey]);
 
   async function start(id: string) {
     try {
       const r = await fetch(`/api/tasks/${id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "IN_PROGRESS" }),
       });
       if (r.ok) {
@@ -59,200 +76,214 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
     }
   }
 
-  const completedCount = tasks.filter((t) => t.status === "COMPLETED").length;
-  const pendingCount = tasks.filter((t) => t.status !== "COMPLETED").length;
-  const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const progressPercent = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+  // Date boundaries
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const tomorrowStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const nextWeekStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  // 1. Today tasks: active + due today, not completed
+  const todayTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      const d = t.dueDate ? t.dueDate.slice(0, 10) : todayStr;
+      return (d <= todayStr || t.status === "IN_PROGRESS") && t.status !== "COMPLETED";
+    });
+  }, [tasks, todayStr]);
+
+  // 2. Tomorrow tasks: due tomorrow, not completed
+  const tomorrowTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      const d = t.dueDate ? t.dueDate.slice(0, 10) : "";
+      return d === tomorrowStr && t.status !== "COMPLETED";
+    });
+  }, [tasks, tomorrowStr]);
+
+  // 3. Upcoming 7-day tasks: due next 7 days, not completed
+  const weekTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      const d = t.dueDate ? t.dueDate.slice(0, 10) : "";
+      return d > todayStr && d <= nextWeekStr && t.status !== "COMPLETED";
+    });
+  }, [tasks, todayStr, nextWeekStr]);
+
+  // 4. Completed tasks
+  const completedTasks = useMemo(() => {
+    return tasks.filter((t) => t.status === "COMPLETED");
+  }, [tasks]);
+
+  // Today's progress counts:
+  const todayAllCount = useMemo(() => {
+    return tasks.filter((t) => {
+      const d = t.dueDate ? t.dueDate.slice(0, 10) : todayStr;
+      return d <= todayStr || t.status === "IN_PROGRESS";
+    }).length;
+  }, [tasks, todayStr]);
+
+  const todayCompletedCount = useMemo(() => {
+    return tasks.filter((t) => {
+      const d = t.dueDate ? t.dueDate.slice(0, 10) : todayStr;
+      return (d <= todayStr || t.status === "IN_PROGRESS") && t.status === "COMPLETED";
+    }).length;
+  }, [tasks, todayStr]);
+
+  const progressPercent = todayAllCount ? Math.round((todayCompletedCount / todayAllCount) * 100) : 0;
+
+  // Active tab tasks
+  const scopedTasks = useMemo(() => {
+    if (activeTab === "TODAY") return todayTasks;
+    if (activeTab === "TOMORROW") return tomorrowTasks;
+    if (activeTab === "WEEK") return weekTasks;
+    if (activeTab === "COMPLETED") return completedTasks;
+    return tasks;
+  }, [activeTab, todayTasks, tomorrowTasks, weekTasks, completedTasks, tasks]);
 
   const filteredTasks = useMemo(() => {
     const q = taskSearch.toLowerCase().trim();
-    return tasks.filter((t) => {
-      const matchesOrigin = originFilter === "ALL" || t.origin === originFilter;
-      const matchesStatus =
-        statusTab === "ALL" ||
-        (statusTab === "PENDING" && t.status !== "COMPLETED") ||
-        (statusTab === "COMPLETED" && t.status === "COMPLETED");
-      const matchesSearch =
-        !q ||
+    if (!q) return scopedTasks;
+    return scopedTasks.filter((t) => {
+      return (
         t.title.toLowerCase().includes(q) ||
         (t.plot?.name && t.plot.name.toLowerCase().includes(q)) ||
         (t.cropCycle?.cropName && t.cropCycle.cropName.toLowerCase().includes(q)) ||
-        t.category.toLowerCase().includes(q);
-      return matchesOrigin && matchesStatus && matchesSearch;
+        t.category.toLowerCase().includes(q)
+      );
     });
-  }, [tasks, originFilter, statusTab, taskSearch]);
+  }, [scopedTasks, taskSearch]);
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* SHIFT PROGRESS BAR CARD */}
+    <section style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 110 }}>
+      {/* 1. COMPACT OPERATIONS HEADER */}
       <div
-        className="compact-card"
         style={{
-          padding: 24,
-          gap: 16,
-          borderRadius: "var(--radius-md)",
-          boxShadow: "var(--shadow-card)",
-          backgroundColor: "var(--canvas)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
-          <div>
-            <div className="eyebrow" style={{ color: "var(--green)" }}>
-              <span className="eyebrow-dot" style={{ backgroundColor: "var(--green)" }} />
-              <span>TODAY&apos;S OPERATIONS QUEUE</span>
-            </div>
-            <h2 className="section-title" style={{ fontSize: "22px", marginTop: 4 }}>
-              {completedCount} of {tasks.length} Operations Completed ({progressPercent}%)
-            </h2>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => setShowIncidentModal(!showIncidentModal)}
-              style={{ borderRadius: "var(--radius-pill)", padding: "8px 16px" }}
-            >
-              <Icons.AlertTriangle size={15} />
-              <span>{showIncidentModal ? "Close Form" : "Report Hazard / Incident"}</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={load}
-              style={{ borderRadius: "var(--radius-pill)", padding: "8px 16px" }}
-            >
-              <Icons.Activity size={15} />
-              <span>Refresh</span>
-            </button>
+        <div>
+          <h1
+            style={{
+              fontSize: "18px",
+              fontWeight: 750,
+              color: "var(--ink)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+              lineHeight: 1.2,
+            }}
+          >
+            {activeTab === "TODAY"
+              ? "Today's Tasks"
+              : activeTab === "TOMORROW"
+              ? "Tomorrow's Schedule"
+              : activeTab === "WEEK"
+              ? "7-Day Upcoming"
+              : activeTab === "COMPLETED"
+              ? "Completed Tasks"
+              : "All Operations"}
+          </h1>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: progressPercent === 100 ? "var(--green)" : "var(--amber)",
+              }}
+            />
+            <span className="muted" style={{ fontSize: "11.5px", fontWeight: 550 }}>
+              {todayCompletedCount} of {todayAllCount} done ({progressPercent}%)
+            </span>
           </div>
         </div>
 
-        <div
-          style={{
-            width: "100%",
-            height: 8,
-            backgroundColor: "var(--stone)",
-            borderRadius: "var(--radius-pill)",
-            overflow: "hidden",
-          }}
-        >
-          <div
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowSearch((v) => !v)}
             style={{
-              width: `${progressPercent}%`,
-              height: "100%",
-              backgroundColor: "var(--green)",
-              borderRadius: "var(--radius-pill)",
-              transition: "width 0.4s ease",
+              borderRadius: "9999px",
+              width: 34,
+              height: 34,
+              padding: 0,
+              display: "grid",
+              placeItems: "center",
+              backgroundColor: showSearch ? "var(--stone)" : "transparent",
             }}
-          />
+            title="Search tasks"
+          >
+            <Icons.Search size={13} />
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={load}
+            style={{
+              borderRadius: "9999px",
+              width: 34,
+              height: 34,
+              padding: 0,
+              display: "grid",
+              placeItems: "center",
+            }}
+            title="Refresh"
+          >
+            <Icons.Refresh size={13} />
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-green"
+            onClick={() => setShowCreateTaskModal(true)}
+            style={{
+              borderRadius: "9999px",
+              padding: "0 13px",
+              fontWeight: 700,
+              fontSize: "12px",
+              height: 34,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <Icons.Plus size={13} />
+            <span>Add Task</span>
+          </button>
         </div>
       </div>
 
-      {showIncidentModal && (
-        <div
-          style={{
-            background: "var(--canvas)",
-            border: "1px solid var(--line)",
-            padding: 20,
-            borderRadius: "var(--radius-md)",
-            boxShadow: "var(--shadow-lg)",
-          }}
-        >
-          <IncidentReportForm
-            onSuccess={() => {
-              setShowIncidentModal(false);
-              toast.success("Field incident logged with photos.");
-              void load();
-            }}
-            onCancel={() => setShowIncidentModal(false)}
-          />
-        </div>
-      )}
-
-      {/* FILTER TABS & SEARCH CONTROLS */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <div className="tabs-nav" style={{ padding: 4, gap: 4 }}>
-            {["ALL", "AGRONOMIST", "SYSTEM", "DAILY_MONITORING"].map((org) => (
-              <button
-                key={org}
-                type="button"
-                className={`tab-btn ${originFilter === org ? "active" : ""}`}
-                onClick={() => setOriginFilter(org)}
-              >
-                {org === "ALL"
-                  ? "All Operations"
-                  : org === "SYSTEM"
-                  ? "Milestones"
-                  : org === "DAILY_MONITORING"
-                  ? "Monitoring"
-                  : "Agronomist Tasks"}
-              </button>
-            ))}
-          </div>
-
-          {/* Quick status tabs: All / Pending / Done */}
-          <div style={{ display: "flex", gap: 4, background: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
-            <button
-              type="button"
-              onClick={() => setStatusTab("ALL")}
-              className="btn btn-sm"
-              style={{
-                background: statusTab === "ALL" ? "var(--canvas)" : "transparent",
-                color: statusTab === "ALL" ? "var(--ink)" : "var(--muted)",
-                fontWeight: statusTab === "ALL" ? 600 : 400,
-                boxShadow: statusTab === "ALL" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                fontSize: "12px",
-                padding: "3px 8px",
-              }}
-            >
-              All ({tasks.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusTab("PENDING")}
-              className="btn btn-sm"
-              style={{
-                background: statusTab === "PENDING" ? "var(--canvas)" : "transparent",
-                color: statusTab === "PENDING" ? "var(--amber)" : "var(--muted)",
-                fontWeight: statusTab === "PENDING" ? 600 : 400,
-                boxShadow: statusTab === "PENDING" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                fontSize: "12px",
-                padding: "3px 8px",
-              }}
-            >
-              Due ({pendingCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusTab("COMPLETED")}
-              className="btn btn-sm"
-              style={{
-                background: statusTab === "COMPLETED" ? "var(--canvas)" : "transparent",
-                color: statusTab === "COMPLETED" ? "var(--green)" : "var(--muted)",
-                fontWeight: statusTab === "COMPLETED" ? 600 : 400,
-                boxShadow: statusTab === "COMPLETED" ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-                fontSize: "12px",
-                padding: "3px 8px",
-              }}
-            >
-              Done ({completedCount})
-            </button>
-          </div>
-        </div>
-
-        {/* Task Search Bar */}
-        <div style={{ position: "relative" }}>
+      {/* Optional Search Bar */}
+      {showSearch && (
+        <div style={{ position: "relative", width: "100%" }}>
           <input
             type="text"
-            placeholder="Search operations by title, plot zone, crop, or category…"
+            placeholder="Search by title, plot, crop…"
             value={taskSearch}
             onChange={(e) => setTaskSearch(e.target.value)}
-            className="input-field"
-            style={{ paddingLeft: 32, fontSize: "13px", height: 36 }}
+            autoFocus
+            style={{
+              width: "100%",
+              height: "32px",
+              borderRadius: "9999px",
+              border: "1px solid var(--line)",
+              backgroundColor: "var(--card)",
+              padding: "0 28px 0 30px",
+              fontSize: "12px",
+              color: "var(--ink)",
+              outline: "none",
+            }}
           />
-          <div style={{ position: "absolute", left: 10, top: 10, color: "var(--muted)" }}>
-            <Icons.Search size={14} />
+          <div style={{ position: "absolute", left: 10, top: 9, color: "var(--muted)", pointerEvents: "none" }}>
+            <Icons.Search size={12} />
           </div>
           {taskSearch && (
             <button
@@ -260,165 +291,447 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
               onClick={() => setTaskSearch("")}
               style={{
                 position: "absolute",
-                right: 10,
-                top: 8,
+                right: 8,
+                top: 6,
                 background: "none",
                 border: "none",
                 color: "var(--muted)",
                 cursor: "pointer",
-                fontSize: "16px",
+                fontSize: "14px",
+                padding: "2px 4px",
               }}
             >
               &times;
             </button>
           )}
         </div>
+      )}
+
+      {/* 2. SINGLE HORIZONTAL SCHEDULE PILL RAIL (ONE ROW ONLY!) */}
+      <div
+        className="schedule-pill-rail"
+        style={{
+          display: "flex",
+          gap: 5,
+          overflowX: "auto",
+          padding: "2px 0",
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {[
+          { key: "TODAY", label: "Today", count: todayTasks.length },
+          { key: "TOMORROW", label: "Tomorrow", count: tomorrowTasks.length },
+          { key: "WEEK", label: "7 Days", count: weekTasks.length },
+          { key: "COMPLETED", label: "Done", count: completedTasks.length },
+          { key: "ALL", label: "All", count: tasks.length },
+        ].map((tab) => {
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key as any)}
+              style={{
+                padding: "5px 12px",
+                fontSize: "12px",
+                fontWeight: active ? 700 : 500,
+                borderRadius: "9999px",
+                border: active ? "1px solid var(--ink)" : "1px solid var(--line)",
+                backgroundColor: active ? "var(--ink)" : "var(--card)",
+                color: active ? "var(--canvas)" : "var(--muted)",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                transition: "all 0.12s ease",
+              }}
+            >
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10.5px",
+                  fontWeight: 700,
+                  opacity: active ? 0.9 : 0.6,
+                }}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {loading && <CardSkeleton />}
 
-      {/* TASK EXECUTION CARDS */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* 3. COMPACT, INFORMATION-DENSE TASK CARDS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filteredTasks.map((task) => {
           const isDone = task.status === "COMPLETED";
           const isStarted = task.status === "IN_PROGRESS";
           const isMonitoring = task.origin === "DAILY_MONITORING";
 
+          const taskDate = task.dueDate ? task.dueDate.slice(0, 10) : null;
+          const isOverdue = taskDate && taskDate < todayStr && !isDone;
+
           return (
             <article
               key={task.id}
-              className="compact-card"
+              className="officer-task-card"
               style={{
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "stretch",
-                gap: 14,
-                padding: "22px 24px",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-card)",
+                gap: 7,
+                padding: "11px 13px",
+                borderRadius: "14px",
+                border: isStarted
+                  ? "1.5px solid var(--green)"
+                  : isOverdue
+                  ? "1.5px solid var(--red)"
+                  : "1px solid var(--line)",
                 backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
-                opacity: isDone ? 0.85 : 1,
+                boxShadow: isStarted
+                  ? "0 2px 8px rgba(36, 84, 58, 0.08)"
+                  : "var(--shadow-sm)",
+                opacity: isDone ? 0.72 : 1,
+                transition: "all 0.15s ease",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "16px", fontWeight: 600, color: "var(--ink)" }}>{task.title}</span>
-                    <StatusBadge status={task.status} />
-                    <PriorityBadge priority={task.priority} />
-                  </div>
-                  <div className="muted" style={{ fontSize: "13px" }}>
-                    {task.farm.name} {task.plot ? `&bull; Plot: ${task.plot.name}` : ""} {task.cropCycle ? `&bull; 🌱 ${task.cropCycle.cropName}` : ""}
-                  </div>
+              {/* Row 1: Plot/Crop Badge on Left, Status/Priority on Right */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "var(--green-dark)",
+                    backgroundColor: "var(--green-light)",
+                    padding: "2px 7px",
+                    borderRadius: "6px",
+                    maxWidth: "68%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {task.plot ? task.plot.name.replace(/^Plot:\s*/i, "") : "Main Field"}
+                  {task.cropCycle ? ` • ${task.cropCycle.cropName.split(" ")[0]}` : ""}
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  {task.priority === "URGENT" && !isDone && (
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 750,
+                        textTransform: "uppercase",
+                        color: "var(--red)",
+                        backgroundColor: "var(--red-light)",
+                        padding: "1px 5px",
+                        borderRadius: "9999px",
+                      }}
+                    >
+                      Urgent
+                    </span>
+                  )}
+                  {isStarted ? (
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        color: "var(--green-dark)",
+                        backgroundColor: "rgba(36, 84, 58, 0.12)",
+                        padding: "2px 7px",
+                        borderRadius: "9999px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <span className="telemetry-live-dot" style={{ width: 5, height: 5, backgroundColor: "var(--green)" }} />
+                      In Progress
+                    </span>
+                  ) : isDone ? (
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 650,
+                        color: "var(--muted)",
+                        backgroundColor: "rgba(0,0,0,0.04)",
+                        padding: "2px 6px",
+                        borderRadius: "9999px",
+                      }}
+                    >
+                      ✓ Done
+                    </span>
+                  ) : isOverdue ? (
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        color: "var(--red)",
+                        backgroundColor: "var(--red-light)",
+                        padding: "2px 6px",
+                        borderRadius: "9999px",
+                      }}
+                    >
+                      Overdue
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 600,
+                        color: "var(--muted)",
+                        padding: "1px 4px",
+                      }}
+                    >
+                      {taskDate === todayStr ? "Due Today" : taskDate ? taskDate.slice(5) : ""}
+                    </span>
+                  )}
                 </div>
               </div>
 
+              {/* Row 2: Title */}
+              <h3
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "var(--ink)",
+                  margin: 0,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {task.title}
+              </h3>
+
+              {/* Row 3: Description (Clean, max 2 lines) */}
               {task.description && (
-                <p style={{ margin: 0, fontSize: "14px", color: "var(--ink)", lineHeight: 1.5 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "12px",
+                    color: "var(--ink-soft)",
+                    lineHeight: 1.4,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
                   {task.description}
                 </p>
               )}
 
+              {/* Row 4: Compact Guidance Disclosure */}
               {task.instructions && (
-                <div
-                  className="callout"
-                  style={{
-                    padding: "12px 16px",
-                    fontSize: "13px",
-                    borderRadius: "var(--radius-sm)",
-                  }}
-                >
-                  <span className="mono-label" style={{ color: "var(--green-dark)", fontWeight: 600 }}>
-                    Operational Guidance:
-                  </span>
-                  <span style={{ color: "var(--ink)", marginTop: 2, display: "block" }}>{task.instructions}</span>
-                </div>
+                <details style={{ fontSize: "11.5px" }}>
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      color: "var(--green-dark)",
+                      userSelect: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <span>💡 View Guidance</span>
+                  </summary>
+                  <div
+                    style={{
+                      marginTop: 4,
+                      padding: "6px 10px",
+                      borderRadius: "8px",
+                      backgroundColor: "var(--stone)",
+                      color: "var(--ink)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {task.instructions}
+                  </div>
+                </details>
               )}
 
+              {/* Row 5: Action Button Row */}
               <div
                 style={{
                   display: "flex",
                   justifyContent: "flex-end",
-                  gap: 10,
-                  marginTop: 6,
-                  borderTop: "1px solid var(--line)",
-                  paddingTop: 14,
-                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 1,
                 }}
               >
-                {!isDone && !isStarted && !isMonitoring && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => start(task.id)}
-                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
+                {isDone ? (
+                  <span
+                    style={{
+                      fontSize: "11.5px",
+                      fontWeight: 650,
+                      color: "var(--green)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
                   >
-                    <Icons.Zap size={14} />
-                    <span>Start Activity</span>
-                  </button>
-                )}
-                {!isDone && isMonitoring && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setMonitoringTaskId(monitoringTaskId === task.id ? null : task.id)}
-                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
-                  >
-                    <Icons.Camera size={14} />
-                    <span>{monitoringTaskId === task.id ? "Close Log" : "Capture Monitoring Photo"}</span>
-                  </button>
-                )}
-                {!isDone && (
+                    <Icons.CheckCircle size={13} /> Completed
+                  </span>
+                ) : isMonitoring ? (
                   <button
                     type="button"
                     className="btn btn-green"
-                    onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
-                    style={{ borderRadius: "var(--radius-pill)", padding: "7px 16px" }}
+                    onClick={() => setMonitoringTaskId(task.id)}
+                    style={{
+                      borderRadius: "8px",
+                      padding: "0 14px",
+                      height: 30,
+                      fontWeight: 700,
+                      fontSize: "12px",
+                    }}
+                  >
+                    Log Crop Signal
+                  </button>
+                ) : isStarted ? (
+                  <button
+                    type="button"
+                    className="btn btn-green"
+                    onClick={() => setCompletionId(task.id)}
+                    style={{
+                      borderRadius: "9999px",
+                      padding: "0 16px",
+                      height: 32,
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      boxShadow: "0 2px 6px rgba(36, 84, 58, 0.25)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
                   >
                     <Icons.CheckCircle size={14} />
                     <span>Complete Task</span>
                   </button>
+                ) : (
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => void start(task.id)}
+                      style={{
+                        borderRadius: "8px",
+                        padding: "0 12px",
+                        height: 28,
+                        fontWeight: 600,
+                        fontSize: "11.5px",
+                      }}
+                    >
+                      Start
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-green"
+                      onClick={() => setCompletionId(task.id)}
+                      style={{
+                        borderRadius: "8px",
+                        padding: "0 14px",
+                        height: 28,
+                        fontWeight: 700,
+                        fontSize: "11.5px",
+                        boxShadow: "0 1px 4px rgba(36, 84, 58, 0.2)",
+                      }}
+                    >
+                      Complete
+                    </button>
+                  </div>
                 )}
               </div>
-
-              {monitoringTaskId === task.id && (
-                <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
-                  <FieldReports
-                    initialFarmId={task.farm.id}
-                    initialPlotId={task.plot?.id}
-                    initialCropCycleId={task.cropCycle?.id}
-                    initialTab="monitoring"
-                    hideTabs={true}
-                    onSuccess={() => { setMonitoringTaskId(null); void load(); }}
-                    onCancel={() => setMonitoringTaskId(null)}
-                  />
-                </div>
-              )}
-
-              {completionId === task.id && (
-                <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
-                  <TaskCompletionForm
-                    taskId={task.id}
-                    farmId={task.farm.id}
-                    taskTitle={task.title}
-                    milestoneName={task.milestone?.name}
-                    onComplete={() => { setCompletionId(null); void load(); }}
-                    onCancel={() => setCompletionId(null)}
-                  />
-                </div>
-              )}
             </article>
           );
         })}
 
-        {!filteredTasks.length && !loading && (
+        {!loading && filteredTasks.length === 0 && (
           <EmptyState
-            icon={<Icons.CheckCircle size={24} />}
-            title="All operations finished"
-            description="All field activities and monitoring checks for today have been completed."
+            title={activeTab === "TODAY" ? "No Tasks Due Today" : "No Operations Found"}
+            description={
+              activeTab === "TODAY"
+                ? "You are completely up to date! Check tomorrow's schedule or tap '+ Add Task' if work is needed."
+                : "No tasks match the active filter or search."
+            }
           />
         )}
       </div>
+
+      {/* Completion Modal */}
+      {completionId && (() => {
+        const t = tasks.find((item) => item.id === completionId);
+        if (!t) return null;
+        return (
+          <div className="modal-overlay" onClick={() => setCompletionId(null)}>
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 540, borderRadius: "16px", padding: 22 }}
+            >
+              <TaskCompletionForm
+                taskId={t.id}
+                farmId={t.farm.id}
+                taskTitle={t.title}
+                milestoneName={t.milestone?.name}
+                onComplete={() => {
+                  setCompletionId(null);
+                  toast.success("Task execution confirmed.");
+                  void load();
+                }}
+                onCancel={() => setCompletionId(null)}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Monitoring Modal */}
+      {monitoringTaskId && (() => {
+        const t = tasks.find((item) => item.id === monitoringTaskId);
+        if (!t) return null;
+        return (
+          <div className="modal-overlay" onClick={() => setMonitoringTaskId(null)}>
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 540, borderRadius: "16px", padding: 22 }}
+            >
+              <FieldReports
+                initialFarmId={t.farm.id}
+                initialPlotId={t.plot?.id}
+                initialCropCycleId={t.cropCycle?.id}
+                initialTab="monitoring"
+                onSuccess={() => {
+                  setMonitoringTaskId(null);
+                  toast.success("Crop observations recorded.");
+                  void load();
+                }}
+                onCancel={() => setMonitoringTaskId(null)}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Create Task Modal */}
+      {showCreateTaskModal && (
+        <CreateTaskModal
+          isOpen={showCreateTaskModal}
+          onClose={() => setShowCreateTaskModal(false)}
+          onSuccess={() => {
+            setShowCreateTaskModal(false);
+            toast.success("Operational task created.");
+            void load();
+          }}
+        />
+      )}
     </section>
   );
 }

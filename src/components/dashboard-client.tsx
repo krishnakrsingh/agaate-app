@@ -284,10 +284,10 @@ export function DashboardClient({
     }
   };
 
-  const viewSelfie = async (key: string, officer: string) => {
+  const viewSelfie = async (attendanceId: string, officer: string) => {
     setLightboxSelfie({ url: null, officer, loading: true });
     try {
-      const res = await fetch(`/api/attendance/selfie?key=${encodeURIComponent(key)}`);
+      const res = await fetch(`/api/attendance/selfie?attendanceId=${encodeURIComponent(attendanceId)}&slot=start`);
       if (!res.ok) throw new Error("Could not load selfie photo.");
       const data = await res.json();
       setLightboxSelfie({ url: data.url, officer, loading: false });
@@ -1103,12 +1103,12 @@ export function DashboardClient({
                         </div>
 
                         <div style={{ display: "flex", gap: 8 }}>
-                          {item.startSelfieKey && (
+                          {item.startSelfieKey && item.attendanceId && (
                             <button
                               type="button"
                               className="btn btn-sm btn-secondary"
                               style={{ padding: "4px 10px", fontSize: 12, borderRadius: "var(--radius-pill)" }}
-                              onClick={() => viewSelfie(item.startSelfieKey!, item.officerName)}
+                              onClick={() => viewSelfie(item.attendanceId!, item.officerName)}
                               title="Inspect Selfie Proof"
                             >
                               <Icons.Camera size={13} />

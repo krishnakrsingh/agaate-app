@@ -225,7 +225,7 @@ export function TaskBoard() {
                   <PriorityBadge priority={t.priority} />
                 </div>
                 <div className="muted" style={{ fontSize: "13px" }}>
-                  {t.farm.name} {t.plot ? `&bull; Plot: ${t.plot.name}` : ""} {t.cropCycle ? `&bull; 🌱 ${t.cropCycle.cropName}` : ""}
+                  {t.farm.name} {t.plot ? `• Plot: ${t.plot.name}` : ""} {t.cropCycle ? `• 🌱 ${t.cropCycle.cropName}` : ""}
                 </div>
               </div>
 

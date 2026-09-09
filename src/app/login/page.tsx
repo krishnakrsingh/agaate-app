@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { LoginForm } from "@/components/login-form";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandLogo } from "@/components/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +27,8 @@ export default async function LoginPage() {
       {/* Left Feature & Product Panel */}
       <section className="auth-panel">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
-            <div className="app-brand-mark">
-              <Icons.Sprout size={16} />
-            </div>
-            <span style={{ fontWeight: 650, fontSize: "14px", letterSpacing: "0.08em", color: "var(--ink)" }}>
-              AGAATE
-            </span>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
+            <BrandLogo height={42} priority />
           </div>
 
           <div style={{ maxWidth: 480 }}>

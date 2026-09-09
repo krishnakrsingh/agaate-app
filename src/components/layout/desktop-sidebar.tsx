@@ -7,6 +7,7 @@ import { Icons } from "@/components/icons";
 import { FarmSwitcher } from "@/components/nav/farm-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/nav/config";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface NavLinkItem {
   href: string;
@@ -199,29 +200,25 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else if (role === "FARM_OFFICER") {
     sections.push(
       {
-        title: "Duty & Execution",
+        title: "Duty & Operations",
         items: [
           {
             href: "/officer/day",
-            label: "My Day Desk",
+            label: "Daily Tasks",
             icon: "Sun",
             badge: "Live",
             isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
           },
           {
-            href: "/officer/quick-log",
-            label: "Quick Event Log",
-            icon: "Zap",
-          },
-          {
-            href: "/officer/crew",
-            label: "Crew Muster",
-            icon: "Users",
+            href: "/officer/reports",
+            label: "Incidents & Signals",
+            icon: "AlertTriangle",
+            isActive: (p) => p.startsWith("/officer/reports"),
           },
         ],
       },
       {
-        title: "Field Tracking",
+        title: "Field Tracking & Logs",
         items: [
           {
             href: "/officer/harvest",
@@ -229,14 +226,20 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             icon: "Truck",
           },
           {
-            href: "/tasks",
-            label: "Assigned Tasks",
-            icon: "ClipboardList",
+            href: "/officer/crew",
+            label: "Crew Muster",
+            icon: "Users",
           },
           {
-            href: "/officer/reports",
-            label: "Visual Field Snaps",
-            icon: "Camera",
+            href: "/officer/quick-log",
+            label: "Quick Event Log",
+            icon: "Zap",
+          },
+          {
+            href: "/officer/profile",
+            label: "Officer Profile",
+            icon: "User",
+            isActive: (p) => p.startsWith("/officer/profile"),
           },
         ],
       }
@@ -286,13 +289,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       <div className="sidebar-header">
         <div className="sidebar-brand-row">
           <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
-            <span className="sidebar-brand-mark">
-              <Icons.Sprout size={16} />
-            </span>
-            <div className="app-brand-text">
-              <span className="sidebar-brand-word">AGAATE</span>
-              <span className="sidebar-brand-tag">OPS CONSOLE</span>
-            </div>
+            <BrandLogo height={27} priority />
+            <span className="sidebar-brand-tag">OPS</span>
           </Link>
           <span className="sidebar-role-badge">
             {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}

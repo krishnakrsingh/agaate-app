@@ -6,6 +6,16 @@ import { ToastProvider } from "@/components/ui/toast";
 export const metadata: Metadata = {
   title: "Agaate Farm Operations",
   description: "Farm operations and agronomy management platform",
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

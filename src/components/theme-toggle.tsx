@@ -32,7 +32,7 @@ export function ThemeToggle({ variant = "button" }: { variant?: "button" | "menu
         style={{
           width: 36,
           height: 36,
-          borderRadius: "var(--radius-xs)",
+          borderRadius: "9999px",
           background: "var(--canvas)",
           border: "1px solid var(--line)",
           display: "grid",
@@ -78,7 +78,7 @@ export function ThemeToggle({ variant = "button" }: { variant?: "button" | "menu
       style={{
         width: 36,
         height: 36,
-        borderRadius: "var(--radius-xs)",
+        borderRadius: "9999px",
         background: "var(--canvas)",
         color: "var(--ink)",
         border: "1px solid var(--line)",

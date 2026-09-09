@@ -208,65 +208,162 @@ export function TaskCompletionForm({
         </div>
       </div>
 
-      {/* Labour Tracking */}
-      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
-        <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icons.Users size={13} color="var(--green)" />
-          <span>Labour Tracking (Optional)</span>
-        </div>
-        <div className="two-column">
-          <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: "12px" }}>Number of Labourers</label>
-            <input
-              name="labourers"
-              type="number"
-              min="1"
-              step="1"
-              value={labourers}
-              onChange={(e) => setLabourers(e.target.value ? Number(e.target.value) : "")}
-              placeholder="e.g., 4"
-            />
+      {/* Labour Tracking with Tactile Steppers */}
+      <div style={{ backgroundColor: "var(--canvas)", border: "1.5px solid var(--line)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Icons.Users size={14} style={{ color: "var(--green)" }} />
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>Labour Tracking (Optional)</span>
           </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: "12px" }}>Hours Worked per Person</label>
-            <input
-              name="hours"
-              type="number"
-              min="0.1"
-              max="24"
-              step="0.1"
-              value={hours}
-              onChange={(e) => setHours(e.target.value ? Number(e.target.value) : "")}
-              placeholder="e.g., 5.5"
-            />
-          </div>
+          {calculatedLabourHours && (
+            <span className="badge badge-green" style={{ fontFamily: "var(--font-mono)", fontSize: "11px" }}>
+              {calculatedLabourHours} Man-Hours
+            </span>
+          )}
         </div>
 
-        {calculatedLabourHours && (
-          <div className="data" style={{ fontSize: "12px", color: "var(--green)", fontWeight: 550 }}>
-            Total Labour Utilization: {calculatedLabourHours} Man-Hours
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: "12px", fontWeight: 650 }}>Number of Labourers</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setLabourers(Math.max(1, (Number(labourers) || 1) - 1))}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                name="labourers"
+                type="number"
+                min="1"
+                step="1"
+                value={labourers}
+                onChange={(e) => setLabourers(e.target.value ? Number(e.target.value) : "")}
+                placeholder="0"
+                className="input-field"
+                style={{ textAlign: "center", fontWeight: 700, fontSize: "15px", height: 36 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setLabourers((Number(labourers) || 0) + 1)}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                +
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+              {[2, 4, 8, 12].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setLabourers(preset)}
+                  style={{
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: "var(--radius-xs)",
+                    border: labourers === preset ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
+                    background: labourers === preset ? "var(--green-light)" : "var(--stone)",
+                    fontWeight: labourers === preset ? 700 : 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: "12px", fontWeight: 650 }}>Hours Worked per Person</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setHours(Math.max(0.5, (Number(hours) || 1) - 0.5))}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                name="hours"
+                type="number"
+                min="0.1"
+                max="24"
+                step="0.5"
+                value={hours}
+                onChange={(e) => setHours(e.target.value ? Number(e.target.value) : "")}
+                placeholder="0"
+                className="input-field"
+                style={{ textAlign: "center", fontWeight: 700, fontSize: "15px", height: 36 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setHours((Number(hours) || 0) + 0.5)}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                +
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+              {[1, 2, 4, 8].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setHours(preset)}
+                  style={{
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: "var(--radius-xs)",
+                    border: hours === preset ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
+                    background: hours === preset ? "var(--green-light)" : "var(--stone)",
+                    fontWeight: hours === preset ? 700 : 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  {preset}h
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Evidence Photos */}
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Photo Evidence (Optional)</label>
-        <input
-          type="file"
-          name="evidence"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          onChange={handlePhotoChange}
-        />
+        <label style={{ fontSize: "12px", fontWeight: 650 }}>Photo Evidence (Field Rear Camera)</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <label
+            className="btn btn-secondary btn-sm"
+            style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 14px" }}
+          >
+            <Icons.Camera size={16} style={{ color: "var(--green)" }} />
+            <span>Snap Field Photo</span>
+            <input
+              type="file"
+              name="evidence"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              multiple
+              onChange={handlePhotoChange}
+              style={{ display: "none" }}
+            />
+          </label>
+          <span className="muted" style={{ fontSize: "12px" }}>
+            {photoPreviews.length ? `${photoPreviews.length} photo(s) attached` : "Snaps upload directly to agronomy audit trail"}
+          </span>
+        </div>
         {photoPreviews.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             {photoPreviews.map((url, i) => (
               <img
                 key={i}
                 src={url}
                 alt={`Evidence preview ${i + 1}`}
-                style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }}
+                style={{ width: 64, height: 64, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "2px solid var(--green)" }}
               />
             ))}
           </div>

@@ -24,9 +24,9 @@ const onboardSchema = z.object({
   // Client Owner Credentials
   ownerName: z.string().min(2).max(100),
   ownerPhone: z.string().max(30).optional().nullable(),
-  ownerDob: z.string().optional().nullable(),
-  ownerEmail: z.string().optional().nullable(),
-  ownerPassword: z.string().min(6).max(128),
+  ownerDob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be YYYY-MM-DD.").optional().nullable(),
+  ownerEmail: z.string().email().max(254).optional().nullable(),
+  ownerPassword: z.string().min(12).max(128),
 
   // Assigned Central Agronomist
   agronomistId: z.string().optional().nullable(),
@@ -61,6 +61,8 @@ const onboardSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN"]);
 
@@ -70,7 +72,22 @@ export async function POST(request: NextRequest) {
     const email = (input.ownerEmail && input.ownerEmail.trim())
       ? input.ownerEmail.trim().toLowerCase()
       : `${(input.ownerPhone || "client").replace(/[^\d]/g, "")}@client.agaate.ag`;
-    const phone = input.ownerPhone ? input.ownerPhone.replace(/[^\d+]/g, "") : null;
+    const rawPhone = input.ownerPhone ? input.ownerPhone.replace(/[^\d+]/g, "") : null;
+    const digits = rawPhone?.replace(/[^\d]/g, "") ?? "";
+    const phone = rawPhone && digits.length >= 10 && digits.length <= 15 ? rawPhone : null;
+    if (!input.ownerEmail && !phone) {
+      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
+    let ownerDob: Date | null = null;
+    let clientDob: Date | null = null;
+    if (input.ownerDob) {
+      const parsed = new Date(`${input.ownerDob}T00:00:00Z`);
+      if (isNaN(parsed.getTime()) || parsed > new Date()) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      }
+      ownerDob = parsed;
+      clientDob = parsed;
+    }
     const passwordHash = await bcrypt.hash(input.ownerPassword, 12);
 
     const result = await prisma.$transaction(async (tx) => {
@@ -90,12 +107,14 @@ export async function POST(request: NextRequest) {
             name: input.ownerName,
             email,
             phone,
-            dateOfBirth: input.ownerDob ? new Date(input.ownerDob) : null,
+            dateOfBirth: ownerDob,
             passwordHash,
             role: "FARM_ADMIN",
             active: true,
           },
         });
+      } else if (owner.role !== "FARM_ADMIN" || !owner.active) {
+        throw new Error("A user account with this mobile number or email already exists.");
       }
 
       // 2. Create the Farm (Activated directly as requested)
@@ -112,8 +131,8 @@ export async function POST(request: NextRequest) {
           waterSource: input.waterSource || "Borewell / General",
           soilType: input.soilType || "Red Loam",
           boundaryGeoJson: input.boundaryGeoJson || null,
-          clientPhone: input.ownerPhone || null,
-          clientDob: input.ownerDob ? new Date(input.ownerDob) : null,
+          clientPhone: phone,
+          clientDob,
           geofenceRadiusMeters: input.geofenceRadiusMeters,
           status: "ACTIVE",
         },
@@ -133,8 +152,11 @@ export async function POST(request: NextRequest) {
       if (input.agronomistId) {
         assignedAgronomist = await tx.user.findUnique({
           where: { id: input.agronomistId },
-          select: { id: true, name: true, email: true, role: true },
+          select: { id: true, name: true, email: true, role: true, active: true },
         });
+        if (assignedAgronomist && (assignedAgronomist.role !== "AGRONOMIST" || !assignedAgronomist.active)) {
+          throw new Error("Validation failed");
+        }
 
         if (assignedAgronomist) {
           await tx.farmAccess.create({
@@ -208,7 +230,6 @@ export async function POST(request: NextRequest) {
         clientEmail: result.owner.email,
         clientPhone: phone,
         loginIdentifier: phone || result.owner.email,
-        initialPassword: input.ownerPassword,
         loginUrl: "/login",
       },
     }, { status: 201 });
