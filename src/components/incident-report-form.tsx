@@ -219,9 +219,8 @@ export function IncidentReportForm({
         gap: 14,
         padding: "16px 18px",
         borderRadius: "16px",
-        border: "1px solid var(--line)",
+        border: "1px solid var(--card)",
         backgroundColor: "var(--card)",
-        boxShadow: "var(--shadow-sm)",
       }}
     >
       {/* 1. COMPACT HEADER */}
@@ -282,8 +281,8 @@ export function IncidentReportForm({
       <div
         style={{
           padding: "12px",
-          backgroundColor: "var(--canvas)",
-          border: "1px solid var(--line)",
+          backgroundColor: "var(--stone)",
+          border: "1px solid var(--stone)",
           borderRadius: "12px",
         }}
       >
@@ -385,8 +384,8 @@ export function IncidentReportForm({
           flexDirection: "column",
           gap: 8,
           padding: "12px",
-          backgroundColor: "var(--canvas)",
-          border: "1px solid var(--line)",
+          backgroundColor: "var(--stone)",
+          border: "1px solid var(--stone)",
           borderRadius: "12px",
         }}
       >
@@ -401,6 +400,7 @@ export function IncidentReportForm({
                 fontWeight: 700,
                 color: "var(--green-dark)",
                 backgroundColor: "var(--green-light)",
+                border: "1px solid var(--green-light)",
                 padding: "2px 8px",
                 borderRadius: "9999px",
               }}
@@ -460,32 +460,19 @@ export function IncidentReportForm({
               <button
                 type="button"
                 onClick={() => setAffectsCrop(true)}
-                style={{
-                  padding: "3px 9px",
-                  fontSize: "11px",
-                  fontWeight: affectsCrop ? 700 : 500,
-                  borderRadius: "9999px",
-                  border: affectsCrop ? "1px solid var(--green)" : "1px solid var(--line)",
-                  backgroundColor: affectsCrop ? "var(--green-light)" : "var(--card)",
-                  color: affectsCrop ? "var(--green-dark)" : "var(--muted)",
-                  cursor: "pointer",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={affectsCrop}
+                style={{ padding: "3px 9px", fontSize: "11px" }}
               >
                 Crop Affected
               </button>
               <button
                 type="button"
                 onClick={() => setAffectsCrop(false)}
-                style={{
-                  padding: "3px 9px",
-                  fontSize: "11px",
-                  fontWeight: !affectsCrop ? 700 : 500,
-                  borderRadius: "9999px",
-                  border: !affectsCrop ? "1px solid var(--ink)" : "1px solid var(--line)",
-                  backgroundColor: !affectsCrop ? "var(--stone)" : "var(--card)",
-                  color: !affectsCrop ? "var(--ink)" : "var(--muted)",
-                  cursor: "pointer",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={!affectsCrop}
+                data-tone="neutral"
+                style={{ padding: "3px 9px", fontSize: "11px" }}
               >
                 Infrastructure Only
               </button>
@@ -513,32 +500,20 @@ export function IncidentReportForm({
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
           {[
-            { key: "LOW", label: "Low", icon: "🟢", color: "var(--green)", bg: "var(--green-light)" },
-            { key: "MEDIUM", label: "Medium", icon: "🟡", color: "var(--ink)", bg: "var(--stone)" },
-            { key: "HIGH", label: "High", icon: "🟠", color: "var(--amber)", bg: "var(--amber-light)" },
-            { key: "CRITICAL", label: "Critical", icon: "🔴", color: "var(--red)", bg: "var(--red-light)" },
+            { key: "LOW", label: "Low", icon: "🟢", tone: undefined },
+            { key: "MEDIUM", label: "Medium", icon: "🟡", tone: "neutral" },
+            { key: "HIGH", label: "High", icon: "🟠", tone: "amber" },
+            { key: "CRITICAL", label: "Critical", icon: "🔴", tone: "red" },
           ].map((s) => {
-            const active = severity === s.key;
             return (
               <button
                 key={s.key}
                 type="button"
                 onClick={() => setSeverity(s.key as any)}
-                style={{
-                  height: 36,
-                  borderRadius: "9999px",
-                  fontSize: "12px",
-                  fontWeight: active ? 750 : 500,
-                  border: active ? `1.5px solid ${s.color}` : "1px solid var(--line)",
-                  backgroundColor: active ? s.bg : "var(--canvas)",
-                  color: active ? (s.key === "CRITICAL" ? "var(--red)" : "var(--ink)") : "var(--muted)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                  cursor: "pointer",
-                  transition: "all 0.12s ease",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={severity === s.key}
+                data-tone={s.tone}
+                style={{ height: 36, fontSize: "12px" }}
               >
                 <span>{s.icon}</span>
                 <span>{s.label}</span>
@@ -568,8 +543,8 @@ export function IncidentReportForm({
             marginTop: 6,
             padding: "10px 12px",
             borderRadius: "10px",
-            backgroundColor: "var(--canvas)",
-            border: "1px solid var(--line)",
+            backgroundColor: "var(--stone)",
+            border: "1px solid var(--stone)",
             display: "flex",
             flexDirection: "column",
             gap: 8,
@@ -683,7 +658,6 @@ export function IncidentReportForm({
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
             }}
           >
             <Icons.AlertTriangle size={15} />

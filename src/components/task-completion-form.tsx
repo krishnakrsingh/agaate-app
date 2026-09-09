@@ -137,7 +137,7 @@ export function TaskCompletionForm({
         padding: 20,
         backgroundColor: "var(--stone)",
         borderRadius: "var(--radius-sm)",
-        border: "1px solid var(--line)",
+        border: "1px solid var(--stone)",
         display: "grid",
         gap: 16,
       }}
@@ -196,7 +196,7 @@ export function TaskCompletionForm({
       )}
 
       {/* Materials Used */}
-      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
         <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Layers size={13} color="var(--green)" />
           <span>Material Utilization (Optional)</span>
@@ -218,7 +218,7 @@ export function TaskCompletionForm({
       </div>
 
       {/* Labour Tracking with Tactile Steppers */}
-      <div style={{ backgroundColor: "var(--canvas)", border: "1.5px solid var(--line)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 12 }}>
+      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Icons.Users size={14} style={{ color: "var(--green)" }} />
@@ -269,15 +269,8 @@ export function TaskCompletionForm({
                   key={preset}
                   type="button"
                   onClick={() => setLabourers(preset)}
-                  style={{
-                    fontSize: "11px",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    border: labourers === preset ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
-                    background: labourers === preset ? "var(--green-light)" : "var(--stone)",
-                    fontWeight: labourers === preset ? 700 : 500,
-                    cursor: "pointer",
-                  }}
+                  className="select-chip"
+                  data-selected={labourers === preset}
                 >
                   {preset}
                 </button>
@@ -323,15 +316,8 @@ export function TaskCompletionForm({
                   key={preset}
                   type="button"
                   onClick={() => setHours(preset)}
-                  style={{
-                    fontSize: "11px",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    border: hours === preset ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
-                    background: hours === preset ? "var(--green-light)" : "var(--stone)",
-                    fontWeight: hours === preset ? 700 : 500,
-                    cursor: "pointer",
-                  }}
+                  className="select-chip"
+                  data-selected={hours === preset}
                 >
                   {preset}h
                 </button>

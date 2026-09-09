@@ -309,7 +309,6 @@ export function PhotoUploadZone({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 0 12px rgba(239, 68, 68, 0.6)",
               }}
               onClick={captureCameraFrame}
               disabled={capturing}

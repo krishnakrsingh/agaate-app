@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const digits = rawPhone?.replace(/[^\d]/g, "") ?? "";
     const normalizedPhone = rawPhone && digits.length >= 10 && digits.length <= 15 ? rawPhone : null;
     if (!input.email && !normalizedPhone) {
-      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      return NextResponse.json({ error: "Either mobile number or email address is required." }, { status: 422 });
     }
     const normalizedEmail = (input.email && input.email.trim())
       ? input.email.trim().toLowerCase()

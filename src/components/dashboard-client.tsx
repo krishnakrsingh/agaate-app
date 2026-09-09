@@ -793,13 +793,8 @@ export function DashboardClient({
                           display: "flex",
                           gap: 10,
                           padding: "4px 12px 4px 4px",
-                          borderRadius: "14px",
-                          border: inc.severity === "CRITICAL" ? "1.5px solid var(--red-light, #fee2e2)" : "1px solid var(--line)",
-                          backgroundColor: "var(--canvas)",
-                          boxShadow: "var(--shadow-sm)",
                           alignItems: "center",
                           cursor: "pointer",
-                          transition: "all 0.12s ease",
                         }}
                         onClick={() => setSelectedIncident(inc)}
                       >
@@ -976,13 +971,8 @@ export function DashboardClient({
                           display: "flex",
                           gap: 10,
                           padding: "4px 12px 4px 4px",
-                          borderRadius: "14px",
-                          border: "1px solid var(--line)",
-                          backgroundColor: "var(--canvas)",
-                          boxShadow: "var(--shadow-sm)",
                           alignItems: "center",
                           textDecoration: "none",
-                          transition: "all 0.12s ease",
                         }}
                       >
                         <div
@@ -1489,7 +1479,7 @@ export function DashboardClient({
                       justifyContent: "space-between",
                       padding: 18,
                       borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--line)",
+                      border: "1px solid var(--canvas)",
                       backgroundColor: "var(--canvas)",
                       gap: 14,
                     }}
@@ -1595,7 +1585,7 @@ export function DashboardClient({
                 padding: "10px 16px",
                 backgroundColor: "var(--stone)",
                 borderRadius: "var(--radius-md)",
-                border: "1px solid var(--line)",
+                border: "1px solid var(--stone)",
                 fontSize: 12,
                 color: "var(--muted)",
               }}
@@ -1678,12 +1668,12 @@ export function DashboardClient({
               style={{
                 width: "100%",
                 height: 300,
-                backgroundColor: "var(--line)",
+                backgroundColor: "var(--surface-strong)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "hidden",
-                border: "1px solid var(--line)",
+                border: "1px solid var(--surface-strong)",
               }}
             >
               {lightboxSelfie.loading ? (
@@ -1802,8 +1792,8 @@ export function DashboardClient({
                   gridTemplateColumns: "1fr 1fr",
                   gap: 10,
                   padding: 12,
-                  backgroundColor: "var(--canvas)",
-                  border: "1px solid var(--line)",
+                  backgroundColor: "var(--stone)",
+                  border: "1px solid var(--stone)",
                 }}
               >
                 <div>

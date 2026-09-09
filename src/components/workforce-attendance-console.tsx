@@ -606,7 +606,7 @@ export function WorkforceAttendanceConsole({
                       gap: 12,
                       padding: "10px 14px",
                       backgroundColor: "var(--canvas)",
-                      border: "1px solid var(--line)",
+                      border: "1px solid var(--canvas)",
                       fontSize: 13,
                     }}
                   >
@@ -697,8 +697,8 @@ export function WorkforceAttendanceConsole({
                       flexWrap: "wrap",
                       gap: 12,
                       padding: "12px 16px",
-                      backgroundColor: "rgba(217, 119, 6, 0.08)",
-                      border: "1px solid var(--amber)",
+                      backgroundColor: "var(--amber-light)",
+                      border: "1px solid var(--amber-light)",
                     }}
                   >
                     <div style={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: "70%" }}>
@@ -790,12 +790,12 @@ export function WorkforceAttendanceConsole({
               style={{
                 width: "100%",
                 height: 320,
-                backgroundColor: "var(--line)",
+                backgroundColor: "var(--surface-strong)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "hidden",
-                border: "1px solid var(--line)",
+                border: "1px solid var(--surface-strong)",
               }}
             >
               {viewingSelfie.loading ? (

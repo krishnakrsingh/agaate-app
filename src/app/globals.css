@@ -73,6 +73,8 @@
   --red-light: #f8eae7;
   --blue: #315f86;
   --blue-light: #eaf0f5;
+  --green-ink: #24543a;
+  --green-tint: #eaf1ea;
   --focus: #315f86;
 
   /* --- Legacy alias layer (compat; keep in sync) --- */
@@ -765,11 +767,11 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .data-table tr:last-child td { border-bottom: none; }
 .data-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 22px; background-color: var(--surface-card);
-  border: 1px solid var(--hairline); border-radius: var(--radius-xl); margin-bottom: 12px;
-  text-decoration: none; color: inherit; transition: box-shadow 0.12s ease;
+  padding: 14px 4px; background: transparent;
+  border: none; border-bottom: 1px solid var(--hairline); border-radius: 0; margin-bottom: 0;
+  text-decoration: none; color: inherit;
 }
-.data-row:hover { box-shadow: var(--shadow-card); }
+.data-row:hover { background-color: var(--canvas-soft); }
 @media (max-width: 640px) { .data-row { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px 16px; } }
 
 /* voice-row: 32px circular plate + name stack + preview (roster lists) */
@@ -784,40 +786,99 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   display: grid; place-items: center; font-size: 14px; font-weight: 500;
 }
 
-/* --- 9. Badges — pill geometry everywhere --- */
+/* --- 9. Badges — tonal: border == fill (premium), text + dot carry status --- */
 .status-marker { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.96px; text-transform: uppercase; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background-color: var(--muted); }
 .status-badge, .status, .badge, .badge-pill, .priority-tag, .role-badge {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 600; letter-spacing: 0.96px; text-transform: uppercase;
   padding: 4px 10px; border-radius: var(--radius-pill);
-  background-color: var(--surface-strong); color: var(--ink); line-height: 1.4;
+  background-color: var(--surface-strong); border: 1px solid var(--surface-strong);
+  color: var(--ink); line-height: 1.4;
 }
+/* ponytail: tonal statuses — fill and border share one colour, never stone-fill + grey-border */
 .status-badge.active, .status.active, .status.completed, .status.good, .status.approved, .badge-active, .badge-green {
-  background-color: var(--surface-strong); color: var(--ink);
+  background-color: var(--green-tint); border-color: var(--green-tint); color: var(--green-ink);
 }
-.status-badge.pending, .status.setup, .status.planned, .status.draft, .status.pending, .badge-setup, .badge-amber,
+.status-badge.pending, .status.setup, .status.planned, .status.draft, .status.pending, .badge-setup, .badge-muted,
+.status.in_progress, .status.assigned, .status.available, .status.open {
+  background-color: var(--surface-strong); border-color: var(--surface-strong); color: var(--ink);
+}
+.badge-amber, .status-badge.warning {
+  background-color: var(--amber-light); border-color: var(--amber-light); color: var(--amber);
+}
 .status-badge.blocked, .status.inactive, .status.poor, .status.rejected, .status.cancelled, .status.blocked, .badge-danger,
-.status.in_progress, .status.assigned, .status.available, .status.open, .badge-blue, .badge-muted,
-.priority-tag.urgent, .priority-tag.critical, .priority-tag.high, .priority-tag.medium, .priority-tag.low {
-  background-color: var(--surface-strong); color: var(--ink);
+.priority-tag.urgent, .priority-tag.critical {
+  background-color: var(--red-light); border-color: var(--red-light); color: var(--red);
 }
+.badge-blue, .status.info, .priority-tag.high, .priority-tag.medium {
+  background-color: var(--blue-light); border-color: var(--blue-light); color: var(--blue);
+}
+.priority-tag.low { background-color: var(--surface-strong); border-color: var(--surface-strong); color: var(--muted); }
 .status.active::before, .status.completed::before, .status.good::before, .status.approved::before,
-.badge-active::before, .badge-green::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--semantic-success); display: inline-block; }
-.status.setup::before, .status.planned::before, .status.pending::before, .badge-setup::before, .badge-amber::before,
-.status.inactive::before, .status.poor::before, .status.rejected::before, .status.blocked::before, .badge-danger::before,
-.status.in_progress::before, .status.open::before, .badge-blue::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--muted); display: inline-block; }
+.badge-active::before, .badge-green::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--green-ink); display: inline-block; }
+.badge-amber::before, .status-badge.warning::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--amber); display: inline-block; }
+.badge-danger::before, .status.blocked::before, .status.rejected::before, .status.inactive::before, .status.poor::before,
+.priority-tag.urgent::before, .priority-tag.critical::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--red); display: inline-block; }
+.badge-blue::before, .status.info::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--blue); display: inline-block; }
+.status.setup::before, .status.planned::before, .status.pending::before, .badge-setup::before,
+.status.in_progress::before, .status.open::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background-color: var(--muted); display: inline-block; }
 
-/* --- 10. Cards: feature-card (xl/24px), metric deck, gradient orbs --- */
+/* --- 10. Cards: flat by default; tonal variants use border == fill --- */
 .metric-summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 .metric-summary-item, .metric-card, .compact-card, .card, .feature-card {
   background-color: var(--surface-card); border: 1px solid var(--hairline);
-  border-radius: var(--radius-xl); padding: 24px;
-  display: flex; flex-direction: column; gap: 14px; transition: box-shadow 0.12s ease;
+  border-radius: var(--radius-md); padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
 }
+/* ponytail: flat by default — hover shadow removed, elevation is for dialogs/dropdowns only */
 .metric-summary-item:hover, .metric-card:hover, .compact-card.hover-glow:hover, .card:hover, .feature-card:hover {
-  box-shadow: var(--shadow-card);
+  box-shadow: none; border-color: var(--hairline-strong);
 }
+/* Tonal cards: fill and border share one colour */
+.card-tone-green, .tone-green { background-color: var(--green-tint); border: 1px solid var(--green-tint); border-radius: var(--radius-md); }
+.card-tone-amber, .tone-amber { background-color: var(--amber-light); border: 1px solid var(--amber-light); border-radius: var(--radius-md); }
+.card-tone-red, .tone-red { background-color: var(--red-light); border: 1px solid var(--red-light); border-radius: var(--radius-md); }
+.card-tone-blue, .tone-blue { background-color: var(--blue-light); border: 1px solid var(--blue-light); border-radius: var(--radius-md); }
+.card-tone-neutral, .tone-neutral { background-color: var(--surface-strong); border: 1px solid var(--surface-strong); border-radius: var(--radius-md); }
+/* Line-first section: use INSTEAD of a card for form groups / orientation blocks */
+.section-block { background: transparent; border: none; border-top: 1px solid var(--hairline); border-radius: 0; padding: 24px 0; display: flex; flex-direction: column; gap: 16px; }
+.section-block:first-child { border-top: none; padding-top: 0; }
+
+/* Task / incident cards — uniform premium white. Status lives in the pills
+   and text only, never in the card fill. Border == fill. */
+.officer-task-card {
+  background-color: var(--surface-card); border: 1px solid var(--surface-card);
+  border-radius: 14px; box-shadow: none;
+}
+.officer-task-card.is-done { opacity: 0.75; }
+
+/* Select chips — single system for every preset/option/priority chip in the app.
+   Unselected = outline control. Selected = tonal fill with border == fill.
+   TSX sets only className + data-selected (+ data-tone); no color logic inline. */
+.select-chip {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font-size: 11px; font-weight: 500; padding: 3px 10px;
+  border-radius: var(--radius-xs); border: 1px solid var(--hairline-strong);
+  background: var(--surface-card); color: var(--ink); cursor: pointer;
+}
+.select-chip[data-selected="true"] {
+  background: var(--green-tint); border-color: var(--green-tint);
+  color: var(--green-ink); font-weight: 700;
+}
+.select-chip[data-tone="red"][data-selected="true"] {
+  background: var(--red-light); border-color: var(--red-light); color: var(--red);
+}
+.select-chip[data-tone="amber"][data-selected="true"] {
+  background: var(--amber-light); border-color: var(--amber-light); color: var(--amber);
+}
+.select-chip[data-tone="blue"][data-selected="true"] {
+  background: var(--blue-light); border-color: var(--blue-light); color: var(--blue);
+}
+.select-chip[data-tone="neutral"][data-selected="true"] {
+  background: var(--surface-strong); border-color: var(--surface-strong); color: var(--ink);
+}
+.select-chip-pill { border-radius: var(--radius-pill); }
 .hover-glow { transition: box-shadow 0.12s ease; }
 .hover-glow:hover { box-shadow: var(--shadow-card); }
 @media (max-width: 768px) { .metric-summary-row { grid-template-columns: 1fr 1fr; gap: 10px; } }
@@ -903,12 +964,15 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .footer-link:hover { color: var(--ink); }
 @media (max-width: 768px) { .footer { grid-template-columns: 1fr 1fr; padding: 48px 24px; } }
 
-/* Callout */
+/* Callout — tonal: border == fill */
 .callout {
-  background-color: var(--surface-strong); border-radius: var(--radius-xl);
+  background-color: var(--surface-strong); border: 1px solid var(--surface-strong); border-radius: var(--radius-md);
   padding: 18px 20px; display: flex; flex-direction: column; gap: 8px;
-  border: 1px solid var(--hairline);
 }
+.callout-green { background-color: var(--green-tint); border-color: var(--green-tint); color: var(--green-ink); }
+.callout-amber { background-color: var(--amber-light); border-color: var(--amber-light); color: var(--amber); }
+.callout-red { background-color: var(--red-light); border-color: var(--red-light); color: var(--red); }
+.callout-blue { background-color: var(--blue-light); border-color: var(--blue-light); color: var(--blue); }
 .card-header {
   display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;
   gap: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--hairline); padding-bottom: 12px;

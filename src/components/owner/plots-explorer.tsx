@@ -110,9 +110,14 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
 
   const handleCreatePlot = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isAll || !selectedFarm?.id) {
+      // ponytail: never silently use farms[0] — force explicit estate choice
+      toast.show("Select a specific estate before creating a plot", "error");
+      return;
+    }
     setPending(true);
     const form = new FormData(e.currentTarget);
-    const targetFarmId = isAll ? farms[0]?.id : selectedFarm.id;
+    const targetFarmId = selectedFarm.id;
 
     const body = {
       name: form.get("name"),
@@ -345,7 +350,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
                   justifyContent: "space-between",
                   padding: 18,
                   borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--canvas)",
                   backgroundColor: "var(--canvas)",
                   gap: 12,
                 }}

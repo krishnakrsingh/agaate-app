@@ -265,7 +265,7 @@ export function DailyReport() {
                 </table>
               </div>
             ) : (
-              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--line)" }}>
+              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--canvas)" }}>
                 <p className="muted" style={{ margin: 0 }}>No attendance records logged for this date.</p>
               </div>
             )}
@@ -304,7 +304,7 @@ export function DailyReport() {
                 </table>
               </div>
             ) : (
-              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--line)" }}>
+              <div style={{ padding: 20, textAlign: "center", background: "var(--canvas)", border: "1px solid var(--canvas)" }}>
                 <p className="muted" style={{ margin: 0 }}>No activities scheduled for this date.</p>
               </div>
             )}

@@ -132,7 +132,7 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
         </div>
 
         {/* Tactile Total Labourers Stepper */}
-        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--line-strong)" }}>
+        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1px solid var(--stone)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <label style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)" }}>
               Total Field Hands Today *
@@ -204,7 +204,7 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
 
         {/* Male & Female Breakdown */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--canvas)" }}>
             <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 6 }}>
               Male Workers
             </label>
@@ -236,7 +236,7 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
             </div>
           </div>
 
-          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--canvas)" }}>
             <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 6 }}>
               Female Workers
             </label>
@@ -270,7 +270,7 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
         </div>
 
         {/* Wage Rate & Live Outflow */}
-        <div style={{ background: "var(--canvas)", padding: "14px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--line)", display: "grid", gap: 10 }}>
+        <div style={{ background: "var(--canvas)", padding: "14px", borderRadius: "var(--radius-sm)", border: "1px solid var(--canvas)", display: "grid", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label style={{ fontSize: 12, fontWeight: 650, color: "var(--ink)", margin: 0 }}>
               Daily Wage Rate (₹ / Day)
@@ -281,15 +281,8 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
                   key={rate}
                   type="button"
                   onClick={() => setDailyWageRate(String(rate))}
-                  style={{
-                    fontSize: "11px",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    border: dailyWageRate === String(rate) ? "1.5px solid var(--green)" : "1px solid var(--line)",
-                    background: dailyWageRate === String(rate) ? "var(--green-light)" : "var(--stone)",
-                    fontWeight: dailyWageRate === String(rate) ? 700 : 500,
-                    cursor: "pointer",
-                  }}
+                  className="select-chip"
+                  data-selected={dailyWageRate === String(rate)}
                 >
                   ₹{rate}
                 </button>
@@ -324,10 +317,10 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
           </div>
 
           {/* Live Wage Calculation Hero */}
-          <div
+            <div
             style={{
               background: "var(--green-light)",
-              border: "1px solid var(--green)",
+              border: "1px solid var(--green-light)",
               borderRadius: "var(--radius-xs)",
               padding: "10px 14px",
               display: "flex",
@@ -356,15 +349,8 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
                 key={c}
                 type="button"
                 onClick={() => setContractorName(c)}
-                style={{
-                  fontSize: "11px",
-                  padding: "3px 10px",
-                  borderRadius: "var(--radius-pill)",
-                  border: contractorName === c ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
-                  background: contractorName === c ? "var(--green-light)" : "var(--canvas)",
-                  fontWeight: contractorName === c ? 700 : 500,
-                  cursor: "pointer",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={contractorName === c}
               >
                 {c}
               </button>

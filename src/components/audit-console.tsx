@@ -197,8 +197,8 @@ export function AuditConsole() {
                   <div
                     style={{
                       padding: 12,
-                      backgroundColor: "var(--canvas)",
-                      border: "1px solid var(--line)",
+                      backgroundColor: "var(--stone)",
+                      border: "1px solid var(--stone)",
                       fontSize: 12,
                       fontFamily: "monospace",
                       overflowX: "auto",

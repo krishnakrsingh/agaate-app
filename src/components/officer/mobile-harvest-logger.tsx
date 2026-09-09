@@ -276,7 +276,7 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
         </div>
 
         {/* Quantity, Unit & Accelerators */}
-        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1.5px solid var(--line-strong)", display: "grid", gap: 12 }}>
+        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1px solid var(--stone)", display: "grid", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)", margin: 0 }}>
               Harvest Weight / Volume *
@@ -287,16 +287,8 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
                   key={u}
                   type="button"
                   onClick={() => setUnit(u)}
-                  style={{
-                    fontSize: "11px",
-                    padding: "3px 8px",
-                    borderRadius: "var(--radius-xs)",
-                    border: unit === u ? "1.5px solid var(--green)" : "1px solid var(--line)",
-                    background: unit === u ? "var(--green)" : "var(--canvas)",
-                    color: unit === u ? "#ffffff" : "var(--ink-soft)",
-                    fontWeight: unit === u ? 700 : 500,
-                    cursor: "pointer",
-                  }}
+                  className="select-chip"
+                  data-selected={unit === u}
                 >
                   {u}
                 </button>
@@ -386,15 +378,13 @@ export function MobileHarvestLogger({ farms }: { farms: Farm[] }) {
                   style={{
                     padding: "10px 12px",
                     borderRadius: "var(--radius-sm)",
-                    border: isSelected ? `2px solid ${g.color}` : "1px solid var(--line)",
+                    border: isSelected ? `1px solid ${g.bg}` : "1px solid var(--line)",
                     background: isSelected ? g.bg : "var(--canvas)",
                     textAlign: "left",
                     cursor: "pointer",
                     display: "flex",
                     flexDirection: "column",
                     gap: 2,
-                    boxShadow: isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
-                    transition: "all 0.15s ease",
                   }}
                 >
                   <span style={{ fontSize: "13px", fontWeight: 750, color: isSelected ? g.color : "var(--ink)" }}>

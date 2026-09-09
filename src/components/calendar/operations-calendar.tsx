@@ -337,18 +337,11 @@ export function OperationsCalendar({
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* ── Top Header ── */}
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* ── Top Header: line-first, not a card ── */}
       <div
-        className="card"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          padding: "16px 20px",
-        }}
+        className="page-header"
+        style={{ paddingBottom: 16 }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
@@ -405,16 +398,16 @@ export function OperationsCalendar({
         )}
       </div>
 
-      {/* ── Controls Bar ── */}
+      {/* ── Controls Bar: rule-separated, not a card ── */}
       <div
-        className="card"
         style={{
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
-          padding: "12px 16px",
+          padding: "12px 0",
+          borderBottom: "1px solid var(--hairline)",
         }}
       >
         {/* Month Navigator */}
@@ -495,11 +488,11 @@ export function OperationsCalendar({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 20, alignItems: "start" }}>
         {/* Calendar Grid (7 columns) */}
         <div
-          className="card"
           style={{
-            padding: 16,
+            padding: "16px 0",
             gridColumn: "span 2",
             minWidth: 0,
+            borderTop: "1px solid var(--hairline)",
           }}
         >
           {/* Weekday headers */}
@@ -533,8 +526,8 @@ export function OperationsCalendar({
                     padding: 8,
                     minHeight: 100,
                     borderRadius: "var(--radius-xs)",
-                    border: isSelected ? "2px solid var(--green)" : isToday ? "1px solid var(--green)" : "1px solid var(--line)",
-                    backgroundColor: isSelected ? "var(--green-light)" : cell.isCurrentMonth ? "var(--canvas)" : "var(--stone)",
+                    border: isSelected ? "1px solid var(--green-tint)" : "1px solid var(--line)",
+                    backgroundColor: isSelected ? "var(--green-tint)" : "var(--canvas)",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
@@ -550,16 +543,15 @@ export function OperationsCalendar({
                         fontSize: 12,
                         fontFamily: "monospace",
                         fontWeight: isToday || isSelected ? 800 : 600,
-                        color: isToday ? "#ffffff" : isSelected ? "var(--green-dark)" : "var(--ink)",
-                        width: isToday ? 22 : "auto",
-                        height: isToday ? 22 : "auto",
-                        borderRadius: isToday ? "50%" : 0,
-                        backgroundColor: isToday ? "var(--green)" : "transparent",
+                        color: isToday ? "var(--green-ink)" : isSelected ? "var(--green-dark)" : "var(--ink)",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
+                        gap: 4,
                       }}
                     >
+                      {isToday && (
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "var(--green-ink)" }} />
+                      )}
                       {cell.dayNumber}
                     </span>
 
@@ -734,7 +726,7 @@ export function OperationsCalendar({
                       style={{
                         padding: 12,
                         borderRadius: "var(--radius-sm)",
-                        border: isDone ? "1px solid var(--line)" : "1px solid var(--line)",
+                        border: isDone ? "1px solid var(--stone)" : "1px solid var(--canvas)",
                         backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
                         gap: 8,
                       }}
@@ -808,7 +800,7 @@ export function OperationsCalendar({
                     style={{
                       padding: 12,
                       borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--danger)",
+                      border: "1px solid var(--canvas)",
                       backgroundColor: "var(--canvas)",
                       gap: 6,
                     }}
@@ -842,7 +834,7 @@ export function OperationsCalendar({
                     style={{
                       padding: 12,
                       borderRadius: "var(--radius-sm)",
-                      border: "1px solid var(--blue)",
+                      border: "1px solid var(--canvas)",
                       backgroundColor: "var(--canvas)",
                       gap: 6,
                     }}

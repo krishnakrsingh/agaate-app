@@ -148,7 +148,7 @@ export function AdminConsole() {
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label>Initial Password</label>
-              <input name="password" type="password" required minLength={8} placeholder="Min 8 chars" />
+              <input name="password" type="password" required minLength={12} placeholder="Min 12 chars" />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label>System Role</label>
@@ -164,7 +164,7 @@ export function AdminConsole() {
             <label>Farm &amp; Estate Assignments</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
               {farms.map((f) => (
-                <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+                <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)" }}>
                   <label className="check"><input type="checkbox" name="farmIds" value={f.id} /><span>{f.name}</span></label>
                   <label className="check" style={{ fontSize: "11px", color: "var(--muted)", marginTop: 4 }}>
                     <input type="checkbox" name="managesFarmIds" value={f.id} /><span>Manager Permissions</span>
@@ -241,7 +241,7 @@ export function AdminConsole() {
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>New Password (Optional)</label>
-                <input name="newPassword" type="password" minLength={8} placeholder="Leave blank to keep existing" />
+                <input name="newPassword" type="password" minLength={12} placeholder="Min 12 chars, blank to keep" />
               </div>
             </div>
             <label className="check">
@@ -254,7 +254,7 @@ export function AdminConsole() {
                 {farms.map((f) => {
                   const acc = u.farmAccess.find((a) => a.farmId === f.id);
                   return (
-                    <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+                    <div key={f.id} style={{ padding: "8px 12px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)" }}>
                       <label className="check">
                         <input type="checkbox" name="farmIds" value={f.id} defaultChecked={Boolean(acc)} />
                         <span>{f.name}</span>

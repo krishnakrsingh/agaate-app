@@ -285,17 +285,9 @@ export function CreateTaskModal({
                 key={p.label}
                 type="button"
                 onClick={() => applyPreset(p)}
-                style={{
-                  fontSize: "12px",
-                  padding: "5px 12px",
-                  borderRadius: "var(--radius-pill)",
-                  border: title === p.title && p.title ? "1.5px solid var(--green)" : "1px solid var(--line-strong)",
-                  backgroundColor: title === p.title && p.title ? "var(--green-light)" : "var(--canvas)",
-                  color: title === p.title && p.title ? "var(--green-dark)" : "var(--ink)",
-                  fontWeight: title === p.title && p.title ? 700 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={title === p.title && !!p.title}
+                style={{ fontSize: "12px", padding: "5px 12px" }}
               >
                 {p.label}
               </button>
@@ -367,32 +359,16 @@ export function CreateTaskModal({
             </label>
             <div style={{ display: "flex", gap: 6 }}>
               {(["LOW", "MEDIUM", "HIGH", "URGENT"] as const).map((p) => {
-                const isSel = priority === p;
-                const isHighOrUrgent = p === "HIGH" || p === "URGENT";
+                const tone = p === "URGENT" ? "red" : p === "HIGH" ? "amber" : p === "MEDIUM" ? undefined : "neutral";
                 return (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPriority(p)}
-                    style={{
-                      flex: 1,
-                      padding: "7px 0",
-                      borderRadius: "8px",
-                      border: isSel
-                        ? "1.5px solid var(--green)"
-                        : "1px solid var(--line)",
-                      backgroundColor: isSel
-                        ? (isHighOrUrgent ? "var(--green)" : "var(--green-light)")
-                        : "var(--paper)",
-                      color: isSel
-                        ? (isHighOrUrgent ? "#FFFFFF" : "var(--green-dark)")
-                        : "var(--muted)",
-                      fontWeight: isSel ? 750 : 500,
-                      fontSize: "12px",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      transition: "all 0.15s ease",
-                    }}
+                    className="select-chip"
+                    data-selected={priority === p}
+                    data-tone={tone}
+                    style={{ flex: 1, padding: "7px 0", borderRadius: "8px", fontSize: "12px" }}
                   >
                     {p === "URGENT" ? "⚡ URGENT" : p}
                   </button>
@@ -441,6 +417,7 @@ export function CreateTaskModal({
               gap: 10,
               padding: "10px 14px",
               background: "var(--stone)",
+              border: "1px solid var(--stone)",
               borderRadius: "var(--radius-sm)",
               cursor: "pointer",
             }}

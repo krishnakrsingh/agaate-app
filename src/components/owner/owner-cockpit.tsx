@@ -270,7 +270,7 @@ export function OwnerCockpit({ initialFarms }: OwnerCockpitProps) {
         <div
           className="metric-summary-item"
           style={{
-            borderColor: activeIncidents.length > 0 ? "rgba(166, 59, 50, 0.3)" : undefined,
+            borderColor: activeIncidents.length > 0 ? "var(--red-light)" : undefined,
             background: activeIncidents.length > 0 ? "var(--red-light)" : undefined,
           }}
         >
@@ -297,8 +297,8 @@ export function OwnerCockpit({ initialFarms }: OwnerCockpitProps) {
           className="compact-card"
           style={{
             padding: 20,
-            border: "1px solid var(--red)",
-            background: "rgba(166, 59, 50, 0.04)",
+            border: "1px solid var(--red-light)",
+            background: "var(--red-light)",
             gap: 12,
           }}
         >
@@ -344,7 +344,7 @@ export function OwnerCockpit({ initialFarms }: OwnerCockpitProps) {
                   padding: "12px 14px",
                   borderRadius: "var(--radius-sm)",
                   background: "var(--canvas)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--canvas)",
                   display: "flex",
                   flexDirection: "column",
                   gap: 6,
@@ -359,7 +359,7 @@ export function OwnerCockpit({ initialFarms }: OwnerCockpitProps) {
                       borderRadius: 4,
                       background: inc.severity === "CRITICAL" || inc.severity === "HIGH" ? "var(--red-light)" : "var(--amber-light)",
                       color: inc.severity === "CRITICAL" || inc.severity === "HIGH" ? "var(--red)" : "var(--amber)",
-                      border: `1px solid ${inc.severity === "CRITICAL" || inc.severity === "HIGH" ? "rgba(166, 59, 50, 0.3)" : "rgba(154, 104, 24, 0.3)"}`,
+                      border: inc.severity === "CRITICAL" || inc.severity === "HIGH" ? "1px solid var(--red-light)" : "1px solid var(--amber-light)",
                     }}
                   >
                     {inc.severity || "MEDIUM"}
@@ -660,7 +660,7 @@ export function OwnerCockpit({ initialFarms }: OwnerCockpitProps) {
                 style={{
                   borderRadius: "var(--radius-sm)",
                   overflow: "hidden",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--stone)",
                   background: "var(--stone)",
                   aspectRatio: "4/3",
                   position: "relative",

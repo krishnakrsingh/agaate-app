@@ -430,24 +430,12 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           return (
             <article
               key={task.id}
-              className="officer-task-card"
+              className={`officer-task-card${isDone ? " is-done" : ""}`}
               style={{
                 display: "flex",
                 gap: 10,
                 padding: "4px 12px 4px 4px",
-                borderRadius: "14px",
-                border: isStarted
-                  ? "1.5px solid var(--green)"
-                  : isOverdue
-                  ? "1.5px solid var(--red)"
-                  : "1px solid var(--line)",
-                backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
-                boxShadow: isStarted
-                  ? "0 2px 8px rgba(36, 84, 58, 0.08)"
-                  : "var(--shadow-sm)",
-                opacity: isDone ? 0.8 : 1,
                 alignItems: "center",
-                transition: "all 0.15s ease",
               }}
             >
               {/* 90x90 SQUARE THUMBNAIL (TAP TO EXPAND PHOTO IF AVAILABLE) */}
@@ -516,7 +504,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     justifyContent: "center",
                     gap: 3,
                     flexShrink: 0,
-                    border: "1px solid var(--line)",
+                    border: "1px solid var(--stone)",
                   }}
                 >
                   <span style={{ fontSize: "24px" }}>
@@ -541,11 +529,12 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between",
-                  height: 90,
-                  gap: 2,
+                  justifyContent: "flex-start",
+                  minHeight: 90,
+                  gap: 3,
                   flex: 1,
                   minWidth: 0,
+                  padding: "6px 0",
                 }}
               >
                 {/* Row 1: Plot on Left, Status/Priority on Right */}
@@ -556,6 +545,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                       fontWeight: 700,
                       color: "var(--green-dark)",
                       backgroundColor: "var(--green-light)",
+                      border: "1px solid var(--green-light)",
                       padding: "1px 6px",
                       borderRadius: "6px",
                       maxWidth: "60%",

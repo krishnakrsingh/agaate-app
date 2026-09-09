@@ -135,7 +135,10 @@ export function TaskBoard() {
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
-      const matchStatus = statusFilter === "ALL" || t.status === statusFilter;
+      const matchStatus =
+        statusFilter === "ALL" ||
+        t.status === statusFilter ||
+        (statusFilter === "QUEUED" && ["DRAFT", "ASSIGNED", "AVAILABLE"].includes(t.status));
       const matchDay = dayFilter === "ALL" || t.dueDate?.slice(0, 10) === dayFilter;
       const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.farm.name.toLowerCase().includes(search.toLowerCase());
       return matchStatus && matchDay && matchSearch;
@@ -237,7 +240,7 @@ export function TaskBoard() {
           >
             {[
               { key: "ALL", label: "All Tasks", count: tasks.length },
-              { key: "PENDING", label: "Pending", count: tasks.filter((t) => t.status === "PENDING" || t.status === "ASSIGNED" || t.status === "AVAILABLE").length },
+              { key: "QUEUED", label: "Queued", count: tasks.filter((t) => ["DRAFT", "ASSIGNED", "AVAILABLE"].includes(t.status)).length },
               { key: "IN_PROGRESS", label: "In Progress", count: tasks.filter((t) => t.status === "IN_PROGRESS").length },
               { key: "COMPLETED", label: "Completed", count: tasks.filter((t) => t.status === "COMPLETED").length },
             ].map((tab) => {
@@ -311,21 +314,11 @@ export function TaskBoard() {
           return (
             <article
               key={t.id}
-              className="officer-task-card"
+              className={`officer-task-card${isDone ? " is-done" : ""}`}
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: 0,
-                borderRadius: "14px",
-                border: isStarted
-                  ? "1.5px solid var(--green)"
-                  : isUrgent && !isDone
-                  ? "1.5px solid var(--amber-light, #fef3c7)"
-                  : "1px solid var(--line)",
-                backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
-                boxShadow: "var(--shadow-sm)",
-                opacity: isDone ? 0.8 : 1,
-                transition: "all 0.15s ease",
                 overflow: "hidden",
               }}
             >
@@ -404,7 +397,7 @@ export function TaskBoard() {
                       justifyContent: "center",
                       gap: 3,
                       flexShrink: 0,
-                      border: "1px solid var(--line)",
+                      border: "1px solid var(--stone)",
                     }}
                   >
                     <span style={{ fontSize: "24px" }}>
@@ -562,9 +555,11 @@ export function TaskBoard() {
                     <div className="form-group" style={{ margin: 0 }}>
                       <label style={{ fontSize: 11 }}>Status</label>
                       <select name="status" defaultValue={t.status} style={{ height: 32, fontSize: 12 }}>
-                        <option value="PENDING">Pending</option>
+                        <option value="ASSIGNED">Queued</option>
                         <option value="IN_PROGRESS">In Progress</option>
+                        <option value="BLOCKED">Blocked</option>
                         <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
                       </select>
                     </div>
                     <div className="form-group wide" style={{ margin: 0 }}>

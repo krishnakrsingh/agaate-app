@@ -176,7 +176,7 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                   style={{
                     padding: "12px 14px",
                     borderRadius: "var(--radius-sm)",
-                    border: isSelected ? "2px solid var(--green)" : "1.5px solid var(--line)",
+                    border: isSelected ? "1px solid var(--green-light)" : "1px solid var(--line)",
                     background: isSelected ? "var(--green-light)" : "var(--canvas)",
                     color: isSelected ? "var(--green-dark)" : "var(--ink)",
                     display: "flex",
@@ -184,8 +184,6 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
                     gap: 10,
                     cursor: "pointer",
                     textAlign: "left",
-                    boxShadow: isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
-                    transition: "all 0.15s ease",
                   }}
                 >
                   <span style={{ fontSize: 20 }}>{cat.icon}</span>
@@ -236,7 +234,7 @@ export function QuickLogger({ farms }: { farms: Farm[] }) {
 
         {/* Shed Stock Consumption (Optional) */}
         {(selectedCategory === "FERTIGATION" || selectedCategory === "SPRAYING" || inventoryItems.length > 0) && (
-          <div style={{ padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--stone)", display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
                 <Icons.Package size={14} style={{ color: "var(--amber)" }} />

@@ -266,7 +266,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
           width: "100%",
           maxWidth: 580,
           backgroundColor: "var(--canvas)",
-          border: "1px solid var(--line)",
+          border: "1px solid var(--canvas)",
           borderRadius: "var(--radius-md)",
           boxShadow: "var(--shadow-modal)",
           overflow: "hidden",
@@ -329,7 +329,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
               borderRadius: "var(--radius-xs)",
               backgroundColor: "var(--canvas)",
               color: "var(--muted)",
-              border: "1px solid var(--line)",
+              border: "1px solid var(--canvas)",
             }}
           >
             ESC

@@ -54,7 +54,7 @@ export default async function LoginPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16, margin: "32px 0" }}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--line)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--stone)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
               <Icons.MapPin size={16} />
             </div>
             <div>
@@ -64,7 +64,7 @@ export default async function LoginPage() {
           </div>
 
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--line)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--stone)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
               <Icons.Calendar size={16} />
             </div>
             <div>
@@ -74,7 +74,7 @@ export default async function LoginPage() {
           </div>
 
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--line)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "var(--radius-xs)", background: "var(--stone)", border: "1px solid var(--stone)", color: "var(--green)", display: "grid", placeItems: "center", flexShrink: 0, marginTop: 2 }}>
               <Icons.FileText size={16} />
             </div>
             <div>

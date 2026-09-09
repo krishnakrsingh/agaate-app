@@ -543,9 +543,8 @@ export function OfficerSignalsConsole() {
             gap: 12,
             padding: "16px 18px",
             borderRadius: "16px",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--card)",
             backgroundColor: "var(--card)",
-            boxShadow: "var(--shadow-sm)",
           }}
         >
           <div>
@@ -632,20 +631,9 @@ export function OfficerSignalsConsole() {
               <button
                 type="button"
                 onClick={() => setHealthStatus("GOOD")}
-                style={{
-                  height: 36,
-                  borderRadius: "9999px",
-                  fontSize: "12px",
-                  fontWeight: healthStatus === "GOOD" ? 700 : 500,
-                  border: healthStatus === "GOOD" ? "1.5px solid var(--green)" : "1px solid var(--line)",
-                  backgroundColor: healthStatus === "GOOD" ? "var(--green-light)" : "var(--canvas)",
-                  color: healthStatus === "GOOD" ? "var(--green-dark)" : "var(--muted)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 5,
-                  cursor: "pointer",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={healthStatus === "GOOD"}
+                style={{ height: 36, fontSize: "12px", flex: 1 }}
               >
                 <Icons.CheckCircle size={14} />
                 <span>Healthy / Thriving</span>
@@ -654,20 +642,10 @@ export function OfficerSignalsConsole() {
               <button
                 type="button"
                 onClick={() => setHealthStatus("POOR")}
-                style={{
-                  height: 36,
-                  borderRadius: "9999px",
-                  fontSize: "12px",
-                  fontWeight: healthStatus === "POOR" ? 700 : 500,
-                  border: healthStatus === "POOR" ? "1.5px solid var(--red)" : "1px solid var(--line)",
-                  backgroundColor: healthStatus === "POOR" ? "var(--red-light)" : "var(--canvas)",
-                  color: healthStatus === "POOR" ? "var(--red)" : "var(--muted)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 5,
-                  cursor: "pointer",
-                }}
+                className="select-chip select-chip-pill"
+                data-selected={healthStatus === "POOR"}
+                data-tone="red"
+                style={{ height: 36, fontSize: "12px", flex: 1 }}
               >
                 <Icons.AlertTriangle size={14} />
                 <span>Distressed / Poor</span>
@@ -788,19 +766,12 @@ export function OfficerSignalsConsole() {
                 return (
                   <article
                     key={inc.id}
-                    className="officer-task-card"
+                    className={`officer-task-card${isResolved ? " is-done" : ""}`}
                     style={{
                       display: "flex",
                       gap: 10,
                       padding: "4px 12px 4px 4px",
-                      borderRadius: "14px",
-                      border: isCritical && !isResolved
-                        ? "1.5px solid var(--red-light, #fee2e2)"
-                        : "1px solid var(--line)",
-                      backgroundColor: isResolved ? "var(--stone)" : "var(--canvas)",
-                      boxShadow: "var(--shadow-sm)",
                       alignItems: "center",
-                      transition: "all 0.12s ease",
                     }}
                   >
                     {/* SQUARE IMAGE THUMBNAIL (TAP TO EXPAND) */}
@@ -1127,8 +1098,8 @@ export function OfficerSignalsConsole() {
               display: "flex",
               flexDirection: "column",
               gap: 12,
-              boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
-              border: "1px solid var(--line)",
+              boxShadow: "var(--shadow-modal)",
+              border: "1px solid var(--card)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1244,8 +1215,8 @@ export function OfficerSignalsConsole() {
               style={{
                 padding: "10px 12px",
                 borderRadius: "10px",
-                backgroundColor: "var(--canvas)",
-                border: "1px solid var(--line)",
+                backgroundColor: "var(--stone)",
+                border: "1px solid var(--stone)",
                 fontSize: "12.5px",
                 color: "var(--ink)",
                 lineHeight: 1.45,
@@ -1317,8 +1288,8 @@ export function OfficerSignalsConsole() {
                       style={{
                         padding: "7px 10px",
                         borderRadius: "8px",
-                        backgroundColor: "var(--canvas)",
-                        border: "1px solid var(--line)",
+                        backgroundColor: "var(--stone)",
+                        border: "1px solid var(--stone)",
                         fontSize: "11.5px",
                       }}
                     >

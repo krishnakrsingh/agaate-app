@@ -137,7 +137,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
           </div>
 
           {showAddPlot && (
-            <div style={{ background: "var(--canvas)", border: "1px solid var(--line)", padding: 20, borderRadius: "var(--radius-sm)" }}>
+            <div style={{ background: "var(--canvas)", border: "1px solid var(--canvas)", padding: 20, borderRadius: "var(--radius-sm)" }}>
               <PlotForm farmId={farm.id} />
             </div>
           )}
@@ -152,7 +152,6 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                   padding: 24,
                   gap: 16,
                   borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-card)",
                   backgroundColor: "var(--canvas)",
                 }}
               >
@@ -322,7 +321,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                         height: 90,
                         minWidth: 90,
                         borderRadius: "var(--radius-xs)",
-                        border: "1px solid var(--line)",
+                        border: "1px solid var(--canvas)",
                         backgroundColor: "var(--canvas)",
                         display: "flex",
                         flexDirection: "column",
@@ -430,7 +429,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
 
       {/* TAB 5: SETTINGS */}
       {tab === "settings" && canManage && (
-        <div style={{ background: "var(--canvas)", border: "1px solid var(--line)", padding: 24, borderRadius: "var(--radius-sm)" }}>
+        <div style={{ background: "var(--canvas)", border: "1px solid var(--canvas)", padding: 24, borderRadius: "var(--radius-sm)" }}>
           <FarmEditForm farm={farm} />
         </div>
       )}

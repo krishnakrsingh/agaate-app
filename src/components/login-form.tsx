@@ -366,7 +366,7 @@ export function LoginForm() {
             padding: "6px 10px",
             background: "var(--stone)",
             borderRadius: "var(--radius-xs)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--stone)",
           }}>
             <span style={{ color: "var(--muted)" }}>
               Test Password: <strong style={{ color: "var(--ink)", fontFamily: "var(--font-mono)" }}>{TEST_PASSWORD}</strong>
@@ -396,7 +396,7 @@ export function LoginForm() {
             padding: "6px 10px",
             background: "var(--stone)",
             borderRadius: "var(--radius-xs)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--stone)",
             color: "var(--muted)",
           }}>
             <span style={{ fontWeight: 600, color: "var(--ink)" }}>Regional Officers:</span>

@@ -42,16 +42,16 @@ export function ClientOnboardingWizardV2() {
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState(13.4325);
   const [longitude, setLongitude] = useState(77.7275);
-  const [totalArea, setTotalArea] = useState("25");
-  const [cultivableArea, setCultivableArea] = useState("22.5");
-  const [waterSource, setWaterSource] = useState("3x 15HP Borewells with automated filtration");
+  const [totalArea, setTotalArea] = useState("");
+  const [cultivableArea, setCultivableArea] = useState("");
+  const [waterSource, setWaterSource] = useState("");
   const [soilType, setSoilType] = useState("Red Sandy Loam");
   const [geofenceRadius, setGeofenceRadius] = useState(600);
   const [boundaryPoints, setBoundaryPoints] = useState<BoundaryPoint[]>([]);
 
   // Step 3: Plots & Infrastructure
-  const [initialPlotName, setInitialPlotName] = useState("Block Alpha - Pomegranate");
-  const [initialPlotArea, setInitialPlotArea] = useState("10.0");
+  const [initialPlotName, setInitialPlotName] = useState("");
+  const [initialPlotArea, setInitialPlotArea] = useState("");
   const [initialIrrigationType, setInitialIrrigationType] = useState("Drip");
 
   // Step 4: Handover & Security
@@ -117,14 +117,15 @@ export function ClientOnboardingWizardV2() {
         longitude: Number(longitude),
         totalArea: Number(totalArea),
         cultivableArea: Number(cultivableArea),
-        waterSource: waterSource.trim(),
-        soilType: soilType.trim(),
+        waterSource: waterSource.trim() || null,
+        soilType: soilType.trim() || null,
         geofenceRadiusMeters: Number(geofenceRadius),
         boundaryGeoJson: boundaryPoints.length > 0 ? JSON.stringify(boundaryPoints) : null,
         ownerName: ownerName.trim(),
         ownerPhone: ownerPhone.trim() || null,
         ownerEmail: ownerEmail.trim() || null,
         ownerDob: ownerDob || null,
+        secondaryContact: secondaryContact.trim() || null,
         ownerPassword: ownerPassword.trim(),
         initialPlotName: initialPlotName.trim() || null,
         initialPlotArea: initialPlotArea ? Number(initialPlotArea) : null,
@@ -144,7 +145,9 @@ export function ClientOnboardingWizardV2() {
 
       setHandover({
         ...data.handover,
-        farmId: data.farm.id,
+        farmId: data.handover?.farmId || data.farm.id,
+        // ponytail: server never returns secrets — voucher uses the locally-entered password
+        initialPassword: ownerPassword.trim(),
       });
       toast.show("Estate & Client Owner provisioned successfully!", "success");
     } catch (err: any) {
@@ -223,15 +226,15 @@ export function ClientOnboardingWizardV2() {
                   padding: "8px 12px",
                   borderRadius: "var(--radius-sm)",
                   background: isCurrent
-                    ? "rgba(16, 185, 129, 0.12)"
+                    ? "var(--green-tint)"
                     : isDone
-                    ? "rgba(255, 255, 255, 0.04)"
+                    ? "var(--surface-strong)"
                     : "transparent",
                   border: isCurrent
-                    ? "1px solid var(--brand)"
+                    ? "1px solid var(--green-tint)"
                     : isDone
-                    ? "1px solid rgba(52, 211, 153, 0.3)"
-                    : "1px solid var(--border-subtle)",
+                    ? "1px solid var(--surface-strong)"
+                    : "1px solid var(--hairline)",
                   cursor: !handover && step.id < currentStep ? "pointer" : "default",
                 }}
               >
@@ -246,20 +249,20 @@ export function ClientOnboardingWizardV2() {
                     fontSize: "11px",
                     fontWeight: 700,
                     background: isDone
-                      ? "var(--brand)"
+                      ? "var(--green-ink)"
                       : isCurrent
-                      ? "rgba(16, 185, 129, 0.2)"
-                      : "var(--surface-muted)",
-                    color: isDone ? "#022c1e" : isCurrent ? "var(--brand)" : "var(--muted-fg)",
+                      ? "var(--green-tint)"
+                      : "var(--surface-strong)",
+                    color: isDone ? "#FFFFFF" : isCurrent ? "var(--green-ink)" : "var(--muted)",
                   }}
                 >
                   {isDone ? <Icons.Check size={12} /> : step.id}
                 </div>
                 <div style={{ overflow: "hidden" }}>
-                  <div style={{ fontSize: "12px", fontWeight: 600, color: isCurrent ? "var(--fg)" : "var(--muted-fg)", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: isCurrent ? "var(--ink)" : "var(--muted)", whiteSpace: "nowrap" }}>
                     {step.title}
                   </div>
-                  <div style={{ fontSize: "10px", color: "var(--muted-fg)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "10px", color: "var(--muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {step.desc}
                   </div>
                 </div>
@@ -271,15 +274,16 @@ export function ClientOnboardingWizardV2() {
 
       {/* HANDOVER VOUCHER */}
       {handover && (
-        <div className="compact-card" style={{ padding: 32, gap: 24, border: "1px solid var(--brand)", background: "rgba(16, 185, 129, 0.04)" }}>
+        <div className="compact-card tone-green" style={{ padding: 32, gap: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div
               style={{
                 width: 48,
                 height: 48,
                 borderRadius: "50%",
-                background: "rgba(16, 185, 129, 0.15)",
-                color: "var(--brand)",
+                background: "var(--green-tint)",
+                border: "1px solid var(--green-tint)",
+                color: "var(--green-ink)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -299,8 +303,8 @@ export function ClientOnboardingWizardV2() {
             style={{
               padding: 20,
               borderRadius: "var(--radius-md)",
-              background: "var(--surface-muted)",
-              border: "1px dashed var(--brand)",
+              background: "var(--surface-card)",
+              border: "1px dashed var(--green-ink)",
               fontFamily: "monospace",
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -308,20 +312,20 @@ export function ClientOnboardingWizardV2() {
             }}
           >
             <div>
-              <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>ESTATE NAME</div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)" }}>{handover.estateName}</div>
+              <div style={{ fontSize: "11px", color: "var(--muted)" }}>ESTATE NAME</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--ink)" }}>{handover.estateName}</div>
             </div>
             <div>
-              <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>CLIENT OWNER</div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg)" }}>{handover.clientName}</div>
+              <div style={{ fontSize: "11px", color: "var(--muted)" }}>CLIENT OWNER</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--ink)" }}>{handover.clientName}</div>
             </div>
             <div>
-              <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>LOGIN IDENTIFIER</div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#34d399" }}>{handover.loginIdentifier}</div>
+              <div style={{ fontSize: "11px", color: "var(--muted)" }}>LOGIN IDENTIFIER</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--green-ink)" }}>{handover.loginIdentifier}</div>
             </div>
             <div>
-              <div style={{ fontSize: "11px", color: "var(--muted-fg)" }}>INITIAL PASSWORD</div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#fbbf24" }}>{handover.initialPassword}</div>
+              <div style={{ fontSize: "11px", color: "var(--muted)" }}>INITIAL PASSWORD</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--ink)" }}>{handover.initialPassword}</div>
             </div>
           </div>
 
@@ -330,7 +334,7 @@ export function ClientOnboardingWizardV2() {
               <Icons.Copy size={16} />
               <span>{copied ? "Copied Voucher!" : "Copy Access Voucher"}</span>
             </button>
-            <button type="button" onClick={shareViaWhatsApp} className="btn btn-secondary" style={{ color: "#25D366" }}>
+            <button type="button" onClick={shareViaWhatsApp} className="btn btn-secondary">
               <Icons.Send size={16} />
               <span>Share via WhatsApp</span>
             </button>
@@ -443,9 +447,9 @@ export function ClientOnboardingWizardV2() {
               {/* Split layout: Interactive Map on Left, Parameters on Right */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 24, alignItems: "start" }}>
                 {/* Left: Tactical Map */}
-                <div style={{ background: "var(--surface-muted)", padding: 16, borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
+                <div style={{ background: "var(--surface-strong)", padding: 16, borderRadius: "var(--radius-md)", border: "1px solid var(--surface-strong)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--fg)" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
                       Tactical Satellite & Parcel Visualizer
                     </div>
                     <span className="badge badge-green" style={{ fontSize: "10px" }}>Interactive</span>
@@ -679,15 +683,15 @@ export function ClientOnboardingWizardV2() {
                   <span className="form-hint">This password will be displayed on the handover card for the client.</span>
                 </div>
 
-                <div style={{ padding: 16, borderRadius: "var(--radius-sm)", background: "var(--surface-muted)", border: "1px solid var(--border-subtle)" }}>
-                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--fg)", marginBottom: 8 }}>
+                <div style={{ padding: 16, borderRadius: "var(--radius-sm)", background: "var(--surface-strong)", border: "1px solid var(--surface-strong)" }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)", marginBottom: 8 }}>
                     Summary of Account Being Provisioned:
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: "12px", color: "var(--muted-fg)" }}>
-                    <div>👤 Client: <strong style={{ color: "var(--fg)" }}>{ownerName}</strong></div>
-                    <div>📱 Mobile: <strong style={{ color: "var(--fg)" }}>{ownerPhone || "None"}</strong></div>
-                    <div>✉️ Email: <strong style={{ color: "var(--fg)" }}>{ownerEmail || "Auto-generated"}</strong></div>
-                    <div>🌾 Estate: <strong style={{ color: "var(--fg)" }}>{farmName}</strong> ({totalArea} Acres)</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8, fontSize: "12px", color: "var(--muted)" }}>
+                    <div>👤 Client: <strong style={{ color: "var(--ink)" }}>{ownerName}</strong></div>
+                    <div>📱 Mobile: <strong style={{ color: "var(--ink)" }}>{ownerPhone || "None"}</strong></div>
+                    <div>✉️ Email: <strong style={{ color: "var(--ink)" }}>{ownerEmail || "Auto-generated"}</strong></div>
+                    <div>🌾 Estate: <strong style={{ color: "var(--ink)" }}>{farmName}</strong> ({totalArea} Acres)</div>
                   </div>
                 </div>
               </div>

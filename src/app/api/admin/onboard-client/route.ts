@@ -31,6 +31,8 @@ const onboardSchema = z.object({
   // Assigned Central Agronomist
   agronomistId: z.string().optional().nullable(),
 
+  secondaryContact: z.string().max(100).optional().nullable(),
+
   // Optional Initial Plot
   initialPlotName: z.string().max(100).optional().nullable(),
   initialPlotArea: z.coerce.number().positive().optional().nullable(),
@@ -76,14 +78,14 @@ export async function POST(request: NextRequest) {
     const digits = rawPhone?.replace(/[^\d]/g, "") ?? "";
     const phone = rawPhone && digits.length >= 10 && digits.length <= 15 ? rawPhone : null;
     if (!input.ownerEmail && !phone) {
-      return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      return NextResponse.json({ error: "Either mobile number or email address is required for client login." }, { status: 422 });
     }
     let ownerDob: Date | null = null;
     let clientDob: Date | null = null;
     if (input.ownerDob) {
       const parsed = new Date(`${input.ownerDob}T00:00:00Z`);
       if (isNaN(parsed.getTime()) || parsed > new Date()) {
-        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+        return NextResponse.json({ error: "Date of birth must be a valid past date (YYYY-MM-DD)." }, { status: 422 });
       }
       ownerDob = parsed;
       clientDob = parsed;
@@ -113,7 +115,8 @@ export async function POST(request: NextRequest) {
             active: true,
           },
         });
-      } else if (owner.role !== "FARM_ADMIN" || !owner.active) {
+      } else {
+        // ponytail: refuse reuse — attaching a farm without password proof is account takeover
         throw new Error("A user account with this mobile number or email already exists.");
       }
 
@@ -154,8 +157,11 @@ export async function POST(request: NextRequest) {
           where: { id: input.agronomistId },
           select: { id: true, name: true, email: true, role: true, active: true },
         });
+        if (input.agronomistId && !assignedAgronomist) {
+          throw new Error("The selected agronomist no longer exists.");
+        }
         if (assignedAgronomist && (assignedAgronomist.role !== "AGRONOMIST" || !assignedAgronomist.active)) {
-          throw new Error("Validation failed");
+          throw new Error("The selected agronomist is not available.");
         }
 
         if (assignedAgronomist) {
@@ -205,6 +211,7 @@ export async function POST(request: NextRequest) {
       onboarding: true,
       ownerId: result.owner.id,
       agronomistId: result.agronomist?.id,
+      secondaryContact: input.secondaryContact || undefined,
     });
 
     // Dispatch instant client credential handover alert
@@ -226,6 +233,7 @@ export async function POST(request: NextRequest) {
       ...result,
       handover: {
         estateName: result.farm.name,
+        farmId: result.farm.id,
         clientName: result.owner.name,
         clientEmail: result.owner.email,
         clientPhone: phone,

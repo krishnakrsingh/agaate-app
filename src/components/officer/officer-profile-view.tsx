@@ -168,8 +168,7 @@ export function OfficerProfileView({
           padding: "20px",
           borderRadius: "14px",
           background: "var(--canvas)",
-          border: "1px solid var(--line)",
-          boxShadow: "var(--shadow-sm)",
+          border: "1px solid var(--canvas)",
         }}
       >
         <div
@@ -261,9 +260,8 @@ export function OfficerProfileView({
         style={{
           padding: "12px 16px",
           borderRadius: "10px",
-          background: "var(--canvas)",
-          border: "1px solid var(--line)",
-          borderLeft: isShiftActive ? "3px solid var(--green)" : "3px solid var(--muted)",
+          background: isShiftActive ? "var(--green-tint)" : "var(--canvas)",
+          border: isShiftActive ? "1px solid var(--green-tint)" : "1px solid var(--canvas)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -325,7 +323,7 @@ export function OfficerProfileView({
             padding: "14px 16px",
             borderRadius: "12px",
             background: "var(--canvas)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--canvas)",
             display: "flex",
             flexDirection: "column",
             gap: 4,
@@ -345,7 +343,7 @@ export function OfficerProfileView({
             padding: "14px 16px",
             borderRadius: "12px",
             background: "var(--canvas)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--canvas)",
             display: "flex",
             flexDirection: "column",
             gap: 4,
@@ -365,7 +363,7 @@ export function OfficerProfileView({
             padding: "14px 16px",
             borderRadius: "12px",
             background: "var(--canvas)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--canvas)",
             display: "flex",
             flexDirection: "column",
             gap: 4,
@@ -385,7 +383,7 @@ export function OfficerProfileView({
             padding: "14px 16px",
             borderRadius: "12px",
             background: "var(--canvas)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--canvas)",
             display: "flex",
             flexDirection: "column",
             gap: 4,
@@ -407,7 +405,7 @@ export function OfficerProfileView({
           padding: "18px 20px",
           borderRadius: "14px",
           background: "var(--canvas)",
-          border: "1px solid var(--line)",
+          border: "1px solid var(--canvas)",
           display: "flex",
           flexDirection: "column",
           gap: 16,
@@ -431,7 +429,7 @@ export function OfficerProfileView({
               backgroundColor: "var(--stone)",
               padding: 3,
               borderRadius: "9999px",
-              border: "1px solid var(--line)",
+              border: "1px solid var(--stone)",
             }}
           >
             <button
@@ -507,8 +505,8 @@ export function OfficerProfileView({
                     alignItems: "center",
                     padding: "12px 14px",
                     borderRadius: "10px",
-                    backgroundColor: "var(--paper)",
-                    border: "1px solid var(--line)",
+                    backgroundColor: "var(--canvas)",
+                    border: "1px solid var(--canvas)",
                     flexWrap: "wrap",
                     gap: 10,
                   }}
@@ -524,6 +522,7 @@ export function OfficerProfileView({
                           borderRadius: "4px",
                           backgroundColor: s.insideGeofence ? "var(--green-light)" : "var(--amber-light)",
                           color: s.insideGeofence ? "var(--green)" : "var(--amber)",
+                          border: s.insideGeofence ? "1px solid var(--green-light)" : "1px solid var(--amber-light)",
                         }}
                       >
                         {s.insideGeofence ? "Verified Inside" : "Exception Requested"}
@@ -542,10 +541,10 @@ export function OfficerProfileView({
                         fontSize: "13px",
                         fontWeight: 700,
                         color: "var(--ink)",
-                        backgroundColor: "var(--canvas)",
+                        backgroundColor: "var(--stone)",
                         padding: "3px 10px",
                         borderRadius: "6px",
-                        border: "1px solid var(--line)",
+                        border: "1px solid var(--stone)",
                       }}
                     >
                       {formatMins(s.durationMinutes)}
@@ -570,16 +569,12 @@ export function OfficerProfileView({
                 return (
                   <div
                     key={t.id}
+                    className={`officer-task-card${isCompleted ? " is-done" : ""}`}
                     style={{
                       display: "flex",
                       gap: 10,
                       padding: "4px 12px 4px 4px",
-                      borderRadius: "14px",
-                      border: "1px solid var(--line)",
-                      backgroundColor: isCompleted ? "var(--stone)" : "var(--canvas)",
-                      boxShadow: "var(--shadow-sm)",
                       alignItems: "center",
-                      transition: "all 0.12s ease",
                     }}
                   >
                     {/* SQUARE IMAGE THUMBNAIL (TAP TO EXPAND) */}
@@ -644,7 +639,7 @@ export function OfficerProfileView({
                           justifyContent: "center",
                           gap: 3,
                           flexShrink: 0,
-                          border: "1px solid var(--line)",
+                          border: "1px solid var(--stone)",
                         }}
                       >
                         <span style={{ fontSize: "24px" }}>
@@ -669,11 +664,12 @@ export function OfficerProfileView({
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
-                        height: 90,
-                        gap: 2,
+                        justifyContent: "flex-start",
+                        minHeight: 90,
+                        gap: 3,
                         flex: 1,
                         minWidth: 0,
+                        padding: "6px 0",
                       }}
                     >
                       {/* Row 1: Plot/Crop on Left, Status/Priority on Right */}
@@ -814,16 +810,12 @@ export function OfficerProfileView({
                 return (
                   <div
                     key={inc.id}
+                    className={`officer-task-card${isResolved ? " is-done" : ""}`}
                     style={{
                       display: "flex",
                       gap: 10,
                       padding: "4px 12px 4px 4px",
-                      borderRadius: "14px",
-                      border: isCritical && !isResolved ? "1.5px solid var(--red-light, #fee2e2)" : "1px solid var(--line)",
-                      backgroundColor: isResolved ? "var(--stone)" : "var(--canvas)",
-                      boxShadow: "var(--shadow-sm)",
                       alignItems: "center",
-                      transition: "all 0.12s ease",
                     }}
                   >
                     {/* SQUARE IMAGE THUMBNAIL (TAP TO EXPAND) */}
@@ -890,7 +882,7 @@ export function OfficerProfileView({
                           gap: 3,
                           color: "var(--muted)",
                           flexShrink: 0,
-                          border: "1px solid var(--line)",
+                          border: "1px solid var(--stone)",
                         }}
                       >
                         <Icons.AlertTriangle size={18} style={{ opacity: 0.45 }} />
@@ -903,11 +895,12 @@ export function OfficerProfileView({
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between",
-                        height: 90,
-                        gap: 2,
+                        justifyContent: "flex-start",
+                        minHeight: 90,
+                        gap: 3,
                         flex: 1,
                         minWidth: 0,
+                        padding: "6px 0",
                       }}
                     >
                       {/* Row 1: Plot/Crop on Left, Severity + Status on Right */}
@@ -1038,7 +1031,7 @@ export function OfficerProfileView({
           padding: "16px 20px",
           borderRadius: "14px",
           background: "var(--canvas)",
-          border: "1px solid var(--line)",
+          border: "1px solid var(--canvas)",
           display: "flex",
           flexDirection: "column",
           gap: 12,
@@ -1074,7 +1067,7 @@ export function OfficerProfileView({
                   padding: "8px 12px",
                   borderRadius: "8px",
                   background: "var(--paper)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--paper)",
                 }}
               >
                 <div style={{ fontSize: "11px", color: "var(--muted)" }}>Cultivable Area</div>
@@ -1088,7 +1081,7 @@ export function OfficerProfileView({
                   padding: "8px 12px",
                   borderRadius: "8px",
                   background: "var(--paper)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--paper)",
                 }}
               >
                 <div style={{ fontSize: "11px", color: "var(--muted)" }}>Total Plots</div>
@@ -1102,7 +1095,7 @@ export function OfficerProfileView({
                   padding: "8px 12px",
                   borderRadius: "8px",
                   background: "var(--paper)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--paper)",
                 }}
               >
                 <div style={{ fontSize: "11px", color: "var(--muted)" }}>Geofence Radius</div>
@@ -1126,7 +1119,7 @@ export function OfficerProfileView({
           padding: "16px 20px",
           borderRadius: "14px",
           background: "var(--canvas)",
-          border: "1px solid var(--line)",
+          border: "1px solid var(--canvas)",
           display: "flex",
           flexDirection: "column",
           gap: 14,
@@ -1154,7 +1147,7 @@ export function OfficerProfileView({
             padding: "10px 14px",
             borderRadius: "10px",
             backgroundColor: "var(--paper)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--paper)",
             textDecoration: "none",
             color: "var(--ink)",
           }}
