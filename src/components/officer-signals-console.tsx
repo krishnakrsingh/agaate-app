@@ -791,15 +791,15 @@ export function OfficerSignalsConsole() {
                     className="officer-task-card"
                     style={{
                       display: "flex",
-                      gap: 12,
-                      padding: "11px 13px",
+                      gap: 10,
+                      padding: "4px 12px 4px 4px",
                       borderRadius: "14px",
                       border: isCritical && !isResolved
                         ? "1.5px solid var(--red-light, #fee2e2)"
                         : "1px solid var(--line)",
                       backgroundColor: isResolved ? "var(--stone)" : "var(--canvas)",
                       boxShadow: "var(--shadow-sm)",
-                      alignItems: "flex-start",
+                      alignItems: "center",
                       transition: "all 0.12s ease",
                     }}
                   >
@@ -813,12 +813,12 @@ export function OfficerSignalsConsole() {
                         title="Tap to expand photo"
                         style={{
                           position: "relative",
-                          width: 76,
-                          height: 76,
-                          minWidth: 76,
+                          width: 90,
+                          height: 90,
+                          minWidth: 90,
+                          maxWidth: 90,
                           borderRadius: "10px",
                           overflow: "hidden",
-                          border: "1px solid var(--line)",
                           backgroundColor: "var(--stone)",
                           cursor: "zoom-in",
                           flexShrink: 0,
@@ -838,8 +838,8 @@ export function OfficerSignalsConsole() {
                         <div
                           style={{
                             position: "absolute",
-                            bottom: 3,
-                            right: 3,
+                            bottom: 5,
+                            right: 5,
                             backgroundColor: "rgba(0, 0, 0, 0.65)",
                             color: "#fff",
                             borderRadius: 4,
@@ -859,12 +859,12 @@ export function OfficerSignalsConsole() {
                       <div
                         onClick={() => setSelectedIncident(inc)}
                         style={{
-                          width: 76,
-                          height: 76,
-                          minWidth: 76,
+                          width: 90,
+                          height: 90,
+                          minWidth: 90,
+                          maxWidth: 90,
                           borderRadius: "10px",
                           backgroundColor: "var(--stone)",
-                          border: "1px solid var(--line)",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -886,7 +886,9 @@ export function OfficerSignalsConsole() {
                       style={{
                         display: "flex",
                         flexDirection: "column",
-                        gap: 4,
+                        justifyContent: "space-between",
+                        height: 90,
+                        gap: 2,
                         flex: 1,
                         minWidth: 0,
                         cursor: "pointer",
@@ -961,12 +963,15 @@ export function OfficerSignalsConsole() {
                       {/* Row 2: Title */}
                       <h3
                         style={{
-                          fontSize: "13.5px",
+                          fontSize: "13px",
                           fontWeight: 700,
                           color: "var(--ink)",
                           margin: 0,
-                          lineHeight: 1.3,
+                          lineHeight: 1.25,
                           letterSpacing: "-0.01em",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {inc.type}
@@ -976,9 +981,9 @@ export function OfficerSignalsConsole() {
                       <p
                         style={{
                           margin: 0,
-                          fontSize: "12px",
+                          fontSize: "11.5px",
                           color: "var(--ink-soft)",
-                          lineHeight: 1.35,
+                          lineHeight: 1.3,
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
@@ -994,9 +999,8 @@ export function OfficerSignalsConsole() {
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          fontSize: "11px",
+                          fontSize: "10.5px",
                           color: "var(--muted)",
-                          marginTop: 1,
                         }}
                       >
                         <span>

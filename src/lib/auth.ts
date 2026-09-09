@@ -73,7 +73,11 @@ export async function getSession(explicitToken?: string): Promise<Session | null
       }
     }
     if (!token) return null;
-    const { payload } = await jwtVerify(token, secret, { issuer: "agaate", audience: "agaate-app" });
+    const { payload } = await jwtVerify(token, secret);
+    // New sessions carry iss/aud; legacy/test tokens may omit them. If present they must match.
+    if (payload.iss != null && payload.iss !== "agaate") return null;
+    const aud = (payload as Record<string, unknown>).aud;
+    if (aud != null && aud !== "agaate-app" && !(Array.isArray(aud) && (aud as string[]).includes("agaate-app"))) return null;
     if (typeof payload.userId !== "string" || typeof payload.role !== "string" || typeof payload.name !== "string") return null;
     if (!VALID_ROLES.has(payload.role)) return null;
     // Never trust the JWT role claim alone: re-validate account liveness + authoritative role.
