@@ -10,10 +10,70 @@ import { useToast } from "./ui/toast";
 import { TaskForm } from "./task-form";
 
 type Task = {
-  id: string; title: string; description: string; instructions: string | null; priority: string;
-  status: string; origin: string; dueDate: string; farm: { id: string; name: string };
-  plot: { name: string } | null; cropCycle: { cropName: string } | null; assignedOfficer: { name: string } | null;
+  id: string;
+  title: string;
+  description: string;
+  instructions: string | null;
+  priority: string;
+  category?: string;
+  status: string;
+  origin: string;
+  dueDate: string;
+  farm: { id: string; name: string };
+  plot: { name: string } | null;
+  cropCycle: { cropName: string } | null;
+  assignedOfficer: { name: string } | null;
+  primaryImageUrl?: string | null;
+  media?: Array<{ id: string; url: string | null }>;
 };
+
+function getCategoryEmoji(category?: string, origin?: string): string {
+  if (origin === "DAILY_MONITORING") return "👁️";
+  switch (category) {
+    case "FERTIGATION":
+    case "IRRIGATION_RECOMMENDATION":
+      return "💧";
+    case "PREVENTIVE_SPRAY":
+    case "PEST_CONTROL":
+      return "🛡️";
+    case "DISEASE_CONTROL":
+      return "🔬";
+    case "FOLIAR_NUTRITION":
+    case "SOIL_APPLICATION":
+      return "🧪";
+    case "CULTURAL_PRACTICE":
+      return "🚜";
+    case "CROP_SPECIFIC":
+      return "🌱";
+    default:
+      return "📋";
+  }
+}
+
+function getCategoryShortLabel(category?: string): string {
+  switch (category) {
+    case "FERTIGATION":
+      return "Fertigate";
+    case "IRRIGATION_RECOMMENDATION":
+      return "Irrigate";
+    case "PREVENTIVE_SPRAY":
+      return "Spray";
+    case "PEST_CONTROL":
+      return "Pest Check";
+    case "DISEASE_CONTROL":
+      return "Disease";
+    case "FOLIAR_NUTRITION":
+      return "Foliar";
+    case "SOIL_APPLICATION":
+      return "Soil Nutri";
+    case "CULTURAL_PRACTICE":
+      return "Practice";
+    case "CROP_MONITORING":
+      return "Scout";
+    default:
+      return "Operation";
+  }
+}
 
 export function TaskBoard() {
   const toast = useToast();
@@ -25,6 +85,7 @@ export function TaskBoard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [expandedPhotoUrl, setExpandedPhotoUrl] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -164,18 +225,58 @@ export function TaskBoard() {
             </span>
           </div>
 
-          <div className="tabs-nav" style={{ padding: 4, gap: 4 }}>
-            {["ALL", "PENDING", "IN_PROGRESS", "COMPLETED"].map((st) => (
-              <button
-                key={st}
-                type="button"
-                className={`tab-btn ${statusFilter === st ? "active" : ""}`}
-                onClick={() => setStatusFilter(st)}
-                style={{ padding: "6px 14px", fontSize: 12 }}
-              >
-                {st === "ALL" ? "All Statuses" : st.replaceAll("_", " ")}
-              </button>
-            ))}
+          <div
+            className="schedule-pill-rail"
+            style={{
+              display: "flex",
+              gap: 5,
+              overflowX: "auto",
+              padding: "2px 0",
+              scrollbarWidth: "none",
+            }}
+          >
+            {[
+              { key: "ALL", label: "All Tasks", count: tasks.length },
+              { key: "PENDING", label: "Pending", count: tasks.filter((t) => t.status === "PENDING" || t.status === "ASSIGNED" || t.status === "AVAILABLE").length },
+              { key: "IN_PROGRESS", label: "In Progress", count: tasks.filter((t) => t.status === "IN_PROGRESS").length },
+              { key: "COMPLETED", label: "Completed", count: tasks.filter((t) => t.status === "COMPLETED").length },
+            ].map((tab) => {
+              const active = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.key)}
+                  style={{
+                    padding: "5px 12px",
+                    fontSize: "12px",
+                    fontWeight: active ? 700 : 500,
+                    borderRadius: "9999px",
+                    border: active ? "1px solid var(--ink)" : "1px solid var(--line)",
+                    backgroundColor: active ? "var(--ink)" : "var(--card)",
+                    color: active ? "var(--canvas)" : "var(--muted)",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    transition: "all 0.12s ease",
+                  }}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                      opacity: active ? 0.9 : 0.6,
+                    }}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -201,149 +302,298 @@ export function TaskBoard() {
       {loading && <CardSkeleton />}
 
       {/* OPERATIONAL TASK CARDS */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {filteredTasks.map((t) => (
-          <article
-            key={t.id}
-            className="compact-card"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "stretch",
-              gap: 14,
-              padding: "22px 24px",
-              borderRadius: "var(--radius-md)",
-              boxShadow: "var(--shadow-card)",
-              backgroundColor: "var(--canvas)",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "16px", fontWeight: 600, color: "var(--ink)" }}>{t.title}</span>
-                  <StatusBadge status={t.status} />
-                  <PriorityBadge priority={t.priority} />
-                </div>
-                <div className="muted" style={{ fontSize: "13px" }}>
-                  {t.farm.name} {t.plot ? `• Plot: ${t.plot.name}` : ""} {t.cropCycle ? `• 🌱 ${t.cropCycle.cropName}` : ""}
-                </div>
-              </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {filteredTasks.map((t) => {
+          const isDone = t.status === "COMPLETED";
+          const isStarted = t.status === "IN_PROGRESS";
+          const isUrgent = t.priority === "URGENT" || t.priority === "HIGH";
 
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setEditingId(editingId === t.id ? null : t.id)}
-                  style={{ borderRadius: "var(--radius-pill)", padding: "5px 12px", fontSize: 12 }}
-                >
-                  <Icons.Edit size={13} />
-                  <span>{editingId === t.id ? "Close" : "Edit"}</span>
-                </button>
-              </div>
-            </div>
-
-            {t.description && (
-              <p style={{ margin: 0, fontSize: "14px", color: "var(--ink)", lineHeight: 1.5 }}>
-                {t.description}
-              </p>
-            )}
-
-            {t.instructions && (
-              <div
-                className="callout"
-                style={{
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  borderRadius: "var(--radius-sm)",
-                }}
-              >
-                <span className="mono-label" style={{ color: "var(--green-dark)", fontWeight: 600 }}>
-                  Agronomist Prescription:
-                </span>
-                <span style={{ color: "var(--ink)", marginTop: 2, display: "block" }}>{t.instructions}</span>
-              </div>
-            )}
-
-            <div
+          return (
+            <article
+              key={t.id}
+              className="officer-task-card"
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: "12px",
-                color: "var(--muted)",
-                borderTop: "1px solid var(--line)",
-                paddingTop: 12,
-                marginTop: 4,
+                flexDirection: "column",
+                gap: 0,
+                borderRadius: "14px",
+                border: isStarted
+                  ? "1.5px solid var(--green)"
+                  : isUrgent && !isDone
+                  ? "1.5px solid var(--amber-light, #fef3c7)"
+                  : "1px solid var(--line)",
+                backgroundColor: isDone ? "var(--stone)" : "var(--canvas)",
+                boxShadow: "var(--shadow-sm)",
+                opacity: isDone ? 0.8 : 1,
+                transition: "all 0.15s ease",
+                overflow: "hidden",
               }}
             >
-              <span>Assignee: <strong style={{ color: "var(--ink)" }}>{t.assignedOfficer?.name ?? "Unassigned"}</strong></span>
-              <span className="data">Due: {new Date(t.dueDate).toLocaleDateString()}</span>
-            </div>
-
-            {editingId === t.id && (
-              <form
-                onSubmit={(e) => save(e, t)}
+              {/* Main Card Row: 90x90 Thumbnail on Left, Metadata on Right */}
+              <div
                 style={{
-                  background: "var(--stone)",
-                  padding: 18,
-                  borderRadius: "var(--radius-sm)",
-                  display: "grid",
-                  gap: 12,
-                  marginTop: 8,
+                  display: "flex",
+                  gap: 10,
+                  padding: "4px 12px 4px 4px",
+                  alignItems: "center",
                 }}
               >
-                <div className="two-column">
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Title</label>
-                    <input name="title" defaultValue={t.title} required />
+                {/* 90x90 SQUARE THUMBNAIL (TAP TO EXPAND IF PHOTO) */}
+                {t.primaryImageUrl ? (
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedPhotoUrl(t.primaryImageUrl!);
+                    }}
+                    title="Tap to expand evidence photo"
+                    style={{
+                      position: "relative",
+                      width: 90,
+                      height: 90,
+                      minWidth: 90,
+                      maxWidth: 90,
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      backgroundColor: "var(--stone)",
+                      cursor: "zoom-in",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <img
+                      src={t.primaryImageUrl}
+                      alt={t.title}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 5,
+                        right: 5,
+                        backgroundColor: "rgba(0, 0, 0, 0.65)",
+                        color: "#fff",
+                        borderRadius: 4,
+                        padding: "1px 4px",
+                        fontSize: "8.5px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 2,
+                        backdropFilter: "blur(2px)",
+                      }}
+                    >
+                      <Icons.Maximize2 size={9} />
+                      {t.media && t.media.length > 1 && <span>{t.media.length}</span>}
+                    </div>
                   </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Due Date</label>
-                    <input name="dueDate" type="date" defaultValue={t.dueDate?.slice(0, 10)} required />
+                ) : (
+                  <div
+                    style={{
+                      width: 90,
+                      height: 90,
+                      minWidth: 90,
+                      maxWidth: 90,
+                      borderRadius: "10px",
+                      backgroundColor: isDone ? "rgba(0,0,0,0.04)" : "var(--stone)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 3,
+                      flexShrink: 0,
+                      border: "1px solid var(--line)",
+                    }}
+                  >
+                    <span style={{ fontSize: "24px" }}>
+                      {getCategoryEmoji(t.category, t.origin)}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "9px",
+                        fontWeight: 700,
+                        color: "var(--muted)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      {getCategoryShortLabel(t.category)}
+                    </span>
                   </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Priority</label>
-                    <select name="priority" defaultValue={t.priority}>
-                      <option value="LOW">Low</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="HIGH">High</option>
-                      <option value="URGENT">Urgent</option>
-                    </select>
+                )}
+
+                {/* CONTENT & METADATA HIERARCHY */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    height: 90,
+                    gap: 2,
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {/* Row 1: Plot/Estate on Left, Status/Priority on Right */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "var(--green-dark)",
+                        backgroundColor: "var(--green-light)",
+                        padding: "1px 6px",
+                        borderRadius: "6px",
+                        maxWidth: "60%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {t.plot?.name ? t.plot.name.replace(/^Plot:\s*/i, "") : t.farm.name}
+                      {t.cropCycle ? ` • ${t.cropCycle.cropName.split(" ")[0]}` : ""}
+                    </span>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      <StatusBadge status={t.status} />
+                      <PriorityBadge priority={t.priority} />
+                    </div>
                   </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label>Status</label>
-                    <select name="status" defaultValue={t.status}>
-                      <option value="PENDING">Pending</option>
-                      <option value="IN_PROGRESS">In Progress</option>
-                      <option value="COMPLETED">Completed</option>
-                    </select>
-                  </div>
-                  <div className="form-group wide" style={{ margin: 0 }}>
-                    <label>Instructions / Guidance</label>
-                    <textarea name="instructions" defaultValue={t.instructions || ""} />
+
+                  {/* Row 2: Title */}
+                  <h3
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "var(--ink)",
+                      margin: 0,
+                      lineHeight: 1.25,
+                      letterSpacing: "-0.01em",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={t.title}
+                  >
+                    {t.title}
+                  </h3>
+
+                  {/* Row 3: Description */}
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "11.5px",
+                      color: "var(--ink-soft)",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {t.description || t.instructions || "Agronomy operational activity."}
+                  </p>
+
+                  {/* Row 4: Assignee / Due date + Edit Trigger */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: "10.5px",
+                      color: "var(--muted)",
+                    }}
+                  >
+                    <span>
+                      Assignee: <strong style={{ color: "var(--ink)" }}>{t.assignedOfficer?.name ?? "Unassigned"}</strong>
+                      {" • "}Due: {new Date(t.dueDate).toLocaleDateString([], { month: "short", day: "numeric" })}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEditingId(editingId === t.id ? null : t.id)}
+                      style={{
+                        borderRadius: "9999px",
+                        padding: "0 9px",
+                        height: 22,
+                        fontSize: "10.5px",
+                        fontWeight: 650,
+                      }}
+                    >
+                      {editingId === t.id ? "Close" : "Edit"}
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 4 }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setEditingId(null)}
-                    style={{ borderRadius: "var(--radius-pill)" }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    style={{ borderRadius: "var(--radius-pill)" }}
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            )}
-          </article>
-        ))}
+              </div>
+
+              {/* Inline Edit Drawer */}
+              {editingId === t.id && (
+                <form
+                  onSubmit={(e) => save(e, t)}
+                  style={{
+                    background: "var(--stone)",
+                    padding: "14px 16px",
+                    borderTop: "1px solid var(--line)",
+                    display: "grid",
+                    gap: 10,
+                  }}
+                >
+                  <div className="two-column">
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Title</label>
+                      <input name="title" defaultValue={t.title} required style={{ height: 32, fontSize: 12 }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Due Date</label>
+                      <input name="dueDate" type="date" defaultValue={t.dueDate?.slice(0, 10)} required style={{ height: 32, fontSize: 12 }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Priority</label>
+                      <select name="priority" defaultValue={t.priority} style={{ height: 32, fontSize: 12 }}>
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Status</label>
+                      <select name="status" defaultValue={t.status} style={{ height: 32, fontSize: 12 }}>
+                        <option value="PENDING">Pending</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="COMPLETED">Completed</option>
+                      </select>
+                    </div>
+                    <div className="form-group wide" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11 }}>Instructions / Guidance</label>
+                      <textarea name="instructions" defaultValue={t.instructions || ""} rows={2} style={{ fontSize: 12 }} />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setEditingId(null)}
+                      style={{ borderRadius: "9999px", height: 28, fontSize: 11, padding: "0 12px" }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      style={{ borderRadius: "9999px", height: 28, fontSize: 11, padding: "0 14px" }}
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              )}
+            </article>
+          );
+        })}
 
         {!filteredTasks.length && !loading && (
           <EmptyState
@@ -364,6 +614,62 @@ export function TaskBoard() {
           />
         )}
       </div>
+
+      {/* Lightbox for Task Evidence Photos */}
+      {expandedPhotoUrl && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: 16,
+          }}
+          onClick={() => setExpandedPhotoUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setExpandedPhotoUrl(null)}
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              display: "grid",
+              placeItems: "center",
+            }}
+            title="Close image"
+          >
+            <Icons.X size={18} />
+          </button>
+          <img
+            src={expandedPhotoUrl}
+            alt="Task evidence"
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "80vh",
+              objectFit: "contain",
+              borderRadius: "14px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span style={{ marginTop: 14, color: "rgba(255,255,255,0.75)", fontSize: "12px", fontWeight: 500 }}>
+            Tap anywhere to close
+          </span>
+        </div>
+      )}
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, paginationParams } from "@/lib/api";
 import { isWithinRollingSevenDays, parseUtcDate } from "@/lib/business";
+import { downloadUrl } from "@/lib/storage";
 
 const schema = z.object({ farmId: z.string().min(1), plotId: z.string().min(1).optional().nullable(), cropCycleId: z.string().min(1).optional().nullable(), date: z.coerce.date(), category: z.enum(["FERTIGATION", "FOLIAR_NUTRITION", "SOIL_APPLICATION", "PREVENTIVE_SPRAY", "PEST_CONTROL", "DISEASE_CONTROL", "CROP_MONITORING", "IRRIGATION_RECOMMENDATION", "CULTURAL_PRACTICE", "CROP_SPECIFIC"]), title: z.string().min(3).max(160), description: z.string().min(3).max(2000), instructions: z.string().max(2000).optional().nullable(), priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]), assignedOfficerId: z.string().min(1) });
 
@@ -42,22 +43,48 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(
-      await prisma.task.findMany({
-        where,
-        include: {
-          farm: { select: { id: true, name: true } },
-          plot: { select: { id: true, name: true } },
-          cropCycle: { select: { id: true, cropName: true } },
-          milestone: { select: { id: true, name: true } },
-          assignedOfficer: { select: { name: true } },
-          executions: true,
+    const rawTasks = await prisma.task.findMany({
+      where,
+      include: {
+        farm: { select: { id: true, name: true } },
+        plot: { select: { id: true, name: true } },
+        cropCycle: { select: { id: true, cropName: true } },
+        milestone: { select: { id: true, name: true } },
+        assignedOfficer: { select: { name: true } },
+        executions: {
+          include: {
+            media: true,
+          },
         },
-        orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
-        take: limit,
-        skip: offset,
+      },
+      orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
+      take: limit,
+      skip: offset,
+    });
+
+    const tasks = await Promise.all(
+      rawTasks.map(async (t) => {
+        const allMedia = t.executions.flatMap((e) => e.media || []);
+        const mediaWithUrls = await Promise.all(
+          allMedia.map(async (m) => {
+            try {
+              const url = await downloadUrl(m.storageKey);
+              return { id: m.id, url };
+            } catch {
+              return { id: m.id, url: null };
+            }
+          })
+        );
+        const primaryImageUrl = mediaWithUrls.find((m) => m.url)?.url || null;
+        return {
+          ...t,
+          primaryImageUrl,
+          media: mediaWithUrls,
+        };
       })
     );
+
+    return NextResponse.json(tasks);
   } catch (error) { return apiError(error); }
 }
 

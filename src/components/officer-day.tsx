@@ -25,7 +25,57 @@ type Task = {
   cropCycle?: { id?: string; cropName: string } | null;
   milestone?: { id: string; name: string } | null;
   executions?: Array<{ id: string; status: string; completedAt: string | null; remarks: string | null }>;
+  primaryImageUrl?: string | null;
+  media?: Array<{ id: string; url: string | null }>;
 };
+
+function getCategoryEmoji(category?: string, origin?: string): string {
+  if (origin === "DAILY_MONITORING") return "👁️";
+  switch (category) {
+    case "FERTIGATION":
+    case "IRRIGATION_RECOMMENDATION":
+      return "💧";
+    case "PREVENTIVE_SPRAY":
+    case "PEST_CONTROL":
+      return "🛡️";
+    case "DISEASE_CONTROL":
+      return "🔬";
+    case "FOLIAR_NUTRITION":
+    case "SOIL_APPLICATION":
+      return "🧪";
+    case "CULTURAL_PRACTICE":
+      return "🚜";
+    case "CROP_SPECIFIC":
+      return "🌱";
+    default:
+      return "📋";
+  }
+}
+
+function getCategoryShortLabel(category?: string): string {
+  switch (category) {
+    case "FERTIGATION":
+      return "Fertigate";
+    case "IRRIGATION_RECOMMENDATION":
+      return "Irrigate";
+    case "PREVENTIVE_SPRAY":
+      return "Spray";
+    case "PEST_CONTROL":
+      return "Pest Check";
+    case "DISEASE_CONTROL":
+      return "Disease";
+    case "FOLIAR_NUTRITION":
+      return "Foliar";
+    case "SOIL_APPLICATION":
+      return "Soil Nutri";
+    case "CULTURAL_PRACTICE":
+      return "Practice";
+    case "CROP_MONITORING":
+      return "Scout";
+    default:
+      return "Operation";
+  }
+}
 
 export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const toast = useToast();
@@ -37,6 +87,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
   const [showSearch, setShowSearch] = useState(false);
   const [taskSearch, setTaskSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [expandedPhotoUrl, setExpandedPhotoUrl] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -382,9 +433,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
               className="officer-task-card"
               style={{
                 display: "flex",
-                flexDirection: "column",
-                gap: 7,
-                padding: "11px 13px",
+                gap: 10,
+                padding: "4px 12px 4px 4px",
                 borderRadius: "14px",
                 border: isStarted
                   ? "1.5px solid var(--green)"
@@ -395,258 +445,326 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                 boxShadow: isStarted
                   ? "0 2px 8px rgba(36, 84, 58, 0.08)"
                   : "var(--shadow-sm)",
-                opacity: isDone ? 0.72 : 1,
+                opacity: isDone ? 0.8 : 1,
+                alignItems: "center",
                 transition: "all 0.15s ease",
               }}
             >
-              {/* Row 1: Plot/Crop Badge on Left, Status/Priority on Right */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-                <span
+              {/* 90x90 SQUARE THUMBNAIL (TAP TO EXPAND PHOTO IF AVAILABLE) */}
+              {task.primaryImageUrl ? (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedPhotoUrl(task.primaryImageUrl!);
+                  }}
+                  title="Tap to expand photo evidence"
                   style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    color: "var(--green-dark)",
-                    backgroundColor: "var(--green-light)",
-                    padding: "2px 7px",
-                    borderRadius: "6px",
-                    maxWidth: "68%",
+                    position: "relative",
+                    width: 90,
+                    height: 90,
+                    minWidth: 90,
+                    maxWidth: 90,
+                    borderRadius: "10px",
                     overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    backgroundColor: "var(--stone)",
+                    cursor: "zoom-in",
+                    flexShrink: 0,
                   }}
                 >
-                  {task.plot ? task.plot.name.replace(/^Plot:\s*/i, "") : "Main Field"}
-                  {task.cropCycle ? ` • ${task.cropCycle.cropName.split(" ")[0]}` : ""}
-                </span>
-
-                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                  {task.priority === "URGENT" && !isDone && (
-                    <span
-                      style={{
-                        fontSize: "9.5px",
-                        fontWeight: 750,
-                        textTransform: "uppercase",
-                        color: "var(--red)",
-                        backgroundColor: "var(--red-light)",
-                        padding: "1px 5px",
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      Urgent
-                    </span>
-                  )}
-                  {isStarted ? (
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 700,
-                        color: "var(--green-dark)",
-                        backgroundColor: "rgba(36, 84, 58, 0.12)",
-                        padding: "2px 7px",
-                        borderRadius: "9999px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <span className="telemetry-live-dot" style={{ width: 5, height: 5, backgroundColor: "var(--green)" }} />
-                      In Progress
-                    </span>
-                  ) : isDone ? (
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 650,
-                        color: "var(--muted)",
-                        backgroundColor: "rgba(0,0,0,0.04)",
-                        padding: "2px 6px",
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      ✓ Done
-                    </span>
-                  ) : isOverdue ? (
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 700,
-                        color: "var(--red)",
-                        backgroundColor: "var(--red-light)",
-                        padding: "2px 6px",
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      Overdue
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 600,
-                        color: "var(--muted)",
-                        padding: "1px 4px",
-                      }}
-                    >
-                      {taskDate === todayStr ? "Due Today" : taskDate ? taskDate.slice(5) : ""}
-                    </span>
-                  )}
+                  <img
+                    src={task.primaryImageUrl}
+                    alt={task.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 5,
+                      right: 5,
+                      backgroundColor: "rgba(0, 0, 0, 0.65)",
+                      color: "#fff",
+                      borderRadius: 4,
+                      padding: "1px 4px",
+                      fontSize: "8.5px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 2,
+                      backdropFilter: "blur(2px)",
+                    }}
+                  >
+                    <Icons.Maximize2 size={9} />
+                    {task.media && task.media.length > 1 && <span>{task.media.length}</span>}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div
+                  style={{
+                    width: 90,
+                    height: 90,
+                    minWidth: 90,
+                    maxWidth: 90,
+                    borderRadius: "10px",
+                    backgroundColor: isDone ? "rgba(0,0,0,0.04)" : "var(--stone)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 3,
+                    flexShrink: 0,
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  <span style={{ fontSize: "24px" }}>
+                    {getCategoryEmoji(task.category, task.origin)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 700,
+                      color: "var(--muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {getCategoryShortLabel(task.category)}
+                  </span>
+                </div>
+              )}
 
-              {/* Row 2: Title */}
-              <h3
+              {/* CONTENT & METADATA HIERARCHY */}
+              <div
                 style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  color: "var(--ink)",
-                  margin: 0,
-                  lineHeight: 1.3,
-                  letterSpacing: "-0.01em",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  height: 90,
+                  gap: 2,
+                  flex: 1,
+                  minWidth: 0,
                 }}
               >
-                {task.title}
-              </h3>
+                {/* Row 1: Plot on Left, Status/Priority on Right */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "var(--green-dark)",
+                      backgroundColor: "var(--green-light)",
+                      padding: "1px 6px",
+                      borderRadius: "6px",
+                      maxWidth: "60%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {task.plot ? task.plot.name.replace(/^Plot:\s*/i, "") : "Main Field"}
+                    {task.cropCycle ? ` • ${task.cropCycle.cropName.split(" ")[0]}` : ""}
+                  </span>
 
-              {/* Row 3: Description (Clean, max 2 lines) */}
-              {task.description && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    {task.priority === "URGENT" && !isDone && (
+                      <span
+                        style={{
+                          fontSize: "9.5px",
+                          fontWeight: 750,
+                          textTransform: "uppercase",
+                          color: "var(--red)",
+                          backgroundColor: "var(--red-light)",
+                          padding: "1px 5px",
+                          borderRadius: "9999px",
+                        }}
+                      >
+                        Urgent
+                      </span>
+                    )}
+
+                    {isStarted ? (
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "var(--green-dark)",
+                          backgroundColor: "rgba(36, 84, 58, 0.12)",
+                          padding: "1px 6px",
+                          borderRadius: "9999px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 3,
+                        }}
+                      >
+                        <span className="telemetry-live-dot" style={{ width: 4, height: 4, backgroundColor: "var(--green)" }} />
+                        In Progress
+                      </span>
+                    ) : isDone ? (
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 650,
+                          color: "var(--green-dark)",
+                          backgroundColor: "var(--green-light)",
+                          padding: "1px 6px",
+                          borderRadius: "9999px",
+                        }}
+                      >
+                        ✓ Done
+                      </span>
+                    ) : isOverdue ? (
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "var(--red)",
+                          backgroundColor: "var(--red-light)",
+                          padding: "1px 6px",
+                          borderRadius: "9999px",
+                        }}
+                      >
+                        Overdue
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          color: "var(--muted)",
+                          padding: "1px 4px",
+                        }}
+                      >
+                        {taskDate === todayStr ? "Due Today" : taskDate ? taskDate.slice(5) : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2: Title */}
+                <h3
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "var(--ink)",
+                    margin: 0,
+                    lineHeight: 1.25,
+                    letterSpacing: "-0.01em",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  title={task.title}
+                >
+                  {task.title}
+                </h3>
+
+                {/* Row 3: Description */}
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     color: "var(--ink-soft)",
-                    lineHeight: 1.4,
+                    lineHeight: 1.3,
                     display: "-webkit-box",
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: "vertical",
                     overflow: "hidden",
                   }}
                 >
-                  {task.description}
+                  {task.description || "Operational agronomy task."}
                 </p>
-              )}
 
-              {/* Row 4: Compact Guidance Disclosure */}
-              {task.instructions && (
-                <details style={{ fontSize: "11.5px" }}>
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      color: "var(--green-dark)",
-                      userSelect: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <span>💡 View Guidance</span>
-                  </summary>
-                  <div
-                    style={{
-                      marginTop: 4,
-                      padding: "6px 10px",
-                      borderRadius: "8px",
-                      backgroundColor: "var(--stone)",
-                      color: "var(--ink)",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {task.instructions}
-                  </div>
-                </details>
-              )}
-
-              {/* Row 5: Action Button Row */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
-                  gap: 6,
-                  marginTop: 1,
-                }}
-              >
-                {isDone ? (
-                  <span
-                    style={{
-                      fontSize: "11.5px",
-                      fontWeight: 650,
-                      color: "var(--green)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <Icons.CheckCircle size={13} /> Completed
+                {/* Row 4: Action Footer */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "10.5px",
+                    color: "var(--muted)",
+                  }}
+                >
+                  <span>
+                    {task.origin === "DAILY_MONITORING" ? "Officer Task" : "Prescribed"}
+                    {task.instructions ? " • Guidance" : ""}
                   </span>
-                ) : isMonitoring ? (
-                  <button
-                    type="button"
-                    className="btn btn-green"
-                    onClick={() => setMonitoringTaskId(task.id)}
-                    style={{
-                      borderRadius: "8px",
-                      padding: "0 14px",
-                      height: 30,
-                      fontWeight: 700,
-                      fontSize: "12px",
-                    }}
-                  >
-                    Log Crop Signal
-                  </button>
-                ) : isStarted ? (
-                  <button
-                    type="button"
-                    className="btn btn-green"
-                    onClick={() => setCompletionId(task.id)}
-                    style={{
-                      borderRadius: "9999px",
-                      padding: "0 16px",
-                      height: 32,
-                      fontWeight: 700,
-                      fontSize: "12px",
-                      boxShadow: "0 2px 6px rgba(36, 84, 58, 0.25)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    <Icons.CheckCircle size={14} />
-                    <span>Complete Task</span>
-                  </button>
-                ) : (
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => void start(task.id)}
-                      style={{
-                        borderRadius: "8px",
-                        padding: "0 12px",
-                        height: 28,
-                        fontWeight: 600,
-                        fontSize: "11.5px",
-                      }}
-                    >
-                      Start
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-green"
-                      onClick={() => setCompletionId(task.id)}
-                      style={{
-                        borderRadius: "8px",
-                        padding: "0 14px",
-                        height: 28,
-                        fontWeight: 700,
-                        fontSize: "11.5px",
-                        boxShadow: "0 1px 4px rgba(36, 84, 58, 0.2)",
-                      }}
-                    >
-                      Complete
-                    </button>
+
+                  <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                    {isDone ? (
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>
+                        Completed
+                      </span>
+                    ) : isMonitoring ? (
+                      <button
+                        type="button"
+                        className="btn btn-green"
+                        onClick={() => setMonitoringTaskId(task.id)}
+                        style={{
+                          borderRadius: "9999px",
+                          padding: "0 10px",
+                          height: 24,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                        }}
+                      >
+                        Signal
+                      </button>
+                    ) : isStarted ? (
+                      <button
+                        type="button"
+                        className="btn btn-green"
+                        onClick={() => setCompletionId(task.id)}
+                        style={{
+                          borderRadius: "9999px",
+                          padding: "0 10px",
+                          height: 24,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 3,
+                        }}
+                      >
+                        <Icons.CheckCircle size={11} />
+                        <span>Complete</span>
+                      </button>
+                    ) : (
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => void start(task.id)}
+                          style={{
+                            borderRadius: "9999px",
+                            padding: "0 8px",
+                            height: 22,
+                            fontWeight: 650,
+                            fontSize: "10.5px",
+                          }}
+                        >
+                          Start
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-green"
+                          onClick={() => setCompletionId(task.id)}
+                          style={{
+                            borderRadius: "9999px",
+                            padding: "0 8px",
+                            height: 22,
+                            fontWeight: 700,
+                            fontSize: "10.5px",
+                          }}
+                        >
+                          Finish
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </article>
           );
@@ -731,6 +849,62 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
             void load();
           }}
         />
+      )}
+
+      {/* Lightbox for Task Evidence Photos */}
+      {expandedPhotoUrl && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: 16,
+          }}
+          onClick={() => setExpandedPhotoUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setExpandedPhotoUrl(null)}
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              display: "grid",
+              placeItems: "center",
+            }}
+            title="Close image"
+          >
+            <Icons.X size={18} />
+          </button>
+          <img
+            src={expandedPhotoUrl}
+            alt="Task evidence"
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "80vh",
+              objectFit: "contain",
+              borderRadius: "14px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span style={{ marginTop: 14, color: "rgba(255,255,255,0.75)", fontSize: "12px", fontWeight: 500 }}>
+            Tap anywhere to close
+          </span>
+        </div>
       )}
     </section>
   );

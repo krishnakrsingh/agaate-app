@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { OfficerProfileView } from "@/components/officer/officer-profile-view";
+import { downloadUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,7 @@ export default async function OfficerProfilePage() {
         },
         labour: { select: { labourers: true, hours: true, labourHours: true } },
         materials: { select: { materialName: true, quantity: true, unit: true } },
+        media: { select: { id: true, storageKey: true } },
       },
     }),
 
@@ -157,38 +159,64 @@ export default async function OfficerProfilePage() {
   });
 
   // Serialize Task Executions
-  const serializedTasks = taskExecutions.map((e) => ({
-    id: e.id,
-    taskId: e.task.id,
-    title: e.task.title,
-    priority: e.task.priority,
-    category: e.task.category,
-    status: e.status,
-    farmName: e.task.farm.name,
-    plotName: e.task.plot?.name || "Farm Wide",
-    cropName: e.task.cropCycle?.cropName || null,
-    completedAt: e.completedAt ? e.completedAt.toISOString() : null,
-    startedAt: e.startedAt ? e.startedAt.toISOString() : null,
-    remarks: e.remarks,
-    labourHours: e.labour.reduce((sum, l) => sum + Number(l.labourHours), 0),
-    materials: e.materials.map((m) => `${m.materialName} (${m.quantity} ${m.unit})`).join(", "),
-  }));
+  const serializedTasks = await Promise.all(
+    taskExecutions.map(async (e) => {
+      let primaryImageUrl: string | null = null;
+      if (e.media && e.media.length > 0) {
+        try {
+          primaryImageUrl = await downloadUrl(e.media[0].storageKey);
+        } catch {
+          primaryImageUrl = null;
+        }
+      }
+      return {
+        id: e.id,
+        taskId: e.task.id,
+        title: e.task.title,
+        priority: e.task.priority,
+        category: e.task.category,
+        status: e.status,
+        farmName: e.task.farm.name,
+        plotName: e.task.plot?.name || "Farm Wide",
+        cropName: e.task.cropCycle?.cropName || null,
+        completedAt: e.completedAt ? e.completedAt.toISOString() : null,
+        startedAt: e.startedAt ? e.startedAt.toISOString() : null,
+        remarks: e.remarks,
+        primaryImageUrl,
+        labourHours: e.labour.reduce((sum, l) => sum + Number(l.labourHours), 0),
+        materials: e.materials.map((m) => `${m.materialName} (${m.quantity} ${m.unit})`).join(", "),
+      };
+    })
+  );
 
   // Serialize Incidents
-  const serializedIncidents = incidentsHistory.map((i) => ({
-    id: i.id,
-    date: i.createdAt.toISOString().split("T")[0],
-    createdAt: i.createdAt.toISOString(),
-    severity: i.severity || "MEDIUM",
-    type: i.type,
-    level: i.level,
-    status: i.status,
-    description: i.description,
-    farmName: i.farm.name,
-    plotName: i.plot?.name || "Farm Wide",
-    cropName: i.cropCycle?.cropName || null,
-    photosCount: i.media.length,
-  }));
+  const serializedIncidents = await Promise.all(
+    incidentsHistory.map(async (i) => {
+      let primaryImageUrl: string | null = null;
+      if (i.media && i.media.length > 0) {
+        try {
+          primaryImageUrl = await downloadUrl(i.media[0].storageKey);
+        } catch {
+          primaryImageUrl = null;
+        }
+      }
+      return {
+        id: i.id,
+        date: i.createdAt.toISOString().split("T")[0],
+        createdAt: i.createdAt.toISOString(),
+        severity: i.severity || "MEDIUM",
+        type: i.type,
+        level: i.level,
+        status: i.status,
+        description: i.description,
+        farmName: i.farm.name,
+        plotName: i.plot?.name || "Farm Wide",
+        cropName: i.cropCycle?.cropName || null,
+        photosCount: i.media.length,
+        primaryImageUrl,
+      };
+    })
+  );
 
   return (
     <>

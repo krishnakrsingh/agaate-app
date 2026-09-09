@@ -77,7 +77,7 @@ const ALTERNATIVE_OFFICERS = [
   { name: "Pooja Deshmukh", region: "Nashik", email: "officer3@agaate.local" },
 ];
 
-const SHOW_DEMO_PROFILES = process.env.NEXT_PUBLIC_ALLOW_DEMO_LOGIN === "true";
+const TEST_PASSWORD = "LocalAdminPassword-ChangeMe-123";
 
 export function LoginForm() {
   const [identifier, setIdentifier] = useState("");
@@ -85,7 +85,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [, setActiveQuickEmail] = useState<string | null>(null);
+  const [activeQuickEmail, setActiveQuickEmail] = useState<string | null>(null);
+  const [copiedPass, setCopiedPass] = useState(false);
 
   async function performLogin(loginId: string, loginPass: string) {
     if (pending) return;
@@ -131,10 +132,11 @@ export function LoginForm() {
   }
 
   async function handleQuickLogin(email: string) {
-    if (pending || !SHOW_DEMO_PROFILES) return;
-    // Fill-only: never embed passwords or auto-submit from the client bundle.
+    if (pending) return;
+    setActiveQuickEmail(email);
     setIdentifier(email);
-    setActiveQuickEmail(null);
+    setPassword(TEST_PASSWORD);
+    await performLogin(email, TEST_PASSWORD);
   }
 
   return (
@@ -217,10 +219,9 @@ export function LoginForm() {
           </button>
         </form>
 
-        {/* Quick Sign-In For Testing — dev only, fill email, never auto-login */}
-        {SHOW_DEMO_PROFILES && (
+        {/* Quick 1-Click Sign-In for 4 Persons of Authority (Testing Phase) */}
         <div style={{
-          marginTop: 10,
+          marginTop: 14,
           paddingTop: 18,
           borderTop: "1px dashed var(--line)",
           display: "flex",
@@ -229,31 +230,49 @@ export function LoginForm() {
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Icons.Zap size={14} style={{ color: "var(--green)" }} />
+              <Icons.Zap size={14} style={{ color: "var(--amber)" }} />
               <span className="mono-label" style={{ fontSize: "11px", letterSpacing: "0.06em", color: "var(--ink)", fontWeight: 700 }}>
-                QUICK TEST PROFILES
+                QUICK SIGN-IN: 4 PERSONS OF AUTHORITY
               </span>
             </div>
+            <span style={{
+              fontSize: "9.5px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              color: "var(--green)",
+              background: "var(--green-light)",
+              border: "1px solid rgba(36, 84, 58, 0.2)",
+              padding: "2px 6px",
+              borderRadius: "3px",
+              textTransform: "uppercase",
+            }}>
+              Testing Phase
+            </span>
           </div>
+
+          <p className="muted" style={{ margin: 0, fontSize: "11.5px", lineHeight: 1.4 }}>
+            Click any authority persona below to immediately authenticate into their role desk.
+          </p>
 
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
             gap: 8,
           }}>
             {TEST_PROFILES.map((profile) => {
               const Icon = profile.icon;
+              const isThisActive = pending && activeQuickEmail === profile.email;
               return (
                 <button
                   key={profile.role}
                   type="button"
                   disabled={pending}
                   onClick={() => handleQuickLogin(profile.email)}
-                  title={`Fill ${profile.roleLabel} email`}
+                  title={`1-Click Sign In as ${profile.roleLabel} (${profile.email})`}
                   style={{
                     textAlign: "left",
-                    background: "var(--canvas)",
-                    border: "1px solid var(--line)",
+                    background: isThisActive ? "var(--green-light)" : "var(--canvas)",
+                    border: `1px solid ${isThisActive ? "var(--green)" : "var(--line)"}`,
                     borderRadius: "var(--radius-sm)",
                     padding: "10px 12px",
                     display: "flex",
@@ -261,7 +280,7 @@ export function LoginForm() {
                     gap: 6,
                     transition: "all 0.15s ease",
                     cursor: pending ? "not-allowed" : "pointer",
-                    opacity: pending ? 0.6 : 1,
+                    opacity: pending && !isThisActive ? 0.5 : 1,
                   }}
                   className="hover-glow"
                 >
@@ -284,7 +303,7 @@ export function LoginForm() {
                       <Icon size={11} />
                       {profile.badge}
                     </span>
-                    <span className="mono-label" style={{ fontSize: "9.5px", color: "var(--muted)" }}>
+                    <span className="mono-label" style={{ fontSize: "9px", color: "var(--muted)" }}>
                       {profile.target.replace("/", "")}
                     </span>
                   </div>
@@ -313,15 +332,22 @@ export function LoginForm() {
                     </span>
                     <span style={{
                       fontWeight: 650,
-                      color: "var(--green)",
+                      color: isThisActive ? "var(--green-dark)" : "var(--green)",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 3,
                     }}>
-                      <>
-                        <span>Fill</span>
-                        <Icons.ArrowRight size={10} />
-                      </>
+                      {isThisActive ? (
+                        <>
+                          <Icons.Spinner className="spin" size={11} />
+                          <span>Signing in…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>1-Click Sign In</span>
+                          <Icons.ArrowRight size={10} />
+                        </>
+                      )}
                     </span>
                   </div>
                 </button>
@@ -329,14 +355,45 @@ export function LoginForm() {
             })}
           </div>
 
-          {/* Regional Officers footer */}
+          {/* Test credentials info pill */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 6,
+            fontSize: "10.5px",
+            padding: "6px 10px",
+            background: "var(--stone)",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid var(--line)",
+          }}>
+            <span style={{ color: "var(--muted)" }}>
+              Test Password: <strong style={{ color: "var(--ink)", fontFamily: "var(--font-mono)" }}>{TEST_PASSWORD}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(TEST_PASSWORD);
+                setCopiedPass(true);
+                setTimeout(() => setCopiedPass(false), 2000);
+              }}
+              className="btn btn-link"
+              style={{ fontSize: "10.5px", padding: 0, display: "inline-flex", alignItems: "center", gap: 3, color: "var(--green)" }}
+            >
+              <Icons.Copy size={11} />
+              <span>{copiedPass ? "Copied!" : "Copy Password"}</span>
+            </button>
+          </div>
+
+          {/* Regional Field Officers */}
           <div style={{
             display: "flex",
             alignItems: "center",
             flexWrap: "wrap",
             gap: 6,
             fontSize: "10.5px",
-            padding: "8px 10px",
+            padding: "6px 10px",
             background: "var(--stone)",
             borderRadius: "var(--radius-xs)",
             border: "1px solid var(--line)",
@@ -344,33 +401,40 @@ export function LoginForm() {
           }}>
             <span style={{ fontWeight: 600, color: "var(--ink)" }}>Regional Officers:</span>
             {ALTERNATIVE_OFFICERS.map((alt) => {
+              const isThisAltActive = pending && activeQuickEmail === alt.email;
               return (
                 <button
                   key={alt.email}
                   type="button"
                   onClick={() => handleQuickLogin(alt.email)}
                   disabled={pending}
-                  className="btn btn-link"
+                  className="btn btn-link hover-glow"
                   style={{
                     fontSize: "10.5px",
-                    padding: "2px 6px",
-                    background: "var(--canvas)",
-                    border: "1px solid var(--line)",
+                    padding: "2px 8px",
+                    background: isThisAltActive ? "var(--green-light)" : "var(--canvas)",
+                    border: `1px solid ${isThisAltActive ? "var(--green)" : "var(--line)"}`,
                     borderRadius: "3px",
                     color: "var(--blue)",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 4,
                   }}
-                  title={`Fill ${alt.name} email`}
+                  title={`1-Click Sign In as ${alt.name} (${alt.email})`}
                 >
-                  <span>{alt.name.split(" ")[0]} ({alt.region})</span>
+                  {isThisAltActive ? (
+                    <>
+                      <Icons.Spinner className="spin" size={10} />
+                      <span>{alt.name.split(" ")[0]}…</span>
+                    </>
+                  ) : (
+                    <span>{alt.name.split(" ")[0]} ({alt.region}) &rarr;</span>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
-        )}
       </div>
     </div>
   );
