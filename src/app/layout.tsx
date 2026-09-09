@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -17,14 +16,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <Script
-          id="theme-initializer"
-          strategy="beforeInteractive"
+      <head>
+        <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('agaate_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
+      </head>
+      <body suppressHydrationWarning>
         <ToastProvider>
           {children}
         </ToastProvider>
