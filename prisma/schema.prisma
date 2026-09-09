@@ -21,6 +21,14 @@ enum FarmStatus {
   COMPLETED
 }
 
+enum FarmSetupStage {
+  SURVEY_SOIL_TEST
+  PLOT_DEMARCATION
+  BED_SOIL_PREP
+  IRRIGATION_LAYOUT
+  HANDED_OVER
+}
+
 enum PlotStatus {
   SETUP
   ACTIVE
@@ -102,6 +110,31 @@ enum MediaKind {
   ACTIVITY_EVIDENCE
 }
 
+model Client {
+  id          String   @id @default(cuid())
+  code             String?  @unique
+  name             String
+  email            String?  @unique
+  phone            String?  @unique
+  companyName      String?
+  entityType       String?  // INDIVIDUAL, PVT_LTD, PARTNERSHIP, HUF, TRUST
+  panNumber        String?
+  gstin            String?
+  billingAddress   String?
+  secondaryContact String?
+  state            String?
+  district         String?
+  address          String?
+  status           String   @default("ACTIVE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  farms            Farm[]
+  users            User[]
+
+  @@index([status])
+  @@index([state, district])
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String
@@ -112,6 +145,8 @@ model User {
   passwordHash          String
   role                  Role
   active                Boolean                @default(true)
+  clientId              String?
+  client                Client?                @relation(fields: [clientId], references: [id])
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   farmAccess            FarmAccess[]
@@ -130,10 +165,13 @@ model User {
   authoredPrescriptions AgronomyPrescription[]
 
   @@index([role, active])
+  @@index([clientId])
 }
 
 model Farm {
   id                     String                  @id @default(cuid())
+  clientId               String?
+  client                 Client?                 @relation(fields: [clientId], references: [id])
   name                   String
   ownerName              String
   location               String
@@ -144,10 +182,31 @@ model Farm {
   cultivableArea         Decimal                 @db.Decimal(12, 2)
   waterSource            String
   soilType               String?
+  surveyNumber           String?                 // Khasra / Patta / Survey No.
+  village                String?
+  taluk                  String?
+  district               String?
+  state                  String?
+  pincode                String?
+  terrainType            String?                 // Flat Plain, Gentle Gradient, Rolling Hills, Terraced
+  fencingType            String?                 // Chainlink, Barbed Wire, Solar Electric, Stone Wall
+  borewellCount          Int?
+  borewellDepthFeet      Int?
+  waterYieldGph          Int?
+  electricitySupply      String?                 // 3-Phase Agri, Solar Pump, Grid-tied
+  soilPh                 Decimal?                @db.Decimal(4, 2)
+  soilEc                 Decimal?                @db.Decimal(4, 2)
+  soilOrganicCarbon      Decimal?                @db.Decimal(4, 2)
+  proposedCrops          String?
+  contractValue          Decimal?                @db.Decimal(14, 2)
+  targetHandoverDate     DateTime?
   boundaryGeoJson        String?                 @db.Text
   clientPhone            String?
   clientDob              DateTime?               @db.Date
   status                 FarmStatus              @default(SETUP)
+  setupStage             FarmSetupStage          @default(SURVEY_SOIL_TEST)
+  setupProgress          Int                     @default(0)
+  handedOverAt           DateTime?
   geofenceRadiusMeters   Int                     @default(500)
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -166,6 +225,10 @@ model Farm {
   prescriptions          AgronomyPrescription[]
 
   @@index([status])
+  @@index([setupStage])
+  @@index([clientId, status])
+  @@index([state, district])
+  @@index([setupStage, status])
 }
 
 model FarmAccess {

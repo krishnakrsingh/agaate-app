@@ -96,7 +96,7 @@ export async function requireSession() { const session = await getSession(); if 
 export async function requireActiveUser() {
   const session = await getSession();
   if (!session) throw new Error("Unauthenticated");
-  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { id: true, name: true, email: true, role: true, active: true } });
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { id: true, name: true, email: true, role: true, active: true, clientId: true } });
   if (!user?.active) throw new Error("Account is unavailable");
   return user;
 }
