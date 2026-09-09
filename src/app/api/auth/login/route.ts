@@ -41,25 +41,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = isEmail
-      ? await prisma.user.findUnique({ where: { email: normalizedIdentifier } })
-      : await prisma.user.findFirst({
-          where: {
-            OR: [
-              { phone: normalizedIdentifier },
-              { phone: rawIdentifier },
-              { email: rawIdentifier.toLowerCase() },
-            ],
-          },
-        });
+    const baselineUserSelect = {
+      id: true,
+      name: true,
+      email: true,
+      passwordHash: true,
+      role: true,
+      active: true,
+    } as const;
 
-    if (!user?.active || !(await bcrypt.compare(input.password, user.passwordHash))) {
+    let user: {
+      id: string;
+      name: string;
+      email: string;
+      passwordHash: string;
+      role: "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
+      active: boolean;
+    } | null = null;
+
+    try {
+      if (isEmail) {
+        user = await prisma.user.findUnique({
+          where: { email: normalizedIdentifier },
+          select: baselineUserSelect,
+        });
+      } else {
+        try {
+          user = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { phone: normalizedIdentifier },
+                { phone: rawIdentifier },
+                { email: rawIdentifier.toLowerCase() },
+              ],
+            },
+            select: baselineUserSelect,
+          });
+        } catch (phoneErr) {
+          console.warn("[Auth Login] Phone query failed (schema may lack phone column), falling back to email:", phoneErr);
+          user = await prisma.user.findUnique({
+            where: { email: rawIdentifier.toLowerCase() },
+            select: baselineUserSelect,
+          });
+        }
+      }
+    } catch (dbError) {
+      console.error("[Auth Login] Database lookup error:", dbError);
+      return NextResponse.json(
+        { error: "Authentication service temporarily unavailable. Please try again in a few moments." },
+        { status: 500 }
+      );
+    }
+
+    if (!user || !user.active || !(await bcrypt.compare(input.password, user.passwordHash))) {
       return NextResponse.json({ error: "Invalid email, phone number, or password." }, { status: 401 });
     }
 
     resetRateLimit(rateKey);
     await createSession({ userId: user.id, name: user.name, role: user.role });
-    await audit(user.id, "LOGIN", "User", user.id);
+    try {
+      await audit(user.id, "LOGIN", "User", user.id);
+    } catch {
+      // Non-blocking audit
+    }
     return NextResponse.json({ user: { id: user.id, name: user.name, role: user.role } });
   } catch (error) {
     return apiError(error);
