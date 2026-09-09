@@ -16,6 +16,7 @@ import {
   IncidentStatus,
   MediaKind,
 } from "@prisma/client";
+import { seedScalablePortfolio } from "./seed-scale";
 
 const prisma = new PrismaClient();
 
@@ -55,6 +56,7 @@ async function main() {
   await prisma.farmAccess.deleteMany({});
   await prisma.farm.deleteMany({});
   await prisma.user.deleteMany({});
+  await prisma.client.deleteMany({});
   console.log("✓ Database cleanly wiped.");
 
   // Helper date generators (relative to execution time so the demo is always fresh today)
@@ -150,12 +152,81 @@ async function main() {
   // -------------------------------------------------------------------------
   // STEP 3: ESTATES PORTFOLIO (Active, Setup Wizard, Inactive)
   // -------------------------------------------------------------------------
-  console.log("\n[3/7] Seeding 5 distinct agricultural estates across India...");
+  console.log("\n[3/8] Seeding 5 flagship agricultural estates and client accounts across India...");
+
+  // Seed Flagship Clients for Demo Estates
+  const flagshipClients = [
+    {
+      id: "client-flagship-01",
+      code: "CLI-FLAGSHIP-01",
+      name: "Somnath Agrotech Ltd",
+      companyName: "Somnath Agrotech Ltd",
+      entityType: "PVT_LTD",
+      email: "somnath@flagship.agaate.local",
+      phone: "+919845011221",
+      state: "Tamil Nadu",
+      district: "Krishnagiri",
+      status: "ACTIVE",
+    },
+    {
+      id: "client-flagship-02",
+      code: "CLI-FLAGSHIP-02",
+      name: "Narayana Swamy & Sons",
+      companyName: "Cauvery Valley Holdings",
+      entityType: "PARTNERSHIP",
+      email: "swamy@flagship.agaate.local",
+      phone: "+919845022332",
+      state: "Karnataka",
+      district: "Mandya",
+      status: "ACTIVE",
+    },
+    {
+      id: "client-flagship-03",
+      code: "CLI-FLAGSHIP-03",
+      name: "Priyanka Deshmukh",
+      companyName: "Sunrise Vineyard Holdings",
+      entityType: "INDIVIDUAL",
+      email: "deshmukh@flagship.agaate.local",
+      phone: "+919845033443",
+      state: "Maharashtra",
+      district: "Nashik",
+      status: "ACTIVE",
+    },
+    {
+      id: "client-flagship-04",
+      code: "CLI-FLAGSHIP-04",
+      name: "Dr. K. R. Soundarajan",
+      companyName: "Deccan Plateau Agro Nursery",
+      entityType: "INDIVIDUAL",
+      email: "soundarajan@flagship.agaate.local",
+      phone: "+919845044554",
+      state: "Tamil Nadu",
+      district: "Dharmapuri",
+      status: "ACTIVE",
+    },
+    {
+      id: "client-flagship-05",
+      code: "CLI-FLAGSHIP-05",
+      name: "Highland Agro Holdings",
+      companyName: "Highland Agro Holdings Ltd",
+      entityType: "PVT_LTD",
+      email: "highland@flagship.agaate.local",
+      phone: "+919845055665",
+      state: "Tamil Nadu",
+      district: "Nilgiris",
+      status: "ACTIVE",
+    },
+  ];
+
+  for (const fc of flagshipClients) {
+    await prisma.client.create({ data: fc });
+  }
 
   // Estate 1: Greenfield Precision Estate (Hosur, Tamil Nadu) - ACTIVE High-Tech Polyhouse
   const greenfieldFarm = await prisma.farm.create({
     data: {
       id: "farm-greenfield-01",
+      clientId: "client-flagship-01",
       name: "Greenfield Precision Estate",
       ownerName: "Somnath Agrotech Ltd",
       location: "Hosur, Tamil Nadu",
@@ -174,6 +245,7 @@ async function main() {
   const valleyFarm = await prisma.farm.create({
     data: {
       id: "farm-valley-02",
+      clientId: "client-flagship-02",
       name: "Cauvery Valley Orchards",
       ownerName: "Narayana Swamy & Sons",
       location: "Mandya, Karnataka",
@@ -192,6 +264,7 @@ async function main() {
   const sunriseFarm = await prisma.farm.create({
     data: {
       id: "farm-sunrise-03",
+      clientId: "client-flagship-03",
       name: "Sunrise Organic Vineyards",
       ownerName: "Priyanka Deshmukh",
       location: "Nashik, Maharashtra",
@@ -210,6 +283,7 @@ async function main() {
   const deccanFarm = await prisma.farm.create({
     data: {
       id: "farm-deccan-04",
+      clientId: "client-flagship-04",
       name: "Deccan Plateau High-Tech Nursery",
       ownerName: "Dr. K. R. Soundarajan",
       location: "Dharmapuri, Tamil Nadu",
@@ -228,6 +302,7 @@ async function main() {
   const nilgiriFarm = await prisma.farm.create({
     data: {
       id: "farm-nilgiri-05",
+      clientId: "client-flagship-05",
       name: "Nilgiri Foothills Tea & Spices",
       ownerName: "Highland Agro Holdings",
       location: "Ooty, Tamil Nadu",
@@ -1540,8 +1615,13 @@ async function main() {
 
   console.log("✓ Commercial ledger, harvest records, inventory items & prescriptions seeded.");
 
+  // -------------------------------------------------------------------------
+  // STEP 8: 10,000 ENTERPRISE CLIENTS & 25,000 MULTI-FARM SCALABLE PORTFOLIO
+  // -------------------------------------------------------------------------
+  await seedScalablePortfolio(prisma, passwordHash, 10000);
+
   console.log("\n==========================================================");
-  console.log("🎉 SEEDING COMPLETE! THE PLATFORM IS 100% READY FOR THE DEMO.");
+  console.log("🎉 SEEDING COMPLETE! THE PLATFORM IS 100% READY AT 10,000+ CLIENT SCALE.");
   console.log("==========================================================");
   console.log("Demo Credentials:");
   console.log("  • Super Admin:  admin@agaate.local      / LocalAdminPassword-ChangeMe-123");

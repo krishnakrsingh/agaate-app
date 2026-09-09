@@ -133,6 +133,8 @@ model Client {
 
   @@index([status])
   @@index([state, district])
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model User {
@@ -227,8 +229,11 @@ model Farm {
   @@index([status])
   @@index([setupStage])
   @@index([clientId, status])
+  @@index([clientId])
   @@index([state, district])
   @@index([setupStage, status])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model FarmAccess {

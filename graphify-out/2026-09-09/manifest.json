@@ -6,8 +6,8 @@
     "semantic_hash": "effa368837c2722432c83b5d28802f08"
   },
   "next-env.d.ts": {
-    "mtime": 1788946168.7503777,
-    "seen": 1788946217.4536717,
+    "mtime": 1788955206.927875,
+    "seen": 1788955257.9878564,
     "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
     "semantic_hash": ""
   },
@@ -192,9 +192,9 @@
     "semantic_hash": ""
   },
   "src/app/api/tasks/route.ts": {
-    "mtime": 1788948644.0102463,
-    "seen": 1788948886.887021,
-    "ast_hash": "962d0ea4bedbf9b12e7a354857ed91f6",
+    "mtime": 1788949365.3124664,
+    "seen": 1788955257.9880128,
+    "ast_hash": "48bd6b54c4e2495b0341b3674c74c2fe",
     "semantic_hash": ""
   },
   "src/app/api/uploads/[mediaId]/complete/route.ts": {
@@ -438,21 +438,21 @@
     "semantic_hash": ""
   },
   "src/components/task-board.tsx": {
-    "mtime": 1788948847.5289848,
-    "seen": 1788948886.8875067,
-    "ast_hash": "24638373875be8e902671486f8017375",
+    "mtime": 1788949558.4095473,
+    "seen": 1788955257.9882622,
+    "ast_hash": "b90dd4eb43e27528d92442850f2e58fd",
     "semantic_hash": ""
   },
   "src/components/task-completion-form.tsx": {
-    "mtime": 1788936028.2789967,
-    "seen": 1788936427.5208056,
-    "ast_hash": "8048d152cdb4c5d778d26cf8d00fc25c",
+    "mtime": 1788955154.4987912,
+    "seen": 1788955257.9882648,
+    "ast_hash": "65fd211c8adf482822ed46dc547c73c7",
     "semantic_hash": ""
   },
   "src/components/task-form.tsx": {
-    "mtime": 1788421101.8315897,
-    "seen": 1788421181.252409,
-    "ast_hash": "d85fd5b3788ce3c062537d1d5dc5175c",
+    "mtime": 1788949505.1113439,
+    "seen": 1788955257.9882667,
+    "ast_hash": "773be6cc4d08ef84400fb9af1beb078a",
     "semantic_hash": ""
   },
   "src/components/weather-card.tsx": {
@@ -785,18 +785,6 @@
     "ast_hash": "4ce75ad596258b1e0836b7cfff0e1517",
     "semantic_hash": ""
   },
-  "public/icon-512.png": {
-    "mtime": 1788946109.509,
-    "seen": 1788946217.4544988,
-    "ast_hash": "3b225bda5ac6030a8e89542bd0a36e8f",
-    "semantic_hash": ""
-  },
-  "public/icon.svg": {
-    "mtime": 1788068631.3017864,
-    "seen": 1788083373.854171,
-    "ast_hash": "834e2d4ebfba78b70f10c445f481904d",
-    "semantic_hash": ""
-  },
   "playwright.config.ts": {
     "mtime": 1788088217.404846,
     "seen": 1788100024.0220218,
@@ -834,9 +822,9 @@
     "semantic_hash": ""
   },
   "src/lib/api-integration.test.ts": {
-    "mtime": 1788418748.833918,
-    "seen": 1788418822.3531055,
-    "ast_hash": "5276a1c1ef4835cb07f0ca5cdf1e9da5",
+    "mtime": 1788955072.437611,
+    "seen": 1788955257.9882934,
+    "ast_hash": "abb37541ddd3dc3c7cd6611deea7e53c",
     "semantic_hash": ""
   },
   "src/lib/rate-limit.ts": {
@@ -1236,9 +1224,9 @@
     "semantic_hash": ""
   },
   "src/components/agronomy/weekly-planner.tsx": {
-    "mtime": 1788866034.8441298,
-    "seen": 1788866474.709365,
-    "ast_hash": "beb54095e34e6eae83f642d517be988d",
+    "mtime": 1788949531.798532,
+    "seen": 1788955257.9881368,
+    "ast_hash": "eb73bb20d08b75d39fd0a55539bcfaff",
     "semantic_hash": ""
   },
   "src/components/agronomy/printable-spray-sheet.tsx": {
@@ -1356,21 +1344,21 @@
     "semantic_hash": ""
   },
   "src/app/api/officer/tasks/route.ts": {
-    "mtime": 1788936992.7096603,
-    "seen": 1788937239.5886068,
-    "ast_hash": "e34e309ca967f57428c52284f989be40",
+    "mtime": 1788949376.2924345,
+    "seen": 1788955257.9879882,
+    "ast_hash": "01a2c3c3dd7ba0a8d180c451bb7a6936",
     "semantic_hash": ""
   },
   "src/components/officer/create-task-modal.tsx": {
-    "mtime": 1788937412.5174553,
-    "seen": 1788937490.0771317,
-    "ast_hash": "31d32538598068cd061c0d0d3ce5d600",
+    "mtime": 1788949485.9391925,
+    "seen": 1788955257.9882195,
+    "ast_hash": "9add1a15eb6a71314b58f7f08066eedb",
     "semantic_hash": ""
   },
   "src/app/api/uploads/direct/route.ts": {
-    "mtime": 1788946297.5883217,
-    "seen": 1788946376.7761428,
-    "ast_hash": "5119541a141894afee270a8a02c4d341",
+    "mtime": 1788949326.3687208,
+    "seen": 1788955257.9880183,
+    "ast_hash": "861d141d074ed6d6a3dd9105bdb0824a",
     "semantic_hash": ""
   },
   "src/app/officer/calendar/page.tsx": {
@@ -1421,12 +1409,6 @@
     "ast_hash": "2e8c4309507035598f52643301ddb2e3",
     "semantic_hash": ""
   },
-  "public/icon.png": {
-    "mtime": 1788946109.514,
-    "seen": 1788946217.4545007,
-    "ast_hash": "5784a58634d7743d1ae216683dd4881d",
-    "semantic_hash": ""
-  },
   "public/logo-dark.png": {
     "mtime": 1788946089.085,
     "seen": 1788946217.4545052,
@@ -1449,6 +1431,12 @@
     "mtime": 1788946109.542,
     "seen": 1788946217.4545176,
     "ast_hash": "5784a58634d7743d1ae216683dd4881d",
+    "semantic_hash": ""
+  },
+  "public/uploads/evidence/farm-greenfield-01/2026-09-09/drip-flush.jpg": {
+    "mtime": 1788941351.9435472,
+    "seen": 1788955257.9885454,
+    "ast_hash": "4c2db6ac6b99b4955041df6863e8ae2b",
     "semantic_hash": ""
   }
 }
