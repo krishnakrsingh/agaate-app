@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { FarmSwitcher } from "@/components/nav/farm-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/nav/config";
 
 interface NavLinkItem {
   href: string;
@@ -49,20 +50,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       window.location.href = "/login";
     }
   }
-
-  const roleLabels: Record<string, string> = {
-    SUPER_ADMIN: "SUPER ADMIN",
-    FARM_ADMIN: "FARM OWNER",
-    AGRONOMIST: "AGRONOMIST",
-    FARM_OFFICER: "FARM MANAGER",
-  };
-
-  const roleHomeUrls: Record<string, string> = {
-    SUPER_ADMIN: "/dashboard",
-    FARM_ADMIN: "/owner/dashboard",
-    AGRONOMIST: "/agronomy/radar",
-    FARM_OFFICER: "/officer/day",
-  };
 
   // Build role-tailored grouped navigation sections
   const sections: NavSection[] = [];
@@ -290,8 +277,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   }
 
   const initials = userName ? userName.trim().charAt(0).toUpperCase() : "U";
-  const userRoleLabel = roleLabels[role] ?? role.replaceAll("_", " ");
-  const homeHref = roleHomeUrls[role] ?? "/";
+  const userRoleLabel = ROLE_LABELS[role] ?? role.replaceAll("_", " ");
+  const homeHref = ROLE_HOME_URLS[role] ?? "/";
 
   return (
     <aside className="app-desktop-sidebar" aria-label="Desktop Application Sidebar">

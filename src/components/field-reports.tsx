@@ -4,34 +4,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "./icons";
 import { IncidentReportForm } from "./incident-report-form";
-import { compressImage } from "@/lib/image-compress";
+import { uploadEvidencePhotos, PhotoItem } from "./photo-upload-zone";
 
 type Cycle = { id: string; cropName: string };
 type Plot = { id: string; name: string; cropCycles: Cycle[] };
 type Farm = { id: string; name: string; plots: Plot[] };
 
-const incidentTypes = ["Disease Infestation", "Pest Damage", "Nutrient Deficiency", "Water Stress", "Pump / Motor Failure", "Irrigation Leakage", "Labour Shortage", "Other"];
 const cropStages = ["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"];
-
-async function uploadPhotos(farmId: string, kind: "CROP_PHOTO" | "INCIDENT_PHOTO", files: FormDataEntryValue[]) {
-  const ids: string[] = [];
-  for (const file of files) {
-    if (!(file instanceof File) || !file.size) continue;
-    const processed = await compressImage(file);
-    const signed = await fetch("/api/uploads/presign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ farmId, kind, mimeType: processed.type, sizeBytes: processed.size }),
-    });
-    if (!signed.ok) throw new Error((await signed.json()).error ?? "Could not prepare upload.");
-    const { uploadUrl, mediaId } = await signed.json();
-    const stored = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": processed.type }, body: processed });
-    if (!stored.ok) throw new Error("Photo upload failed.");
-    await fetch(`/api/uploads/${mediaId}/complete`, { method: "POST" });
-    ids.push(mediaId);
-  }
-  return ids;
-}
 
 export function FieldReports({
   initialFarmId, initialPlotId, initialCropCycleId, initialTab = "monitoring", onSuccess, onCancel, hideTabs = false,
@@ -46,9 +25,7 @@ export function FieldReports({
   const [cycleId, setCycleId] = useState(initialCropCycleId || "");
   const [tab, setTab] = useState<"monitoring" | "incident">(initialTab);
   const [health, setHealth] = useState<"GOOD" | "POOR">("GOOD");
-  const [incidentLevel, setIncidentLevel] = useState<"FARM" | "PLOT" | "CROP">("CROP");
   const [monitoringPhotos, setMonitoringPhotos] = useState<string[]>([]);
-  const [incidentPhotos, setIncidentPhotos] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -78,11 +55,17 @@ export function FieldReports({
     const f = new FormData(e.currentTarget);
     try {
       if (!farmId || !plotId || !cycleId) throw new Error("Select farm, plot, and crop cycle.");
-      const photos = f.getAll("photos");
-      if (!photos.length || !(photos[0] instanceof File) || !photos[0].size) {
+      const photos = f.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
+      if (!photos.length) {
         throw new Error("At least one crop photo is required.");
       }
-      const mediaIds = await uploadPhotos(farmId, "CROP_PHOTO", photos);
+      const photoItems: PhotoItem[] = photos.map((file, i) => ({
+        id: `${i}`,
+        file,
+        previewUrl: "",
+        source: "file",
+      }));
+      const mediaIds = await uploadEvidencePhotos(farmId, "CROP_PHOTO", photoItems);
       const res = await fetch("/api/monitoring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,40 +86,6 @@ export function FieldReports({
     } catch (err: any) {
       setPending(false);
       setMessage(err.message ?? "Error submitting monitoring report.");
-    }
-  }
-
-  async function submitIncident(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setPending(true);
-    setMessage("");
-    const f = new FormData(e.currentTarget);
-    try {
-      if (!farmId) throw new Error("Please select a farm.");
-      const photos = f.getAll("photos");
-      const mediaIds = await uploadPhotos(farmId, "INCIDENT_PHOTO", photos);
-      const res = await fetch("/api/incidents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          farmId,
-          plotId: incidentLevel !== "FARM" ? plotId || null : null,
-          cropCycleId: incidentLevel === "CROP" ? cycleId || null : null,
-          level: incidentLevel,
-          type: f.get("type"),
-          severity: f.get("severity") || null,
-          description: f.get("description"),
-          mediaIds,
-        }),
-      });
-      setPending(false);
-      if (!res.ok) throw new Error((await res.json()).error ?? "Incident submission failed.");
-      setMessage("Field incident logged.");
-      setIncidentPhotos([]);
-      onSuccess?.();
-    } catch (err: any) {
-      setPending(false);
-      setMessage(err.message ?? "Error submitting incident.");
     }
   }
 

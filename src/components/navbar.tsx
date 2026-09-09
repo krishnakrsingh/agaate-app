@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icons } from "./icons";
-import { getNavForRole, getMobileNavForRole, isActiveItem } from "./nav/config";
+import { getNavForRole, getMobileNavForRole, isActiveItem, ROLE_LABELS } from "./nav/config";
 import { FarmSwitcher } from "./nav/farm-switcher";
 import { ProfileMenu } from "./nav/profile-menu";
 import { ThemeToggle } from "./theme-toggle";
@@ -48,13 +48,6 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Stethoscope: Icons.Stethoscope,
     TrendingUp: Icons.TrendingUp,
     Zap: Icons.Zap,
-  };
-
-  const roleLabels: Record<string, string> = {
-    SUPER_ADMIN: "SUPER ADMIN",
-    FARM_ADMIN: "FARM OWNER",
-    AGRONOMIST: "AGRONOMIST",
-    FARM_OFFICER: "FARM MANAGER",
   };
 
   return (
@@ -127,7 +120,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
 
             {/* Role Badge */}
             <div className="header-role-badge">
-              {roleLabels[role] ?? role.replaceAll("_", " ")}
+              {ROLE_LABELS[role] ?? role.replaceAll("_", " ")}
             </div>
 
             {/* Quick 1-Click Theme Toggle */}

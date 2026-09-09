@@ -23,11 +23,9 @@ export const noStore = { "Cache-Control": "no-store" };
 export function paginationParams(sp: URLSearchParams) {
   const rawLimit = sp.get("limit");
   const rawOffset = sp.get("offset");
-  const rawCursor = sp.get("cursor");
   const limit = rawLimit == null ? 100 : Number(rawLimit);
   const offset = rawOffset == null ? 0 : Number(rawOffset);
   if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new Error("limit must be an integer between 1 and 200.");
   if (!Number.isInteger(offset) || offset < 0) throw new Error("offset must be a non-negative integer.");
-  if (rawCursor != null && rawCursor.length < 10) throw new Error("cursor is invalid.");
-  return { limit, offset, cursor: rawCursor ?? null };
+  return { limit, offset };
 }

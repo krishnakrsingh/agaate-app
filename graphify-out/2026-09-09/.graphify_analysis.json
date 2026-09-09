@@ -1,0 +1,1049 @@
+{
+  "communities": {
+    "0": [
+      "src_app_api_attendance_exceptions_exceptionid_route",
+      "src_app_api_attendance_exceptions_exceptionid_route_patch",
+      "src_app_api_attendance_exceptions_route",
+      "src_app_api_attendance_exceptions_route_get",
+      "src_app_api_attendance_list_route",
+      "src_app_api_attendance_list_route_get",
+      "src_app_api_audit_logs_route",
+      "src_app_api_audit_logs_route_get",
+      "src_app_api_auth_login_route",
+      "src_app_api_auth_login_route_post",
+      "src_app_api_dashboard_route",
+      "src_app_api_dashboard_route_get",
+      "src_app_api_farms_farmid_access_route",
+      "src_app_api_farms_farmid_access_route_delete",
+      "src_app_api_farms_farmid_access_route_get",
+      "src_app_api_farms_farmid_access_route_post",
+      "src_app_api_farms_farmid_access_route_schema",
+      "src_app_api_farms_farmid_activate_route",
+      "src_app_api_farms_farmid_activate_route_post",
+      "src_app_api_farms_farmid_plots_route",
+      "src_app_api_farms_farmid_plots_route_post",
+      "src_app_api_farms_farmid_plots_route_schema",
+      "src_app_api_farms_farmid_route",
+      "src_app_api_farms_farmid_route_get",
+      "src_app_api_farms_farmid_route_patch",
+      "src_app_api_farms_farmid_route_patchschema",
+      "src_app_api_farms_route",
+      "src_app_api_farms_route_farmschema",
+      "src_app_api_farms_route_get",
+      "src_app_api_farms_route_post",
+      "src_app_api_incidents_incidentid_follow_ups_route",
+      "src_app_api_incidents_incidentid_follow_ups_route_createschema",
+      "src_app_api_incidents_incidentid_follow_ups_route_get",
+      "src_app_api_incidents_incidentid_follow_ups_route_post",
+      "src_app_api_incidents_incidentid_route",
+      "src_app_api_incidents_incidentid_route_get",
+      "src_app_api_incidents_incidentid_route_patch",
+      "src_app_api_incidents_incidentid_route_schema",
+      "src_app_api_incidents_route",
+      "src_app_api_incidents_route_post",
+      "src_app_api_incidents_route_schema",
+      "src_app_api_location_change_requests_requestid_route",
+      "src_app_api_location_change_requests_requestid_route_patch",
+      "src_app_api_location_change_requests_route",
+      "src_app_api_location_change_requests_route_get",
+      "src_app_api_location_change_requests_route_post",
+      "src_app_api_location_change_requests_route_schema",
+      "src_app_api_media_mediaid_url_route",
+      "src_app_api_media_mediaid_url_route_get",
+      "src_app_api_monitoring_route",
+      "src_app_api_monitoring_route_post",
+      "src_app_api_monitoring_route_schema",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_date",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_delete",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_get",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_milestone",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_patch",
+      "src_app_api_plots_plotid_crop_cycles_cycleid_route_patchschema",
+      "src_app_api_plots_plotid_crop_cycles_route",
+      "src_app_api_plots_plotid_crop_cycles_route_date",
+      "src_app_api_plots_plotid_crop_cycles_route_milestoneinput",
+      "src_app_api_plots_plotid_crop_cycles_route_schema",
+      "src_app_api_plots_plotid_route",
+      "src_app_api_plots_plotid_route_delete",
+      "src_app_api_plots_plotid_route_get",
+      "src_app_api_plots_plotid_route_patch",
+      "src_app_api_plots_plotid_route_schema",
+      "src_app_api_reports_daily_route",
+      "src_app_api_reports_daily_route_get",
+      "src_app_api_tasks_route",
+      "src_app_api_tasks_route_get",
+      "src_app_api_tasks_route_post",
+      "src_app_api_tasks_route_schema",
+      "src_app_api_tasks_taskid_complete_route",
+      "src_app_api_tasks_taskid_complete_route_post",
+      "src_app_api_tasks_taskid_complete_route_schema",
+      "src_app_api_tasks_taskid_route",
+      "src_app_api_tasks_taskid_route_patch",
+      "src_app_api_tasks_taskid_route_schema",
+      "src_app_api_uploads_mediaid_complete_route",
+      "src_app_api_uploads_mediaid_complete_route_post",
+      "src_app_api_uploads_presign_route",
+      "src_app_api_uploads_presign_route_allowedmimetypes",
+      "src_app_api_uploads_presign_route_post",
+      "src_app_api_uploads_presign_route_schema",
+      "src_app_api_users_route",
+      "src_app_api_users_route_createuserschema",
+      "src_app_api_users_route_get",
+      "src_app_api_users_route_post",
+      "src_app_api_users_userid_route",
+      "src_app_api_users_userid_route_patch",
+      "src_app_api_users_userid_route_schema",
+      "src_app_api_weather_manual_route",
+      "src_app_api_weather_manual_route_get",
+      "src_app_api_weather_manual_route_manualschema",
+      "src_app_api_weather_manual_route_post",
+      "src_app_api_weather_route",
+      "src_app_api_weather_route_get",
+      "src_lib_access",
+      "src_lib_access_accessiblefarmwhere",
+      "src_lib_access_currentactor",
+      "src_lib_access_httperror",
+      "src_lib_access_httperror_constructor",
+      "src_lib_access_platformroles",
+      "src_lib_access_requirefarmaccess",
+      "src_lib_access_requirerole",
+      "src_lib_api",
+      "src_lib_api_apierror",
+      "src_lib_api_nostore",
+      "src_lib_api_paginationparams",
+      "src_lib_audit",
+      "src_lib_audit_audit",
+      "src_lib_prisma",
+      "src_lib_prisma_globalforprisma",
+      "src_lib_prisma_prisma"
+    ],
+    "1": [
+      "src_app_farms_farmid_page",
+      "src_app_farms_farmid_page_dynamic",
+      "src_app_farms_farmid_page_farmdetailpage",
+      "src_components_activate_farm_button_activatefarmbutton",
+      "src_components_activate_farm_button_activatefarmbutton_activate",
+      "src_components_evidence_gallery",
+      "src_components_evidence_gallery_evidencegallery",
+      "src_components_farm_access_manager",
+      "src_components_farm_access_manager_accessresponse",
+      "src_components_farm_access_manager_farmaccessmanager",
+      "src_components_farm_access_manager_farmaccessmanager_assign",
+      "src_components_farm_access_manager_farmaccessmanager_remove",
+      "src_components_farm_access_manager_person",
+      "src_components_farm_edit_form_farmeditform",
+      "src_components_farm_edit_form_farmeditform_capture",
+      "src_components_farm_edit_form_farmeditform_save",
+      "src_components_farm_hub_client",
+      "src_components_farm_hub_client_cropcycle",
+      "src_components_farm_hub_client_farm",
+      "src_components_farm_hub_client_farmhubclient",
+      "src_components_farm_hub_client_incident",
+      "src_components_farm_hub_client_milestone",
+      "src_components_farm_hub_client_monitoring",
+      "src_components_farm_hub_client_plot",
+      "src_components_farm_status_control_farmstatuscontrol",
+      "src_components_farm_status_control_farmstatuscontrol_save",
+      "src_components_incident_followup_incidentfollowup",
+      "src_components_incident_followup_incidentfollowup_submit",
+      "src_components_incident_status_control",
+      "src_components_incident_status_control_incidentstatuscontrol",
+      "src_components_incident_status_control_incidentstatuscontrol_update",
+      "src_components_manual_weather_form",
+      "src_components_manual_weather_form_farm",
+      "src_components_manual_weather_form_manual",
+      "src_components_manual_weather_form_manualweatherform",
+      "src_components_manual_weather_form_manualweatherform_load",
+      "src_components_manual_weather_form_manualweatherform_submit",
+      "src_components_plot_form_plotform",
+      "src_components_plot_form_plotform_submit",
+      "src_components_plot_form_plotform_toggle",
+      "src_components_weather_card",
+      "src_components_weather_card_weather",
+      "src_components_weather_card_weathercard"
+    ],
+    "2": [
+      "src_app_admin_users_page",
+      "src_app_admin_users_page_adminuserspage",
+      "src_app_admin_users_page_dynamic",
+      "src_app_dashboard_page",
+      "src_app_dashboard_page_dashboardpage",
+      "src_app_dashboard_page_dynamic",
+      "src_app_farms_new_page",
+      "src_app_farms_new_page_dynamic",
+      "src_app_farms_new_page_newfarmpage",
+      "src_app_officer_reports_page",
+      "src_app_officer_reports_page_dynamic",
+      "src_app_officer_reports_page_officerreportspage",
+      "src_app_plots_plotid_crop_cycles_new_page",
+      "src_app_plots_plotid_crop_cycles_new_page_dynamic",
+      "src_app_plots_plotid_crop_cycles_new_page_newcropcyclepage",
+      "src_app_plots_plotid_page",
+      "src_app_plots_plotid_page_dynamic",
+      "src_app_plots_plotid_page_plotpage",
+      "src_app_tasks_new_page",
+      "src_app_tasks_new_page_dynamic",
+      "src_app_tasks_new_page_newtaskpage",
+      "src_app_tasks_page",
+      "src_app_tasks_page_dynamic",
+      "src_app_tasks_page_taskspage",
+      "src_components_breadcrumbs",
+      "src_components_breadcrumbs_breadcrumbitem",
+      "src_components_breadcrumbs_breadcrumbs",
+      "src_components_logout_button",
+      "src_components_logout_button_logoutbutton",
+      "src_components_navbar",
+      "src_components_navbar_navbar",
+      "src_lib_auth_requiresession"
+    ],
+    "3": [
+      "src_app_error",
+      "src_app_error_errorpage",
+      "src_app_not_found",
+      "src_app_not_found_notfoundpage",
+      "src_components_activate_farm_button",
+      "src_components_farm_edit_form",
+      "src_components_farm_edit_form_farm",
+      "src_components_farm_form",
+      "src_components_farm_status_control",
+      "src_components_icons",
+      "src_components_icons_iconprops",
+      "src_components_icons_icons",
+      "src_components_incident_followup",
+      "src_components_incident_followup_followup",
+      "src_components_location_request_form",
+      "src_components_location_request_form_farm",
+      "src_components_login_form",
+      "src_components_login_form_demo_accounts",
+      "src_components_officer_day",
+      "src_components_officer_day_task",
+      "src_components_plot_form",
+      "src_components_plot_form_irrigationoptions",
+      "src_components_task_board",
+      "src_components_task_board_task",
+      "src_components_task_board_taskboard",
+      "src_components_task_board_taskboard_save",
+      "src_components_task_completion_form",
+      "src_components_task_completion_form_taskcompletionform",
+      "src_components_task_completion_form_taskcompletionform_handlephotochange",
+      "src_components_task_completion_form_taskcompletionform_submit"
+    ],
+    "4": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_es2022",
+      "ref_next_dev_types_ts",
+      "ref_next_env_d_ts",
+      "ref_next_types_ts",
+      "ref_node_modules",
+      "ref_src_ts",
+      "ref_src_tsx",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowjs",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_incremental",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_plugins",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_exclude",
+      "tsconfig_include"
+    ],
+    "5": [
+      "agents_skills_graphify_skill",
+      "agents_skills_graphify_skill_for_graphify_add_and_watch",
+      "agents_skills_graphify_skill_for_graphify_query",
+      "agents_skills_graphify_skill_for_the_commit_hook_and_native_claude_md_integration",
+      "agents_skills_graphify_skill_for_update_and_cluster_only",
+      "agents_skills_graphify_skill_graphify",
+      "agents_skills_graphify_skill_honesty_rules",
+      "agents_skills_graphify_skill_interpreter_guard_for_subcommands",
+      "agents_skills_graphify_skill_part_a_structural_extraction_for_code_files",
+      "agents_skills_graphify_skill_part_b_semantic_extraction_parallel_subagents",
+      "agents_skills_graphify_skill_part_c_merge_ast_semantic_into_final_extraction",
+      "agents_skills_graphify_skill_step_0_github_repos_and_multi_path_merge_only_if_a_url_or_several_paths",
+      "agents_skills_graphify_skill_step_1_ensure_graphify_is_installed",
+      "agents_skills_graphify_skill_step_2_5_video_and_audio_only_if_video_files_detected",
+      "agents_skills_graphify_skill_step_2_detect_files",
+      "agents_skills_graphify_skill_step_3_extract_entities_and_relationships",
+      "agents_skills_graphify_skill_step_4_5_graph_health_check_read_only_integrity_gate",
+      "agents_skills_graphify_skill_step_4_build_graph_cluster_analyze_generate_outputs",
+      "agents_skills_graphify_skill_step_5_label_communities",
+      "agents_skills_graphify_skill_step_6_generate_obsidian_vault_opt_in_html",
+      "agents_skills_graphify_skill_step_9_save_manifest_update_cost_tracker_clean_up_and_report",
+      "agents_skills_graphify_skill_steps_6b_8_wiki_neo4j_falkordb_svg_graphml_mcp_benchmark_only_on_their_flags",
+      "agents_skills_graphify_skill_usage",
+      "agents_skills_graphify_skill_what_graphify_is_for",
+      "agents_skills_graphify_skill_what_you_must_do_when_invoked"
+    ],
+    "6": [
+      "prisma_migrations_202608300001_initial_migration",
+      "prisma_migrations_202608300001_initial_migration_agronomyplan",
+      "prisma_migrations_202608300001_initial_migration_attendance",
+      "prisma_migrations_202608300001_initial_migration_attendanceexception",
+      "prisma_migrations_202608300001_initial_migration_auditlog",
+      "prisma_migrations_202608300001_initial_migration_cropcycle",
+      "prisma_migrations_202608300001_initial_migration_cropmonitoring",
+      "prisma_migrations_202608300001_initial_migration_cropvariety",
+      "prisma_migrations_202608300001_initial_migration_farm",
+      "prisma_migrations_202608300001_initial_migration_farmaccess",
+      "prisma_migrations_202608300001_initial_migration_incident",
+      "prisma_migrations_202608300001_initial_migration_irrigationconfiguration",
+      "prisma_migrations_202608300001_initial_migration_labourusage",
+      "prisma_migrations_202608300001_initial_migration_locationchangerequest",
+      "prisma_migrations_202608300001_initial_migration_materialusage",
+      "prisma_migrations_202608300001_initial_migration_mediaasset",
+      "prisma_migrations_202608300001_initial_migration_milestone",
+      "prisma_migrations_202608300001_initial_migration_plot",
+      "prisma_migrations_202608300001_initial_migration_task",
+      "prisma_migrations_202608300001_initial_migration_taskexecution",
+      "prisma_migrations_202608300001_initial_migration_user",
+      "prisma_migrations_20260830093112_manual_weather_and_followups_migration",
+      "prisma_migrations_20260830093112_manual_weather_and_followups_migration_incidentfollowup"
+    ],
+    "7": [
+      "src_app_api_attendance_route",
+      "src_app_api_attendance_route_get",
+      "src_app_api_attendance_route_post",
+      "src_app_api_attendance_route_schema",
+      "src_app_api_attendance_route_today",
+      "src_app_api_plots_plotid_crop_cycles_route_post",
+      "src_lib_auth_penetration_test",
+      "src_lib_business",
+      "src_lib_business_calculatedinfrastructure",
+      "src_lib_business_cantransitiontask",
+      "src_lib_business_default_geofence_radius_meters",
+      "src_lib_business_distancemeters",
+      "src_lib_business_iswithinrollingsevendays",
+      "src_lib_business_labourhours",
+      "src_lib_business_milestonetemplates",
+      "src_lib_business_parseutcdate",
+      "src_lib_business_radians",
+      "src_lib_business_tasktransitions",
+      "src_lib_business_test",
+      "src_lib_business_utcdateonly",
+      "src_lib_business_variance",
+      "src_lib_domain_verification_test"
+    ],
+    "8": [
+      "aws_sdk_client_s3",
+      "aws_sdk_s3_request_presigner",
+      "bcryptjs",
+      "jose",
+      "next",
+      "package_dependencies",
+      "package_dependencies_aws_sdk_client_s3",
+      "package_dependencies_aws_sdk_s3_request_presigner",
+      "package_dependencies_bcryptjs",
+      "package_dependencies_jose",
+      "package_dependencies_next",
+      "package_dependencies_prisma_client",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_zod",
+      "prisma_client",
+      "react",
+      "react_dom",
+      "zod"
+    ],
+    "9": [
+      "eslint",
+      "eslint_config_next",
+      "package_devdependencies",
+      "package_devdependencies_eslint",
+      "package_devdependencies_eslint_config_next",
+      "package_devdependencies_prisma",
+      "package_devdependencies_tsx",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_vitest",
+      "prisma",
+      "tsx",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "typescript",
+      "vitest"
+    ],
+    "10": [
+      "src_app_api_auth_logout_route",
+      "src_app_api_auth_logout_route_post",
+      "src_app_login_page",
+      "src_app_login_page_dynamic",
+      "src_app_login_page_loginpage",
+      "src_app_page",
+      "src_app_page_dynamic",
+      "src_app_page_home",
+      "src_components_login_form_loginform",
+      "src_components_login_form_loginform_quickfill",
+      "src_components_login_form_loginform_submit",
+      "src_lib_auth",
+      "src_lib_auth_clearsession",
+      "src_lib_auth_createsession",
+      "src_lib_auth_getsession",
+      "src_lib_auth_requireactiveuser",
+      "src_lib_auth_requiresecret",
+      "src_lib_auth_secret",
+      "src_lib_auth_session"
+    ],
+    "11": [
+      "src_app_officer_day_page",
+      "src_app_officer_day_page_dynamic",
+      "src_app_officer_day_page_officerdaypage",
+      "src_components_attendance_form",
+      "src_components_attendance_form_attendanceform",
+      "src_components_attendance_form_attendanceform_acquirelocation",
+      "src_components_attendance_form_attendanceform_handleattendancesubmit",
+      "src_components_attendance_form_attendanceform_handleselfiechange",
+      "src_components_attendance_form_attendancerecord",
+      "src_components_attendance_form_farm",
+      "src_components_officer_day_officerday",
+      "src_components_officer_day_officerday_start"
+    ],
+    "12": [
+      "src_components_field_reports",
+      "src_components_field_reports_cropstages",
+      "src_components_field_reports_cycle",
+      "src_components_field_reports_farm",
+      "src_components_field_reports_fieldreports",
+      "src_components_field_reports_fieldreports_handlefarmselect",
+      "src_components_field_reports_fieldreports_handleincidentsubmit",
+      "src_components_field_reports_fieldreports_handlemonitoringsubmit",
+      "src_components_field_reports_incidenttypes",
+      "src_components_field_reports_plot",
+      "src_components_field_reports_uploadphotos"
+    ],
+    "13": [
+      "agents_skills_ponytail_examples_rate_limit_1_using_slowapi_recommended_easiest",
+      "agents_skills_ponytail_examples_rate_limit_2_using_limits_library_more_control",
+      "agents_skills_ponytail_examples_rate_limit_3_custom_middleware_full_control",
+      "agents_skills_ponytail_examples_rate_limit_4_per_user_rate_limiting_with_authentication",
+      "agents_skills_ponytail_examples_rate_limit_5_redis_based_rate_limiting_production",
+      "agents_skills_ponytail_examples_rate_limit_6_complete_example_with_multiple_endpoints",
+      "agents_skills_ponytail_examples_rate_limit_comparison_table",
+      "agents_skills_ponytail_examples_rate_limit_rate_limiting_in_fastapi",
+      "agents_skills_ponytail_examples_rate_limit_testing_rate_limits",
+      "agents_skills_ponytail_examples_rate_limit_with_ponytail_10_lines_of_code"
+    ],
+    "14": [
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_db_generate",
+      "package_scripts_db_migrate",
+      "package_scripts_db_seed",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_scripts_test_watch"
+    ],
+    "15": [
+      "agents_skills_graphify_references_exports",
+      "agents_skills_graphify_references_exports_graphify_reference_extra_exports_and_benchmark",
+      "agents_skills_graphify_references_exports_step_6b_wiki_only_if_wiki_flag",
+      "agents_skills_graphify_references_exports_step_7_neo4j_export_only_if_neo4j_or_neo4j_push_flag",
+      "agents_skills_graphify_references_exports_step_7a_falkordb_export_only_if_falkordb_or_falkordb_push_flag",
+      "agents_skills_graphify_references_exports_step_7b_svg_export_only_if_svg_flag",
+      "agents_skills_graphify_references_exports_step_7c_graphml_export_only_if_graphml_flag",
+      "agents_skills_graphify_references_exports_step_7d_mcp_server_only_if_mcp_flag",
+      "agents_skills_graphify_references_exports_step_8_token_reduction_benchmark_only_if_total_words_5000"
+    ],
+    "16": [
+      "agents_skills_ponytail_examples_react_countdown_advanced_timer_with_formatted_display",
+      "agents_skills_ponytail_examples_react_countdown_basic_countdown_timer",
+      "agents_skills_ponytail_examples_react_countdown_css_styling",
+      "agents_skills_ponytail_examples_react_countdown_custom_hook_version",
+      "agents_skills_ponytail_examples_react_countdown_features",
+      "agents_skills_ponytail_examples_react_countdown_react_countdown_timer_component",
+      "agents_skills_ponytail_examples_react_countdown_styled_component_with_animations",
+      "agents_skills_ponytail_examples_react_countdown_usage_examples",
+      "agents_skills_ponytail_examples_react_countdown_with_ponytail_9_lines_of_code"
+    ],
+    "17": [
+      "agents_skills_ponytail_skill",
+      "agents_skills_ponytail_skill_boundaries",
+      "agents_skills_ponytail_skill_intensity",
+      "agents_skills_ponytail_skill_output",
+      "agents_skills_ponytail_skill_persistence",
+      "agents_skills_ponytail_skill_ponytail",
+      "agents_skills_ponytail_skill_rules",
+      "agents_skills_ponytail_skill_the_ladder",
+      "agents_skills_ponytail_skill_when_not_to_be_lazy"
+    ],
+    "18": [
+      "src_app_admin_approvals_page",
+      "src_app_admin_approvals_page_adminapprovalspage",
+      "src_app_admin_approvals_page_dynamic",
+      "src_components_approvals_console",
+      "src_components_approvals_console_approvalsconsole",
+      "src_components_approvals_console_approvalsconsole_review",
+      "src_components_approvals_console_attendance",
+      "src_components_approvals_console_exception",
+      "src_components_approvals_console_locationrequest"
+    ],
+    "19": [
+      "src_app_reports_daily_page",
+      "src_app_reports_daily_page_dailyreportpage",
+      "src_app_reports_daily_page_dynamic",
+      "src_components_daily_report",
+      "src_components_daily_report_dailyreport",
+      "src_components_daily_report_dailyreport_adjustdate",
+      "src_components_daily_report_dailyreport_load",
+      "src_components_daily_report_farm",
+      "src_components_daily_report_report"
+    ],
+    "20": [
+      "agents_skills_ponytail_examples_debounce",
+      "agents_skills_ponytail_examples_debounce_debounce",
+      "agents_skills_ponytail_examples_debounce_without_ponytail_116_lines_of_code",
+      "agents_skills_ponytail_examples_rate_limit",
+      "agents_skills_ponytail_examples_rate_limit_rate_limiting",
+      "agents_skills_ponytail_examples_rate_limit_without_ponytail_128_lines_of_code",
+      "agents_skills_ponytail_examples_readme",
+      "agents_skills_ponytail_examples_readme_examples"
+    ],
+    "21": [
+      "agents_skills_ponytail_examples_email_validation",
+      "agents_skills_ponytail_examples_email_validation_comparison",
+      "agents_skills_ponytail_examples_email_validation_email_validation",
+      "agents_skills_ponytail_examples_email_validation_email_validation_function",
+      "agents_skills_ponytail_examples_email_validation_more_robust_version_with_additional_checks",
+      "agents_skills_ponytail_examples_email_validation_using_a_third_party_library_recommended_for_production",
+      "agents_skills_ponytail_examples_email_validation_with_ponytail_3_lines_of_code",
+      "agents_skills_ponytail_examples_email_validation_without_ponytail_75_lines_of_code"
+    ],
+    "22": [
+      "agents_skills_ponytail_help_skill",
+      "agents_skills_ponytail_help_skill_configure_default_mode",
+      "agents_skills_ponytail_help_skill_deactivate",
+      "agents_skills_ponytail_help_skill_levels",
+      "agents_skills_ponytail_help_skill_more",
+      "agents_skills_ponytail_help_skill_ponytail_help",
+      "agents_skills_ponytail_help_skill_skills",
+      "agents_skills_ponytail_help_skill_update"
+    ],
+    "23": [
+      "src_app_plots_plotid_crop_cycles_cycleid_edit_page",
+      "src_app_plots_plotid_crop_cycles_cycleid_edit_page_dynamic",
+      "src_app_plots_plotid_crop_cycles_cycleid_edit_page_editcropcyclepage",
+      "src_components_crop_cycle_edit_form",
+      "src_components_crop_cycle_edit_form_cropcycleeditform",
+      "src_components_crop_cycle_edit_form_cropcycleeditform_submit",
+      "src_components_crop_cycle_edit_form_cycle",
+      "src_components_crop_cycle_edit_form_datevalue"
+    ],
+    "24": [
+      "src_components_admin_console",
+      "src_components_admin_console_access",
+      "src_components_admin_console_adminconsole",
+      "src_components_admin_console_adminconsole_create",
+      "src_components_admin_console_adminconsole_update",
+      "src_components_admin_console_farm",
+      "src_components_admin_console_roles",
+      "src_components_admin_console_user"
+    ],
+    "25": [
+      "src_components_plot_edit_form",
+      "src_components_plot_edit_form_options",
+      "src_components_plot_edit_form_plot",
+      "src_components_plot_edit_form_ploteditform",
+      "src_components_plot_edit_form_ploteditform_archive",
+      "src_components_plot_edit_form_ploteditform_capture",
+      "src_components_plot_edit_form_ploteditform_save",
+      "src_components_plot_edit_form_ploteditform_toggle"
+    ],
+    "26": [
+      "agents_skills_ponytail_examples_debounce_advanced_debounce_with_cancel_immediate_options",
+      "agents_skills_ponytail_examples_debounce_basic_debounce_function",
+      "agents_skills_ponytail_examples_debounce_debounce_search_input",
+      "agents_skills_ponytail_examples_debounce_enhanced_version_with_loading_state",
+      "agents_skills_ponytail_examples_debounce_html_example",
+      "agents_skills_ponytail_examples_debounce_key_benefits",
+      "agents_skills_ponytail_examples_debounce_with_ponytail_10_lines_of_code"
+    ],
+    "27": [
+      "docs_implementation_status",
+      "docs_implementation_status_1_domain_capability_by_capability_ledger",
+      "docs_implementation_status_2_requirement_traceability_matrix_brd_vs_implementation",
+      "docs_implementation_status_3_verification_test_suite_results",
+      "docs_implementation_status_4_hardening_debt_resolution_2026_08_30_continuation_audit_restructure_complete_integrate_verify",
+      "docs_implementation_status_5_end_to_end_completion_takeover_continuation_2026_08_30_finish_all_features",
+      "docs_implementation_status_agaate_implementation_status_ledger_traceability_matrix"
+    ],
+    "28": [
+      "src_components_task_form",
+      "src_components_task_form_access",
+      "src_components_task_form_categories",
+      "src_components_task_form_farm",
+      "src_components_task_form_plot",
+      "src_components_task_form_taskform",
+      "src_components_task_form_taskform_submit"
+    ],
+    "29": [
+      "src_lib_storage",
+      "src_lib_storage_bucket",
+      "src_lib_storage_client",
+      "src_lib_storage_downloadurl",
+      "src_lib_storage_env",
+      "src_lib_storage_headobject",
+      "src_lib_storage_uploadurl"
+    ],
+    "30": [
+      "agents_skills_graphify_references_query",
+      "agents_skills_graphify_references_query_for_graphify_explain",
+      "agents_skills_graphify_references_query_for_graphify_path",
+      "agents_skills_graphify_references_query_graphify_reference_query_path_explain",
+      "agents_skills_graphify_references_query_step_0_constrained_query_expansion_required_before_traversal",
+      "agents_skills_graphify_references_query_step_1_traversal"
+    ],
+    "31": [
+      "agents_skills_ponytail_examples_csv_sum",
+      "agents_skills_ponytail_examples_csv_sum_alternative_methods",
+      "agents_skills_ponytail_examples_csv_sum_csv_sum",
+      "agents_skills_ponytail_examples_csv_sum_python_code_to_read_sales_csv_and_sum_the_amount_column",
+      "agents_skills_ponytail_examples_csv_sum_with_ponytail_3_lines_of_code",
+      "agents_skills_ponytail_examples_csv_sum_without_ponytail_20_lines_of_code"
+    ],
+    "32": [
+      "package",
+      "package_name",
+      "package_prisma",
+      "package_prisma_seed",
+      "package_private",
+      "package_version"
+    ],
+    "33": [
+      "src_app_layout",
+      "src_app_layout_metadata",
+      "src_app_layout_rootlayout",
+      "src_app_layout_viewport",
+      "src_components_service_worker",
+      "src_components_service_worker_serviceworker"
+    ],
+    "34": [
+      "agents_skills_ponytail_audit_skill",
+      "agents_skills_ponytail_audit_skill_boundaries",
+      "agents_skills_ponytail_audit_skill_hunt",
+      "agents_skills_ponytail_audit_skill_output",
+      "agents_skills_ponytail_audit_skill_tags"
+    ],
+    "35": [
+      "agents_skills_ponytail_gain_skill",
+      "agents_skills_ponytail_gain_skill_boundaries",
+      "agents_skills_ponytail_gain_skill_honesty_boundary",
+      "agents_skills_ponytail_gain_skill_ponytail_gain",
+      "agents_skills_ponytail_gain_skill_scoreboard"
+    ],
+    "36": [
+      "agents_skills_ponytail_review_skill",
+      "agents_skills_ponytail_review_skill_boundaries",
+      "agents_skills_ponytail_review_skill_examples",
+      "agents_skills_ponytail_review_skill_format",
+      "agents_skills_ponytail_review_skill_scoring"
+    ],
+    "37": [
+      "docs_spec_audit_comparison",
+      "docs_spec_audit_comparison_1_executive_summary_verification_matrix",
+      "docs_spec_audit_comparison_2_detailed_gap_analysis_findings",
+      "docs_spec_audit_comparison_3_verification_commands_outputs",
+      "docs_spec_audit_comparison_agaate_brd_spec_audit_deep_comparison_report"
+    ],
+    "38": [
+      "readme",
+      "readme_agaate_farm_management_pwa",
+      "readme_current_coverage",
+      "readme_run_locally",
+      "readme_security_and_persistence"
+    ],
+    "39": [
+      "agents",
+      "agents_graphify_codebase_knowledge_graph",
+      "agents_ponytail_lazy_senior_dev_mode",
+      "agents_this_is_not_the_next_js_you_know"
+    ],
+    "40": [
+      "agents_skills_graphify_references_add_watch",
+      "agents_skills_graphify_references_add_watch_for_graphify_add",
+      "agents_skills_graphify_references_add_watch_for_watch",
+      "agents_skills_graphify_references_add_watch_graphify_reference_add_a_url_and_watch_a_folder"
+    ],
+    "41": [
+      "agents_skills_graphify_references_hooks",
+      "agents_skills_graphify_references_hooks_for_git_commit_hook",
+      "agents_skills_graphify_references_hooks_for_native_claude_md_integration",
+      "agents_skills_graphify_references_hooks_graphify_reference_commit_hook_and_native_claude_md_integration"
+    ],
+    "42": [
+      "agents_skills_graphify_references_update",
+      "agents_skills_graphify_references_update_for_cluster_only",
+      "agents_skills_graphify_references_update_for_update_incremental_re_extraction",
+      "agents_skills_graphify_references_update_graphify_reference_incremental_update_and_cluster_only"
+    ],
+    "43": [
+      "agents_skills_ponytail_debt_skill",
+      "agents_skills_ponytail_debt_skill_boundaries",
+      "agents_skills_ponytail_debt_skill_output",
+      "agents_skills_ponytail_debt_skill_scan"
+    ],
+    "44": [
+      "agents_skills_ponytail_examples_deep_clone",
+      "agents_skills_ponytail_examples_deep_clone_deep_clone",
+      "agents_skills_ponytail_examples_deep_clone_with_ponytail",
+      "agents_skills_ponytail_examples_deep_clone_without_ponytail"
+    ],
+    "45": [
+      "agents_skills_ponytail_examples_group_by",
+      "agents_skills_ponytail_examples_group_by_group_by",
+      "agents_skills_ponytail_examples_group_by_with_ponytail",
+      "agents_skills_ponytail_examples_group_by_without_ponytail"
+    ],
+    "46": [
+      "agents_skills_ponytail_examples_infinite_scroll",
+      "agents_skills_ponytail_examples_infinite_scroll_infinite_scroll",
+      "agents_skills_ponytail_examples_infinite_scroll_with_ponytail",
+      "agents_skills_ponytail_examples_infinite_scroll_without_ponytail"
+    ],
+    "47": [
+      "agents_skills_ponytail_examples_modal_dialog",
+      "agents_skills_ponytail_examples_modal_dialog_modal_dialog",
+      "agents_skills_ponytail_examples_modal_dialog_with_ponytail",
+      "agents_skills_ponytail_examples_modal_dialog_without_ponytail"
+    ],
+    "48": [
+      "agents_skills_ponytail_examples_number_formatting",
+      "agents_skills_ponytail_examples_number_formatting_number_formatting",
+      "agents_skills_ponytail_examples_number_formatting_with_ponytail",
+      "agents_skills_ponytail_examples_number_formatting_without_ponytail"
+    ],
+    "49": [
+      "agents_skills_ponytail_examples_url_params",
+      "agents_skills_ponytail_examples_url_params_url_parameters",
+      "agents_skills_ponytail_examples_url_params_with_ponytail",
+      "agents_skills_ponytail_examples_url_params_without_ponytail"
+    ],
+    "50": [
+      "src_components_crop_cycle_form",
+      "src_components_crop_cycle_form_cropcycleform",
+      "src_components_crop_cycle_form_cropcycleform_submit",
+      "src_components_crop_cycle_form_iso"
+    ],
+    "51": [
+      "src_components_dashboard_client",
+      "src_components_dashboard_client_dashboardclient",
+      "src_components_dashboard_client_farm",
+      "src_components_dashboard_client_metricdata"
+    ],
+    "52": [
+      "agents_skills_graphify_references_github_and_merge",
+      "agents_skills_graphify_references_github_and_merge_graphify_reference_github_clone_and_cross_repo_merge",
+      "agents_skills_graphify_references_github_and_merge_step_0_clone_github_repo_s_only_if_a_github_url_was_given"
+    ],
+    "53": [
+      "agents_skills_graphify_references_transcribe",
+      "agents_skills_graphify_references_transcribe_graphify_reference_transcribe_video_and_audio",
+      "agents_skills_graphify_references_transcribe_step_2_5_transcribe_video_audio_files_only_if_video_files_detected"
+    ],
+    "54": [
+      "agents_skills_ponytail_examples_react_countdown",
+      "agents_skills_ponytail_examples_react_countdown_countdown_timer",
+      "agents_skills_ponytail_examples_react_countdown_without_ponytail_267_lines_of_code"
+    ],
+    "55": [
+      "prisma_seed",
+      "prisma_seed_main",
+      "prisma_seed_prisma"
+    ],
+    "56": [
+      "src_components_farm_form_farmform",
+      "src_components_farm_form_farmform_capture",
+      "src_components_farm_form_farmform_submit"
+    ],
+    "57": [
+      "src_components_location_request_form_locationrequestform",
+      "src_components_location_request_form_locationrequestform_capture",
+      "src_components_location_request_form_locationrequestform_submit"
+    ],
+    "58": [
+      "agents_rules_graphify",
+      "agents_rules_graphify_graphify"
+    ],
+    "59": [
+      "agents_rules_ponytail",
+      "agents_rules_ponytail_ponytail_lazy_senior_dev_mode"
+    ],
+    "60": [
+      "agents_skills_graphify_references_extraction_spec",
+      "agents_skills_graphify_references_extraction_spec_graphify_reference_extraction_subagent_prompt"
+    ],
+    "61": [
+      "agents_workflows_graphify",
+      "agents_workflows_graphify_workflow_graphify"
+    ],
+    "62": [
+      "next_config",
+      "next_config_nextconfig"
+    ],
+    "63": [
+      "next_env_d",
+      "next_env_d_rationale_6"
+    ],
+    "64": [
+      "package_devdependencies_types_bcryptjs",
+      "types_bcryptjs"
+    ],
+    "65": [
+      "src_app_manifest",
+      "src_app_manifest_manifest"
+    ],
+    "66": [
+      "agaate_mvp_spec"
+    ],
+    "67": [
+      "eslint_config"
+    ],
+    "68": [
+      "prisma_migrations_202608300002_media_verification_migration"
+    ],
+    "69": [
+      "public_sw"
+    ],
+    "70": [
+      "src_lib_empty"
+    ],
+    "71": [
+      "vitest_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07871064467766117,
+    "1": 0.05426356589147287,
+    "2": 0.13709677419354838,
+    "3": 0.10114942528735632,
+    "4": 0.07142857142857142,
+    "5": 0.08,
+    "6": 0.22924901185770752,
+    "7": 0.21645021645021645,
+    "8": 0.10526315789473684,
+    "9": 0.10526315789473684,
+    "10": 0.15789473684210525,
+    "11": 0.19696969696969696,
+    "12": 0.21818181818181817,
+    "13": 0.2,
+    "14": 0.2,
+    "15": 0.2222222222222222,
+    "16": 0.2222222222222222,
+    "17": 0.2222222222222222,
+    "18": 0.25,
+    "19": 0.25,
+    "20": 0.25,
+    "21": 0.25,
+    "22": 0.25,
+    "23": 0.32142857142857145,
+    "24": 0.25,
+    "25": 0.25,
+    "26": 0.2857142857142857,
+    "27": 0.2857142857142857,
+    "28": 0.2857142857142857,
+    "29": 0.6666666666666666,
+    "30": 0.3333333333333333,
+    "31": 0.3333333333333333,
+    "32": 0.3333333333333333,
+    "33": 0.4,
+    "34": 0.4,
+    "35": 0.4,
+    "36": 0.4,
+    "37": 0.4,
+    "38": 0.4,
+    "39": 0.5,
+    "40": 0.5,
+    "41": 0.5,
+    "42": 0.5,
+    "43": 0.5,
+    "44": 0.5,
+    "45": 0.5,
+    "46": 0.5,
+    "47": 0.5,
+    "48": 0.5,
+    "49": 0.5,
+    "50": 0.6666666666666666,
+    "51": 0.5,
+    "52": 0.6666666666666666,
+    "53": 0.6666666666666666,
+    "54": 0.6666666666666666,
+    "55": 0.6666666666666666,
+    "56": 0.6666666666666666,
+    "57": 0.6666666666666666,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_lib_api_apierror",
+      "label": "apiError()",
+      "degree": 80
+    },
+    {
+      "id": "src_lib_access_requirefarmaccess",
+      "label": "requireFarmAccess()",
+      "degree": 75
+    },
+    {
+      "id": "src_lib_access_currentactor",
+      "label": "currentActor()",
+      "degree": 57
+    },
+    {
+      "id": "src_lib_audit_audit",
+      "label": "audit()",
+      "degree": 54
+    },
+    {
+      "id": "src_lib_prisma_prisma",
+      "label": "prisma",
+      "degree": 43
+    },
+    {
+      "id": "src_components_icons_icons",
+      "label": "Icons",
+      "degree": 32
+    },
+    {
+      "id": "src_lib_auth_requiresession",
+      "label": "requireSession()",
+      "degree": 29
+    },
+    {
+      "id": "src_lib_access_requirerole",
+      "label": "requireRole()",
+      "degree": 28
+    },
+    {
+      "id": "src_lib_api_paginationparams",
+      "label": "paginationParams()",
+      "degree": 17
+    },
+    {
+      "id": "src_lib_business_utcdateonly",
+      "label": "utcDateOnly()",
+      "degree": 17
+    }
+  ],
+  "surprises": [
+    {
+      "source": "OfficerDayPage()",
+      "target": "requireSession()",
+      "source_files": [
+        "src/app/officer/day/page.tsx",
+        "src/lib/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `OfficerDayPage()` unexpectedly reaches hub `requireSession()`"
+    },
+    {
+      "source": "AdminApprovalsPage()",
+      "target": "requireSession()",
+      "source_files": [
+        "src/app/admin/approvals/page.tsx",
+        "src/lib/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `AdminApprovalsPage()` unexpectedly reaches hub `requireSession()`"
+    },
+    {
+      "source": "DailyReportPage()",
+      "target": "requireSession()",
+      "source_files": [
+        "src/app/reports/daily/page.tsx",
+        "src/lib/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `DailyReportPage()` unexpectedly reaches hub `requireSession()`"
+    },
+    {
+      "source": "POST()",
+      "target": "createSession()",
+      "source_files": [
+        "src/app/api/auth/login/route.ts",
+        "src/lib/auth.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "milestoneTemplates()",
+      "source_files": [
+        "src/app/api/farms/[farmId]/activate/route.ts",
+        "src/lib/business.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `requireFarmAccess()` connect `apiError` to `farm-hub-client.tsx`, `requireSession`, `edit/page.tsx`, `business.ts`?",
+      "why": "High betweenness centrality (0.047) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `Icons` connect `icons.tsx` to `farm-hub-client.tsx`, `requireSession`, `auth.ts`, `day/page.tsx`, `field-reports.tsx`, `approvals/page.tsx`, `crop-cycle-form.tsx`, `daily/page.tsx`, `dashboard-client.tsx`, `edit/page.tsx`, `admin-console.tsx`, `plot-edit-form.tsx`, `task-form.tsx`?",
+      "why": "High betweenness centrality (0.028) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `prisma` connect `apiError` to `farm-hub-client.tsx`, `requireSession`, `business.ts`, `auth.ts`, `edit/page.tsx`?",
+      "why": "High betweenness centrality (0.026) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `AccessResponse`, `Person`, `CropCycle` to the rest of the system?",
+      "why": "281 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `apiError` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07871064467766117 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `farm-hub-client.tsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05426356589147287 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `requireSession` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13709677419354838 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

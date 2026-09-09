@@ -15,47 +15,35 @@ type SearchableItem = {
 };
 
 interface CommandPaletteProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-  onOpen?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onOpen: () => void;
   role?: string;
 }
 
-export function CommandPalette({ isOpen: controlledOpen, onClose, onOpen, role }: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPaletteProps) {
   const router = useRouter();
-  const [internalOpen, setInternalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [farms, setFarms] = useState<{ id: string; name: string; location: string; status: string; cultivableArea: string }[]>([]);
 
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-
   const handleClose = useCallback(() => {
-    if (isControlled && onClose) {
-      onClose();
-    } else {
-      setInternalOpen(false);
-    }
+    onClose();
     setQuery("");
     setSelectedIndex(0);
-  }, [isControlled, onClose]);
+  }, [onClose]);
 
   // Global keyboard shortcut: Cmd+K or Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        if (isControlled) {
-          if (open) {
-            onClose?.();
-          } else {
-            onOpen?.();
-          }
+        if (isOpen) {
+          onClose();
         } else {
-          setInternalOpen((prev) => !prev);
+          onOpen();
         }
-      } else if (e.key === "Escape" && open) {
+      } else if (e.key === "Escape" && isOpen) {
         e.preventDefault();
         handleClose();
       }
@@ -63,17 +51,17 @@ export function CommandPalette({ isOpen: controlledOpen, onClose, onOpen, role }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, isControlled, onClose, onOpen, handleClose]);
+  }, [isOpen, onClose, onOpen, handleClose]);
 
   // Fetch estates list once for quick searching
   useEffect(() => {
-    if (open && farms.length === 0) {
+    if (isOpen && farms.length === 0) {
       fetch("/api/farms")
         .then((r) => (r.ok ? r.json() : []))
         .then((data) => setFarms(data || []))
         .catch(() => undefined);
     }
-  }, [open, farms.length]);
+  }, [isOpen, farms.length]);
 
   // Static navigation routes tailored to role
   const baseItems: SearchableItem[] = useMemo(() => {
@@ -249,7 +237,7 @@ export function CommandPalette({ isOpen: controlledOpen, onClose, onOpen, role }
     }
   };
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
   return (
     <div

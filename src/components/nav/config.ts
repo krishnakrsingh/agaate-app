@@ -222,3 +222,18 @@ export function isActiveItem(pathname: string, item: NavItem): boolean {
   if (item.isActive) return item.isActive(pathname);
   return pathname === item.href || pathname.startsWith(item.href + "/");
 }
+
+export const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "SUPER ADMIN",
+  FARM_ADMIN: "FARM OWNER",
+  AGRONOMIST: "AGRONOMIST",
+  FARM_OFFICER: "FARM MANAGER",
+};
+
+export const ROLE_HOME_URLS: Record<string, string> = {
+  SUPER_ADMIN: "/dashboard",
+  FARM_ADMIN: "/owner/dashboard",
+  AGRONOMIST: "/agronomy/radar",
+  FARM_OFFICER: "/officer/day",
+};
+
