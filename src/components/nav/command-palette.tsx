@@ -32,8 +32,7 @@ interface SearchResponse {
 
 /**
  * Global search (⌘K) — server-driven via /api/search, debounced 250ms with
- * AbortController. Replaces the old fetch-all-farms-once pattern that missed
- * 99.9% of entities past the first 100 rows.
+ * AbortController. Connects directly to real backend database entities.
  */
 export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPaletteProps) {
   const router = useRouter();
@@ -98,22 +97,42 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
   }, [isOpen, debounced]);
 
   const baseItems: SearchableItem[] = useMemo(() => {
-    const items: SearchableItem[] = [
-      { id: "nav-overview", title: "Overview", subtitle: "Aggregates + drill-down", category: "NAVIGATION", href: role === "FARM_ADMIN" ? "/owner/dashboard" : "/dashboard", icon: "Farm" },
-      { id: "nav-farms", title: "Farms directory", subtitle: "Search, filter, bulk act", category: "NAVIGATION", href: "/farms", icon: "Farm" },
-      { id: "nav-tasks", title: "Tasks queue", subtitle: "Filter + bulk dispatch", category: "NAVIGATION", href: "/operations/tasks", icon: "CheckCircle" },
-      { id: "nav-calendar", title: "Operations Calendar", subtitle: "Chronological ledger", category: "NAVIGATION", href: "/owner/calendar", icon: "Calendar", badge: "Timeline" },
-      { id: "nav-reports", title: "Daily reports", subtitle: "Per-farm/day rollup", category: "NAVIGATION", href: "/reports/daily", icon: "FileText" },
-    ];
     if (role === "SUPER_ADMIN") {
-      items.unshift({ id: "act-new-farm", title: "Onboard New Client Farm", subtitle: "Staged workflow", category: "ACTIONS", href: "/farms/new", icon: "Plus", badge: "Admin" });
-      items.push({ id: "nav-clients", title: "Clients directory", subtitle: "Portfolio accounts", category: "NAVIGATION", href: "/clients", icon: "Users" });
-      items.push({ id: "nav-audit", title: "Audit trail", subtitle: "Filterable ledger", category: "NAVIGATION", href: "/admin/audit", icon: "Shield" });
+      return [
+        { id: "nav-ops", title: "Operations Center", subtitle: "Action queues & bottlenecks", category: "NAVIGATION", href: "/operations", icon: "Activity" },
+        { id: "nav-dir", title: "Unified Directory", subtitle: "Farms, Clients, Users, Plots", category: "NAVIGATION", href: "/directory", icon: "Farm" },
+        { id: "nav-onboard", title: "Onboarding Workspace", subtitle: "5-stage pipeline & batch intake", category: "NAVIGATION", href: "/onboarding", icon: "Zap", badge: "Pipeline" },
+        { id: "nav-work", title: "Work Management", subtitle: "Cross-platform task execution", category: "NAVIGATION", href: "/work", icon: "ClipboardList" },
+        { id: "nav-insights", title: "Platform Insights", subtitle: "Portfolio analytics & drill-down", category: "NAVIGATION", href: "/insights", icon: "TrendingUp" },
+        { id: "nav-people", title: "People & Access", subtitle: "User credentials & permissions", category: "NAVIGATION", href: "/people", icon: "Users" },
+        { id: "nav-system", title: "System Governance", subtitle: "Approvals & audit logs", category: "NAVIGATION", href: "/system", icon: "Shield" },
+        { id: "act-new-farm", title: "Onboard Farm Property", subtitle: "Intake wizard", category: "ACTIONS", href: "/farms/new", icon: "Plus", badge: "Action" },
+      ];
+    }
+    if (role === "FARM_ADMIN") {
+      return [
+        { id: "nav-owner-home", title: "Home Cockpit", subtitle: "Today's estate priorities", category: "NAVIGATION", href: "/owner/dashboard", icon: "Farm" },
+        { id: "nav-owner-farm", title: "My Farm", subtitle: "Soil, water & infrastructure", category: "NAVIGATION", href: "/owner/farm", icon: "Plot" },
+        { id: "nav-owner-land", title: "Land & Plots", subtitle: "Acreage & active crops", category: "NAVIGATION", href: "/owner/land", icon: "TrendingUp" },
+        { id: "nav-owner-ops", title: "Operations", subtitle: "Field tasks & schedules", category: "NAVIGATION", href: "/owner/operations", icon: "ClipboardList" },
+        { id: "nav-owner-people", title: "People & Labor", subtitle: "On-site managers & muster", category: "NAVIGATION", href: "/owner/people", icon: "Users" },
+        { id: "nav-owner-records", title: "Logistics & Records", subtitle: "Harvest, inventory & expenses", category: "NAVIGATION", href: "/owner/records", icon: "Truck" },
+        { id: "nav-owner-insights", title: "Farm Insights", subtitle: "Yield & executive brief", category: "NAVIGATION", href: "/owner/insights", icon: "Activity" },
+        { id: "nav-owner-settings", title: "Settings", subtitle: "Geofence & configuration", category: "NAVIGATION", href: "/owner/settings", icon: "Settings" },
+      ];
     }
     if (role === "FARM_OFFICER") {
-      items.unshift({ id: "nav-officer-day", title: "My Day", subtitle: "Assigned execution", category: "NAVIGATION", href: "/officer/day", icon: "ClipboardList", badge: "Duty" });
+      return [
+        { id: "nav-officer-day", title: "My Day", subtitle: "Clock in, tasks, completion", category: "NAVIGATION", href: "/officer/day", icon: "ClipboardList", badge: "Duty" },
+        { id: "nav-officer-reports", title: "Field Signals & Incidents", subtitle: "Crop monitoring updates", category: "NAVIGATION", href: "/officer/reports", icon: "AlertTriangle" },
+        { id: "nav-officer-profile", title: "Officer Profile", subtitle: "Account & duty logs", category: "NAVIGATION", href: "/officer/profile", icon: "User" },
+      ];
     }
-    return items;
+    return [
+      { id: "nav-agronomy-radar", title: "Crop Radar", subtitle: "Monitoring & health", category: "NAVIGATION", href: "/agronomy/radar", icon: "TrendingUp" },
+      { id: "nav-agronomy-plan", title: "Weekly Plan", subtitle: "Schedule prescriptions", category: "NAVIGATION", href: "/agronomy/planning", icon: "Calendar" },
+      { id: "nav-tasks", title: "All Tasks", subtitle: "Field activities", category: "NAVIGATION", href: "/tasks", icon: "ClipboardList" },
+    ];
   }, [role]);
 
   const allItems: SearchableItem[] = useMemo(() => {
@@ -123,7 +142,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
     const out: SearchableItem[] = [...nav];
     for (const f of server.farms) out.push({ id: `farm-${f.id}`, title: f.name, subtitle: `${f.location} • ${f.status}`, category: "FARMS", href: f.href, badge: f.status, icon: "Farm" });
     for (const c of server.clients) out.push({ id: `client-${c.id}`, title: c.name, subtitle: `${c.code ?? ""} ${c.phone ?? ""}`.trim(), category: "CLIENTS", href: c.href, icon: "Users" });
-    for (const t of server.tasks) out.push({ id: `task-${t.id}`, title: t.title, subtitle: `${t.farm.name} • ${t.status}`, category: "TASKS", href: t.href, badge: t.status, icon: "CheckCircle" });
+    for (const t of server.tasks) out.push({ id: `task-${t.id}`, title: t.title, subtitle: `${t.farm.name} • ${t.status}`, category: "TASKS", href: t.href, badge: t.status, icon: "ClipboardList" });
     for (const i of server.incidents) out.push({ id: `inc-${i.id}`, title: i.type, subtitle: `${i.farm.name} • ${i.status}`, category: "INCIDENTS", href: i.href, badge: i.status, icon: "AlertTriangle" });
     for (const u of server.users) out.push({ id: `user-${u.id}`, title: u.name, subtitle: `${u.email ?? ""} • ${u.role}`, category: "PEOPLE", href: u.href, icon: "User" });
     return out.slice(0, 25);
@@ -159,17 +178,17 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
       role="dialog"
     >
       <div
-        style={{ width: "100%", maxWidth: 580, backgroundColor: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-modal)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "80vh" }}
+        style={{ width: "100%", maxWidth: 580, backgroundColor: "var(--canvas)", border: "1px solid var(--hairline-strong)", borderRadius: "var(--radius-xl)", boxShadow: "var(--shadow-modal)", overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "80vh" }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleListKeyDown}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--line)", backgroundColor: "var(--stone)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid var(--hairline)", backgroundColor: "var(--surface-strong)" }}>
           <span style={{ color: "var(--muted)", display: "flex", alignItems: "center" }}>
             <Icons.Search size={18} />
           </span>
           <input
             type="text"
-            placeholder="Search farms, clients, tasks, incidents, people… (min 2 chars)"
+            placeholder="Search farms, clients, users, tasks, incidents… (⌘K)"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -178,56 +197,73 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
             autoFocus
             style={{ flex: 1, backgroundColor: "transparent", border: "none", outline: "none", fontSize: 14, color: "var(--ink)" }}
           />
-          {query && (
-            <button type="button" onClick={() => setQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 2 }}>
-              <Icons.X size={14} />
-            </button>
+          {searching && (
+            <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
+              SEARCHING…
+            </span>
           )}
-          <kbd style={{ display: "inline-flex", alignItems: "center", padding: "2px 6px", fontSize: 10, fontFamily: "monospace", fontWeight: 700, borderRadius: "var(--radius-xs)", backgroundColor: "var(--canvas)", color: "var(--muted)", border: "1px solid var(--canvas)" }}>ESC</kbd>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: 8, display: "flex", flexDirection: "column", gap: 2 }}>
-          {searching && <div style={{ textAlign: "center", padding: "24px 16px", fontSize: 12, color: "var(--muted)" }}>Searching…</div>}
-          {!searching && debounced.length >= 2 && filteredItems.length === 0 && (
-            <div style={{ textAlign: "center", padding: "40px 16px", fontSize: 12, color: "var(--muted)" }}>
-              No matching farms, clients, tasks, incidents or people for &ldquo;{debounced}&rdquo;
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+          {filteredItems.length === 0 ? (
+            <div style={{ padding: "32px", textAlign: "center", color: "var(--muted)", fontSize: 14 }}>
+              No matches found for &ldquo;{debounced}&rdquo;
             </div>
+          ) : (
+            filteredItems.map((item, index) => {
+              const isSelected = index === selectedIndex;
+              const IconComp = Icons[item.icon] || Icons.Layers;
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => handleSelect(item)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    borderRadius: "var(--radius-md)",
+                    backgroundColor: isSelected ? "var(--surface-strong)" : "transparent",
+                    cursor: "pointer",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                    <span style={{ color: isSelected ? "var(--ink)" : "var(--muted)", display: "flex", alignItems: "center" }}>
+                      <IconComp size={16} />
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {item.title}
+                      </div>
+                      {item.subtitle && (
+                        <div style={{ fontSize: 12, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.subtitle}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {item.badge && (
+                      <span className="status-badge" style={{ fontSize: 10 }}>
+                        {item.badge}
+                      </span>
+                    )}
+                    <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
+                      {item.category}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           )}
-          {!searching && filteredItems.map((item, idx) => {
-            const isSelected = idx === selectedIndex;
-            const Icon = Icons[item.icon] || Icons.Layers;
-            return (
-              <div
-                key={item.id}
-                onClick={() => handleSelect(item)}
-                onMouseEnter={() => setSelectedIndex(idx)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: "var(--radius-xs)", cursor: "pointer", transition: "all 0.1s ease", backgroundColor: isSelected ? "var(--green-light)" : "transparent", border: isSelected ? "1px solid var(--green)" : "1px solid transparent" }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "var(--radius-xs)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backgroundColor: isSelected ? "var(--green)" : "var(--stone)", color: isSelected ? "#ffffff" : "var(--green)" }}>
-                    <Icon size={14} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-                    {item.subtitle && <div style={{ fontSize: 11, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.subtitle}</div>}
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 12 }}>
-                  {item.badge && <span className="badge badge-muted font-mono" style={{ fontSize: 9 }}>{item.badge}</span>}
-                  <span style={{ fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", color: "var(--muted)" }}>{item.category}</span>
-                </div>
-              </div>
-            );
-          })}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderTop: "1px solid var(--line)", backgroundColor: "var(--stone)", fontSize: 11, fontFamily: "monospace", color: "var(--muted)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span>↑↓ Navigate</span>
-            <span>↵ Open</span>
-            <span>ESC Close</span>
-          </div>
-          <span>{searching ? "Searching…" : `Server results for "${debounced || "…"}"`}</span>
+        <div style={{ padding: "8px 16px", borderTop: "1px solid var(--hairline)", backgroundColor: "var(--surface-card)", display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted)" }}>
+          <span>Navigate: ↑↓ • Open: ↵</span>
+          <span>Close: Esc</span>
         </div>
       </div>
     </div>

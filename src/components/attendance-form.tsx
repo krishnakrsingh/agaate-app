@@ -329,6 +329,9 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 flexShrink: 0,
               }}
             />
+            <span className="badge badge-green" style={{ fontSize: "10.5px", fontWeight: 750, letterSpacing: "0.04em" }}>
+              ON DUTY
+            </span>
             <span style={{ fontSize: "12px", color: "var(--ink)", fontWeight: 650, whiteSpace: "nowrap" }}>
               {isException ? "Shift (Exception)" : "Active Shift"}
             </span>
@@ -360,7 +363,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               onClick={() => setShowEndModal(true)}
               style={{
                 borderRadius: "9999px",
-                padding: "3px 9px",
+                padding: "3px 11px",
                 fontSize: "11px",
                 height: 26,
                 minHeight: 26,
@@ -371,7 +374,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               }}
             >
               <Icons.LogOut size={11} />
-              <span>End</span>
+              <span>End Shift</span>
             </button>
           </div>
         </div>
@@ -383,29 +386,47 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               onClick={(e) => e.stopPropagation()}
               style={{ maxWidth: 440, display: "flex", flexDirection: "column", gap: 16, borderRadius: "var(--radius-lg)", padding: 24 }}
             >
-              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600 }}>Clock Out Confirmation</h3>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 600 }}>End Shift Confirmation</h3>
               <p className="muted" style={{ margin: 0, fontSize: "14px", lineHeight: 1.5 }}>
                 End your active shift at <strong>{attendance.farm.name}</strong>? Total duration: <strong>{elapsed}</strong>.
               </p>
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 8 }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowEndModal(false)}
-                  style={{ borderRadius: "var(--radius-pill)" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={handleClockOut}
-                  disabled={pending}
-                  style={{ borderRadius: "var(--radius-pill)" }}
-                >
-                  {pending ? "Ending…" : "Confirm Clock Out"}
-                </button>
-              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleClockOut();
+                }}
+                style={{ display: "flex", flexDirection: "column", gap: 14 }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
+                    Departure Selfie (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    name="departureSelfie"
+                    accept="image/*"
+                    style={{ fontSize: "12px" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowEndModal(false)}
+                    style={{ borderRadius: "var(--radius-pill)" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-danger"
+                    disabled={pending}
+                    style={{ borderRadius: "var(--radius-pill)" }}
+                  >
+                    {pending ? "Ending…" : "Confirm End of Shift"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -433,7 +454,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Icons.CheckCircle size={16} style={{ color: "var(--green)" }} />
           <span style={{ fontSize: "13px", color: "var(--ink)", fontWeight: 600 }}>
-            Shift Completed Today at {attendance.farm.name} (Clocked out at {new Date(attendance.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
+            Today&apos;s Field Shift Completed at {attendance.farm.name} (Clocked out at {new Date(attendance.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
           </span>
         </div>
         <button
@@ -769,7 +790,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               ) : (
                 <>
                   <Icons.Check size={18} />
-                  <span>Start Daily Shift →</span>
+                  <span>Clock In &amp; Start Daily Shift</span>
                 </>
               )}
             </button>

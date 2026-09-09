@@ -512,7 +512,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
             </div>
             {canManage && (
               <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(!showAddPlot)}>
-                <Icons.Plus size={14} /><span>{showAddPlot ? "Close Form" : "Add Land Plot"}</span>
+                <Icons.Plus size={14} /><span>{showAddPlot ? "Close Form" : "Create New Plot"}</span>
               </button>
             )}
           </div>
@@ -540,7 +540,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                   <div>
                     <h3 style={{ fontSize: "17px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>{plot.name}</h3>
                     <div className="muted" style={{ fontSize: "13px", marginTop: 3 }}>
-                      <strong style={{ color: "var(--ink)" }}>{plot.area}</strong> acres &bull; {plot.soilType || "Soil Not Specified"}
+                      <strong style={{ color: "var(--ink)" }}>{plot.area}</strong> Acres &bull; {plot.soilType || "Soil Not Specified"}
                     </div>
                   </div>
                   <StatusBadge status={plot.status} />
@@ -604,7 +604,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
                       style={{ borderRadius: "var(--radius-pill)", padding: "5px 14px" }}
                     >
                       <Icons.Plus size={13} />
-                      <span>Launch Crop Cycle</span>
+                      <span>Plan Crop Cycle</span>
                     </Link>
                   )}
                 </div>
@@ -620,7 +620,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
               action={
                 canManage && (
                   <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(true)}>
-                    <Icons.Plus size={14} /><span>Add Plot</span>
+                    <Icons.Plus size={14} /><span>Create New Plot</span>
                   </button>
                 )
               }

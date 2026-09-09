@@ -378,7 +378,7 @@ export function TaskCompletionForm({
           className="btn btn-green btn-sm"
           disabled={pending}
         >
-          {pending ? "Saving Evidence…" : "Confirm Activity Completion"}
+          {pending ? "Saving Evidence…" : "Complete Activity"}
         </button>
       </div>
     </form>

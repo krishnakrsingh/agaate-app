@@ -80,7 +80,7 @@ export function FieldReports({
       });
       setPending(false);
       if (!res.ok) throw new Error((await res.json()).error ?? "Submission failed.");
-      setMessage("Crop monitoring logged successfully.");
+      setMessage("Daily crop monitoring update recorded");
       setMonitoringPhotos([]);
       onSuccess?.();
     } catch (err: any) {
@@ -94,7 +94,7 @@ export function FieldReports({
       {!hideTabs && (
         <div className="tabs-nav">
           <button type="button" className={`tab-btn ${tab === "monitoring" ? "active" : ""}`} onClick={() => setTab("monitoring")}>
-            <Icons.Eye size={14} /><span>Daily Crop Health Monitoring</span>
+            <Icons.Eye size={14} /><span>Daily Crop Health &amp; Stage Capture</span>
           </button>
           <button type="button" className={`tab-btn ${tab === "incident" ? "active" : ""}`} onClick={() => setTab("incident")}>
             <Icons.AlertTriangle size={14} /><span>Report Field Incident</span>
@@ -191,7 +191,7 @@ export function FieldReports({
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
             <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
-              <Icons.Check size={16} /><span>{pending ? "Logging…" : "Log Crop Health"}</span>
+              <Icons.Check size={16} /><span>{pending ? "Submitting…" : "Submit Daily Monitoring"}</span>
             </button>
           </div>
         </form>

@@ -116,7 +116,7 @@ export function LoginForm() {
       } else if (userRole === "FARM_OFFICER") {
         targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {
-        targetUrl = "/agronomy/radar";
+        targetUrl = "/tasks";
       }
       window.location.replace(targetUrl);
     } catch {
@@ -168,6 +168,7 @@ export function LoginForm() {
             <label htmlFor="login-identifier" style={{ fontSize: "13px", fontWeight: 600 }}>Mobile Number or Email</label>
             <input
               id="login-identifier"
+              name="email"
               type="text"
               required
               autoFocus
@@ -194,6 +195,7 @@ export function LoginForm() {
             </div>
             <input
               id="login-password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               autoComplete="current-password"

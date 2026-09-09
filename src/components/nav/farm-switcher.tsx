@@ -51,6 +51,7 @@ export function FarmSwitcher() {
 
   const saveRecentFarm = useCallback((farm: FarmOption) => {
     setRecentFarms((prev) => {
+      if (prev.length > 0 && prev[0].id === farm.id) return prev;
       const filtered = prev.filter((f) => f.id !== farm.id);
       const next = [farm, ...filtered].slice(0, 5);
       try {

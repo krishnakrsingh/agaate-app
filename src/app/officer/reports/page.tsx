@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
-import { OfficerSignalsConsole } from "@/components/officer-signals-console";
+import { FieldReports } from "@/components/field-reports";
+import { LocationRequestForm } from "@/components/location-request-form";
 import { Navbar } from "@/components/navbar";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,8 @@ export default async function OfficerReportsPage() {
       <Navbar role={session.role} userName={session.name} />
 
       <main className="shell narrow">
-        <OfficerSignalsConsole />
+        <FieldReports />
+        <LocationRequestForm />
       </main>
     </>
   );

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       const email = rawIdentifier.toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254) {
         await bcrypt.compare(input.password, DUMMY_HASH);
-        return NextResponse.json({ error: "Invalid email, phone number, or password." }, { status: 401 });
+        return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
       }
       normalizedIdentifier = email;
     } else {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     const passwordOk = user ? await bcrypt.compare(input.password, user.passwordHash) : await bcrypt.compare(input.password, DUMMY_HASH).then(() => false);
     if (!user?.active || !passwordOk) {
-      return NextResponse.json({ error: "Invalid email, phone number, or password." }, { status: 401 });
+      return NextResponse.json({ error: isEmail ? "Invalid email or password." : "Invalid phone number or password." }, { status: 401 });
     }
 
     resetRateLimit(rateKey);

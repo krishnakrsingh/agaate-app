@@ -107,8 +107,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
       }
 
       toast.success(`Crop cycle launched for ${cropName}!`);
-      router.replace(`/farms/${farmId}`);
-      router.refresh();
+      window.location.replace(`/farms/${farmId}`);
     } catch {
       setPending(false);
       setError("Network error while launching crop cycle.");
@@ -147,11 +146,11 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
             <div className="two-column" style={{ marginTop: 12 }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Crop Name</label>
-                <input value={cropName} onChange={(e) => setCropName(e.target.value)} placeholder="e.g., Tomato (Solanum lycopersicum)" required />
+                <input value={cropName} onChange={(e) => setCropName(e.target.value)} placeholder="e.g., Watermelon, Tomato, Chilli" required />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Varieties (Comma Separated)</label>
-                <input value={varieties} onChange={(e) => setVarieties(e.target.value)} placeholder="e.g., Arka Rakshak, Abhinav, Saaho 3251" required />
+                <input value={varieties} onChange={(e) => setVarieties(e.target.value)} placeholder="e.g., Arka Manik, Sugar Baby, Black Magic" required />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label>Cycle Start Date</label>
@@ -206,15 +205,15 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
                 <div className="two-column" style={{ marginTop: 8 }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Bed Width (cm)</label>
-                    <input type="number" value={bedWidthCm} onChange={(e) => setBedWidthCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 90" />
+                    <input type="number" value={bedWidthCm} onChange={(e) => setBedWidthCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g., 90" />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Centre-to-Centre Distance (cm)</label>
-                    <input type="number" value={bedCenterDistanceCm} onChange={(e) => setBedCenterDistanceCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 150" />
+                    <input type="number" value={bedCenterDistanceCm} onChange={(e) => setBedCenterDistanceCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g., 150" />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Expected Beds / Acre</label>
-                    <input type="number" value={bedsPerAcre} onChange={(e) => setBedsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 26" />
+                    <input type="number" value={bedsPerAcre} onChange={(e) => setBedsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g., 200" />
                   </div>
                   {calculatedTotalBeds && (
                     <div style={{ padding: 12, background: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
@@ -242,11 +241,11 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Plant Distance (cm)</label>
-                    <input type="number" value={plantDistanceCm} onChange={(e) => setPlantDistanceCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 45" />
+                    <input type="number" value={plantDistanceCm} onChange={(e) => setPlantDistanceCm(e.target.value ? Number(e.target.value) : "")} placeholder="e.g., 45" />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label>Expected Plants / Acre</label>
-                    <input type="number" value={plantsPerAcre} onChange={(e) => setPlantsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 6000" />
+                    <input type="number" value={plantsPerAcre} onChange={(e) => setPlantsPerAcre(e.target.value ? Number(e.target.value) : "")} placeholder="e.g., 4500" />
                   </div>
                   {calculatedTotalPlants && (
                     <div style={{ padding: 12, background: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-xs)", alignSelf: "end" }}>
@@ -336,7 +335,7 @@ export function CropCycleForm({ plotId, farmId, plotArea = 1 }: { plotId: string
             </button>
           ) : (
             <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
-              <Icons.Check size={16} /><span>{pending ? "Launching…" : "Launch Crop Cycle"}</span>
+              <Icons.Check size={16} /><span>{pending ? "Launching…" : "Confirm & Launch Cycle"}</span>
             </button>
           )}
         </div>

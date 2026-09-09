@@ -430,16 +430,17 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           return (
             <article
               key={task.id}
-              className={`officer-task-card${isDone ? " is-done" : ""}`}
+              className={`card officer-task-card${isDone ? " is-done" : ""}`}
               style={{
                 display: "flex",
+                flexDirection: "column",
                 gap: 10,
-                padding: "4px 12px 4px 4px",
-                alignItems: "center",
+                padding: "8px 12px",
               }}
             >
-              {/* 90x90 SQUARE THUMBNAIL (TAP TO EXPAND PHOTO IF AVAILABLE) */}
-              {task.primaryImageUrl ? (
+              <div style={{ display: "flex", gap: 10, alignItems: "center", width: "100%" }}>
+                {/* 90x90 SQUARE THUMBNAIL (TAP TO EXPAND PHOTO IF AVAILABLE) */}
+                {task.primaryImageUrl ? (
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
@@ -590,7 +591,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                         }}
                       >
                         <span className="telemetry-live-dot" style={{ width: 4, height: 4, backgroundColor: "var(--green)" }} />
-                        In Progress
+                        IN PROGRESS
                       </span>
                     ) : isDone ? (
                       <span
@@ -603,7 +604,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                           borderRadius: "9999px",
                         }}
                       >
-                        ✓ Done
+                        COMPLETED
                       </span>
                     ) : isOverdue ? (
                       <span
@@ -685,7 +686,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                   <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
                     {isDone ? (
                       <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--green)" }}>
-                        Completed
+                        COMPLETED
                       </span>
                     ) : isMonitoring ? (
                       <button
@@ -706,7 +707,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                       <button
                         type="button"
                         className="btn btn-green"
-                        onClick={() => setCompletionId(task.id)}
+                        onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
                         style={{
                           borderRadius: "9999px",
                           padding: "0 10px",
@@ -719,7 +720,7 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                         }}
                       >
                         <Icons.CheckCircle size={11} />
-                        <span>Complete</span>
+                        <span>Record Completion</span>
                       </button>
                     ) : (
                       <div style={{ display: "flex", gap: 4 }}>
@@ -733,29 +734,54 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                             height: 22,
                             fontWeight: 650,
                             fontSize: "10.5px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
                           }}
                         >
-                          Start
+                          <Icons.Zap size={11} />
+                          <span>Start Activity</span>
                         </button>
                         <button
                           type="button"
                           className="btn btn-green"
-                          onClick={() => setCompletionId(task.id)}
+                          onClick={() => setCompletionId(completionId === task.id ? null : task.id)}
                           style={{
                             borderRadius: "9999px",
                             padding: "0 8px",
                             height: 22,
                             fontWeight: 700,
                             fontSize: "10.5px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
                           }}
                         >
-                          Finish
+                          <span>Record Completion</span>
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+            </div>
+
+            {completionId === task.id && (
+                <div style={{ width: "100%", marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+                  <TaskCompletionForm
+                    taskId={task.id}
+                    farmId={task.farm.id}
+                    taskTitle={task.title}
+                    milestoneName={task.milestone?.name}
+                    onComplete={() => {
+                      setCompletionId(null);
+                      toast.success("Task execution confirmed.");
+                      void load();
+                    }}
+                    onCancel={() => setCompletionId(null)}
+                  />
+                </div>
+              )}
             </article>
           );
         })}
@@ -771,34 +797,6 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
           />
         )}
       </div>
-
-      {/* Completion Modal */}
-      {completionId && (() => {
-        const t = tasks.find((item) => item.id === completionId);
-        if (!t) return null;
-        return (
-          <div className="modal-overlay" onClick={() => setCompletionId(null)}>
-            <div
-              className="modal-content"
-              onClick={(e) => e.stopPropagation()}
-              style={{ maxWidth: 540, borderRadius: "16px", padding: 22 }}
-            >
-              <TaskCompletionForm
-                taskId={t.id}
-                farmId={t.farm.id}
-                taskTitle={t.title}
-                milestoneName={t.milestone?.name}
-                onComplete={() => {
-                  setCompletionId(null);
-                  toast.success("Task execution confirmed.");
-                  void load();
-                }}
-                onCancel={() => setCompletionId(null)}
-              />
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Monitoring Modal */}
       {monitoringTaskId && (() => {

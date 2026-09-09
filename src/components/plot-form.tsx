@@ -91,9 +91,9 @@ export function PlotForm({ farmId }: { farmId: string }) {
       }
 
       setSuccess("Plot added successfully.");
-      router.refresh();
       formEl?.reset();
       setSelected(new Set(["Drip"]));
+      window.location.reload();
     } catch {
       setPending(false);
       setError("Network error.");
