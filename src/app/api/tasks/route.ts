@@ -119,11 +119,11 @@ export async function POST(request: NextRequest) {
     if (!isWithinRollingSevenDays(input.date)) throw new HttpError(422, "Agronomy activities must be planned within the rolling seven-day window.");
     await requireFarmAccess(input.farmId);
     const farm = await prisma.farm.findUniqueOrThrow({ where: { id: input.farmId }, select: { status: true } });
-    if (farm.status !== "ACTIVE") throw new Error("Agronomy activities can only be planned for an active farm.");
+    if (farm.status !== "ACTIVE") throw new HttpError(422, "Agronomy activities can only be planned for an active farm.");
     const officer = await prisma.user.findUniqueOrThrow({ where: { id: input.assignedOfficerId }, select: { role: true, active: true, farmAccess: { where: { farmId: input.farmId } } } });
-    if (officer.role !== "FARM_OFFICER" || !officer.active || !officer.farmAccess.length) throw new Error("The assigned user must be an active Farm Officer assigned to this farm.");
-    if (input.plotId && !(await prisma.plot.findFirst({ where: { id: input.plotId, farmId: input.farmId, deletedAt: null } }))) throw new Error("The selected plot is not part of this farm.");
-    if (input.cropCycleId && !(await prisma.cropCycle.findFirst({ where: { id: input.cropCycleId, plot: { farmId: input.farmId, deletedAt: null }, ...(input.plotId ? { plotId: input.plotId } : {}) } }))) throw new Error("The selected crop cycle is not part of this farm and plot.");
+    if (officer.role !== "FARM_OFFICER" || !officer.active || !officer.farmAccess.length) throw new HttpError(422, "The assigned user must be an active Farm Officer assigned to this farm.");
+    if (input.plotId && !(await prisma.plot.findFirst({ where: { id: input.plotId, farmId: input.farmId, deletedAt: null } }))) throw new HttpError(422, "The selected plot is not part of this farm.");
+    if (input.cropCycleId && !(await prisma.cropCycle.findFirst({ where: { id: input.cropCycleId, plot: { farmId: input.farmId, deletedAt: null }, ...(input.plotId ? { plotId: input.plotId } : {}) } }))) throw new HttpError(422, "The selected crop cycle is not part of this farm and plot.");
 
     const task = await prisma.$transaction(async (tx) => {
       const plan = await tx.agronomyPlan.upsert({

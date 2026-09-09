@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Validation failed" }, { status: 422 });
     }
 
-    await requireFarmAccess(input.farmId, true);
+    // Field officers muster crew from the officer mobile logger; assigned
+    // farm access suffices (upsert is date-scoped, actor recorded below).
+    await requireFarmAccess(input.farmId);
 
     const date = parseUtcDate(input.musterDate);
     const totalWageCost = input.dailyWageRate

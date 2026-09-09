@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "src/app/api/tasks/[taskId]/route.ts": {
-    "mtime": 1788110449.1581514,
-    "seen": 1788262736.031407,
-    "ast_hash": "9d5d28f20abba0012cef101090d1fd66",
+    "mtime": 1788948952.4678664,
+    "seen": 1788949194.071384,
+    "ast_hash": "f5d2dfd07dce5d3e367827e61c9061d8",
     "semantic_hash": ""
   },
   "src/app/api/tasks/route.ts": {
@@ -198,10 +198,10 @@
     "semantic_hash": ""
   },
   "src/app/api/uploads/[mediaId]/complete/route.ts": {
-    "mtime": 1788077449.5478797,
-    "seen": 1788080507.3093448,
-    "ast_hash": "de1f019c30e547248e0962a9d6e8b683",
-    "semantic_hash": "de1f019c30e547248e0962a9d6e8b683"
+    "mtime": 1788949119.98605,
+    "seen": 1788949194.0713944,
+    "ast_hash": "2f2f0cde2f2b70e0772158cfd32d80df",
+    "semantic_hash": ""
   },
   "src/app/api/uploads/presign/route.ts": {
     "mtime": 1788946321.5219903,
@@ -366,9 +366,9 @@
     "semantic_hash": ""
   },
   "src/components/dashboard-client.tsx": {
-    "mtime": 1788945336.279509,
-    "seen": 1788946217.4539845,
-    "ast_hash": "3553bc8965a99d6e67e4f0b9dea0f445",
+    "mtime": 1788949068.2918904,
+    "seen": 1788949194.0715637,
+    "ast_hash": "b4d3ce22c12d1351658b38a232b2b573",
     "semantic_hash": ""
   },
   "src/components/farm-access-manager.tsx": {
@@ -1386,9 +1386,9 @@
     "semantic_hash": ""
   },
   "src/components/officer/officer-profile-view.tsx": {
-    "mtime": 1788942501.7894864,
-    "seen": 1788942606.0513654,
-    "ast_hash": "4032019e5ca38f3001406c08015871c0",
+    "mtime": 1788949008.558144,
+    "seen": 1788949194.0716512,
+    "ast_hash": "7eec3b3afd037f7f1a59f66577a36f46",
     "semantic_hash": ""
   },
   "public/uploads/evidence/farm-greenfield-01/2026-09-09/0f186247-45aa-4864-b614-13613a1eb61d.jpeg": {

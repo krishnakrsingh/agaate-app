@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
+import { currentActor, requireFarmAccess, requireRole, HttpError } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { labourHours } from "@/lib/business";
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     requireRole(actor.role, ["FARM_OFFICER", "SUPER_ADMIN"]);
     const task = await prisma.task.findUniqueOrThrow({ where: { id: taskId }, include: { cropCycle: true, milestone: true } });
     await requireFarmAccess(task.farmId);
-    if (actor.role === "FARM_OFFICER" && task.assignedOfficerId !== actor.id) throw new Error("This task is assigned to another officer.");
+    if (actor.role === "FARM_OFFICER" && task.assignedOfficerId !== actor.id) throw new HttpError(403, "This task is assigned to another officer.");
     if (task.status !== "IN_PROGRESS") return NextResponse.json({ error: "Start the activity before recording completion." }, { status: 409 });
     const input = schema.parse(await request.json());
     if (input.actualBedsCreated !== undefined) {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const ex = await tx.taskExecution.upsert({ where: { taskId }, update: { officerId: actor.id, status: "COMPLETED", completedAt: new Date(), remarks: input.remarks, materials: { deleteMany: {}, create: input.materials }, labour: { deleteMany: {}, create: input.labour.map(l => ({ ...l, labourHours: labourHours(l.labourers, l.hours) })) } }, create: { taskId, officerId: actor.id, status: "COMPLETED", startedAt: new Date(), completedAt: new Date(), remarks: input.remarks, materials: { create: input.materials }, labour: { create: input.labour.map(l => ({ ...l, labourHours: labourHours(l.labourers, l.hours) })) } } });
       if (input.mediaIds.length) {
         const count = await tx.mediaAsset.updateMany({ where: { id: { in: input.mediaIds }, uploadedById: actor.id, kind: "ACTIVITY_EVIDENCE", executionId: null, verifiedAt: { not: null } }, data: { executionId: ex.id, farmId: task.farmId } });
-        if (count.count !== input.mediaIds.length) throw new Error("One or more activity evidence files are unavailable or unverified.");
+        if (count.count !== input.mediaIds.length) throw new HttpError(422, "One or more activity evidence files are unavailable or unverified.");
       }
       if (task.cropCycleId && (input.actualBedsCreated !== undefined || input.actualPlants !== undefined)) await tx.cropCycle.update({ where: { id: task.cropCycleId }, data: { ...(input.actualBedsCreated !== undefined ? { actualBedsCreated: input.actualBedsCreated } : {}), ...(input.actualPlants !== undefined ? { actualPlants: input.actualPlants } : {}) } });
       if (task.milestoneId) await tx.milestone.update({ where: { id: task.milestoneId }, data: { status: "COMPLETED", completedAt: new Date(), remarks: input.remarks ?? undefined } });

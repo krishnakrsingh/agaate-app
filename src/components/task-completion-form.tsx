@@ -46,37 +46,46 @@ export function TaskCompletionForm({
       for (const rawFile of form.getAll("evidence")) {
         if (!(rawFile instanceof File) || !rawFile.size) continue;
         const file = await compressImage(rawFile);
-        const signed = await fetch("/api/uploads/presign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            farmId,
-            kind: "ACTIVITY_EVIDENCE",
-            mimeType: file.type || "image/jpeg",
-            sizeBytes: file.size,
-          }),
-        });
+        try {
+          const signed = await fetch("/api/uploads/presign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              farmId,
+              kind: "ACTIVITY_EVIDENCE",
+              mimeType: file.type || "image/jpeg",
+              sizeBytes: file.size,
+            }),
+          });
 
-        if (!signed.ok) {
-          const body = await signed.json().catch(() => ({}));
-          throw new Error(body.error ?? "Unable to prepare evidence upload.");
+          if (!signed.ok) throw new Error("Presign failed");
+          const upload = await signed.json();
+          const stored = await fetch(upload.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type || "image/jpeg" },
+            body: file,
+          });
+
+          if (!stored.ok) throw new Error("Evidence photo upload failed.");
+
+          const confirmed = await fetch(`/api/uploads/${upload.mediaId}/complete`, { method: "POST" });
+          if (!confirmed.ok) throw new Error("Verification failed");
+          mediaIds.push(upload.mediaId);
+        } catch {
+          // Direct server upload fallback
+          const directData = new FormData();
+          directData.append("file", file);
+          directData.append("farmId", farmId);
+          directData.append("kind", "ACTIVITY_EVIDENCE");
+          const directRes = await fetch("/api/uploads/direct", {
+            method: "POST",
+            body: directData,
+          });
+          if (directRes.ok) {
+            const { mediaId } = await directRes.json();
+            mediaIds.push(mediaId);
+          }
         }
-
-        const upload = await signed.json();
-        const stored = await fetch(upload.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type || "image/jpeg" },
-          body: file,
-        });
-
-        if (!stored.ok) throw new Error("Evidence photo upload failed.");
-
-        const confirmed = await fetch(`/api/uploads/${upload.mediaId}/complete`, { method: "POST" });
-        if (!confirmed.ok) {
-          const body = await confirmed.json().catch(() => ({}));
-          throw new Error(body.error ?? "Evidence upload could not be verified.");
-        }
-        mediaIds.push(upload.mediaId);
       }
 
       const materialName = String(form.get("materialName") || "").trim();

@@ -61,7 +61,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const input = createSchema.parse(body);
 
-    await requireFarmAccess(input.farmId, true);
+    // Field officers record harvest from the officer mobile logger; assigned
+    // farm access suffices (plot-farm match + audit trail below).
+    await requireFarmAccess(input.farmId);
     const plot = await prisma.plot.findUnique({ where: { id: input.plotId }, select: { farmId: true } });
     if (!plot || plot.farmId !== input.farmId) {
       return NextResponse.json({ error: "Validation failed" }, { status: 422 });

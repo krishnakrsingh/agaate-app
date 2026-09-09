@@ -55,6 +55,7 @@ describe.sequential("Complete 4-Tier Persona Operational Lifecycle", () => {
   let onboardedPlot: any;
   let hiredOfficer: any;
   let seededSku: any;
+  let blockCycle: any;
 
   beforeAll(async () => {
     // 1. Fetch or create Super Admin and Central Agronomist
@@ -140,8 +141,10 @@ describe.sequential("Complete 4-Tier Persona Operational Lifecycle", () => {
     expect(body.success).toBe(true);
     expect(body.farm.name).toBe(payload.farmName);
     expect(body.owner.email).toBe(payload.ownerEmail);
-    expect(body.handover.initialPassword).toBe(payload.ownerPassword);
+    // Secure handover: server never echoes the credential back. Verify the
+    // login identifier + URL instead (see onboard-client route).
     expect(body.handover.loginUrl).toBe("/login");
+    expect(body.handover.loginIdentifier).toBeTruthy();
 
     onboardedFarm = body.farm;
     onboardedOwner = body.owner;
@@ -221,10 +224,22 @@ describe.sequential("Complete 4-Tier Persona Operational Lifecycle", () => {
     const updatedSku = invItems.find((i: any) => i.id === seededSku.id);
     expect(Number(updatedSku.quantityInStock)).toBe(45);
 
-    // 2. Log Commercial Harvest cut
+    // 2. Log Commercial Harvest cut (block must have an active crop cycle —
+    //    the harvest logger UI requires cycle selection and HarvestLog
+    //    carries a mandatory cropCycleId for traceability).
+    blockCycle = await prisma.cropCycle.create({
+      data: {
+        plotId: onboardedPlot.id,
+        cropName: "Ruby Red Pomegranate",
+        establishmentType: "DIRECT_SOWING",
+        startDate: new Date(),
+        status: "ACTIVE",
+      },
+    });
     const harvestPayload = {
       farmId: onboardedFarm.id,
       plotId: onboardedPlot.id,
+      cropCycleId: blockCycle.id,
       harvestDate: new Date().toISOString().slice(0, 10),
       quantity: 850,
       unit: "KG",
@@ -267,16 +282,8 @@ describe.sequential("Complete 4-Tier Persona Operational Lifecycle", () => {
 
   // ── 4. CENTRAL AGRONOMIST FLOW ──
   it("Tier 4: Central Agronomist issues prescription that auto-dispatches to officer board", async () => {
-    // Create a crop cycle for the plot so prescription can target it
-    const cropCycle = await prisma.cropCycle.create({
-      data: {
-        plotId: onboardedPlot.id,
-        cropName: "Ruby Red Pomegranate",
-        establishmentType: "DIRECT_SOWING",
-        startDate: new Date(),
-        status: "ACTIVE",
-      },
-    });
+    // Target the active cycle established in Tier 3.
+    const cropCycle = blockCycle;
 
     const rxPayload = {
       farmId: onboardedFarm.id,

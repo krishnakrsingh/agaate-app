@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
+import { currentActor, requireFarmAccess, requireRole, HttpError } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
@@ -15,11 +15,11 @@ export async function POST(request: NextRequest) {
     const input = schema.parse(await request.json());
     await requireFarmAccess(input.farmId);
     const cycle = await prisma.cropCycle.findFirst({ where: { id: input.cropCycleId, plotId: input.plotId, status: "ACTIVE", plot: { farmId: input.farmId, deletedAt: null, status: { not: "ARCHIVED" } } } });
-    if (!cycle) throw new Error("The crop cycle must be active and belong to the selected farm and plot.");
+    if (!cycle) throw new HttpError(422, "The crop cycle must be active and belong to the selected farm and plot.");
     const monitoring = await prisma.$transaction(async tx => {
       const created = await tx.cropMonitoring.create({ data: { farmId: input.farmId, plotId: input.plotId, cropCycleId: input.cropCycleId, officerId: actor.id, status: input.status, stage: input.stage, impactPercent: input.impactPercent, remarks: input.remarks } });
       const count = await tx.mediaAsset.updateMany({ where: { id: { in: input.mediaIds }, uploadedById: actor.id, kind: "CROP_PHOTO", monitoringId: null, verifiedAt: { not: null } }, data: { monitoringId: created.id, farmId: input.farmId } });
-      if (count.count !== input.mediaIds.length) throw new Error("One or more crop photos are unavailable or unverified.");
+      if (count.count !== input.mediaIds.length) throw new HttpError(422, "One or more crop photos are unavailable or unverified.");
       const today = utcDateOnly(new Date());
       const tasks = await tx.task.findMany({
         where: {
