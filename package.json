@@ -13,6 +13,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "node --env-file=.env --import=tsx prisma/seed.ts",
+    "migrate": "prisma migrate deploy",
+    "seed": "node --env-file=.env --import=tsx prisma/seed.ts",
     "build:docs": "node scripts/build-docs-html.mjs"
   },
   "dependencies": {
