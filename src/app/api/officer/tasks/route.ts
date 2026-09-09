@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { utcDateOnly } from "@/lib/business";
+import { downloadUrl } from "@/lib/storage";
 
 const officerTaskSchema = z.object({
   farmId: z.string().min(1),
@@ -16,6 +17,7 @@ const officerTaskSchema = z.object({
   instructions: z.string().max(2000).optional().nullable(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("HIGH"),
   startImmediately: z.boolean().default(false),
+  mediaIds: z.array(z.string().min(1)).optional().default([]),
 });
 
 export async function POST(request: NextRequest) {
@@ -54,29 +56,73 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (input.startImmediately) {
-        await tx.taskExecution.create({
+      if (input.startImmediately || (input.mediaIds && input.mediaIds.length > 0)) {
+        const execution = await tx.taskExecution.create({
           data: {
             taskId: task.id,
             officerId: actor.id,
-            status: "IN_PROGRESS",
-            startedAt: now,
-            remarks: "Directly initiated upon creation.",
+            status: input.startImmediately ? "IN_PROGRESS" : "ASSIGNED",
+            startedAt: input.startImmediately ? now : null,
+            remarks: input.startImmediately
+              ? "Directly initiated upon creation."
+              : "Ad-hoc field task reference evidence.",
           },
         });
+
+        if (input.mediaIds && input.mediaIds.length > 0) {
+          await tx.mediaAsset.updateMany({
+            where: {
+              id: { in: input.mediaIds },
+              uploadedById: actor.id,
+              kind: "ACTIVITY_EVIDENCE",
+              executionId: null,
+            },
+            data: {
+              executionId: execution.id,
+              farmId: input.farmId,
+            },
+          });
+        }
       }
 
       return task;
     });
+
+    let primaryImageUrl: string | null = null;
+    let mediaWithUrls: Array<{ id: string; url: string | null }> = [];
+    if (input.mediaIds && input.mediaIds.length > 0) {
+      const mediaAssets = await prisma.mediaAsset.findMany({
+        where: { id: { in: input.mediaIds } },
+      });
+      mediaWithUrls = await Promise.all(
+        mediaAssets.map(async (m) => {
+          try {
+            const url = await downloadUrl(m.storageKey);
+            return { id: m.id, url };
+          } catch {
+            return { id: m.id, url: null };
+          }
+        })
+      );
+      primaryImageUrl = mediaWithUrls.find((m) => m.url)?.url || null;
+    }
 
     await audit(actor.id, "CREATE", "Task", result.id, {
       farmId: result.farmId,
       origin: "DAILY_MONITORING",
       adHoc: true,
       priority: input.priority,
+      mediaCount: input.mediaIds?.length || 0,
     });
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(
+      {
+        ...result,
+        primaryImageUrl,
+        media: mediaWithUrls,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     return apiError(error);
   }

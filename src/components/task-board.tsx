@@ -572,6 +572,39 @@ export function TaskBoard() {
                       <textarea name="instructions" defaultValue={t.instructions || ""} rows={2} style={{ fontSize: 12 }} />
                     </div>
                   </div>
+
+                  {/* Attached Visual Evidence in Edit Drawer */}
+                  {t.media && t.media.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "6px 0" }}>
+                      <label style={{ fontSize: 11, fontWeight: 650, color: "var(--ink-soft)" }}>
+                        Attached Visual Evidence ({t.media.length})
+                      </label>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {t.media.map((m, idx) => m.url ? (
+                          <div
+                            key={m.id || idx}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                              border: "1px solid var(--line-strong)",
+                              cursor: "zoom-in",
+                              position: "relative",
+                            }}
+                            onClick={() => setExpandedPhotoUrl(m.url)}
+                          >
+                            <img
+                              src={m.url}
+                              alt={`Evidence ${idx + 1}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          </div>
+                        ) : null)}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                     <button
                       type="button"
@@ -668,6 +701,75 @@ export function TaskBoard() {
           <span style={{ marginTop: 14, color: "rgba(255,255,255,0.75)", fontSize: "12px", fontWeight: 500 }}>
             Tap anywhere to close
           </span>
+        </div>
+      )}
+
+      {/* Plan Activity Modal */}
+      {showPlanModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setShowPlanModal(false)}
+        >
+          <div
+            style={{
+              maxWidth: "600px",
+              width: "100%",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              backgroundColor: "var(--canvas)",
+              borderRadius: "var(--radius-lg)",
+              padding: "24px",
+              boxShadow: "var(--shadow-xl)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <div className="eyebrow" style={{ color: "var(--green)" }}>
+                  <span className="eyebrow-dot" style={{ backgroundColor: "var(--green)" }} />
+                  <span>AGRONOMY DISPATCH</span>
+                </div>
+                <h3 style={{ margin: "4px 0 0", fontSize: "18px", fontWeight: 700, color: "var(--ink)" }}>
+                  Plan New Field Activity
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                style={{
+                  background: "var(--stone)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  display: "grid",
+                  placeItems: "center",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  color: "var(--ink-soft)",
+                }}
+              >
+                &times;
+              </button>
+            </div>
+            <TaskForm
+              onSuccess={() => {
+                setShowPlanModal(false);
+                void load();
+              }}
+              onCancel={() => setShowPlanModal(false)}
+            />
+          </div>
         </div>
       )}
     </section>

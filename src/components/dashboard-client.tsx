@@ -788,119 +788,168 @@ export function DashboardClient({
                     {activeIncidents.map((inc) => (
                       <div
                         key={inc.id}
-                        className="compact-card hover-glow"
+                        className="officer-task-card"
                         style={{
-                          padding: 18,
-                          gap: 14,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
+                          display: "flex",
+                          gap: 10,
+                          padding: "4px 12px 4px 4px",
+                          borderRadius: "14px",
+                          border: inc.severity === "CRITICAL" ? "1.5px solid var(--red-light, #fee2e2)" : "1px solid var(--line)",
+                          backgroundColor: "var(--canvas)",
+                          boxShadow: "var(--shadow-sm)",
+                          alignItems: "center",
                           cursor: "pointer",
+                          transition: "all 0.12s ease",
                         }}
                         onClick={() => setSelectedIncident(inc)}
                       >
-                        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                          <div
-                            style={{
-                              width: 96,
-                              height: 96,
-                              minWidth: 96,
-                              borderRadius: "var(--radius-sm)",
-                              overflow: "hidden",
-                              backgroundColor: "var(--stone)",
-                              position: "relative",
-                            }}
-                          >
-                            {inc.imageUrl ? (
-                              <img
-                                src={inc.imageUrl}
-                                alt={inc.type}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: 4,
-                                  color: "var(--muted)",
-                                  fontSize: 10,
-                                }}
-                              >
-                                <Icons.AlertTriangle size={24} style={{ color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--amber)" }} />
-                                <span>No Photo</span>
-                              </div>
-                            )}
-                            {inc.imageUrl && (
-                              <span
-                                style={{
-                                  position: "absolute",
-                                  bottom: 4,
-                                  right: 4,
-                                  backgroundColor: "rgba(0,0,0,0.7)",
-                                  color: "#fff",
-                                  borderRadius: "var(--radius-pill)",
-                                  padding: "2px 6px",
-                                  fontSize: 9,
-                                  fontWeight: 600,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 3,
-                                }}
-                              >
-                                <Icons.Camera size={10} /> Photo
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontWeight: 600, color: "var(--ink)", fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {inc.type}
-                              </span>
-                              <span
-                                className={`badge ${
-                                  inc.severity === "CRITICAL"
-                                    ? "badge-danger"
-                                    : inc.severity === "HIGH"
-                                    ? "badge-amber"
-                                    : "badge-blue"
-                                }`}
-                              >
-                                {inc.severity}
-                              </span>
-                            </div>
-
-                            <div className="muted" style={{ fontSize: 12 }}>
-                              {inc.farmName} {inc.plotName ? `• ${inc.plotName}` : ""}
-                            </div>
-
-                            <p
+                        {/* SQUARE IMAGE THUMBNAIL (90x90, 10px radius) */}
+                        <div
+                          style={{
+                            width: 90,
+                            height: 90,
+                            minWidth: 90,
+                            maxWidth: 90,
+                            borderRadius: "10px",
+                            overflow: "hidden",
+                            backgroundColor: "var(--stone)",
+                            position: "relative",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {inc.imageUrl ? (
+                            <img
+                              src={inc.imageUrl}
+                              alt={inc.type}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            <div
                               style={{
-                                margin: 0,
-                                fontSize: 13,
-                                color: "var(--ink)",
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                                lineHeight: 1.4,
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 3,
+                                color: "var(--muted)",
                               }}
                             >
-                              {inc.description}
-                            </p>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                              <span>Reported {inc.date}</span>
-                              {inc.impactPercent && (
-                                <span style={{ color: "var(--amber)", fontWeight: 600 }}>
-                                  Impact: {inc.impactPercent}%
-                                </span>
-                              )}
+                              <Icons.AlertTriangle size={18} style={{ color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--amber)" }} />
+                              <span style={{ fontSize: "9px", fontWeight: 600 }}>No Photo</span>
                             </div>
+                          )}
+                          {inc.imageUrl && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                bottom: 5,
+                                right: 5,
+                                backgroundColor: "rgba(0,0,0,0.65)",
+                                color: "#fff",
+                                borderRadius: 4,
+                                padding: "1px 4px",
+                                fontSize: "8.5px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 2,
+                                backdropFilter: "blur(2px)",
+                              }}
+                            >
+                              <Icons.Maximize2 size={9} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* RIGHT METADATA COLUMN */}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            height: 90,
+                            gap: 2,
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                color: "var(--green-dark)",
+                                backgroundColor: "var(--green-light)",
+                                padding: "1px 6px",
+                                borderRadius: "6px",
+                                maxWidth: "60%",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {inc.farmName} {inc.plotName ? `• ${inc.plotName.replace(/^Plot:\s*/i, "")}` : ""}
+                            </span>
+                            <span
+                              className={`badge ${
+                                inc.severity === "CRITICAL"
+                                  ? "badge-danger"
+                                  : inc.severity === "HIGH"
+                                  ? "badge-amber"
+                                  : "badge-blue"
+                              }`}
+                              style={{ fontSize: "9.5px", padding: "1px 6px" }}
+                            >
+                              {inc.severity}
+                            </span>
+                          </div>
+
+                          <h4
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              color: "var(--ink)",
+                              margin: 0,
+                              lineHeight: 1.25,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {inc.type}
+                          </h4>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: "11px",
+                              color: "var(--ink-soft)",
+                              lineHeight: 1.25,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {inc.description}
+                          </p>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              fontSize: "10.5px",
+                              color: "var(--muted)",
+                            }}
+                          >
+                            <span>Reported {inc.date}</span>
+                            {inc.impactPercent && (
+                              <span style={{ color: "var(--amber)", fontWeight: 600 }}>
+                                Impact: {inc.impactPercent}%
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -922,49 +971,134 @@ export function DashboardClient({
                       <Link
                         key={a.id}
                         href={`/farms/${a.farmId}`}
-                        className="compact-card hover-glow"
+                        className="officer-task-card"
                         style={{
-                          padding: 18,
-                          gap: 12,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
+                          display: "flex",
+                          gap: 10,
+                          padding: "4px 12px 4px 4px",
+                          borderRadius: "14px",
+                          border: "1px solid var(--line)",
+                          backgroundColor: "var(--canvas)",
+                          boxShadow: "var(--shadow-sm)",
+                          alignItems: "center",
                           textDecoration: "none",
+                          transition: "all 0.12s ease",
                         }}
                       >
-                        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                          {a.imageUrl && (
+                        <div
+                          style={{
+                            width: 90,
+                            height: 90,
+                            minWidth: 90,
+                            maxWidth: 90,
+                            borderRadius: "10px",
+                            overflow: "hidden",
+                            backgroundColor: "var(--stone)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {a.imageUrl ? (
+                            <img
+                              src={a.imageUrl}
+                              alt={a.cropName}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
                             <div
                               style={{
-                                width: 96,
-                                height: 96,
-                                minWidth: 96,
-                                borderRadius: "var(--radius-sm)",
-                                overflow: "hidden",
-                                backgroundColor: "var(--stone)",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 3,
+                                color: "var(--muted)",
                               }}
                             >
-                              <img
-                                src={a.imageUrl}
-                                alt={a.cropName}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
+                              <span style={{ fontSize: "24px" }}>🌾</span>
+                              <span style={{ fontSize: "9px", fontWeight: 600 }}>Observation</span>
                             </div>
                           )}
+                        </div>
 
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontWeight: 600, color: "var(--ink)", fontSize: 15 }}>
-                                {a.farmName} &bull; {a.cropName}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            height: 90,
+                            gap: 2,
+                            flex: 1,
+                            minWidth: 0,
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                color: "var(--green-dark)",
+                                backgroundColor: "var(--green-light)",
+                                padding: "1px 6px",
+                                borderRadius: "6px",
+                                maxWidth: "60%",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {a.farmName} &bull; {a.plotName}
+                            </span>
+                            <span className="badge badge-danger" style={{ fontSize: "9.5px", padding: "1px 6px" }}>POOR HEALTH</span>
+                          </div>
+
+                          <h4
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              color: "var(--ink)",
+                              margin: 0,
+                              lineHeight: 1.25,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {a.cropName} &bull; {a.stage}
+                          </h4>
+
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: "11px",
+                              color: a.remarks ? "var(--ink)" : "var(--ink-soft)",
+                              lineHeight: 1.25,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              fontStyle: a.remarks ? "italic" : "normal",
+                            }}
+                          >
+                            {a.remarks ? `“${a.remarks}”` : `Distress flagged during routine crop monitoring`}
+                          </p>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              fontSize: "10.5px",
+                              color: "var(--muted)",
+                            }}
+                          >
+                            <span>Observed {a.date}</span>
+                            {a.impactPercent && (
+                              <span style={{ color: "var(--amber)", fontWeight: 600 }}>
+                                Impact: {a.impactPercent}%
                               </span>
-                              <span className="badge badge-danger">POOR HEALTH</span>
-                            </div>
-                            <div className="muted" style={{ fontSize: 12 }}>
-                              Plot: {a.plotName} &bull; Stage: {a.stage} &bull; Impact: {a.impactPercent ? `${a.impactPercent}%` : "Unspecified"}
-                            </div>
-                            {a.remarks && (
-                              <div style={{ fontSize: 12, color: "var(--ink)", fontStyle: "italic", lineHeight: 1.4 }}>
-                                &ldquo;{a.remarks}&rdquo;
-                              </div>
                             )}
                           </div>
                         </div>

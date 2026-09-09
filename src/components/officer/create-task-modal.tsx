@@ -2,6 +2,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
+import { PhotoUploadZone, PhotoItem, uploadEvidencePhotos } from "@/components/photo-upload-zone";
 
 type Plot = { id: string; name: string; cropCycles?: { id: string; cropName: string }[] };
 type Farm = { id: string; name: string; plots?: Plot[] };
@@ -85,6 +86,8 @@ export function CreateTaskModal({
   const [instructions, setInstructions] = useState("");
   const [startImmediately, setStartImmediately] = useState(true);
   const [pending, setPending] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [activeFarmData, setActiveFarmData] = useState<Farm | null>(null);
 
   useEffect(() => {
@@ -146,7 +149,20 @@ export function CreateTaskModal({
     }
 
     setPending(true);
+    setUploadProgress(null);
     try {
+      let mediaIds: string[] = [];
+      if (photos.length > 0) {
+        setUploadProgress(`Securing ${photos.length} photo(s)…`);
+        mediaIds = await uploadEvidencePhotos(
+          farmId,
+          "ACTIVITY_EVIDENCE",
+          photos,
+          (idx, total) => setUploadProgress(`Uploading photo ${idx} of ${total}…`)
+        );
+      }
+      setUploadProgress("Creating field task…");
+
       const res = await fetch("/api/officer/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,10 +175,12 @@ export function CreateTaskModal({
           instructions: instructions.trim() || null,
           priority,
           startImmediately,
+          mediaIds,
         }),
       });
 
       setPending(false);
+      setUploadProgress(null);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast.show(err.error || "Failed to create field task.", "error");
@@ -177,11 +195,13 @@ export function CreateTaskModal({
       );
       setTitle("");
       setInstructions("");
+      setPhotos([]);
       onSuccess();
       onClose();
-    } catch {
+    } catch (err: any) {
       setPending(false);
-      toast.show("Network error while creating task.", "error");
+      setUploadProgress(null);
+      toast.show(err?.message || "Network error while creating task.", "error");
     }
   };
 
@@ -392,6 +412,25 @@ export function CreateTaskModal({
               className="input-field"
               style={{ fontSize: "13px", resize: "vertical" }}
             />
+          </div>
+
+          {/* Visual Photo Evidence (Camera Capture / Gallery) */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: 6 }}>
+              Field Photo Evidence / Job Reference (Optional)
+            </label>
+            <PhotoUploadZone
+              farmId={farmId}
+              kind="ACTIVITY_EVIDENCE"
+              maxPhotos={4}
+              onPhotosChange={setPhotos}
+              isUploading={pending}
+            />
+            {uploadProgress && (
+              <div style={{ fontSize: "12px", color: "var(--green-dark)", marginTop: 6, fontWeight: 600 }}>
+                ⏳ {uploadProgress}
+              </div>
+            )}
           </div>
 
           {/* Start Immediately Toggle */}

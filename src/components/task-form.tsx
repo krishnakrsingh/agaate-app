@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
+import { PhotoUploadZone, PhotoItem, uploadEvidencePhotos } from "./photo-upload-zone";
 
 type Farm = { id: string; name: string };
 type Plot = { id: string; name: string; status: string; cropCycles: { id: string; cropName: string; status: string }[] };
@@ -31,6 +32,8 @@ export function TaskForm({
   const [planDate, setPlanDate] = useState(() => initialDate || new Date().toISOString().slice(0, 10));
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/farms")
@@ -63,25 +66,52 @@ export function TaskForm({
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!farmId) {
+      setError("Please select a target farm estate.");
+      return;
+    }
     setPending(true);
     setError("");
+    setUploadStatus(null);
     const f = new FormData(e.currentTarget);
     try {
+      let mediaIds: string[] = [];
+      if (photos.length > 0) {
+        setUploadStatus(`Securing ${photos.length} photo(s)…`);
+        mediaIds = await uploadEvidencePhotos(
+          farmId,
+          "ACTIVITY_EVIDENCE",
+          photos,
+          (idx, total) => setUploadStatus(`Uploading photo ${idx} of ${total}…`)
+        );
+      }
+      setUploadStatus("Dispatching activity…");
+
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          farmId, date: planDate, plotId: plotId || null, cropCycleId: cropCycleId || null,
-          category, title: f.get("title"), description: f.get("description"), instructions: f.get("instructions") || null,
-          priority, assignedOfficerId: f.get("assignedOfficerId"),
+          farmId,
+          date: planDate,
+          plotId: plotId || null,
+          cropCycleId: cropCycleId || null,
+          category,
+          title: f.get("title"),
+          description: f.get("description"),
+          instructions: f.get("instructions") || null,
+          priority,
+          assignedOfficerId: f.get("assignedOfficerId"),
+          mediaIds,
         }),
       });
       setPending(false);
+      setUploadStatus(null);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Failed to create activity.");
       if (onSuccess) onSuccess();
       else { router.push("/tasks"); router.refresh(); }
     } catch (err: any) {
       setPending(false);
+      setUploadStatus(null);
       setError(err.message ?? "Network error.");
     }
   }
@@ -200,11 +230,30 @@ export function TaskForm({
         </div>
       </div>
 
+      <div className="form-section">
+        <div className="form-section-title">3. Reference &amp; Visual Evidence Photos (Optional)</div>
+        <p className="muted" style={{ fontSize: "12px", margin: "4px 0 12px" }}>
+          Attach reference photos, pest/disease identification images, or visual instructions for the assigned officer.
+        </p>
+        <PhotoUploadZone
+          farmId={farmId}
+          kind="ACTIVITY_EVIDENCE"
+          maxPhotos={4}
+          onPhotosChange={setPhotos}
+          isUploading={pending}
+        />
+        {uploadStatus && (
+          <div style={{ fontSize: "12px", color: "var(--green-dark)", marginTop: 8, fontWeight: 600 }}>
+            ⏳ {uploadStatus}
+          </div>
+        )}
+      </div>
+
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 16 }}>
         {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
-        <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
+        <button type="submit" className="btn btn-green btn-lg" disabled={pending || !farmId}>
           <Icons.Check size={16} />
-          <span>{pending ? "Scheduling…" : "Dispatch Activity"}</span>
+          <span>{pending ? (uploadStatus || "Scheduling…") : "Dispatch Activity"}</span>
         </button>
       </div>
     </form>

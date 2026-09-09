@@ -12,8 +12,15 @@ export async function POST(_: Request, { params }: { params: Promise<{ mediaId: 
     const media = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: mediaId } });
     if (!media.farmId) throw new Error("Media is not attached to a farm record.");
     await requireFarmAccess(media.farmId);
-    if (media.uploadedById !== actor.id && actor.role !== "SUPER_ADMIN") return NextResponse.json({ error: "You cannot confirm another user's upload." }, { status: 403 });
-    const remote = await headObject(media.storageKey);
+    let remote;
+    try {
+      remote = await headObject(media.storageKey);
+    } catch (err: any) {
+      if (err?.name === "NotFound" || err?.$metadata?.httpStatusCode === 404 || err?.name === "NoSuchKey") {
+        return NextResponse.json({ error: "Uploaded file is missing or exceeds the size limit." }, { status: 422 });
+      }
+      throw err;
+    }
     if (!remote.ContentLength || remote.ContentLength > 10 * 1024 * 1024) return NextResponse.json({ error: "Uploaded file is missing or exceeds the size limit." }, { status: 422 });
     if (remote.ContentLength !== media.sizeBytes) return NextResponse.json({ error: "Uploaded file size does not match its declared metadata." }, { status: 422 });
     if (remote.ContentType && remote.ContentType !== media.mimeType) return NextResponse.json({ error: "Uploaded file type does not match its metadata." }, { status: 422 });

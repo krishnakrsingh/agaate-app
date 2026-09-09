@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
         sizeBytes: buffer.length,
         farmId,
         uploadedById: actor.id,
+        verifiedAt: new Date(),
       },
     });
 
