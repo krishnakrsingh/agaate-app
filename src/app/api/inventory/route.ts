@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess, HttpError } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { apiError, paginatedJson, paginationParams } from "@/lib/api";
 
 const createItemSchema = z.object({
   farmId: z.string().min(1),
@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
     const actor = await currentActor();
     const { searchParams } = new URL(request.url);
     const farmId = searchParams.get("farmId");
+    const { limit, offset } = paginationParams(searchParams);
+    const category = searchParams.get("category")?.trim();
+    const stock = searchParams.get("stock")?.trim();
+    const q = searchParams.get("search")?.trim();
 
     let where: any = {};
     if (farmId) {
@@ -35,8 +39,11 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
+    if (category && category !== "ALL") where.category = category;
+    if (q) where.name = { contains: q };
 
-    const items = await prisma.inventoryItem.findMany({
+    const [items, total] = await Promise.all([
+      prisma.inventoryItem.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true } },
@@ -46,7 +53,11 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { name: "asc" },
-    });
+      take: limit,
+      skip: offset,
+      }),
+      prisma.inventoryItem.count({ where }),
+    ]);
 
     const enriched = items.map((item) => {
       const stock = Number(item.quantityInStock);
@@ -57,8 +68,9 @@ export async function GET(request: NextRequest) {
         isLowStock,
       };
     });
+    const filtered = stock === "LOW" ? enriched.filter((i) => i.isLowStock) : enriched;
 
-    return NextResponse.json(enriched);
+    return paginatedJson(filtered, stock === "LOW" ? filtered.length + offset : total);
   } catch (error) {
     return apiError(error);
   }

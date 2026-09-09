@@ -83,6 +83,10 @@ type Farm = {
   plots: Plot[];
   incidents: Incident[];
   monitoring: Monitoring[];
+  plotsTotal?: number;
+  plotsTruncated?: boolean;
+  incidentsTotal?: number;
+  incidentsTruncated?: boolean;
 };
 
 const SETUP_STAGES = [
@@ -477,7 +481,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
       {/* SEGMENTED TABS */}
       <div className="tabs-nav">
         <button type="button" className={`tab-btn ${tab === "plots" ? "active" : ""}`} onClick={() => setTab("plots")}>
-          <Icons.Plot size={14} /><span>Plots &amp; Crops ({farm.plots.length})</span>
+          <Icons.Plot size={14} /><span>Plots &amp; Crops ({(farm.plotsTotal ?? farm.plots.length).toLocaleString()})</span>
         </button>
         <button type="button" className={`tab-btn ${tab === "weather" ? "active" : ""}`} onClick={() => setTab("weather")}>
           <Icons.Sun size={14} /><span>Agronomy &amp; Weather</span>
@@ -486,7 +490,7 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
           <Icons.Users size={14} /><span>Team &amp; Access</span>
         </button>
         <button type="button" className={`tab-btn ${tab === "signals" ? "active" : ""}`} onClick={() => setTab("signals")}>
-          <Icons.Activity size={14} /><span>Signals &amp; Incidents ({farm.incidents.length + farm.monitoring.length})</span>
+          <Icons.Activity size={14} /><span>Signals &amp; Incidents ({((farm.incidentsTotal ?? farm.incidents.length) + farm.monitoring.length).toLocaleString()})</span>
         </button>
         {canManage && (
           <button type="button" className={`tab-btn ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}>
@@ -501,7 +505,10 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <div>
               <h2 className="section-title">Plots &amp; Precision Crop Cycles</h2>
-              <p className="muted" style={{ marginTop: 2 }}>Manage plot acreage, irrigation systems, and launch crop cycles.</p>
+              <p className="muted" style={{ marginTop: 2 }}>
+                Manage plot acreage, irrigation systems, and launch crop cycles.
+                {farm.plotsTruncated && ` Showing ${farm.plots.length} of ${farm.plotsTotal?.toLocaleString()} — use the Plots explorer with search for the full list.`}
+              </p>
             </div>
             {canManage && (
               <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(!showAddPlot)}>
@@ -636,7 +643,8 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
       {tab === "signals" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div className="page-header" style={{ paddingBottom: 12 }}>
-            <h2 className="section-title">Field Incidents &amp; Observations ({farm.incidents.length})</h2>
+            <h2 className="section-title">Field Incidents &amp; Observations ({(farm.incidentsTotal ?? farm.incidents.length).toLocaleString()})</h2>
+            {farm.incidentsTruncated && <p className="muted" style={{ fontSize: 12 }}>Showing the 50 most recent — filter the full history in the incidents registry.</p>}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {farm.incidents.map((inc) => (

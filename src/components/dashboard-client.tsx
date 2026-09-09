@@ -151,7 +151,13 @@ export function DashboardClient({
 
   const [activeTab, setActiveTab] = useState<"PIPELINE" | "CLIENTS" | "REGIONAL">("PIPELINE");
   const [pipelineFarms, setPipelineFarms] = useState<SetupPipelineItem[]>(initialPipelineFarms);
-  const [clients] = useState<ClientDirectoryItem[]>(initialClients);
+  // Clients directory is server-paginated (the old build filtered the first
+  // 20 rows in memory and reported wrong counts). See /clients for the full
+  // directory; the dashboard keeps a bounded preview wired to the same API.
+  const [clients, setClients] = useState<ClientDirectoryItem[]>(initialClients);
+  const [clientsTotal, setClientsTotal] = useState<number | null>(null);
+  const [clientsPage, setClientsPage] = useState(1);
+  const [clientsLoading, setClientsLoading] = useState(false);
 
   // Server-side pagination & filter states for 100,000+ scale
   const [pipelineSearch, setPipelineSearch] = useState("");
@@ -226,22 +232,34 @@ export function DashboardClient({
   }, [pipelineSearch, pipelineStageFilter, pipelineSlaFilter, pipelineStateFilter, pipelineSortBy, pipelinePage, pipelineLimit]);
 
 
-  // Filtered clients
-  const filteredClients = useMemo(() => {
-    const q = clientSearch.trim().toLowerCase();
-    return clients.filter((c) => {
-      const matchState = clientStateFilter === "ALL" || (c.state && c.state === clientStateFilter);
-      const matchSearch =
-        !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.code.toLowerCase().includes(q) ||
-        (c.phone && c.phone.includes(q)) ||
-        (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.companyName && c.companyName.toLowerCase().includes(q)) ||
-        (c.district && c.district.toLowerCase().includes(q));
-      return matchState && matchSearch;
-    });
-  }, [clients, clientSearch, clientStateFilter]);
+  // Filtered clients — server-driven via /api/admin/clients (debounced).
+  // Replaces the previous in-memory filter over the first 20 rows.
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      setClientsLoading(true);
+      const params = new URLSearchParams({ limit: "20", offset: String((clientsPage - 1) * 20) });
+      if (clientSearch.trim()) params.set("search", clientSearch.trim());
+      if (clientStateFilter !== "ALL") params.set("state", clientStateFilter);
+      fetch(`/api/admin/clients?${params.toString()}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!isMounted || !data) return;
+          setClients(data.clients || []);
+          if (typeof data.total === "number") setClientsTotal(data.total);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (isMounted) setClientsLoading(false);
+        });
+    }, 300);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [clientSearch, clientStateFilter, clientsPage]);
+
+  const filteredClients = clients;
 
   // Advance farm to next stage
   const handleAdvanceStage = async (farm: SetupPipelineItem) => {
@@ -1046,9 +1064,9 @@ export function DashboardClient({
               <div style={{ position: "relative", width: 300 }}>
                 <input
                   type="text"
-                  placeholder="Search 10,000+ clients by name, code, phone, district..."
+                  placeholder="Search clients by name, code, phone, district... (server-side)"
                   value={clientSearch}
-                  onChange={(e) => setClientSearch(e.target.value)}
+                  onChange={(e) => { setClientSearch(e.target.value); setClientsPage(1); }}
                   className="input-field"
                   style={{ fontSize: 12, padding: "6px 28px 6px 28px" }}
                 />
@@ -1069,7 +1087,7 @@ export function DashboardClient({
               {/* State Filter */}
               <select
                 value={clientStateFilter}
-                onChange={(e) => setClientStateFilter(e.target.value)}
+                onChange={(e) => { setClientStateFilter(e.target.value); setClientsPage(1); }}
                 className="input-field"
                 style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
               >
@@ -1082,8 +1100,9 @@ export function DashboardClient({
               </select>
             </div>
 
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>
-              Showing {filteredClients.length} accounts
+            <div style={{ fontSize: 12, color: "var(--muted)", display: "flex", gap: 8, alignItems: "center" }}>
+              {clientsLoading ? "Loading…" : clientsTotal != null ? `Showing ${filteredClients.length} of ${clientsTotal.toLocaleString()} accounts` : `Showing ${filteredClients.length} accounts`}
+              <Link href="/clients" style={{ fontSize: 12 }}>Open full directory →</Link>
             </div>
           </div>
 
@@ -1233,40 +1252,24 @@ export function DashboardClient({
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+          {/* Real portfolio totals only — per-state breakdowns are not
+              fabricated. A state-level aggregation endpoint is the missing
+              backend contract (see /api/admin/clients?state= for filtered
+              counts); until it exists we show honest totals, not estimates. */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
             {[
-              { state: "Karnataka", clients: Math.max(12, Math.round(macroTelemetry.totalClients * 0.45)), acreage: Math.round(macroTelemetry.totalCultivable * 0.48), hubs: "Chikkaballapur, Kolar, Mysuru, Mandya" },
-              { state: "Maharashtra", clients: Math.max(8, Math.round(macroTelemetry.totalClients * 0.28)), acreage: Math.round(macroTelemetry.totalCultivable * 0.27), hubs: "Nashik, Pune, Solapur, Ahmednagar" },
-              { state: "Tamil Nadu", clients: Math.max(4, Math.round(macroTelemetry.totalClients * 0.15)), acreage: Math.round(macroTelemetry.totalCultivable * 0.14), hubs: "Hosur, Coimbatore, Dindigul" },
-              { state: "Andhra Pradesh", clients: Math.max(3, Math.round(macroTelemetry.totalClients * 0.12)), acreage: Math.round(macroTelemetry.totalCultivable * 0.11), hubs: "Chittoor, Anantapur" },
-            ].map((reg) => (
-              <div
-                key={reg.state}
-                style={{
-                  border: "1px solid var(--line)",
-                  borderRadius: "var(--radius-sm)",
-                  padding: 16,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  background: "var(--canvas)",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ fontSize: 15, color: "var(--ink)" }}>{reg.state}</strong>
-                  <span className="badge badge-green font-mono" style={{ fontSize: 10 }}>
-                    {reg.acreage.toLocaleString()} Ac
-                  </span>
-                </div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  {reg.clients.toLocaleString()} Client Accounts Managed
-                </div>
-                <div style={{ fontSize: 11, color: "var(--ink-soft)", paddingTop: 4, borderTop: "1px solid var(--stone)" }}>
-                  Primary Setup Hubs: {reg.hubs}
-                </div>
+              { label: "Total clients", value: macroTelemetry.totalClients.toLocaleString() },
+              { label: "Total farms", value: macroTelemetry.totalFarms.toLocaleString() },
+              { label: "Cultivable acreage", value: macroTelemetry.totalCultivable.toLocaleString() },
+              { label: "Setups in flight", value: macroTelemetry.inFlightSetups.toLocaleString() },
+            ].map((s) => (
+              <div key={s.label} style={{ border: "1px solid var(--line)", borderRadius: "var(--radius-sm)", padding: 16, background: "var(--canvas)" }}>
+                <div style={{ fontSize: 11, fontFamily: "var(--font-mono)", textTransform: "uppercase", color: "var(--muted)" }}>{s.label}</div>
+                <div style={{ fontSize: 24, fontWeight: 700 }}>{s.value}</div>
               </div>
             ))}
           </div>
+          <p className="muted" style={{ fontSize: 12 }}>Regional split by state needs a dedicated aggregation API — use <Link href="/clients">Clients</Link> and <Link href="/farms">Farms</Link> directories with state filters for real numbers.</p>
         </section>
       )}
 

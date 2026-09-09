@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
@@ -68,11 +69,12 @@ const RECIPE_PRESETS = [
   },
 ];
 
-export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
+export function WeeklyPlanner({ farms, farmsTotal }: { farms: Farm[]; farmsTotal?: number }) {
   const toast = useToast();
   const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPrintSheet, setShowPrintSheet] = useState(false);
   const [targetDayIndex, setTargetDayIndex] = useState(0);
@@ -120,6 +122,50 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
       setAssignedOfficerId(officers[0].id);
     }
   }, [officers, assignedOfficerId]);
+
+  // Load persisted tasks for the selected farm + visible week. The old build
+  // only showed tasks created in the current session; a refresh wiped the
+  // board even though the tasks exist server-side.
+  useEffect(() => {
+    if (!selectedFarmId || weekDays.length !== 7) return;
+    const ctrl = new AbortController();
+    setTasksLoading(true);
+    setTasks([]);
+    const params = new URLSearchParams({
+      farmId: selectedFarmId,
+      dateFrom: weekDays[0].dateStr,
+      dateTo: weekDays[6].dateStr,
+      limit: "200",
+    });
+    fetch(`/api/tasks?${params.toString()}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: any[]) => {
+        if (ctrl.signal.aborted) return;
+        const byDate = new Map(weekDays.map((d) => [d.dateStr, d.index]));
+        const server = (Array.isArray(list) ? list : []).map((t: any) => ({
+          id: t.id,
+          dayIndex: byDate.get(t.dueDate?.slice(0, 10)) ?? 0,
+          dateStr: t.dueDate?.slice(0, 10) ?? weekDays[0].dateStr,
+          plotId: t.plot?.id ?? "",
+          plotName: t.plot?.name ?? "Farm",
+          cropCycleId: t.cropCycle?.id,
+          cropName: t.cropCycle?.cropName,
+          category: t.category ?? "CROP_SPECIFIC",
+          title: t.title,
+          instructions: t.instructions ?? t.description ?? "",
+          priority: t.priority,
+          assignedOfficerId: t.assignedOfficerId ?? "",
+          officerName: t.assignedOfficer?.name ?? "Unassigned",
+        }));
+        setTasks(server);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!ctrl.signal.aborted) setTasksLoading(false);
+      });
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFarmId, weekOffset]);
 
   const handlePresetSelect = (preset: typeof RECIPE_PRESETS[0]) => {
     setSelectedCategory(preset.category);
@@ -233,10 +279,14 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
           </div>
           <p className="text-sm text-zinc-400 mt-1">
             Build and dispatch precision 7-day spray, fertigation, and cultural practice schedules for on-site farm managers.
+            {tasksLoading && <span className="ml-2 text-xs text-zinc-500">Loading dispatched tasks…</span>}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          {farmsTotal != null && farmsTotal > farms.length && (
+            <span className="text-xs text-zinc-500">Showing {farms.length} of {farmsTotal.toLocaleString()} estates — find any farm in the Farms directory.</span>
+          )}
           {farms.length > 1 && (
             <select
               value={selectedFarmId}

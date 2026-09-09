@@ -10,7 +10,10 @@ export default async function AgronomyPlanningPage() {
   const session = await requireSession();
   const farmWhere = await accessibleFarmWhere();
 
-  const farms = await prisma.farm.findMany({
+  // Bounded to 100 estates + total — the old build loaded every farm with
+  // all plots, cycles and officers into one planning dropdown.
+  const [farms, farmsTotal] = await Promise.all([
+  prisma.farm.findMany({
     where: farmWhere,
     include: {
       plots: {
@@ -33,7 +36,10 @@ export default async function AgronomyPlanningPage() {
       },
     },
     orderBy: { createdAt: "desc" },
-  });
+    take: 100,
+  }),
+  prisma.farm.count({ where: farmWhere }),
+  ]);
 
   const serialized = farms.map((f) => ({
     id: f.id,
@@ -56,7 +62,7 @@ export default async function AgronomyPlanningPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <WeeklyPlanner farms={serialized} />
+        <WeeklyPlanner farms={serialized} farmsTotal={farmsTotal} />
       </main>
     </>
   );

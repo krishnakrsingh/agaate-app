@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
     const stateParam = searchParams.get("state")?.trim() || "";
     const districtParam = searchParams.get("district")?.trim() || "";
     const slaParam = searchParams.get("sla")?.trim() || "ALL";
-    const sortBy = searchParams.get("sortBy")?.trim() || "updatedAt";
+    const SORTABLE = ["updatedAt", "createdAt", "name", "totalArea", "cultivableArea"] as const;
+    const rawSort = searchParams.get("sortBy")?.trim() || "updatedAt";
+    const sortBy = (SORTABLE as readonly string[]).includes(rawSort) ? rawSort : "updatedAt";
     const sortOrder = (searchParams.get("sortOrder")?.toLowerCase() === "asc" ? "asc" : "desc") as "asc" | "desc";
 
     // 1. Stage filter condition

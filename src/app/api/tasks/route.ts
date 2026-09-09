@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess, requireRole, HttpError } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError, paginationParams } from "@/lib/api";
+import { apiError, paginatedJson, paginationParams } from "@/lib/api";
 import { isWithinRollingSevenDays, parseUtcDate } from "@/lib/business";
 import { downloadUrl } from "@/lib/storage";
 
@@ -42,6 +42,13 @@ export async function GET(request: NextRequest) {
 
     const unrestricted = actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST";
     const { limit, offset } = paginationParams(search);
+    const q = search.get("search")?.trim() || search.get("q")?.trim();
+    const statusParam = search.get("status")?.trim();
+    const priorityParam = search.get("priority")?.trim();
+    const categoryParam = search.get("category")?.trim();
+    const assigneeParam = search.get("assignedOfficerId")?.trim() || search.get("assignee")?.trim();
+    const dateFrom = search.get("dateFrom") || search.get("from");
+    const dateTo = search.get("dateTo") || search.get("to");
 
     let where: any;
     if (actor.role === "FARM_OFFICER") {
@@ -66,7 +73,39 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const rawTasks = await prisma.task.findMany({
+    // Server-side queue filters — previously client-side useMemo over the
+    // first 100 rows (silent data loss at scale). All optional.
+    const and: any[] = [];
+    if (statusParam && statusParam !== "ALL") {
+      if (statusParam === "QUEUED") and.push({ status: { in: ["DRAFT", "ASSIGNED", "AVAILABLE"] } });
+      else and.push({ status: statusParam });
+    }
+    if (priorityParam && priorityParam !== "ALL") and.push({ priority: priorityParam });
+    if (categoryParam && categoryParam !== "ALL") and.push({ category: categoryParam });
+    if (assigneeParam && assigneeParam !== "ALL") {
+      and.push(assigneeParam === "UNASSIGNED" ? { assignedOfficerId: null } : { assignedOfficerId: assigneeParam });
+    }
+    if (dateFrom || dateTo) {
+      const range: any = {};
+      try {
+        if (dateFrom) range.gte = parseUtcDate(dateFrom);
+        if (dateTo) range.lte = parseUtcDate(dateTo);
+      } catch { /* invalid date strings fall through to 422 via parseUtcDate in where */ }
+      if (Object.keys(range).length) and.push({ dueDate: range });
+    }
+    if (q) {
+      and.push({
+        OR: [
+          { title: { contains: q } },
+          { description: { contains: q } },
+          { farm: { name: { contains: q } } },
+        ],
+      });
+    }
+    if (and.length) where = { AND: [where, ...and] };
+
+    const [rawTasks, total] = await Promise.all([
+      prisma.task.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true } },
@@ -83,7 +122,9 @@ export async function GET(request: NextRequest) {
       orderBy: [{ dueDate: "asc" }, { priority: "desc" }],
       take: limit,
       skip: offset,
-    });
+      }),
+      prisma.task.count({ where }),
+    ]);
 
     const tasks = await Promise.all(
       rawTasks.map(async (t) => {
@@ -107,7 +148,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json(tasks);
+    return paginatedJson(tasks, total);
   } catch (error) { return apiError(error); }
 }
 

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess, requireRole, accessibleFarmWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError, noStore, paginationParams } from "@/lib/api";
+import { apiError, noStore, paginatedJson, paginationParams } from "@/lib/api";
 import { downloadUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
     const statusParam = searchParams.get("status");
     const severityParam = searchParams.get("severity");
     const levelParam = searchParams.get("level");
+    const q = searchParams.get("search")?.trim() || searchParams.get("q")?.trim();
     const { limit, offset } = paginationParams(searchParams);
 
     const where: any = {
@@ -75,8 +76,12 @@ export async function GET(request: NextRequest) {
     if (levelParam && levelParam !== "ALL") {
       where.level = levelParam;
     }
+    if (q) {
+      where.AND = [...(where.AND || []), { OR: [{ type: { contains: q } }, { description: { contains: q } }] }];
+    }
 
-    const incidents = await prisma.incident.findMany({
+    const [incidents, total] = await Promise.all([
+      prisma.incident.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true, location: true } },
@@ -102,7 +107,9 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
-    });
+      }),
+      prisma.incident.count({ where }),
+    ]);
 
     // Generate signed download URLs for media assets
     const enriched = await Promise.all(
@@ -152,7 +159,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json(enriched, { headers: noStore });
+    return paginatedJson(enriched, total, noStore);
   } catch (error) {
     return apiError(error);
   }

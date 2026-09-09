@@ -10,14 +10,18 @@ export default async function AgronomyRadarPage() {
   const session = await requireSession();
   const farmWhere = await accessibleFarmWhere();
 
-  const activeCycles = await prisma.cropCycle.findMany({
-    where: {
-      status: "ACTIVE",
-      plot: {
-        farm: farmWhere,
-        deletedAt: null,
-      },
+  // Bounded: first 200 active cycles by start date + real total. The old
+  // build loaded every ACTIVE cycle in the portfolio into one page.
+  const where = {
+    status: "ACTIVE" as const,
+    plot: {
+      farm: farmWhere,
+      deletedAt: null,
     },
+  };
+  const [activeCycles, totalActive] = await Promise.all([
+  prisma.cropCycle.findMany({
+    where,
     include: {
       plot: {
         include: {
@@ -37,7 +41,10 @@ export default async function AgronomyRadarPage() {
       },
     },
     orderBy: { startDate: "asc" },
-  });
+    take: 200,
+  }),
+  prisma.cropCycle.count({ where }),
+  ]);
 
   const now = new Date();
 
@@ -70,7 +77,7 @@ export default async function AgronomyRadarPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <CropRadar items={items} />
+        <CropRadar items={items} total={totalActive} />
       </main>
     </>
   );

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { apiError, paginatedJson, paginationParams } from "@/lib/api";
 import { parseUtcDate } from "@/lib/business";
 
 const createSchema = z.object({
@@ -26,6 +26,11 @@ export async function GET(request: NextRequest) {
     const actor = await currentActor();
     const { searchParams } = new URL(request.url);
     const farmId = searchParams.get("farmId");
+    const { limit, offset } = paginationParams(searchParams);
+    const grade = searchParams.get("grade")?.trim();
+    const q = searchParams.get("search")?.trim();
+    const from = searchParams.get("from") || searchParams.get("dateFrom");
+    const to = searchParams.get("to") || searchParams.get("dateTo");
 
     let where: any = {};
     if (farmId) {
@@ -34,8 +39,17 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
+    if (grade && grade !== "ALL") where.grade = grade;
+    if (q) where.OR = [{ buyerOrMarket: { contains: q } }, { notes: { contains: q } }, { vehicleNumber: { contains: q } }];
+    if (from || to) {
+      const range: any = {};
+      if (from) range.gte = parseUtcDate(from);
+      if (to) range.lte = parseUtcDate(to);
+      where.harvestDate = range;
+    }
 
-    const logs = await prisma.harvestLog.findMany({
+    const [logs, total] = await Promise.all([
+      prisma.harvestLog.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true } },
@@ -44,10 +58,13 @@ export async function GET(request: NextRequest) {
         createdBy: { select: { id: true, name: true, role: true } },
       },
       orderBy: { harvestDate: "desc" },
-      take: 100,
-    });
+      take: limit,
+      skip: offset,
+      }),
+      prisma.harvestLog.count({ where }),
+    ]);
 
-    return NextResponse.json(logs);
+    return paginatedJson(logs, total);
   } catch (error) {
     return apiError(error);
   }

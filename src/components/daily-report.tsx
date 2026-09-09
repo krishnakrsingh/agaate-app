@@ -34,21 +34,41 @@ type Report = {
 
 export function DailyReport() {
   const [farms, setFarms] = useState<Farm[]>([]);
+  const [farmsTruncated, setFarmsTruncated] = useState(false);
+  const [farmSearch, setFarmSearch] = useState("");
   const [farmId, setFarmId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Server-searched estate picker — the old build loaded the first 100 farms
+  // once, silently hiding farms 101–100,000 from reports.
   useEffect(() => {
-    fetch("/api/farms")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((list) => {
-        setFarms(list);
-        if (list.length > 0) setFarmId(list[0].id);
-      })
-      .catch(() => setError("Unable to load farms."));
-  }, []);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ limit: "25" });
+      if (farmSearch.trim()) params.set("search", farmSearch.trim());
+      fetch(`/api/farms?${params.toString()}`, { signal: ctrl.signal })
+        .then((r) => {
+          const h = r.headers.get("X-Total-Count");
+          if (h != null) setFarmsTruncated(Number(h) > 25);
+          return r.ok ? r.json() : Promise.reject();
+        })
+        .then((list) => {
+          setFarms(list);
+          if (!farmId && list.length > 0) setFarmId(list[0].id);
+        })
+        .catch((e) => {
+          if (e?.name !== "AbortError") setError("Unable to load farms.");
+        });
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [farmSearch]);
 
   async function load(targetFarmId = farmId, targetDate = date) {
     if (!targetFarmId) return;
@@ -105,6 +125,14 @@ export function DailyReport() {
           <Icons.Farm size={18} color="var(--green)" />
           <label style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontWeight: 550, fontSize: "13px", flex: 1 }}>
             <span style={{ whiteSpace: "nowrap" }}>Select Estate:</span>
+            <input
+              type="search"
+              placeholder="Type to search…"
+              value={farmSearch}
+              onChange={(e) => setFarmSearch(e.target.value)}
+              style={{ minHeight: 36, padding: "6px 12px", fontSize: "13px", width: 140 }}
+              aria-label="Search estates"
+            />
             <select
               value={farmId}
               onChange={(e) => setFarmId(e.target.value)}
@@ -123,6 +151,7 @@ export function DailyReport() {
               ))}
             </select>
           </label>
+          {farmsTruncated && <span className="muted" style={{ fontSize: 11 }}>25 of many — keep typing to narrow.</span>}
         </div>
 
         {/* Date Stepper & Actions */}

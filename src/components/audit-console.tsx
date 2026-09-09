@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { Icons } from "./icons";
 import { EmptyState } from "./ui/empty-state";
 import { CardSkeleton } from "./ui/skeleton";
@@ -17,20 +18,37 @@ type AuditLog = {
 
 export function AuditConsole() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
+  const [entityFilter, setEntityFilter] = useState("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchLogs = async () => {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const fetchLogs = async (p = page) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/audit-logs?limit=100");
+      const params = new URLSearchParams({ limit: "50", offset: String((p - 1) * 50) });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (actionFilter !== "ALL") params.set("action", actionFilter);
+      if (entityFilter !== "ALL") params.set("entityType", entityFilter);
+      const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (!res.ok) throw new Error("Could not load system audit records.");
-      const data = await res.json();
-      setLogs(data || []);
+      const h = res.headers.get("X-Total-Count");
+      setTotal(h == null ? null : Number(h));
+      setLogs((await res.json()) || []);
     } catch (err: any) {
       setError(err.message || "Network error loading audit trail.");
     } finally {
@@ -40,28 +58,10 @@ export function AuditConsole() {
 
   useEffect(() => {
     void fetchLogs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, actionFilter, entityFilter, page]);
 
-  const actionTypes = useMemo(() => {
-    const set = new Set<string>();
-    for (const log of logs) {
-      set.add(log.action);
-    }
-    return Array.from(set);
-  }, [logs]);
-
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
-      const matchAction = actionFilter === "ALL" || log.action === actionFilter;
-      const matchSearch =
-        !search ||
-        log.action.toLowerCase().includes(search.toLowerCase()) ||
-        log.entityType.toLowerCase().includes(search.toLowerCase()) ||
-        (log.actor?.name && log.actor.name.toLowerCase().includes(search.toLowerCase())) ||
-        (log.actor?.email && log.actor.email.toLowerCase().includes(search.toLowerCase()));
-      return matchAction && matchSearch;
-    });
-  }, [logs, actionFilter, search]);
+  const filteredLogs = logs;
 
   const getActionBadgeColor = (action: string) => {
     if (action.includes("APPROVED") || action.includes("CREATE")) return "badge-green";
@@ -87,30 +87,38 @@ export function AuditConsole() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="label" style={{ fontSize: 11 }}>ACTION:</span>
-            <select
+            <input
               className="input-field"
-              value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
+              value={actionFilter === "ALL" ? "" : actionFilter}
+              onChange={(e) => { setActionFilter(e.target.value.trim() || "ALL"); setPage(1); }}
+              placeholder="All actions (server filter)"
               style={{ width: 200, padding: "6px 10px", fontSize: 13 }}
-            >
-              <option value="ALL">All Actions ({logs.length})</option>
-              {actionTypes.map((act) => (
-                <option key={act} value={act}>
-                  {act}
-                </option>
-              ))}
-            </select>
+            />
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="label" style={{ fontSize: 11 }}>ENTITY:</span>
+            <input
+              className="input-field"
+              value={entityFilter === "ALL" ? "" : entityFilter}
+              onChange={(e) => { setEntityFilter(e.target.value.trim() || "ALL"); setPage(1); }}
+              placeholder="e.g. Farm, Task"
+              style={{ width: 160, padding: "6px 10px", fontSize: 13 }}
+            />
           </div>
 
           <button
             type="button"
             className="btn btn-sm btn-secondary"
-            onClick={fetchLogs}
+            onClick={() => void fetchLogs()}
             title="Refresh Audit Trail"
           >
             <Icons.Refresh size={14} />
             <span>Sync</span>
           </button>
+          <span className="muted font-mono" style={{ fontSize: 11 }} role="status">
+            {total != null ? `${logs.length} OF ${total.toLocaleString()} SHOWN` : `${logs.length} SHOWN`}
+          </span>
         </div>
 
         <div style={{ position: "relative", width: 260 }}>
@@ -217,6 +225,13 @@ export function AuditConsole() {
               </div>
             );
           })}
+          {total != null && total > 50 && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center", padding: 12 }}>
+              <button type="button" className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>← Prev</button>
+              <span className="muted font-mono" style={{ fontSize: 12 }}>PAGE {page} / {Math.max(1, Math.ceil(total / 50))}</span>
+              <button type="button" className="btn btn-secondary" disabled={page >= Math.ceil(total / 50)} onClick={() => setPage((p) => p + 1)}>Next →</button>
+            </div>
+          )}
         </div>
       )}
     </div>

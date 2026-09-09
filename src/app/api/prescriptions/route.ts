@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { apiError, paginatedJson, paginationParams } from "@/lib/api";
 import { parseUtcDate } from "@/lib/business";
 import { sendNotification } from "@/lib/notifications";
 
@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     const actor = await currentActor();
     const { searchParams } = new URL(request.url);
     const farmId = searchParams.get("farmId");
+    const { limit, offset } = paginationParams(searchParams);
+    const q = searchParams.get("search")?.trim();
 
     let where: any = {};
     if (farmId) {
@@ -39,8 +41,10 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
+    if (q) where.OR = [{ targetIssue: { contains: q } }, { instructions: { contains: q } }];
 
-    const prescriptions = await prisma.agronomyPrescription.findMany({
+    const [prescriptions, total] = await Promise.all([
+      prisma.agronomyPrescription.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true } },
@@ -49,10 +53,13 @@ export async function GET(request: NextRequest) {
         author: { select: { id: true, name: true, role: true } },
       },
       orderBy: { applicationDate: "desc" },
-      take: 50,
-    });
+      take: limit,
+      skip: offset,
+      }),
+      prisma.agronomyPrescription.count({ where }),
+    ]);
 
-    return NextResponse.json(prescriptions);
+    return paginatedJson(prescriptions, total);
   } catch (error) {
     return apiError(error);
   }

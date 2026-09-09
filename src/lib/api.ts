@@ -41,3 +41,23 @@ export function paginationParams(sp: URLSearchParams) {
   if (!Number.isInteger(offset) || offset < 0) throw new Error("offset must be a non-negative integer.");
   return { limit, offset };
 }
+/**
+ * Scale contract: every list endpoint returns the page array as JSON and
+ * exposes the full result size via `X-Total-Count`. Keeping the body an
+ * array preserves backward compatibility with existing callers while new
+ * UIs read the header for real server-side pagination ("showing X of Y").
+ * Never silently truncate: if the header is absent the caller fetched a
+ * legacy capped route that still needs migration.
+ */
+export function paginatedJson<T>(data: T[], total: number, extraHeaders: Record<string, string> = {}) {
+  return NextResponse.json(data, {
+    headers: { ...noStore, "X-Total-Count": String(total), ...extraHeaders },
+  });
+}
+/** Allow-list sort params — never pass raw user input to Prisma orderBy. */
+export function parseSort(sp: URLSearchParams, allowed: readonly string[], fallback: string) {
+  const raw = (sp.get("sortBy") || fallback).trim();
+  const sortBy = (allowed as readonly string[]).includes(raw) ? raw : fallback;
+  const order = sp.get("sortOrder") === "asc" ? "asc" : "desc";
+  return { sortBy, order } as { sortBy: string; order: "asc" | "desc" };
+}

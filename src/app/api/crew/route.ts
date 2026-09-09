@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { apiError, paginatedJson, paginationParams } from "@/lib/api";
 import { parseUtcDate } from "@/lib/business";
 
 const musterSchema = z.object({
@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
     const actor = await currentActor();
     const { searchParams } = new URL(request.url);
     const farmId = searchParams.get("farmId");
+    const { limit, offset } = paginationParams(searchParams);
+    const q = searchParams.get("search")?.trim();
 
     let where: any = {};
     if (farmId) {
@@ -31,18 +33,23 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
+    if (q) where.OR = [{ contractorName: { contains: q } }, { notes: { contains: q } }];
 
-    const musters = await prisma.dailyCrewMuster.findMany({
+    const [musters, total] = await Promise.all([
+      prisma.dailyCrewMuster.findMany({
       where,
       include: {
         farm: { select: { id: true, name: true } },
         recordedBy: { select: { id: true, name: true } },
       },
       orderBy: { musterDate: "desc" },
-      take: 60,
-    });
+      take: limit,
+      skip: offset,
+      }),
+      prisma.dailyCrewMuster.count({ where }),
+    ]);
 
-    return NextResponse.json(musters);
+    return paginatedJson(musters, total);
   } catch (error) {
     return apiError(error);
   }

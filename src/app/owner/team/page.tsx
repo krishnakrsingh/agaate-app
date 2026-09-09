@@ -15,11 +15,17 @@ export default async function OwnerTeamPage({ searchParams }: Props) {
   const session = await requireSession();
   const farmWhere = await accessibleFarmWhere();
 
-  const farms = await prisma.farm.findMany({
+  // Bounded estate picker: the old build rendered one button per farm
+  // (100k buttons at portfolio scale). A dropdown + total keeps it usable.
+  const [farms, farmsTotal] = await Promise.all([
+  prisma.farm.findMany({
     where: farmWhere,
     select: { id: true, name: true, location: true },
     orderBy: { createdAt: "desc" },
-  });
+    take: 200,
+  }),
+  prisma.farm.count({ where: farmWhere }),
+  ]);
 
   const resolvedParams = searchParams ? await searchParams : {};
   const activeFarm = farms.find((f) => f.id === resolvedParams.farmId) || farms[0];
@@ -83,24 +89,23 @@ export default async function OwnerTeamPage({ searchParams }: Props) {
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         {farms.length > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 20 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)" }}>
-              Select Estate:
-            </span>
-            {farms.map((farm) => {
-              const isSelected = farm.id === activeFarm.id;
-              return (
-                <Link
-                  key={farm.id}
-                  href={`/owner/team?farmId=${farm.id}`}
-                  className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-secondary"}`}
-                  style={{ fontSize: 12, padding: "5px 14px", borderRadius: "var(--radius-pill)" }}
-                >
-                  {farm.name}
-                </Link>
-              );
-            })}
-          </div>
+          <form action="/owner/team" method="get" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+            <label htmlFor="team-farm" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--muted)" }}>
+              Estate{farmsTotal > farms.length ? ` (showing ${farms.length} of ${farmsTotal.toLocaleString()} — search in Farms directory)` : ""}:
+            </label>
+            <select
+              id="team-farm"
+              name="farmId"
+              defaultValue={activeFarm.id}
+              style={{ height: 36, fontSize: 13, minWidth: 240 }}
+            >
+              {farms.map((farm) => (
+                <option key={farm.id} value={farm.id}>{farm.name} — {farm.location}</option>
+              ))}
+            </select>
+            <button type="submit" className="btn btn-sm btn-secondary">Open</button>
+            <Link href="/farms" style={{ fontSize: 12 }}>Find any farm →</Link>
+          </form>
         )}
 
         <WorkersConsole

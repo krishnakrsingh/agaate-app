@@ -4,7 +4,7 @@ import { accessibleFarmWhere, currentActor, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
-import { apiError, noStore, paginationParams } from "@/lib/api";
+import { apiError, noStore, paginatedJson, paginationParams, parseSort } from "@/lib/api";
 
 const farmSchema = z
   .object({
@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
     const search = sp.get("search")?.trim();
     const clientId = sp.get("clientId")?.trim();
     const status = sp.get("status")?.trim();
+    const state = sp.get("state")?.trim();
+    const district = sp.get("district")?.trim();
+    const setupStage = sp.get("setupStage")?.trim();
+    const { sortBy, order } = parseSort(sp, ["createdAt", "updatedAt", "name", "totalArea"], "createdAt");
 
     const where: any = {
       ...accessibleWhere,
@@ -45,6 +49,15 @@ export async function GET(request: NextRequest) {
 
     if (status && status !== "ALL") {
       where.status = status;
+    }
+    if (setupStage && setupStage !== "ALL") {
+      where.setupStage = setupStage;
+    }
+    if (state && state !== "ALL") {
+      where.state = state;
+    }
+    if (district) {
+      where.district = { contains: district };
     }
 
     if (search) {
@@ -61,7 +74,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const farms = await prisma.farm.findMany({
+    const [farms, total] = await Promise.all([
+      prisma.farm.findMany({
       where,
       include: {
         client: {
@@ -82,12 +96,14 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { [sortBy]: order },
       take: limit,
       skip: offset,
-    });
+      }),
+      prisma.farm.count({ where }),
+    ]);
 
-    return NextResponse.json(farms, { headers: noStore });
+    return paginatedJson(farms, total);
   } catch (error) {
     return apiError(error);
   }

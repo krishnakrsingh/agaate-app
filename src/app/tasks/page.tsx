@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
-import { TaskBoard } from "@/components/task-board";
+import { TasksQueue } from "@/components/ops/tasks-queue";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Icons } from "@/components/icons";
@@ -34,11 +34,11 @@ export default async function TasksPage() {
           <div className="page-header-content">
             <div className="eyebrow">
               <span className="eyebrow-dot"></span>
-              AGRONOMY INTELLIGENCE &bull; ACTIVITY DISPATCH
+              OPERATIONS &bull; WORK QUEUE
             </div>
-            <h1>Planned Activities & Tasks</h1>
+            <h1>Tasks queue</h1>
             <p className="muted">
-              Review and adjust upcoming agronomy operations across all managed properties.
+              Summary first, then drill into a server-paginated queue. Bulk dispatch is confirmed and permission-checked — never one-by-one for hundreds of rows.
             </p>
           </div>
 
@@ -48,7 +48,7 @@ export default async function TasksPage() {
           </Link>
         </div>
 
-        <TaskBoard />
+        <TasksQueue />
       </main>
     </>
   );

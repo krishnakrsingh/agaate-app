@@ -23,8 +23,14 @@ export default async function FarmDetailPage({
   }
 
   let farm;
+  let plotsTotal = 0;
+  let incidentsTotal = 0;
   try {
-    farm = await prisma.farm.findUniqueOrThrow({
+    // Bounded hub query: plots capped at 200 + total, incidents capped at
+    // recent 50 + total. The old build loaded every plot and every incident
+    // with a sequential signed-URL round-trip per row, blocking TTFB.
+    [farm, plotsTotal, incidentsTotal] = await Promise.all([
+    prisma.farm.findUniqueOrThrow({
       where: { id: farmId },
       include: {
         monitoring: {
@@ -33,13 +39,16 @@ export default async function FarmDetailPage({
         },
         incidents: {
           orderBy: { createdAt: "desc" },
+          take: 50,
           include: {
-            media: true,
+            media: { take: 1 },
             reporter: { select: { name: true } },
           },
         },
         plots: {
           where: { deletedAt: null },
+          orderBy: { name: "asc" },
+          take: 200,
           include: {
             irrigation: true,
             cropCycles: {
@@ -59,7 +68,10 @@ export default async function FarmDetailPage({
           select: { id: true, name: true, code: true, phone: true },
         },
       },
-    });
+    }),
+    prisma.plot.count({ where: { farmId, deletedAt: null } }),
+    prisma.incident.count({ where: { farmId } }),
+    ]);
   } catch {
     return notFound();
   }
@@ -189,6 +201,10 @@ export default async function FarmDetailPage({
         role: a.user.role,
       },
     })),
+    plotsTotal,
+    plotsTruncated: plotsTotal > farm.plots.length,
+    incidentsTotal,
+    incidentsTruncated: incidentsTotal > farm.incidents.length,
   };
 
   return (

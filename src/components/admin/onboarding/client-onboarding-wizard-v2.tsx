@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,6 +34,7 @@ export function ClientOnboardingWizardV2() {
   // Client Selection Mode
   const [isExistingClient, setIsExistingClient] = useState(false);
   const [clientOptions, setClientOptions] = useState<any[]>([]);
+  const [clientSearch, setClientSearch] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("");
 
   // Step 1: Client Profile & Legal Entity Details
@@ -97,13 +99,24 @@ export function ClientOnboardingWizardV2() {
   const [handover, setHandover] = useState<HandoverData | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Fetch clients and agronomists on mount
+  // Fetch clients (server-searched, debounced) and agronomists on mount
   useEffect(() => {
-    fetch("/api/admin/clients?limit=100")
-      .then((r) => (r.ok ? r.json() : { clients: [] }))
-      .then((d) => setClientOptions(d.clients || []))
-      .catch(() => undefined);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({ limit: "25" });
+      if (clientSearch.trim()) params.set("search", clientSearch.trim());
+      fetch(`/api/admin/clients?${params.toString()}`, { signal: ctrl.signal })
+        .then((r) => (r.ok ? r.json() : { clients: [] }))
+        .then((d) => setClientOptions(d.clients || []))
+        .catch(() => undefined);
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
+  }, [clientSearch]);
 
+  useEffect(() => {
     fetch("/api/users?role=AGRONOMIST&limit=50")
       .then((r) => (r.ok ? r.json() : { users: [] }))
       .then((d) => setAgronomistList(d.users || []))
@@ -172,6 +185,11 @@ export function ClientOnboardingWizardV2() {
       }
       setCurrentStep(3);
     } else if (currentStep === 3) {
+      const ph = soilPh.trim() === "" ? null : Number(soilPh);
+      if (ph != null && (Number.isNaN(ph) || ph < 0 || ph > 14)) {
+        toast.show("Soil pH must be between 0 and 14", "error");
+        return;
+      }
       setCurrentStep(4);
     } else if (currentStep === 4) {
       if (!ownerPassword) {
@@ -302,6 +320,38 @@ export function ClientOnboardingWizardV2() {
     window.open(url, "_blank");
   };
 
+  // Per-stage validation state — every stage communicates complete /
+  // incomplete / invalid instead of failing silently at submit time.
+  const stageStatus = (step: number): "complete" | "current" | "incomplete" | "invalid" => {
+    if (handover) return "complete";
+    if (step < currentStep) return "complete";
+    if (step > currentStep) return "incomplete";
+    if (step === 1) {
+      if (!ownerName.trim()) return "incomplete";
+      if (!ownerPhone.trim() && !ownerEmail.trim()) return "invalid";
+      return "current";
+    }
+    if (step === 2) {
+      if (!farmName.trim() || !totalArea || Number(totalArea) <= 0) return "incomplete";
+      if (Number(cultivableArea) > Number(totalArea)) return "invalid";
+      return "current";
+    }
+    if (step === 3) {
+      const ph = soilPh.trim() === "" ? null : Number(soilPh);
+      if (ph != null && (Number.isNaN(ph) || ph < 0 || ph > 14)) return "invalid";
+      return "current";
+    }
+    return "current";
+  };
+
+  const readiness: { label: string; state: string; detail: string }[] = [
+    { label: "Client identity", state: ownerName.trim() && (ownerPhone.trim() || ownerEmail.trim()) ? "Complete" : "Incomplete", detail: "Legal entity, PAN/GSTIN, contacts" },
+    { label: "Land parcel & GPS", state: farmName.trim() && Number(totalArea) > 0 && Number(cultivableArea) <= Number(totalArea) ? "Complete" : "Needs review", detail: "Khasra, village, boundary polygon" },
+    { label: "Soil & water baseline", state: "Complete", detail: "Lab values recorded as reported by the field team" },
+    { label: "Team assignment", state: selectedAgronomistId ? "Complete" : "Awaiting verification", detail: "Agronomist assigned here; field officers are assigned post-handover via Team & Labor" },
+    { label: "Documents", state: "Manual check", detail: "Title, ID and compliance documents are verified offline and noted in the audit trail — no document store in this release" },
+  ];
+
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Header & Step Tracker */}
@@ -327,6 +377,7 @@ export function ClientOnboardingWizardV2() {
           {STEPS.map((step) => {
             const isDone = currentStep > step.id || handover !== null;
             const isCurrent = currentStep === step.id && !handover;
+            const st = stageStatus(step.id);
             return (
               <div
                 key={step.id}
@@ -376,8 +427,8 @@ export function ClientOnboardingWizardV2() {
                   <div style={{ fontSize: "12px", fontWeight: 600, color: isCurrent ? "var(--ink)" : "var(--muted)", whiteSpace: "nowrap" }}>
                     {step.title}
                   </div>
-                  <div style={{ fontSize: "10px", color: "var(--muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                    {step.desc}
+                  <div style={{ fontSize: "10px", color: st === "invalid" ? "var(--red)" : "var(--muted)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    {st === "invalid" ? "Invalid — fix to continue" : st === "incomplete" ? "Incomplete" : st === "complete" ? "Complete" : step.desc}
                   </div>
                 </div>
               </div>
@@ -503,6 +554,14 @@ export function ClientOnboardingWizardV2() {
                   <label htmlFor="select-client" style={{ fontWeight: 700, display: "block", marginBottom: 6 }}>
                     Select Registered Client Account *
                   </label>
+                  <input
+                    type="search"
+                    placeholder="Type to search the portfolio (server-side)…"
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    className="input-field"
+                    style={{ marginBottom: 8 }}
+                  />
                   <select
                     id="select-client"
                     value={selectedClientId}
@@ -1251,6 +1310,22 @@ export function ClientOnboardingWizardV2() {
                     className="input-field font-mono"
                   />
                   <span className="form-hint">This password will be displayed on the printable handover voucher.</span>
+                </div>
+              </div>
+
+              {/* Readiness review — every stage states complete / incomplete /
+                  awaiting verification / manual check before submit. */}
+              <div style={{ padding: 16, borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Readiness review
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, fontSize: "12px" }}>
+                  {readiness.map((r) => (
+                    <div key={r.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span style={{ fontWeight: 700, color: "var(--ink)" }}>{r.label}: <span style={{ color: r.state === "Complete" ? "var(--green-ink)" : "var(--amber)" }}>{r.state}</span></span>
+                      <span style={{ color: "var(--muted)" }}>{r.detail}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
