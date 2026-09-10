@@ -47,7 +47,7 @@ export async function GET(
       take: 200,
     });
     const pins = tasks
-      .filter((t) => t.plot)
+      .filter((t) => t.plot && t.plot.boundaryGeoJson)
       .map((t) => ({
         taskId: t.id,
         title: t.title,

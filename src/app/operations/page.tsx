@@ -1,8 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { OperationsCommandCenter } from "@/components/ops/operations-command-center";
+import { OperationsTriageConsole, type TriageData } from "@/components/admin/operations-triage-console";
 import { utcDateOnly } from "@/lib/business";
 
 export const dynamic = "force-dynamic";
@@ -14,38 +13,81 @@ export default async function OperationsPage() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const [
-    totalClients,
-    totalFarms,
-    activeFarms,
-    setupFarms,
-    acreageSums,
-    totalPlots,
-    pendingApprovals,
-    delayedTasksCount,
-    openIncidents,
-    bottlenecksRaw,
     exceptionsRaw,
+    locationsRaw,
+    flaggedBoundariesRaw,
     criticalTasksRaw,
-    recentAuditRaw,
+    openIncidentsRaw,
+    bottlenecksRaw,
   ] = await Promise.all([
-    prisma.client.count(),
-    prisma.farm.count(),
-    prisma.farm.count({ where: { status: "ACTIVE" } }),
-    prisma.farm.count({ where: { status: "SETUP" } }),
-    prisma.farm.aggregate({
-      _sum: { totalArea: true, cultivableArea: true },
+    // 1. Pending geofence attendance exceptions
+    prisma.attendanceException.findMany({
+      where: { status: "PENDING" },
+      include: {
+        attendance: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+            farm: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { attendance: { attendanceDate: "desc" } },
+      take: 50,
     }),
-    prisma.plot.count({ where: { deletedAt: null } }),
-    prisma.attendanceException.count({ where: { status: "PENDING" } }),
-    prisma.task.count({
+
+    // 2. Pending farm location change requests
+    prisma.locationChangeRequest.findMany({
+      where: { status: "PENDING" },
+      include: {
+        farm: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+
+    // 3. Flagged boundary geometry revisions (|Δ| >= policy tolerance)
+    prisma.boundaryVersion.findMany({
+      where: { areaFlagged: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+
+    // 4. Critical overdue tasks
+    prisma.task.findMany({
       where: {
         status: { in: ["ASSIGNED", "AVAILABLE", "IN_PROGRESS", "BLOCKED"] },
         dueDate: { lt: todayUtc },
       },
+      include: {
+        farm: { select: { id: true, name: true } },
+        assignedOfficer: { select: { name: true } },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 25,
     }),
-    prisma.incident.count({ where: { status: { in: ["OPEN", "ACKNOWLEDGED"] } } }),
 
-    // In-flight farms stalled in setup stages
+    // 5. Open high-severity incidents
+    prisma.incident.findMany({
+      where: {
+        status: { in: ["OPEN", "ACKNOWLEDGED"] },
+      },
+      include: {
+        farm: { select: { id: true, name: true } },
+        reporter: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+    }),
+
+    // 6. In-flight farms stalled in setup stages (>30 days)
     prisma.farm.findMany({
       where: {
         status: "SETUP",
@@ -55,125 +97,153 @@ export default async function OperationsPage() {
         client: { select: { name: true } },
       },
       orderBy: { updatedAt: "asc" },
-      take: 8,
-    }),
-
-    // Pending geofence attendance exceptions
-    prisma.attendanceException.findMany({
-      where: { status: "PENDING" },
-      include: {
-        attendance: {
-          include: {
-            user: { select: { name: true } },
-            farm: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { attendance: { attendanceDate: "desc" } },
-      take: 8,
-    }),
-
-    // Critical overdue tasks
-    prisma.task.findMany({
-      where: {
-        status: { in: ["ASSIGNED", "AVAILABLE", "IN_PROGRESS", "BLOCKED"] },
-        dueDate: { lt: todayUtc },
-      },
-      include: {
-        farm: { select: { name: true } },
-        assignedOfficer: { select: { name: true } },
-      },
-      orderBy: { dueDate: "asc" },
-      take: 8,
-    }),
-
-    // Recent audit logs
-    prisma.auditLog.findMany({
-      include: {
-        actor: { select: { name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 8,
+      take: 25,
     }),
   ]);
 
-  const bottleneckFarms = bottlenecksRaw.map((f) => ({
-    id: f.id,
-    name: f.name,
-    location: f.location,
-    ownerName: f.ownerName,
-    setupStage: f.setupStage,
-    setupProgress: f.setupProgress,
-    daysInStage: Math.floor((now.getTime() - new Date(f.updatedAt).getTime()) / (1000 * 60 * 60 * 24)),
-    clientName: f.client?.name || f.ownerName,
-  }));
+  // Resolve entity names for flagged boundaries
+  const farmBoundaryIds = flaggedBoundariesRaw
+    .filter((b) => b.entityType === "FARM")
+    .map((b) => b.entityId);
+  const plotBoundaryIds = flaggedBoundariesRaw
+    .filter((b) => b.entityType === "PLOT")
+    .map((b) => b.entityId);
 
-  const pendingExceptions = exceptionsRaw.map((ex) => ({
-    id: ex.id,
-    userName: ex.attendance.user.name,
-    farmName: ex.attendance.farm.name,
-    distanceMeters: Number(ex.distanceMeters || 0),
-    reason: ex.reason,
-    date: ex.attendance.attendanceDate.toISOString().slice(0, 10),
-  }));
+  const [farmsForBoundaries, plotsForBoundaries] = await Promise.all([
+    farmBoundaryIds.length > 0
+      ? prisma.farm.findMany({
+          where: { id: { in: farmBoundaryIds } },
+          select: { id: true, name: true },
+        })
+      : [],
+    plotBoundaryIds.length > 0
+      ? prisma.plot.findMany({
+          where: { id: { in: plotBoundaryIds } },
+          select: { id: true, name: true, farmId: true, farm: { select: { name: true } } },
+        })
+      : [],
+  ]);
 
-  const criticalTasks = criticalTasksRaw.map((t) => ({
-    id: t.id,
-    title: t.title,
-    farmName: t.farm.name,
-    dueDate: t.dueDate.toISOString().slice(0, 10),
-    priority: t.priority,
-    status: t.status,
-    officerName: t.assignedOfficer?.name || "Unassigned",
-  }));
+  const farmMap = new Map(farmsForBoundaries.map((f) => [f.id, f.name]));
+  const plotMap = new Map(
+    plotsForBoundaries.map((p) => [p.id, { name: p.name, farmId: p.farmId, farmName: p.farm.name }])
+  );
 
-  const recentAuditLogs = recentAuditRaw.map((a) => ({
-    id: a.id,
-    actorName: a.actor?.name || "System Automated",
-    action: a.action,
-    entityType: a.entityType,
-    entityId: a.entityId,
-    createdAt: a.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-  }));
+  const triageData: TriageData = {
+    pendingExceptions: exceptionsRaw.map((ex) => ({
+      id: ex.id,
+      attendanceId: ex.attendanceId,
+      userName: ex.attendance.user.name,
+      userEmail: ex.attendance.user.email || "",
+      farmId: ex.attendance.farm.id,
+      farmName: ex.attendance.farm.name,
+      distanceMeters: Number(ex.distanceMeters || 0),
+      reason: ex.reason,
+      attendanceDate: ex.attendance.attendanceDate.toISOString().slice(0, 10),
+    })),
 
-  const macro = {
-    totalClients,
-    totalFarms,
-    activeFarms,
-    setupFarms,
-    totalAcreage: Number(acreageSums._sum.totalArea || 0),
-    totalCultivable: Number(acreageSums._sum.cultivableArea || 0),
-    totalPlots,
-    pendingApprovals,
-    delayedTasks: delayedTasksCount,
-    openIncidents,
+    pendingLocations: locationsRaw.map((loc) => ({
+      id: loc.id,
+      farmId: loc.farmId,
+      farmName: loc.farm.name,
+      farmLocation: loc.farm.location,
+      requesterName: "Field Manager",
+      proposedLatitude: Number(loc.proposedLatitude),
+      proposedLongitude: Number(loc.proposedLongitude),
+      currentLatitude: Number(loc.farm.latitude),
+      currentLongitude: Number(loc.farm.longitude),
+      reason: loc.reason,
+      createdAt: loc.createdAt.toISOString(),
+    })),
+
+    flaggedBoundaries: flaggedBoundariesRaw.map((b) => {
+      let entityName = b.entityId;
+      let farmId = b.entityId;
+      let farmName = "Estate";
+
+      if (b.entityType === "FARM") {
+        farmName = farmMap.get(b.entityId) || "Estate";
+        entityName = farmName;
+      } else {
+        const plotInfo = plotMap.get(b.entityId);
+        if (plotInfo) {
+          entityName = plotInfo.name;
+          farmId = plotInfo.farmId;
+          farmName = plotInfo.farmName;
+        }
+      }
+
+      const measured = b.measuredAcres ? Number(b.measuredAcres) : null;
+      const prev = b.prevAcres ? Number(b.prevAcres) : null;
+      let deltaPercent: number | null = null;
+      if (measured != null && prev != null && prev > 0) {
+        deltaPercent = ((measured - prev) / prev) * 100;
+      }
+
+      return {
+        id: b.id,
+        entityType: b.entityType,
+        entityId: b.entityId,
+        entityName,
+        farmId,
+        farmName,
+        source: b.source,
+        measuredAcres: measured,
+        prevAcres: prev,
+        deltaPercent,
+        actorName: b.actorName,
+        createdAt: b.createdAt.toISOString(),
+      };
+    }),
+
+    criticalTasks: criticalTasksRaw.map((t) => ({
+      id: t.id,
+      title: t.title,
+      farmId: t.farm.id,
+      farmName: t.farm.name,
+      dueDate: t.dueDate.toISOString().slice(0, 10),
+      priority: t.priority,
+      status: t.status,
+      officerName: t.assignedOfficer?.name || "Unassigned",
+    })),
+
+    openIncidents: openIncidentsRaw.map((inc) => ({
+      id: inc.id,
+      type: inc.type,
+      description: inc.description,
+      severity: inc.severity,
+      farmId: inc.farm.id,
+      farmName: inc.farm.name,
+      reporterName: inc.reporter?.name || "Field Officer",
+      createdAt: inc.createdAt.toISOString(),
+    })),
+
+    stalledSetups: bottlenecksRaw.map((f) => ({
+      id: f.id,
+      name: f.name,
+      location: f.location,
+      setupStage: f.setupStage,
+      setupProgress: f.setupProgress,
+      daysInStage: Math.floor((now.getTime() - new Date(f.updatedAt).getTime()) / (1000 * 60 * 60 * 24)),
+      clientName: f.client?.name || f.ownerName,
+    })),
   };
 
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Operations Command Center" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div className="eyebrow" style={{ margin: 0 }}>
               <span className="eyebrow-dot" />
-              OPERATE • HQ COMMAND CENTER
+              OPERATE • SUPER ADMIN DISPATCH
             </div>
-            <h1>Operations Center</h1>
-            <p className="muted">
-              Live operational control surface. Unresolved work, onboarding bottlenecks, geofence verification queues, and delayed tasks.
-            </p>
+            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Operations Center</h1>
           </div>
         </div>
 
-        <OperationsCommandCenter
-          macro={macro}
-          bottleneckFarms={bottleneckFarms}
-          pendingExceptions={pendingExceptions}
-          criticalTasks={criticalTasks}
-          recentAuditLogs={recentAuditLogs}
-        />
+        <OperationsTriageConsole data={triageData} />
       </main>
     </>
   );

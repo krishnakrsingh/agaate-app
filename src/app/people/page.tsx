@@ -1,5 +1,5 @@
 import { requireSession } from "@/lib/auth";
-import { AdminConsole } from "@/components/admin-console";
+import { PeopleWorkforceConsole } from "@/components/admin/people-workforce-console";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -25,21 +25,21 @@ export default async function PeoplePage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "People & Access" }]} />
+        <Breadcrumbs items={[{ label: "People & Workforce" }]} />
         <div className="page-header">
           <div className="page-header-content">
             <div className="eyebrow">
               <span className="eyebrow-dot" />
-              MANAGE • PEOPLE & ACCESS GOVERNANCE
+              GOVERNANCE • ECOSYSTEM WORKFORCE
             </div>
-            <h1>People & Access Management</h1>
+            <h1>People &amp; Workforce Governance</h1>
             <p className="muted">
-              Ecosystem-wide user directory across Super Admins, Farm Admins, Central Agronomists, and Farm Officers. Provision accounts, assign estate scopes, and manage access credentials.
+              Ecosystem-wide user directory across Super Admins, Farm Owners, Agronomists, and Managers. Multi-estate permission scopes and real-time field attendance telemetry.
             </p>
           </div>
         </div>
 
-        <AdminConsole />
+        <PeopleWorkforceConsole />
       </main>
     </>
   );

@@ -2,7 +2,6 @@ import { requireSession } from "@/lib/auth";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { AuditConsole } from "@/components/audit-console";
-import { ApprovalsConsole } from "@/components/approvals-console";
 
 export const dynamic = "force-dynamic";
 
@@ -40,22 +39,8 @@ export default async function SystemPage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-          {/* Verification & Approvals Desk */}
-          <section>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--ink)", marginBottom: "12px" }}>
-              Pending Verification &amp; Approvals
-            </h2>
-            <ApprovalsConsole />
-          </section>
-
-          {/* Immutable Audit Log Console */}
-          <section>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--ink)", marginBottom: "12px" }}>
-              Platform Audit Trail
-            </h2>
-            <AuditConsole />
-          </section>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <AuditConsole />
         </div>
       </main>
     </>

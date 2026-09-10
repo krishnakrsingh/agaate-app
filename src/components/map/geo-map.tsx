@@ -28,7 +28,7 @@ export interface GeoMapProps {
   center: [number, number];
   polygon: LngLat[] | null;
   onChange: (ring: LngLat[] | null) => void;
-  height?: number;
+  height?: number | string;
   /**
    * Optional status pins (task map, route stops). CircleMarkers only —
    * no icon assets. Non-interactive except tooltips.
@@ -49,6 +49,13 @@ export interface GeoMapProps {
    * display-only (history preview). Defaults to true.
    */
   interactive?: boolean;
+  /**
+   * Optional save handler to persist the boundary.
+   */
+  onSave?: () => void;
+  saveLabel?: string;
+  isSaving?: boolean;
+  onClear?: () => void;
 }
 
 const ESRI_IMAGERY_URL =
@@ -321,6 +328,197 @@ function PinsLayer({ pins }: { pins: GeoMapPin[] | null }) {
   return null;
 }
 
+function MapDrawingToolbar({
+  interactive,
+  hasPolygon,
+  onSave,
+  saveLabel,
+  isSaving,
+  onClear,
+}: {
+  interactive?: boolean;
+  hasPolygon: boolean;
+  onSave?: () => void;
+  saveLabel?: string;
+  isSaving?: boolean;
+  onClear?: () => void;
+}) {
+  const map = useMap();
+  const [drawMode, setDrawMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    if (!map || !(map as any).pm) return;
+    const onDrawStart = () => setDrawMode(true);
+    const onDrawEnd = () => setDrawMode(false);
+    const onGlobalEditToggle = (e: any) => setEditMode(!!e.enabled);
+
+    map.on("pm:drawstart", onDrawStart);
+    map.on("pm:drawend", onDrawEnd);
+    map.on("pm:globaleditmodetoggled", onGlobalEditToggle);
+
+    return () => {
+      map.off("pm:drawstart", onDrawStart);
+      map.off("pm:drawend", onDrawEnd);
+      map.off("pm:globaleditmodetoggled", onGlobalEditToggle);
+    };
+  }, [map]);
+
+  if (!interactive) return null;
+
+  return (
+    <>
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 54,
+          zIndex: 1000,
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            if (drawMode) {
+              (map as any).pm.disableDraw();
+              setDrawMode(false);
+            } else {
+              if (editMode) {
+                (map as any).pm.disableGlobalEditMode();
+                setEditMode(false);
+              }
+              (map as any).pm.enableDraw("Polygon", { snappable: true, cursorMarker: true });
+              setDrawMode(true);
+            }
+          }}
+          style={{
+            border: "1px solid var(--hairline)",
+            background: drawMode ? "var(--semantic-success)" : "var(--surface-card)",
+            color: drawMode ? "#ffffff" : "var(--ink)",
+            fontSize: 12,
+            fontWeight: 600,
+            padding: "6px 12px",
+            borderRadius: "4px",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
+          }}
+        >
+          <span>{drawMode ? "Drawing (Click to trace)" : hasPolygon ? "Redraw Boundary" : "Draw Boundary"}</span>
+        </button>
+
+        {hasPolygon && (
+          <button
+            type="button"
+            onClick={() => {
+              if (editMode) {
+                (map as any).pm.disableGlobalEditMode();
+                setEditMode(false);
+              } else {
+                if (drawMode) {
+                  (map as any).pm.disableDraw();
+                  setDrawMode(false);
+                }
+                (map as any).pm.enableGlobalEditMode();
+                setEditMode(true);
+              }
+            }}
+            style={{
+              border: "1px solid var(--hairline)",
+              background: editMode ? "var(--blue)" : "var(--surface-card)",
+              color: editMode ? "#ffffff" : "var(--ink)",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
+            }}
+          >
+            <span>{editMode ? "Done Editing" : "Edit Vertices"}</span>
+          </button>
+        )}
+
+        {hasPolygon && onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            style={{
+              border: "1px solid var(--hairline)",
+              background: "var(--surface-card)",
+              color: "var(--semantic-error)",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "6px 10px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
+            }}
+          >
+            Clear
+          </button>
+        )}
+
+        {onSave && (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={isSaving}
+            style={{
+              border: "1px solid transparent",
+              background: "var(--primary)",
+              color: "#ffffff",
+              fontSize: 12,
+              fontWeight: 600,
+              padding: "6px 14px",
+              borderRadius: "4px",
+              cursor: isSaving ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+          >
+            <span>{isSaving ? "Saving…" : saveLabel || "Save Boundary"}</span>
+          </button>
+        )}
+      </div>
+
+      {drawMode && (
+        <div
+          style={{
+            position: "absolute",
+            top: 52,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            background: "rgba(12, 10, 9, 0.88)",
+            color: "#ffffff",
+            padding: "6px 14px",
+            borderRadius: "6px",
+            fontSize: 12,
+            fontWeight: 500,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            pointerEvents: "none",
+          }}
+        >
+          Click points on satellite map to trace perimeter. Click the starting dot to close.
+        </div>
+      )}
+    </>
+  );
+}
+
 /**
  * Real OpenStreetMap-based parcel map (client-side only).
  *
@@ -332,7 +530,20 @@ function PinsLayer({ pins }: { pins: GeoMapPin[] | null }) {
  * <GeoMap center={[13.08, 77.59]} polygon={ring} onChange={setRing} height={360} />
  * ```
  */
-export function GeoMap({ center, polygon, onChange, height = 360, reference = null, track = null, interactive = true, pins = null }: GeoMapProps) {
+export function GeoMap({
+  center,
+  polygon,
+  onChange,
+  height = 360,
+  reference = null,
+  track = null,
+  interactive = true,
+  pins = null,
+  onSave,
+  saveLabel,
+  isSaving,
+  onClear,
+}: GeoMapProps) {
   // Client-side only: never render Leaflet during SSR.
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -387,6 +598,14 @@ export function GeoMap({ center, polygon, onChange, height = 360, reference = nu
           <TileLayer url={OSM_URL} attribution={OSM_ATTRIBUTION} maxZoom={19} />
         )}
         <GeomanController polygon={polygon} onChange={onChange} interactive={interactive} />
+        <MapDrawingToolbar
+          interactive={interactive}
+          hasPolygon={polygon !== null && polygon.length > 0}
+          onSave={onSave}
+          saveLabel={saveLabel}
+          isSaving={isSaving}
+          onClear={onClear}
+        />
         <ReferenceLayer ring={reference} fitWhenIdle={polygon === null && !track && !pins} />
         <TrackLayer track={track} />
         <PinsLayer pins={pins} />

@@ -321,37 +321,51 @@ a {
 }
 a:hover { color: var(--ink); }
 
-/* --- 3. Layout shell (1200px cap, 96px section rhythm) --- */
+/* --- 3. Layout shell (1200px cap, high-density rhythm) --- */
 .shell {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 48px 24px 96px;
+  padding: 24px 20px 64px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 .shell.narrow { max-width: 900px; }
+
+/* Dedicated full-viewport GIS & operations workstation (zero vertical page scroll) */
+.shell-gis {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--canvas-floor);
+}
 
 @media (min-width: 1024px) {
   .app-header { display: none !important; }
   .app-mobile-dock { display: none !important; }
   .app-desktop-sidebar { display: flex !important; }
-  .shell { margin-left: 288px !important; width: calc(100% - 288px) !important; max-width: 1460px; padding: 48px 48px 96px; }
+  .shell { margin-left: 288px !important; width: calc(100% - 288px) !important; max-width: 1460px; padding: 24px 32px 64px; }
   .shell.narrow { max-width: 1160px; margin-left: 288px !important; }
+  .shell-gis { margin-left: 288px !important; width: calc(100% - 288px) !important; height: 100vh; }
 }
 @media (max-width: 1023px) {
   .app-desktop-sidebar { display: none !important; }
   .app-header { display: block !important; }
   .app-mobile-dock { display: block !important; }
-  .shell { margin-left: 0 !important; width: 100% !important; padding: 32px 24px 96px; gap: 20px; }
+  .shell { margin-left: 0 !important; width: 100% !important; padding: 20px 16px 80px; gap: 16px; }
+  .shell-gis { margin-left: 0 !important; width: 100% !important; height: calc(100vh - 64px); }
 }
 @media (max-width: 640px) {
-  .shell { padding: 24px 16px 96px; gap: 16px; }
-  .display { font-size: 32px; letter-spacing: -0.32px; }
-  .page-title, h1 { font-size: 32px; }
-  .section-title, h2 { font-size: 24px; letter-spacing: 0; }
-  .item-title, h3 { font-size: 24px; letter-spacing: 0; }
+  .shell { padding: 16px 12px 80px; gap: 14px; }
+  .display { font-size: 28px; letter-spacing: -0.32px; }
+  .page-title, h1 { font-size: 28px; }
+  .section-title, h2 { font-size: 22px; letter-spacing: 0; }
+  .item-title, h3 { font-size: 20px; letter-spacing: 0; }
 }
 
 .page-header {

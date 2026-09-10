@@ -9,7 +9,7 @@ type SearchableItem = {
   id: string;
   title: string;
   subtitle?: string;
-  category: "FARMS" | "CLIENTS" | "TASKS" | "INCIDENTS" | "PEOPLE" | "NAVIGATION" | "ACTIONS";
+  category: "FARMS" | "PLOTS" | "CLIENTS" | "TASKS" | "INCIDENTS" | "PEOPLE" | "NAVIGATION" | "ACTIONS";
   href: string;
   badge?: string;
   icon: keyof typeof Icons;
@@ -25,6 +25,7 @@ interface CommandPaletteProps {
 interface SearchResponse {
   clients: Array<{ id: string; name: string; code: string | null; phone: string | null; href: string }>;
   farms: Array<{ id: string; name: string; location: string; status: string; href: string; client: { name: string } | null }>;
+  plots?: Array<{ id: string; name: string; farmName: string; area: number; href: string }>;
   users: Array<{ id: string; name: string; email: string | null; role: string; href: string }>;
   tasks: Array<{ id: string; title: string; status: string; href: string; farm: { id: string; name: string } }>;
   incidents: Array<{ id: string; type: string; status: string; href: string; farm: { id: string; name: string } }>;
@@ -99,14 +100,13 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
   const baseItems: SearchableItem[] = useMemo(() => {
     if (role === "SUPER_ADMIN") {
       return [
-        { id: "nav-ops", title: "Operations Center", subtitle: "Action queues & bottlenecks", category: "NAVIGATION", href: "/operations", icon: "Activity" },
-        { id: "nav-dir", title: "Unified Directory", subtitle: "Farms, Clients, Users, Plots", category: "NAVIGATION", href: "/directory", icon: "Farm" },
-        { id: "nav-onboard", title: "Onboarding Workspace", subtitle: "5-stage pipeline & batch intake", category: "NAVIGATION", href: "/onboarding", icon: "Zap", badge: "Pipeline" },
-        { id: "nav-work", title: "Work Management", subtitle: "Cross-platform task execution", category: "NAVIGATION", href: "/work", icon: "ClipboardList" },
-        { id: "nav-insights", title: "Platform Insights", subtitle: "Portfolio analytics & drill-down", category: "NAVIGATION", href: "/insights", icon: "TrendingUp" },
-        { id: "nav-people", title: "People & Access", subtitle: "User credentials & permissions", category: "NAVIGATION", href: "/people", icon: "Users" },
-        { id: "nav-system", title: "System Governance", subtitle: "Approvals & audit logs", category: "NAVIGATION", href: "/system", icon: "Shield" },
-        { id: "act-new-farm", title: "Onboard Farm Property", subtitle: "Intake wizard", category: "ACTIONS", href: "/farms/new", icon: "Plus", badge: "Action" },
+        { id: "nav-ops", title: "Operations Triage", subtitle: "Exception queues & urgent blockers", category: "NAVIGATION", href: "/operations", icon: "Activity" },
+        { id: "nav-farms", title: "Farm Portfolio", subtitle: "Estate registry & cadastral search", category: "NAVIGATION", href: "/farms", icon: "Farm" },
+        { id: "nav-spatial", title: "Spatial Console", subtitle: "Satellite map, geometry & walk tracks", category: "NAVIGATION", href: "/spatial", icon: "Navigation" },
+        { id: "nav-onboard", title: "Setup Pipeline", subtitle: "5-stage turnkey onboarding SLA", category: "NAVIGATION", href: "/onboarding", icon: "Zap", badge: "Pipeline" },
+        { id: "nav-people", title: "People & Workforce", subtitle: "User credentials & live attendance", category: "NAVIGATION", href: "/people", icon: "Users" },
+        { id: "nav-system", title: "Audit & System", subtitle: "Immutable platform audit trail", category: "NAVIGATION", href: "/system", icon: "Shield" },
+        { id: "act-new-farm", title: "Intake New Farm", subtitle: "Provision estate property", category: "ACTIONS", href: "/farms", icon: "Plus", badge: "Action" },
       ];
     }
     if (role === "FARM_ADMIN") {
@@ -141,6 +141,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
     if (!server || debounced.length < 2) return nav;
     const out: SearchableItem[] = [...nav];
     for (const f of server.farms) out.push({ id: `farm-${f.id}`, title: f.name, subtitle: `${f.location}${f.client ? ` • ${f.client.name}` : ""} • ${f.status}`, category: "FARMS", href: f.href, badge: f.status, icon: "Farm" });
+    for (const p of (server.plots || [])) out.push({ id: `plot-${p.id}`, title: p.name, subtitle: `Plot in ${p.farmName} • ${p.area} ac`, category: "PLOTS", href: p.href, icon: "Plot" });
     for (const c of server.clients) out.push({ id: `client-${c.id}`, title: c.name, subtitle: `${c.code ?? ""} ${c.phone ?? ""}`.trim(), category: "CLIENTS", href: c.href, icon: "Users" });
     for (const t of server.tasks) out.push({ id: `task-${t.id}`, title: t.title, subtitle: `${t.farm.name} • ${t.status}`, category: "TASKS", href: t.href, badge: t.status, icon: "ClipboardList" });
     for (const i of server.incidents) out.push({ id: `inc-${i.id}`, title: i.type, subtitle: `${i.farm.name} • ${i.status}`, category: "INCIDENTS", href: i.href, badge: i.status, icon: "AlertTriangle" });

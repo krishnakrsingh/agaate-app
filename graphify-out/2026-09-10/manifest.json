@@ -1494,9 +1494,9 @@
     "semantic_hash": ""
   },
   "src/app/farms/page.tsx": {
-    "mtime": 1789050661.840996,
-    "seen": 1789050858.1992018,
-    "ast_hash": "1b59b2ddaf3a30b611d806d7a5ec305e",
+    "mtime": 1789049564.598452,
+    "seen": 1789050138.0367215,
+    "ast_hash": "1b9d83ab2a5c1e4e192694286f0530ba",
     "semantic_hash": ""
   },
   "src/app/operations/tasks/page.tsx": {
@@ -1608,9 +1608,9 @@
     "semantic_hash": ""
   },
   "src/app/operations/page.tsx": {
-    "mtime": 1789050658.3637245,
-    "seen": 1789050858.199243,
-    "ast_hash": "eba526727476964bfbdb94f0c156e512",
+    "mtime": 1789049518.8495495,
+    "seen": 1789050138.0367606,
+    "ast_hash": "70764897244242e88f34b2d6b5894eb7",
     "semantic_hash": ""
   },
   "src/app/owner/farm/page.tsx": {
@@ -1770,9 +1770,9 @@
     "semantic_hash": ""
   },
   "src/app/api/admin/boundary-reviews/route.ts": {
-    "mtime": 1789050445.6529667,
-    "seen": 1789050858.1989849,
-    "ast_hash": "988c192883b61fdc3d28929750e89a02",
+    "mtime": 1789049627.978931,
+    "seen": 1789050138.0365076,
+    "ast_hash": "cab08ec72cb87f6127b84e74991383f8",
     "semantic_hash": ""
   },
   "src/app/api/boundary-versions/[id]/restore/route.ts": {
@@ -1836,15 +1836,15 @@
     "semantic_hash": ""
   },
   "src/app/spatial/page.tsx": {
-    "mtime": 1789050654.9515197,
-    "seen": 1789050858.199313,
-    "ast_hash": "b561860bde85d7f2237dfc3aba22b4a3",
+    "mtime": 1789049649.3819568,
+    "seen": 1789050138.0368288,
+    "ast_hash": "244625d6889988abfd37ec8de9d9a313",
     "semantic_hash": ""
   },
   "src/components/admin/farm-command-center.tsx": {
-    "mtime": 1789050620.3745222,
-    "seen": 1789050858.1993484,
-    "ast_hash": "296f4f60b8ed10babe9e2eab2fc1af0f",
+    "mtime": 1789049631.0489993,
+    "seen": 1789050138.036848,
+    "ast_hash": "be225614ad3e6eb6bab03fd4a8504278",
     "semantic_hash": ""
   },
   "src/components/admin/farm-registry.tsx": {
@@ -1866,9 +1866,9 @@
     "semantic_hash": ""
   },
   "src/components/admin/spatial-console.tsx": {
-    "mtime": 1789050594.3557148,
-    "seen": 1789050858.199369,
-    "ast_hash": "8d6e3e7353b0c073e466c4eac8a19377",
+    "mtime": 1789049646.3138752,
+    "seen": 1789050138.0368624,
+    "ast_hash": "a8e2e566f02956f4a21c0db460d49b75",
     "semantic_hash": ""
   },
   "src/components/boundary-history.tsx": {
@@ -1896,9 +1896,9 @@
     "semantic_hash": ""
   },
   "src/components/map/geo-map.tsx": {
-    "mtime": 1789050527.4683654,
-    "seen": 1789050858.1994796,
-    "ast_hash": "9075a60cc0c393e121c1e93f3aeef4ff",
+    "mtime": 1789046257.348474,
+    "seen": 1789050138.0369835,
+    "ast_hash": "073cab05a8dab0034cbe265facdabd5f",
     "semantic_hash": ""
   },
   "src/components/plot-coverage-card.tsx": {

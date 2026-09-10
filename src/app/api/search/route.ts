@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const farmScope = await accessibleFarmWhere();
     const isPlatform = actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST";
 
-    const [clients, farms, users, tasks, incidents] = await Promise.all([
+    const [clients, farms, plots, users, tasks, incidents] = await Promise.all([
       actor.role === "SUPER_ADMIN"
         ? prisma.client.findMany({
             where: { OR: [{ name: { contains: q } }, { code: { contains: q } }, { phone: { contains: q } }, { companyName: { contains: q } }] },
@@ -28,10 +28,6 @@ export async function GET(request: NextRequest) {
           })
         : Promise.resolve([]),
       prisma.farm.findMany({
-        // One box, every way an operator identifies a farm: its own
-        // name/ID/location chain, survey number, owner — or its client's
-        // name/code. Bounded (take: per), never fetch-all, so this holds
-        // at 1,00,000+ farms.
         where: {
           ...farmScope,
           OR: [
@@ -51,6 +47,21 @@ export async function GET(request: NextRequest) {
         },
         select: { id: true, name: true, location: true, status: true, setupStage: true, district: true, state: true, client: { select: { name: true } } },
         orderBy: { updatedAt: "desc" },
+        take: per,
+      }),
+      prisma.plot.findMany({
+        where: {
+          farm: farmScope,
+          deletedAt: null,
+          OR: [{ name: { contains: q } }, { soilType: { contains: q } }],
+        },
+        select: {
+          id: true,
+          name: true,
+          area: true,
+          farmId: true,
+          farm: { select: { id: true, name: true } },
+        },
         take: per,
       }),
       actor.role === "SUPER_ADMIN" || actor.role === "FARM_ADMIN"
@@ -79,11 +90,18 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        clients: clients.map((c) => ({ ...c, href: `/clients?q=${encodeURIComponent(q)}` })),
+        clients: clients.map((c) => ({ ...c, href: `/farms?search=${encodeURIComponent(c.name)}` })),
         farms: farms.map((f) => ({ ...f, href: `/farms/${f.id}` })),
-        users: users.map((u) => ({ ...u, href: `/admin/users?q=${encodeURIComponent(q)}` })),
-        tasks: tasks.map((t) => ({ ...t, href: `/operations/tasks?q=${encodeURIComponent(q)}` })),
-        incidents: incidents.map((i) => ({ ...i, href: `/officer/reports?q=${encodeURIComponent(q)}` })),
+        plots: plots.map((p) => ({
+          id: p.id,
+          name: p.name,
+          farmName: p.farm.name,
+          area: Number(p.area),
+          href: `/farms/${p.farmId}?tab=plots`,
+        })),
+        users: users.map((u) => ({ ...u, href: `/people` })),
+        tasks: tasks.map((t) => ({ ...t, href: `/farms/${t.farm.id}?tab=operations` })),
+        incidents: incidents.map((i) => ({ ...i, href: `/farms/${i.farm.id}?tab=operations` })),
       },
       { headers: noStore }
     );

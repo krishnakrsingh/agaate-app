@@ -1,27 +1,29 @@
 import { Suspense } from "react";
 import { requireSession } from "@/lib/auth";
 import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { UnifiedDirectory } from "@/components/ops/unified-directory";
+import { FarmRegistry } from "@/components/admin/farm-registry";
 
 export const dynamic = "force-dynamic";
 
 export default async function FarmsPage() {
   const session = await requireSession();
+
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Directory", href: "/directory" }, { label: "Farms" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow"><span className="eyebrow-dot" />PORTFOLIO • FARMS DIRECTORY</div>
-            <h1>Farms Directory</h1>
-            <p className="muted">Faceted server-side search across 25,000+ farms, bulk status & setup stage advancement, saved views, and CSV export.</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div className="eyebrow" style={{ margin: 0 }}>
+              <span className="eyebrow-dot" />
+              PORTFOLIO • ESTATE REGISTRY
+            </div>
+            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Farm Portfolio</h1>
           </div>
         </div>
-        <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading farms directory…</div>}>
-          <UnifiedDirectory initialTab="farms" />
+
+        <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading farm portfolio…</div>}>
+          <FarmRegistry />
         </Suspense>
       </main>
     </>

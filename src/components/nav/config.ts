@@ -143,43 +143,36 @@ export const NAV_ITEMS: NavItem[] = [
     isActive: (p) => p === "/operations" || p === "/dashboard",
   },
   {
-    href: "/directory",
-    label: "Directory",
+    href: "/farms",
+    label: "Portfolio",
     icon: "Farm",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/directory") || p === "/farms" || p.startsWith("/farms/") && !p.startsWith("/farms/new") || p.startsWith("/clients"),
+    isActive: (p) => p.startsWith("/farms") || p.startsWith("/clients") || p.startsWith("/directory"),
+  },
+  {
+    href: "/spatial",
+    label: "Spatial",
+    icon: "Navigation",
+    roles: ["SUPER_ADMIN"],
+    isActive: (p) => p.startsWith("/spatial"),
   },
   {
     href: "/onboarding",
-    label: "Onboarding",
+    label: "Pipeline",
     icon: "Zap",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/onboarding") || p.startsWith("/farms/new"),
-  },
-  {
-    href: "/work",
-    label: "Work",
-    icon: "ClipboardList",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/work") || p.startsWith("/operations/tasks"),
-  },
-  {
-    href: "/insights",
-    label: "Insights",
-    icon: "TrendingUp",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/insights"),
+    isActive: (p) => p.startsWith("/onboarding"),
   },
   {
     href: "/people",
-    label: "People & Access",
+    label: "People",
     icon: "Users",
     roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/people") || p.startsWith("/admin/users") || p.startsWith("/admin/attendance"),
   },
   {
     href: "/system",
-    label: "System",
+    label: "Audit & System",
     icon: "Shield",
     roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/system") || p.startsWith("/admin/audit") || p.startsWith("/admin/approvals"),
@@ -193,7 +186,7 @@ export function getNavForRole(role: Role): NavItem[] {
 export function getMobileNavForRole(role: Role): NavItem[] {
   const all = getNavForRole(role);
   if (role === "SUPER_ADMIN") {
-    return all.filter((i) => ["/operations", "/directory", "/onboarding", "/work", "/insights"].includes(i.href));
+    return all.filter((i) => ["/operations", "/farms", "/spatial", "/onboarding", "/people"].includes(i.href));
   }
   if (role === "FARM_ADMIN") {
     return all.filter((i) => ["/owner/dashboard", "/owner/land", "/owner/operations", "/owner/records", "/owner/insights"].includes(i.href));

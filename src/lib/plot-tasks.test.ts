@@ -4,8 +4,11 @@ import { NextRequest } from "next/server";
 import { prisma } from "./prisma";
 import { testSessionContext } from "./auth";
 import { POST as officerCreateHandler } from "@/app/api/officer/tasks/route";
+import { POST as incidentHandler } from "@/app/api/incidents/route";
 import { POST as completeHandler } from "@/app/api/tasks/[taskId]/complete/route";
 import { GET as visitsHandler } from "@/app/api/farms/[farmId]/plot-visits/route";
+import { GET as routeHandler } from "@/app/api/farms/[farmId]/visit-route/route";
+import { GET as pinsHandler } from "@/app/api/farms/[farmId]/task-pins/route";
 
 const secret = new TextEncoder().encode(process.env.APP_SESSION_SECRET || "local-development-session-secret-change-this-before-production-32chars");
 
@@ -40,6 +43,7 @@ describe.sequential("Phase 6: plot tasks + missed plots", () => {
   let plotQuiet = "";
 
   async function cleanup() {
+    await prisma.incident.deleteMany({ where: { farm: { name: { startsWith: "TASKGEO Farm" } } } });
     await prisma.taskExecution.deleteMany({ where: { task: { farm: { name: { startsWith: "TASKGEO Farm" } } } } });
     await prisma.task.deleteMany({ where: { farm: { name: { startsWith: "TASKGEO Farm" } } } });
     const actorIds = [officer?.id].filter((id): id is string => !!id);
@@ -190,5 +194,89 @@ describe.sequential("Phase 6: plot tasks + missed plots", () => {
     expect(body.summary).toMatchObject({ visited: 2, missed: 0, never: 1 });
     const masked = await get(cookieStranger);
     expect(masked.status).toBe(404);
+  });
+
+  it("incident GPS: named plot inside → stored; outside → 422; auto-attach to smallest fenced plot", async () => {
+    const post = (body: unknown) =>
+      authed(cookie, () =>
+        incidentHandler(
+          new NextRequest("http://localhost:3000/api/incidents", {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json", Cookie: cookie }),
+            body: JSON.stringify(body),
+          })
+        )
+      );
+    // Named plot: inside → stored with basis
+    const ok = await post({
+      farmId, plotId: plotIn, level: "PLOT", type: "Pest sighting", description: "Leaf miner on new growth",
+      latitude: 13.087, longitude: 77.597, mediaIds: [],
+    });
+    expect(ok.status).toBe(201);
+    const okBody = await ok.json();
+    expect(okBody.geofenceBasis).toBe("PLOT_POLYGON");
+    // Named plot: outside → 422, nothing created
+    const before = await prisma.incident.count({ where: { farmId } });
+    const out = await post({
+      farmId, plotId: plotIn, level: "PLOT", type: "Pest sighting", description: "Leaf miner on new growth",
+      latitude: 13.095, longitude: 77.605, mediaIds: [],
+    });
+    expect(out.status).toBe(422);
+    expect(((await out.json()).code)).toBe("SCOUT_OUTSIDE_PLOT");
+    expect(await prisma.incident.count({ where: { farmId } })).toBe(before);
+    // Farm-level incident with GPS, no plot → auto-attaches smallest fenced plot
+    const auto = await post({
+      farmId, level: "FARM", type: "Pump fault", description: "Motor running dry under load",
+      latitude: 13.087, longitude: 77.597, mediaIds: [],
+    });
+    expect(auto.status).toBe(201);
+    const autoBody = await auto.json();
+    expect(autoBody.plotId).toBe(plotIn);
+    expect(autoBody.geofenceBasis).toBe("PLOT_POLYGON");
+    // GPS malformed: lat without lng → zod 422
+    const half = await post({ farmId, plotId: plotIn, level: "PLOT", type: "Pest", description: "Pest sighting here", latitude: 13.087, mediaIds: [] });
+    expect(half.status).toBe(422);
+  });
+
+  it("visit-route: nearest-first order + unroutable unfenced + active-task pins", async () => {
+    // mark plotIn/quiet as not-visited today: visits already computed from completions
+    const res = await authed(cookie, () =>
+      routeHandler(
+        new NextRequest(`http://localhost:3000/api/farms/${farmId}/visit-route?days=14`, {
+          headers: new Headers({ Cookie: cookie }),
+        }),
+        { params: Promise.resolve({ farmId }) }
+      )
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.stops.every((s: { status: string }) => s.status !== "VISITED")).toBe(true);
+    expect(body.summary.routed).toBe(body.stops.length);
+    expect(body.unroutable.every((u: { plotId: string }) => u.plotId !== plotIn)).toBe(true);
+
+    // task-pins: open task on fenced plot shows up with fence; unfenced plot tasks excluded
+    await mkTask(plotIn, officer.id);
+    const open = await mkTask(plotQuiet, officer.id);
+    const pins = await authed(cookie, () =>
+      pinsHandler(
+        new NextRequest(`http://localhost:3000/api/farms/${farmId}/task-pins`, {
+          headers: new Headers({ Cookie: cookie }),
+        }),
+        { params: Promise.resolve({ farmId }) }
+      )
+    );
+    expect(pins.status).toBe(200);
+    const pinsBody = await pins.json();
+    expect(pinsBody.pins.some((p: { plotId: string }) => p.plotId === plotIn)).toBe(true);
+    expect(pinsBody.pins.every((p: { plotId: string }) => p.plotId !== plotQuiet)).toBe(true);
+    expect(pinsBody.farm.boundaryGeoJson).toBe(FARM_RING);
+    const masked = await authed(cookieStranger, () =>
+      pinsHandler(
+        new NextRequest(`http://localhost:3000/api/farms/${farmId}/task-pins`, { headers: new Headers({ Cookie: cookieStranger }) }),
+        { params: Promise.resolve({ farmId }) }
+      )
+    );
+    expect(masked.status).toBe(404);
+    expect(open.id).toBeTruthy();
   });
 });

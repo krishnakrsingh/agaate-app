@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadUrl } from "@/lib/storage";
-import { FarmHubClient } from "@/components/farm-hub-client";
+import { FarmCommandCenter } from "@/components/admin/farm-command-center";
 import { Navbar } from "@/components/navbar";
 
 export const dynamic = "force-dynamic";
@@ -214,7 +214,7 @@ export default async function FarmDetailPage({
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <FarmHubClient
+        <FarmCommandCenter
           farm={serializedFarm}
           role={session.role}
           canManage={canManage}

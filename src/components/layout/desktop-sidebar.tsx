@@ -43,63 +43,46 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   if (role === "SUPER_ADMIN") {
     sections.push(
       {
-        title: "OPERATE",
+        title: "OPERATIONS",
         items: [
           {
             href: "/operations",
-            label: "Operations",
+            label: "Operations Triage",
             icon: "Activity",
             isActive: (p) => p === "/operations" || p === "/dashboard",
           },
           {
-            href: "/work",
-            label: "Work Management",
-            icon: "ClipboardList",
-            isActive: (p) => p.startsWith("/work") || p.startsWith("/operations/tasks"),
+            href: "/farms",
+            label: "Farm Portfolio",
+            icon: "Farm",
+            isActive: (p) => p.startsWith("/farms") || p.startsWith("/clients") || p.startsWith("/directory"),
+          },
+          {
+            href: "/spatial",
+            label: "Spatial Console",
+            icon: "Navigation",
+            isActive: (p) => p.startsWith("/spatial"),
           },
           {
             href: "/onboarding",
-            label: "Onboarding",
+            label: "Setup Pipeline",
             icon: "Zap",
-            badge: "Intake",
-            isActive: (p) => p.startsWith("/onboarding") || p.startsWith("/farms/new"),
+            isActive: (p) => p.startsWith("/onboarding"),
           },
         ],
       },
       {
-        title: "MANAGE",
+        title: "GOVERNANCE",
         items: [
           {
-            href: "/directory",
-            label: "Unified Directory",
-            icon: "Farm",
-            isActive: (p) => p.startsWith("/directory") || p === "/farms" || (p.startsWith("/farms/") && !p.startsWith("/farms/new")) || p.startsWith("/clients"),
-          },
-          {
             href: "/people",
-            label: "People & Access",
+            label: "People & Workforce",
             icon: "Users",
             isActive: (p) => p.startsWith("/people") || p.startsWith("/admin/users") || p.startsWith("/admin/attendance"),
           },
-        ],
-      },
-      {
-        title: "UNDERSTAND",
-        items: [
-          {
-            href: "/insights",
-            label: "Platform Insights",
-            icon: "TrendingUp",
-            isActive: (p) => p.startsWith("/insights"),
-          },
-        ],
-      },
-      {
-        title: "CONFIGURE",
-        items: [
           {
             href: "/system",
-            label: "System & Audit",
+            label: "Audit & System",
             icon: "Shield",
             isActive: (p) => p.startsWith("/system") || p.startsWith("/admin/audit") || p.startsWith("/admin/approvals"),
           },
