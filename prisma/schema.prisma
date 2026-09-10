@@ -428,6 +428,9 @@ model TaskExecution {
   startedAt   DateTime?
   completedAt DateTime?
   remarks     String?
+  latitude    Decimal?        @db.Decimal(10, 7) // completion GPS (optional evidence)
+  longitude   Decimal?        @db.Decimal(10, 7)
+  geofenceBasis GeofenceBasis? // which boundary authorized the completion
   task        Task            @relation(fields: [taskId], references: [id], onDelete: Cascade)
   officer     User            @relation(fields: [officerId], references: [id])
   materials   MaterialUsage[]
@@ -576,10 +579,13 @@ model CropMonitoring {
   stage         String
   impactPercent Decimal?     @db.Decimal(5, 2)
   remarks       String?
-  createdAt     DateTime     @default(now())
-  farm          Farm         @relation(fields: [farmId], references: [id])
-  plot          Plot         @relation(fields: [plotId], references: [id])
-  cropCycle     CropCycle    @relation(fields: [cropCycleId], references: [id])
+  latitude      Decimal?       @db.Decimal(10, 7) // optional scouting GPS
+  longitude     Decimal?       @db.Decimal(10, 7)
+  geofenceBasis GeofenceBasis?
+  createdAt     DateTime       @default(now())
+  farm          Farm           @relation(fields: [farmId], references: [id])
+  plot          Plot           @relation(fields: [plotId], references: [id])
+  cropCycle     CropCycle      @relation(fields: [cropCycleId], references: [id])
   officer       User         @relation(fields: [officerId], references: [id])
   media         MediaAsset[]
 
@@ -600,6 +606,9 @@ model Incident {
   severity      String?
   impactPercent Decimal?           @db.Decimal(5, 2)
   status        IncidentStatus     @default(OPEN)
+  latitude      Decimal?           @db.Decimal(10, 7) // optional report GPS
+  longitude     Decimal?           @db.Decimal(10, 7)
+  geofenceBasis GeofenceBasis?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   farm          Farm               @relation(fields: [farmId], references: [id])

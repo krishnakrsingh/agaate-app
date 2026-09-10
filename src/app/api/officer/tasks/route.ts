@@ -29,6 +29,14 @@ export async function POST(request: NextRequest) {
 
     await requireFarmAccess(input.farmId);
 
+    if (input.plotId) {
+      const plot = await prisma.plot.findFirst({
+        where: { id: input.plotId, farmId: input.farmId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!plot) return NextResponse.json({ error: "The selected plot does not belong to this farm." }, { status: 422 });
+    }
+
     const now = new Date();
     const today = utcDateOnly(now);
 

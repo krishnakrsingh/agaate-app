@@ -773,6 +773,8 @@ export function OfficerDay({ refreshKey }: { refreshKey?: number }) {
                     farmId={task.farm.id}
                     taskTitle={task.title}
                     milestoneName={task.milestone?.name}
+                    plotId={task.plot?.id ?? null}
+                    plotName={task.plot ? task.plot.name.replace(/^Plot:\s*/i, "") : null}
                     onComplete={() => {
                       setCompletionId(null);
                       toast.success("Task execution confirmed.");

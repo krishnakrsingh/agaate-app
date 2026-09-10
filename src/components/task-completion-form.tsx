@@ -4,11 +4,54 @@ import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
 import { compressImage } from "@/lib/image-compress";
 
+function basisText(basis?: string | null) {
+  if (basis === "PLOT_POLYGON") return "plot fence";
+  if (basis === "FARM_POLYGON") return "farm fence";
+  if (basis === "RADIUS") return "radius fallback (no fence drawn)";
+  return "location check";
+}
+
+/** One-shot GPS for completion evidence. Rejects when unavailable — caller proceeds without GPS. */
+function captureCompletionGps(): Promise<{ latitude: number; longitude: number; accuracyMeters: number }> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      reject(new Error("Location is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        if (!Number.isFinite(p.coords.latitude) || !Number.isFinite(p.coords.longitude)) {
+          reject(new Error("Location unavailable."));
+          return;
+        }
+        resolve({
+          latitude: p.coords.latitude,
+          longitude: p.coords.longitude,
+          accuracyMeters: typeof p.coords.accuracy === "number" ? p.coords.accuracy : 999,
+        });
+      },
+      (err) =>
+        reject(
+          new Error(
+            err.code === 1
+              ? "Location permission was denied."
+              : err.code === 3
+                ? "Location timed out."
+                : "Location is unavailable."
+          )
+        ),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
 export function TaskCompletionForm({
   taskId,
   farmId,
   taskTitle,
   milestoneName,
+  plotId,
+  plotName,
   onComplete,
   onCancel,
 }: {
@@ -16,11 +59,15 @@ export function TaskCompletionForm({
   farmId: string;
   taskTitle: string;
   milestoneName?: string | null;
+  plotId?: string | null;
+  plotName?: string | null;
   onComplete: () => void;
   onCancel?: () => void;
 }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [gpsNote, setGpsNote] = useState("");
+  const [verdict, setVerdict] = useState<string | null>(null);
   const [labourers, setLabourers] = useState<number | "">("");
   const [hours, setHours] = useState<number | "">("");
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -92,6 +139,17 @@ export function TaskCompletionForm({
       const actualBedsCreated = form.get("actualBedsCreated");
       const actualPlants = form.get("actualPlants");
 
+      // Best-effort completion GPS: when the task names a plot, the server
+      // verifies presence inside it. GPS failure never blocks completion —
+      // the server only gates when coordinates arrive.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      try {
+        gps = await captureCompletionGps();
+        setGpsNote(`GPS ±${Math.round(gps.accuracyMeters)}m attached.`);
+      } catch {
+        setGpsNote(plotId ? "No GPS fix — completing without location proof." : "");
+      }
+
       const response = await fetch(`/api/tasks/${taskId}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,12 +168,21 @@ export function TaskCompletionForm({
           labour: labourers && hours ? [{ labourers: Number(labourers), hours: Number(hours) }] : [],
           ...(actualBedsCreated ? { actualBedsCreated: Number(actualBedsCreated) } : {}),
           ...(actualPlants ? { actualPlants: Number(actualPlants) } : {}),
+          ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
         }),
       });
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
+        if (body.geofenceBasis) {
+          setVerdict(`Server: outside ${basisText(body.geofenceBasis)} — ${body.error ?? "rejected"}`);
+        }
         throw new Error(body.error ?? "Completion recording failed.");
+      }
+
+      const done = await response.json().catch(() => ({}));
+      if (done.geofenceBasis) {
+        setVerdict(`Server verified inside ${basisText(done.geofenceBasis)}.`);
       }
 
       onComplete();
@@ -366,6 +433,13 @@ export function TaskCompletionForm({
       </div>
 
       {error && <div className="error">{error}</div>}
+      {gpsNote && !error && <div style={{ fontSize: "12px", color: "var(--muted)" }}>{gpsNote}</div>}
+      {verdict && <div style={{ fontSize: "12px", color: "var(--muted)" }}>{verdict}</div>}
+      {plotName && (
+        <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+          Completing inside {plotName} — server verifies presence on submit.
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
         {onCancel && (

@@ -6,6 +6,7 @@ import { Icons } from "./icons";
 import { PlotForm } from "./plot-form";
 import { GridSplitForm } from "./grid-split-form";
 import { BoundaryHistory } from "./boundary-history";
+import { PlotCoverageCard } from "./plot-coverage-card";
 import { WeatherCard } from "./weather-card";
 import { FarmAccessManager } from "./farm-access-manager";
 import { FarmEditForm } from "./farm-edit-form";
@@ -535,6 +536,8 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
               />
             </div>
           )}
+
+          <PlotCoverageCard farmId={farm.id} />
 
           {/* SPATIAL PLOT GRID */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
