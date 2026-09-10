@@ -24,7 +24,7 @@ interface CommandPaletteProps {
 
 interface SearchResponse {
   clients: Array<{ id: string; name: string; code: string | null; phone: string | null; href: string }>;
-  farms: Array<{ id: string; name: string; location: string; status: string; href: string }>;
+  farms: Array<{ id: string; name: string; location: string; status: string; href: string; client: { name: string } | null }>;
   users: Array<{ id: string; name: string; email: string | null; role: string; href: string }>;
   tasks: Array<{ id: string; title: string; status: string; href: string; farm: { id: string; name: string } }>;
   incidents: Array<{ id: string; type: string; status: string; href: string; farm: { id: string; name: string } }>;
@@ -140,7 +140,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
     const nav = !q ? baseItems.slice(0, 8) : baseItems.filter((i) => i.title.toLowerCase().includes(q) || (i.subtitle ?? "").toLowerCase().includes(q));
     if (!server || debounced.length < 2) return nav;
     const out: SearchableItem[] = [...nav];
-    for (const f of server.farms) out.push({ id: `farm-${f.id}`, title: f.name, subtitle: `${f.location} • ${f.status}`, category: "FARMS", href: f.href, badge: f.status, icon: "Farm" });
+    for (const f of server.farms) out.push({ id: `farm-${f.id}`, title: f.name, subtitle: `${f.location}${f.client ? ` • ${f.client.name}` : ""} • ${f.status}`, category: "FARMS", href: f.href, badge: f.status, icon: "Farm" });
     for (const c of server.clients) out.push({ id: `client-${c.id}`, title: c.name, subtitle: `${c.code ?? ""} ${c.phone ?? ""}`.trim(), category: "CLIENTS", href: c.href, icon: "Users" });
     for (const t of server.tasks) out.push({ id: `task-${t.id}`, title: t.title, subtitle: `${t.farm.name} • ${t.status}`, category: "TASKS", href: t.href, badge: t.status, icon: "ClipboardList" });
     for (const i of server.incidents) out.push({ id: `inc-${i.id}`, title: i.type, subtitle: `${i.farm.name} • ${i.status}`, category: "INCIDENTS", href: i.href, badge: i.status, icon: "AlertTriangle" });

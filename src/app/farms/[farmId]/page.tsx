@@ -121,6 +121,7 @@ export default async function FarmDetailPage({
       phone: farm.client.phone,
     } : null,
     geofenceRadiusMeters: farm.geofenceRadiusMeters,
+    boundaryGeoJson: farm.boundaryGeoJson,
     plots: farm.plots.map((p) => ({
       id: p.id,
       name: p.name,
@@ -129,6 +130,8 @@ export default async function FarmDetailPage({
       longitude: p.longitude.toString(),
       soilType: p.soilType,
       status: p.status,
+      boundaryGeoJson: p.boundaryGeoJson,
+      measuredAcres: p.measuredAcres ? p.measuredAcres.toString() : null,
       irrigation: p.irrigation.map((ir) => ({
         type: ir.type,
         details: ir.details,

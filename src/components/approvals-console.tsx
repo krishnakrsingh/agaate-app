@@ -11,6 +11,7 @@ type Exception = {
   attendance: {
     user: { name: string; email: string };
     farm: { name: string; geofenceRadiusMeters?: number };
+    geofenceBasis?: string | null;
   };
 };
 
@@ -260,7 +261,13 @@ export function ApprovalsConsole() {
                       <td>{ex.attendance.farm.name}</td>
                       <td>
                         <span className="priority-tag high">
-                          {ex.distanceMeters}m (radius: {ex.attendance.farm.geofenceRadiusMeters ?? 500}m)
+                          {ex.distanceMeters}m (
+                          {ex.attendance.geofenceBasis === "PLOT_POLYGON"
+                            ? "plot fence"
+                            : ex.attendance.geofenceBasis === "FARM_POLYGON"
+                              ? "farm fence"
+                              : `radius: ${ex.attendance.farm.geofenceRadiusMeters ?? 500}m`}
+                          )
                         </span>
                       </td>
                       <td style={{ maxWidth: 280, fontSize: "13px" }}>&ldquo;{ex.reason}&rdquo;</td>

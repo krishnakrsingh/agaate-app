@@ -3,14 +3,17 @@ import { z } from "zod";
 import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { distanceMeters, utcDateOnly } from "@/lib/business";
+import { utcDateOnly } from "@/lib/business";
 import { apiError } from "@/lib/api";
+import { validateAttendanceLocation } from "@/lib/attendance-geo";
 
 const schema = z.object({
   farmId: z.string().optional(),
+  plotId: z.string().optional(),
   action: z.enum(["START", "END"]),
   latitude: z.number().gte(-90).lte(90).optional(),
   longitude: z.number().gte(-180).lte(180).optional(),
+  accuracyMeters: z.number().optional(),
   selfieMediaId: z.string().optional(),
   reason: z.string().min(3).max(1000).optional(),
 });
@@ -84,14 +87,41 @@ export async function POST(request: NextRequest) {
       });
       if (reused) throw new Error("A valid uploaded selfie is required.");
 
-      const distance = distanceMeters(
-        { latitude: Number(farm.latitude), longitude: Number(farm.longitude) },
-        { latitude: input.latitude, longitude: input.longitude }
-      );
-      const outside = distance > farm.geofenceRadiusMeters;
+      // Canonical location decision (plot → farm polygon → radius).
+      // Server-authoritative; any frontend radar is display-only.
+      let startPlot: { farmId: string; boundaryGeoJson: string | null; deletedAt: Date | null; status: string } | null = null;
+      if (input.plotId) {
+        const found = await prisma.plot.findUnique({
+          where: { id: input.plotId },
+          select: { farmId: true, boundaryGeoJson: true, deletedAt: true, status: true },
+        });
+        if (!found) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+        startPlot = found;
+      }
+      const checked = validateAttendanceLocation({
+        lat: input.latitude,
+        lng: input.longitude,
+        accuracyMeters: input.accuracyMeters,
+        farmId: input.farmId!,
+        farm,
+        plot: startPlot,
+      });
+      if (!checked.ok) {
+        return NextResponse.json({ error: checked.message, code: checked.code }, { status: checked.status });
+      }
+      const outside = !checked.inside;
+      const basis = checked.basis;
+      const distance = checked.distanceMeters;
+      const linkPlotId =
+        startPlot && !startPlot.deletedAt && startPlot.status !== "ARCHIVED" ? input.plotId! : null;
       if (outside && !input.reason) {
         return NextResponse.json(
-          { error: "A reason is required outside the farm geofence.", distanceMeters: distance },
+          {
+            error: "A reason is required outside the farm geofence.",
+            code: "REASON_REQUIRED",
+            distanceMeters: distance,
+            geofenceBasis: basis,
+          },
           { status: 422 }
         );
       }
@@ -112,8 +142,10 @@ export async function POST(request: NextRequest) {
           data: {
             userId: actor.id,
             farmId: input.farmId!,
+            plotId: linkPlotId,
             attendanceDate: today(),
             status: outside ? "EXCEPTION_PENDING" : "OPEN",
+            geofenceBasis: basis,
             startAt: new Date(),
             startLatitude: input.latitude,
             startLongitude: input.longitude,
@@ -134,9 +166,9 @@ export async function POST(request: NextRequest) {
         "START_DAY",
         "Attendance",
         attendance.id,
-        { farmId: input.farmId, outside, distanceMeters: distance }
+        { farmId: input.farmId, plotId: linkPlotId, outside, distanceMeters: distance, geofenceBasis: basis }
       );
-      return NextResponse.json({ attendance, distanceMeters: distance, withinGeofence: !outside });
+      return NextResponse.json({ attendance, distanceMeters: distance, withinGeofence: !outside, geofenceBasis: basis });
     }
 
     // ── ACTION: END SHIFT ──
@@ -201,14 +233,36 @@ export async function POST(request: NextRequest) {
     const endLat = input.latitude;
     const endLng = input.longitude;
 
-    const distance = distanceMeters(
-      { latitude: Number(farm.latitude), longitude: Number(farm.longitude) },
-      { latitude: endLat, longitude: endLng }
-    );
-    const outside = distance > farm.geofenceRadiusMeters;
+    // END uses the START-associated plot (if any) through the same canonical path.
+    let endPlot: { farmId: string; boundaryGeoJson: string | null; deletedAt: Date | null; status: string } | null = null;
+    if (existing.plotId) {
+      endPlot = await prisma.plot.findUnique({
+        where: { id: existing.plotId },
+        select: { farmId: true, boundaryGeoJson: true, deletedAt: true, status: true },
+      });
+    }
+    const endChecked = validateAttendanceLocation({
+      lat: endLat,
+      lng: endLng,
+      accuracyMeters: input.accuracyMeters,
+      farmId: targetFarmId,
+      farm,
+      plot: endPlot,
+    });
+    if (!endChecked.ok) {
+      return NextResponse.json({ error: endChecked.message, code: endChecked.code }, { status: endChecked.status });
+    }
+    const distance = endChecked.distanceMeters;
+    const outside = !endChecked.inside;
+    const basis = endChecked.basis;
     if (outside && !input.reason) {
       return NextResponse.json(
-        { error: "A reason is required outside the farm geofence.", distanceMeters: distance },
+        {
+          error: "A reason is required outside the farm geofence.",
+          code: "REASON_REQUIRED",
+          distanceMeters: distance,
+          geofenceBasis: basis,
+        },
         { status: 422 }
       );
     }
@@ -229,6 +283,7 @@ export async function POST(request: NextRequest) {
           endLongitude: endLng,
           endSelfieKey: endSelfieKey ?? existing.endSelfieKey,
           status: endStatus,
+          geofenceBasis: basis,
           exception: outside
             ? {
                 upsert: {
@@ -246,9 +301,9 @@ export async function POST(request: NextRequest) {
       "END_DAY",
       "Attendance",
       attendance.id,
-      { farmId: targetFarmId, outside, distanceMeters: distance }
+      { farmId: targetFarmId, outside, distanceMeters: distance, geofenceBasis: basis }
     );
-    return NextResponse.json({ attendance, distanceMeters: distance, withinGeofence: !outside });
+    return NextResponse.json({ attendance, distanceMeters: distance, withinGeofence: !outside, geofenceBasis: basis });
   } catch (error) {
     return apiError(error);
   }

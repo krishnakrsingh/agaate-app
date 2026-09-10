@@ -28,8 +28,28 @@ export async function GET(request: NextRequest) {
           })
         : Promise.resolve([]),
       prisma.farm.findMany({
-        where: { ...farmScope, OR: [{ name: { contains: q } }, { location: { contains: q } }, { ownerName: { contains: q } }, { surveyNumber: { contains: q } }] },
-        select: { id: true, name: true, location: true, status: true, setupStage: true, district: true, state: true },
+        // One box, every way an operator identifies a farm: its own
+        // name/ID/location chain, survey number, owner — or its client's
+        // name/code. Bounded (take: per), never fetch-all, so this holds
+        // at 1,00,000+ farms.
+        where: {
+          ...farmScope,
+          OR: [
+            { id: { contains: q } },
+            { name: { contains: q } },
+            { location: { contains: q } },
+            { village: { contains: q } },
+            { taluk: { contains: q } },
+            { district: { contains: q } },
+            { state: { contains: q } },
+            { pincode: { contains: q } },
+            { ownerName: { contains: q } },
+            { surveyNumber: { contains: q } },
+            { client: { name: { contains: q } } },
+            { client: { code: { contains: q } } },
+          ],
+        },
+        select: { id: true, name: true, location: true, status: true, setupStage: true, district: true, state: true, client: { select: { name: true } } },
         orderBy: { updatedAt: "desc" },
         take: per,
       }),

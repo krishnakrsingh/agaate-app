@@ -79,6 +79,24 @@ enum AttendanceStatus {
   EXCEPTION_REJECTED
 }
 
+enum GeofenceBasis {
+  PLOT_POLYGON
+  FARM_POLYGON
+  RADIUS
+}
+
+enum BoundaryEntityType {
+  FARM
+  PLOT
+}
+
+enum BoundarySource {
+  MANUAL_DRAW
+  GPS_WALK
+  GRID_SPLIT
+  LEGACY
+}
+
 enum ApprovalStatus {
   PENDING
   APPROVED
@@ -203,6 +221,7 @@ model Farm {
   contractValue          Decimal?                @db.Decimal(14, 2)
   targetHandoverDate     DateTime?
   boundaryGeoJson        String?                 @db.Text
+  measuredAcres          Decimal?              @db.Decimal(12, 2)
   clientPhone            String?
   clientDob              DateTime?               @db.Date
   status                 FarmStatus              @default(SETUP)
@@ -228,6 +247,7 @@ model Farm {
 
   @@index([status])
   @@index([setupStage])
+  @@index([name])
   @@index([clientId, status])
   @@index([clientId])
   @@index([state, district])
@@ -257,12 +277,16 @@ model Plot {
   latitude      Decimal                   @db.Decimal(10, 7)
   longitude     Decimal                   @db.Decimal(10, 7)
   soilType      String?
+  boundaryGeoJson String?                 @db.Text // canonical GeoJSON Polygon; server-validated within farm
+  measuredAcres Decimal?                  @db.Decimal(12, 2) // server-computed from boundary
+  captureId     String?                   @unique // perimeter-walk idempotency key (one walk → one plot, ever)
   status        PlotStatus                @default(SETUP)
   deletedAt     DateTime?
   createdAt     DateTime                  @default(now())
   updatedAt     DateTime                  @updatedAt
   farm          Farm                      @relation(fields: [farmId], references: [id])
   irrigation    IrrigationConfiguration[]
+  attendance    Attendance[]
   cropCycles    CropCycle[]
   tasks         Task[]
   monitoring    CropMonitoring[]
@@ -439,8 +463,10 @@ model Attendance {
   id              String               @id @default(cuid())
   userId          String
   farmId          String
+  plotId          String?
   attendanceDate  DateTime             @db.Date
   status          AttendanceStatus     @default(OPEN)
+  geofenceBasis   GeofenceBasis?
   startAt         DateTime?
   endAt           DateTime?
   startLatitude   Decimal?             @db.Decimal(10, 7)
@@ -452,10 +478,12 @@ model Attendance {
   exceptionReason String?
   user            User                 @relation(fields: [userId], references: [id])
   farm            Farm                 @relation(fields: [farmId], references: [id])
+  plot            Plot?                @relation(fields: [plotId], references: [id])
   exception       AttendanceException?
 
   @@unique([userId, farmId, attendanceDate])
   @@index([farmId, attendanceDate])
+  @@index([plotId])
 }
 
 model AttendanceException {
@@ -469,6 +497,57 @@ model AttendanceException {
   attendance     Attendance     @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
 
   @@index([status])
+}
+
+/**
+ * Immutable geometry history. One row per authoritative boundary state.
+ * NO foreign keys to Farm/Plot by design: history must survive entity
+ * deletion/renames (evidence layer, not relational data). Lookups are
+ * (entityType, entityId, version) via the compound unique + index.
+ */
+model BoundaryVersion {
+  id                    String               @id @default(cuid())
+  entityType            BoundaryEntityType
+  entityId              String
+  version               Int
+  boundaryGeoJson       String?              @db.Text // null = fence-removed version
+  measuredAcres         Decimal?             @db.Decimal(12, 2)
+  perimeterM            Decimal?             @db.Decimal(12, 2)
+  centroidLat           Decimal?             @db.Decimal(10, 7)
+  centroidLng           Decimal?             @db.Decimal(10, 7)
+  prevAcres             Decimal?             @db.Decimal(12, 2)
+  areaFlagged           Boolean              @default(false) // |Δ| >= policy threshold (advisory)
+  source                BoundarySource
+  actorId               String? // null = unknown (LEGACY); no FK so history survives user deletion
+  actorName             String? // snapshot at write time; renames don't rewrite history
+  captureId             String?
+  restoredFromVersionId String?
+  createdAt             DateTime             @default(now())
+
+  @@unique([entityType, entityId, version])
+  @@index([entityType, entityId, version])
+  @@index([captureId])
+}
+
+/**
+ * Retained GPS evidence for walked boundaries. id = client captureId
+ * (natural key: redelivery can never duplicate evidence).
+ * Small blobs (≤2000 samples, typically <30KB); no indexes on payloads.
+ */
+model WalkTrack {
+  id             String               @id // = captureId
+  entityType     BoundaryEntityType
+  entityId       String
+  rawSamples     Json // fixes exactly as submitted by the device
+  cleanedSamples Json // what the server actually used
+  samplesKept    Int
+  samplesDropped Int
+  quality        String // GOOD | WARNING (INVALID never persists)
+  acres          Decimal?             @db.Decimal(12, 2)
+  actorId        String?
+  createdAt      DateTime             @default(now())
+
+  @@index([entityType, entityId])
 }
 
 model LocationChangeRequest {

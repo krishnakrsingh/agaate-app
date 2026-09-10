@@ -46,6 +46,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Package: Icons.Package,
     Coins: Icons.Coins,
     Truck: Icons.Truck,
+    Navigation: Icons.Navigation,
     Stethoscope: Icons.Stethoscope,
     TrendingUp: Icons.TrendingUp,
     Zap: Icons.Zap,

@@ -1,11 +1,16 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useMemo, FormEvent } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
-import { InteractiveFarmMap, BoundaryPoint } from "./interactive-farm-map";
+import { parseBoundary, toGeoJsonPolygon, ringAcres, type LngLat } from "@/lib/geo";
+
+const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
+  ssr: false,
+});
 
 type HandoverData = {
   estateName: string;
@@ -66,7 +71,10 @@ export function ClientOnboardingWizardV2() {
   const [totalArea, setTotalArea] = useState("");
   const [cultivableArea, setCultivableArea] = useState("");
   const [geofenceRadius, setGeofenceRadius] = useState(600);
-  const [boundaryPoints, setBoundaryPoints] = useState<BoundaryPoint[]>([]);
+  // Real parcel ring (closed [lng,lat]) drawn on GeoMap. Create flow has no
+  // pre-existing boundary, so init via parseBoundary(null) -> null; the parse
+  // keeps legacy `[{lat,lng}]` tolerance if a seed value is ever passed in.
+  const [boundaryRing, setBoundaryRing] = useState<LngLat[] | null>(() => parseBoundary(null));
 
   // Step 3: Soil Science Baseline & Water / Power Grid
   const [soilType, setSoilType] = useState("Red Sandy Loam");
@@ -238,7 +246,7 @@ export function ClientOnboardingWizardV2() {
         totalArea: Number(totalArea),
         cultivableArea: Number(cultivableArea),
         geofenceRadiusMeters: Number(geofenceRadius),
-        boundaryGeoJson: boundaryPoints.length > 0 ? JSON.stringify(boundaryPoints) : null,
+        boundaryGeoJson: boundaryRing ? toGeoJsonPolygon(boundaryRing) : null,
 
         // Soil Science Baseline & Water / Power Infrastructure
         soilType: soilType.trim() || null,
@@ -343,6 +351,22 @@ export function ClientOnboardingWizardV2() {
     }
     return "current";
   };
+
+  // GeoMap center follows the typed lat/lng fields; fall back to India
+  // center until valid coordinates exist. Polygon stays optional.
+  const mapCenter: [number, number] =
+    Number.isFinite(latitude) && Number.isFinite(longitude)
+      ? [latitude, longitude]
+      : [20.59, 78.96];
+
+  const statedAcres = Number(totalArea);
+  const drawnAcres = useMemo(() => (boundaryRing ? ringAcres(boundaryRing) : 0), [boundaryRing]);
+  const acreageMismatch =
+    boundaryRing !== null &&
+    drawnAcres > 0 &&
+    Number.isFinite(statedAcres) &&
+    statedAcres > 0 &&
+    Math.abs(drawnAcres - statedAcres) / statedAcres > 0.1;
 
   const readiness: { label: string; state: string; detail: string }[] = [
     { label: "Client identity", state: ownerName.trim() && (ownerPhone.trim() || ownerEmail.trim()) ? "Complete" : "Incomplete", detail: "Legal entity, PAN/GSTIN, contacts" },
@@ -738,29 +762,49 @@ export function ClientOnboardingWizardV2() {
                 </div>
               </div>
 
+              {/* Acreage-mismatch flag: drawn polygon vs stated revenue acreage.
+                  Advisory only — polygon stays optional, never blocks onboarding. */}
+              {acreageMismatch && (
+                <div
+                  role="alert"
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    padding: "10px 14px",
+                    background: "var(--amber-light)",
+                    border: "1px solid var(--amber-light)",
+                    borderRadius: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Icons.AlertTriangle size={16} style={{ color: "var(--amber)" }} />
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--amber)" }}>
+                    Drawn {drawnAcres.toFixed(2)} ac vs stated {statedAcres.toFixed(2)} ac — verify before proceeding
+                  </span>
+                </div>
+              )}
+
               {/* Split layout: Tactical Map on Left, Parameters on Right */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 24, alignItems: "start" }}>
-                {/* Left: Tactical Map */}
+                {/* Left: Real satellite GeoMap */}
                 <div style={{ background: "var(--surface-strong)", padding: 16, borderRadius: "var(--radius-md)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                     <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
-                      Tactical Satellite &amp; Parcel Visualizer
+                      Satellite Geo-Map &amp; Parcel Boundary
                     </div>
                     <span className="badge badge-green" style={{ fontSize: "10px" }}>Interactive GPS</span>
                   </div>
 
-                  <InteractiveFarmMap
-                    latitude={latitude}
-                    longitude={longitude}
-                    radiusMeters={geofenceRadius}
-                    boundaryPoints={boundaryPoints}
-                    onCoordinatesChange={(lat, lng) => {
-                      setLatitude(lat);
-                      setLongitude(lng);
-                    }}
-                    onRadiusChange={(r) => setGeofenceRadius(r)}
-                    onBoundaryChange={(pts) => setBoundaryPoints(pts)}
+                  <GeoMap
+                    center={mapCenter}
+                    polygon={boundaryRing}
+                    onChange={setBoundaryRing}
+                    height={340}
                   />
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>
+                    Draw the parcel polygon on satellite imagery. Clearing the shape keeps onboarding unblocked — boundary stays optional.
+                  </div>
                 </div>
 
                 {/* Right: Cadastral Specs Form */}
@@ -871,6 +915,38 @@ export function ClientOnboardingWizardV2() {
                       </select>
                     </div>
                   </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div className="form-group">
+                      <label htmlFor="latitude">Latitude *</label>
+                      <input
+                        id="latitude"
+                        type="number"
+                        step="0.000001"
+                        min="-90"
+                        max="90"
+                        required
+                        value={Number.isFinite(latitude) ? latitude : ""}
+                        onChange={(e) => setLatitude(e.target.value === "" ? NaN : Number(e.target.value))}
+                        className="input-field font-mono"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="longitude">Longitude *</label>
+                      <input
+                        id="longitude"
+                        type="number"
+                        step="0.000001"
+                        min="-180"
+                        max="180"
+                        required
+                        value={Number.isFinite(longitude) ? longitude : ""}
+                        onChange={(e) => setLongitude(e.target.value === "" ? NaN : Number(e.target.value))}
+                        className="input-field font-mono"
+                      />
+                    </div>
+                  </div>
+                  <span className="form-hint">Map center follows the typed coordinates.</span>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div className="form-group">

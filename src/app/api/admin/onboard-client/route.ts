@@ -7,6 +7,8 @@ import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { sendNotification } from "@/lib/notifications";
+import { parseBoundary, roundAcresForDb } from "@/lib/geo-server";
+import { commitBoundary } from "@/lib/geo-versions";
 
 const onboardSchema = z.object({
   // Client Legal Entity & Profile
@@ -37,7 +39,7 @@ const onboardSchema = z.object({
   longitude: z.coerce.number().gte(-180).lte(180),
   totalArea: z.coerce.number().positive(),
   cultivableArea: z.coerce.number().positive(),
-  boundaryGeoJson: z.string().optional().nullable(),
+  boundaryGeoJson: z.any().optional().nullable(),
   geofenceRadiusMeters: z.coerce.number().int().min(100).max(5000).default(500),
 
   // Soil Baseline & Water / Power Infrastructure
@@ -118,6 +120,31 @@ export async function POST(request: NextRequest) {
       clientDob = parsed;
     }
     const passwordHash = input.ownerPassword ? await bcrypt.hash(input.ownerPassword, 12) : "";
+
+    // Normalize-on-write: validate polygon server-side, never trust client math.
+    // Accepts canonical GeoJSON Polygon string OR legacy [{lat,lng}] (stringified or raw).
+    let normalizedBoundary: string | null = null;
+    let measuredAcres: number | null = null;
+    const rawBoundary = (input as { boundaryGeoJson?: unknown }).boundaryGeoJson;
+    const hasBoundary =
+      rawBoundary !== undefined &&
+      rawBoundary !== null &&
+      !(typeof rawBoundary === "string" && rawBoundary.trim() === "") &&
+      !(Array.isArray(rawBoundary) && rawBoundary.length === 0);
+    if (hasBoundary) {
+      try {
+        const parsed = parseBoundary(rawBoundary);
+        if (parsed) {
+          normalizedBoundary = parsed.geoJson;
+          measuredAcres = roundAcresForDb(parsed.acres);
+        }
+      } catch (e) {
+        return NextResponse.json(
+          { error: e instanceof Error ? e.message : "Invalid farm boundary." },
+          { status: 422 }
+        );
+      }
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create or retrieve Client Organization & Owner User
@@ -203,9 +230,9 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // 2. Create the Farm with 5-stage setup initialized and comprehensive parameters
-      const farm = await tx.farm.create({
-        data: {
+      // 2. Create the Farm with 5-stage setup initialized and comprehensive parameters.
+      // Geometry (when drawn) is versioned as v1 MANUAL_DRAW in the same tx.
+      const farmData: Prisma.FarmUncheckedCreateInput = {
           clientId: client.id,
           name: input.farmName,
           surveyNumber: input.surveyNumber || null,
@@ -235,15 +262,26 @@ export async function POST(request: NextRequest) {
           proposedCrops: input.proposedCrops || null,
           contractValue: input.contractValue ? new Prisma.Decimal(input.contractValue) : null,
           targetHandoverDate: input.targetHandoverDate ? new Date(input.targetHandoverDate) : null,
-          boundaryGeoJson: input.boundaryGeoJson || null,
+          boundaryGeoJson: normalizedBoundary,
+          measuredAcres,
           clientPhone: phone,
           clientDob,
           geofenceRadiusMeters: input.geofenceRadiusMeters,
           setupStage: "SURVEY_SOIL_TEST",
           setupProgress: 15,
           status: "SETUP",
-        },
-      });
+      };
+      const farm = normalizedBoundary
+        ? (
+            await commitBoundary(
+              tx,
+              { type: "FARM" },
+              { geoJson: normalizedBoundary, acres: measuredAcres ?? 0 },
+              { source: "MANUAL_DRAW", actorId: actor.id, actorName: actor.name },
+              async (t) => t.farm.create({ data: farmData })
+            )
+          ).result
+        : await tx.farm.create({ data: farmData });
 
       // 3. Grant Owner Management Access
       await tx.farmAccess.create({

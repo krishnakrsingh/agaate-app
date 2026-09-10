@@ -22,6 +22,7 @@ type AttendanceRecord = {
   startAt: string | null;
   endAt: string | null;
   exceptionReason?: string | null;
+  geofenceBasis?: string | null;
   farm: { id: string; name: string; location: string };
 };
 
@@ -40,6 +41,16 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
   const [gpsError, setGpsError] = useState("");
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
+  // Last SERVER verdict (never the phone radar): which boundary was used,
+  // inside/outside, and why a check-in was rejected.
+  const [verdict, setVerdict] = useState<string | null>(null);
+
+function basisText(basis?: string | null) {
+  if (basis === "PLOT_POLYGON") return "plot fence";
+  if (basis === "FARM_POLYGON") return "farm fence";
+  if (basis === "RADIUS") return "radius fallback (no fence drawn)";
+  return "location check";
+}
   const [elapsed, setElapsed] = useState("");
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -232,11 +243,21 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       setPending(false);
       if (!attRes.ok) {
         const errorData = await attRes.json().catch(() => ({}));
+        setVerdict(
+          errorData.geofenceBasis
+            ? `Server rejected: ${errorData.error ?? "Clock-in failed."} (checked against ${basisText(errorData.geofenceBasis)})`
+            : null
+        );
         toast.show(errorData.error ?? "Clock-in failed.", "error");
         return;
       }
 
       const resData = await attRes.json();
+      setVerdict(
+        `Server verified: ${resData.withinGeofence ? "inside" : "outside"} ${basisText(resData.geofenceBasis)}${
+          typeof resData.distanceMeters === "number" ? ` · ${Math.round(resData.distanceMeters)}m from farm center` : ""
+        }`
+      );
       if (resData.attendance?.status === "EXCEPTION_PENDING") {
         toast.show("Shift started with Out-of-Bounds exception (sent to admin for review)", "info");
       } else {
@@ -271,9 +292,18 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
       setPending(false);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
+        setVerdict(
+          errorData.geofenceBasis
+            ? `Server rejected: ${errorData.error ?? "Clock-out failed."} (checked against ${basisText(errorData.geofenceBasis)})`
+            : null
+        );
         toast.show(errorData.error ?? "Clock-out failed.", "error");
         return;
       }
+      const endData = await res.json().catch(() => ({}));
+      setVerdict(
+        `Server verified: ${endData.withinGeofence ? "inside" : "outside"} ${basisText(endData.geofenceBasis)}`
+      );
       toast.show("Shift ended successfully.", "success");
       setShowEndModal(false);
       void load();
@@ -336,7 +366,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               {isException ? "Shift (Exception)" : "Active Shift"}
             </span>
             <span className="muted" style={{ fontSize: "11.5px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              • {attendance.farm.name}
+              · {attendance.farm.name}{attendance.geofenceBasis ? ` · via ${basisText(attendance.geofenceBasis)}` : ""}
             </span>
           </div>
 
@@ -786,7 +816,7 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
               }}
             >
               {pending ? (
-                <span>Starting Shift…</span>
+                <span>Starting Shift�?�</span>
               ) : (
                 <>
                   <Icons.Check size={18} />
@@ -794,6 +824,11 @@ export function AttendanceForm({ onShiftChange }: { onShiftChange?: () => void }
                 </>
               )}
             </button>
+          )}
+          {verdict && (
+            <div style={{ fontSize: "11px", color: "var(--muted)", textAlign: "center", marginTop: 2 }}>
+              {verdict}
+            </div>
           )}
         </form>
       </div>

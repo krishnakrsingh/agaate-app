@@ -3,6 +3,7 @@ import { accessibleFarmWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadUrl } from "@/lib/storage";
 import { distanceMeters, utcDateOnly } from "@/lib/business";
+import { attendanceDisplayVerdict } from "@/lib/attendance-geo";
 import { Navbar } from "@/components/navbar";
 import { OwnerCockpit, TelemetryPhoto } from "@/components/owner/owner-cockpit";
 
@@ -58,6 +59,7 @@ export default async function OwnerDashboardPage() {
             latitude: true,
             longitude: true,
             geofenceRadiusMeters: true,
+            boundaryGeoJson: true,
           },
         },
         exception: true,
@@ -157,6 +159,14 @@ export default async function OwnerDashboardPage() {
   ]);
 
   // Resolve selfie images safely
+  const dashPlotIds = [...new Set(todayAttendancesRaw.map((a) => a.plotId).filter((id): id is string => !!id))];
+  const dashPlots = dashPlotIds.length
+    ? await prisma.plot.findMany({
+        where: { id: { in: dashPlotIds } },
+        select: { id: true, farmId: true, boundaryGeoJson: true, deletedAt: true, status: true },
+      })
+    : [];
+  const dashPlotMap = new Map(dashPlots.map((p) => [p.id, p]));
   const todayAttendances = await Promise.all(
     todayAttendancesRaw.map(async (att) => {
       let selfieUrl: string | null = null;
@@ -168,8 +178,8 @@ export default async function OwnerDashboardPage() {
         }
       }
 
-      const startLat = att.startLatitude ? Number(att.startLatitude) : null;
-      const startLng = att.startLongitude ? Number(att.startLongitude) : null;
+      const startLat = att.startLatitude === null || att.startLatitude === undefined ? null : Number(att.startLatitude);
+      const startLng = att.startLongitude === null || att.startLongitude === undefined ? null : Number(att.startLongitude);
       let dist: number | null = null;
       if (startLat && startLng) {
         dist = distanceMeters(
@@ -177,7 +187,16 @@ export default async function OwnerDashboardPage() {
           { latitude: startLat, longitude: startLng }
         );
       }
-      const withinGeofence = dist !== null ? dist <= att.farm.geofenceRadiusMeters : true;
+      // Canonical display verdict over stored check-in GPS (never a copy).
+      const verdict = attendanceDisplayVerdict({
+        startLat,
+        startLng,
+        farmId: att.farm.id,
+        farm: att.farm,
+        plot: att.plotId ? dashPlotMap.get(att.plotId) ?? null : null,
+        storedBasis: att.geofenceBasis,
+      });
+      const withinGeofence = verdict.inside;
 
       return {
         id: att.id,
@@ -188,6 +207,7 @@ export default async function OwnerDashboardPage() {
         startAt: att.startAt ? att.startAt.toISOString() : null,
         selfieUrl,
         withinGeofence,
+        geofenceBasis: verdict.basis,
         distanceMeters: dist !== null ? Math.round(dist) : null,
         status: att.status,
       };

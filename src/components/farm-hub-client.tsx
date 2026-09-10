@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 import { PlotForm } from "./plot-form";
+import { GridSplitForm } from "./grid-split-form";
+import { BoundaryHistory } from "./boundary-history";
 import { WeatherCard } from "./weather-card";
 import { FarmAccessManager } from "./farm-access-manager";
 import { FarmEditForm } from "./farm-edit-form";
@@ -17,7 +19,7 @@ import { useToast } from "./ui/toast";
 
 type Milestone = { id: string; name: string; targetDate: string; status: string };
 type CropCycle = { id: string; cropName: string; startDate: string; status: string; varieties: { name: string }[]; milestones: Milestone[] };
-type Plot = { id: string; name: string; area: string; status: string; soilType: string | null; irrigation: { type: string; details: string | null }[]; cropCycles: CropCycle[] };
+type Plot = { id: string; name: string; area: string; status: string; soilType: string | null; boundaryGeoJson?: string | null; measuredAcres?: string | null; irrigation: { type: string; details: string | null }[]; cropCycles: CropCycle[] };
 type Incident = {
   id: string;
   type: string;
@@ -62,6 +64,7 @@ type Farm = {
     phone?: string | null;
   } | null;
   geofenceRadiusMeters: number;
+  boundaryGeoJson: string | null;
   surveyNumber?: string | null;
   village?: string | null;
   taluk?: string | null;
@@ -511,15 +514,25 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
               </p>
             </div>
             {canManage && (
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(!showAddPlot)}>
-                <Icons.Plus size={14} /><span>{showAddPlot ? "Close Form" : "Create New Plot"}</span>
-              </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowAddPlot(!showAddPlot)}>
+                  <Icons.Plus size={14} /><span>{showAddPlot ? "Close Form" : "Create New Plot"}</span>
+                </button>
+                <GridSplitForm farmId={farm.id} hasBoundary={!!farm.boundaryGeoJson} />
+                <Link href={`/officer/boundary?farmId=${farm.id}`} className="btn btn-secondary btn-sm">
+                  <Icons.MapPin size={14} /><span>Walk boundary</span>
+                </Link>
+              </div>
             )}
           </div>
 
           {showAddPlot && (
             <div style={{ background: "var(--canvas)", border: "1px solid var(--canvas)", padding: 20, borderRadius: "var(--radius-sm)" }}>
-              <PlotForm farmId={farm.id} />
+              <PlotForm
+                farmId={farm.id}
+                farmCenter={[Number(farm.latitude), Number(farm.longitude)]}
+                farmBoundary={farm.boundaryGeoJson}
+              />
             </div>
           )}
 
@@ -811,8 +824,11 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
 
       {/* TAB 5: SETTINGS */}
       {tab === "settings" && canManage && (
-        <div style={{ background: "var(--canvas)", border: "1px solid var(--canvas)", padding: 24, borderRadius: "var(--radius-sm)" }}>
-          <FarmEditForm farm={farm} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ background: "var(--canvas)", border: "1px solid var(--canvas)", padding: 24, borderRadius: "var(--radius-sm)" }}>
+            <FarmEditForm farm={farm} />
+          </div>
+          <BoundaryHistory entityType="FARM" entityId={farm.id} canRestore={canManage} currentBoundary={farm.boundaryGeoJson} />
         </div>
       )}
     </div>

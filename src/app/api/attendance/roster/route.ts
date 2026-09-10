@@ -3,6 +3,7 @@ import { currentActor, accessibleFarmWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
 import { distanceMeters, utcDateOnly } from "@/lib/business";
+import { attendanceDisplayVerdict } from "@/lib/attendance-geo";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +33,28 @@ export async function GET(request: NextRequest) {
         latitude: true,
         longitude: true,
         geofenceRadiusMeters: true,
+        boundaryGeoJson: true,
         status: true,
       },
       orderBy: { name: "asc" },
     });
 
     const estateIds = estates.map((e) => e.id);
+
+    // Plot fences for plot-linked attendance rows (two bounded queries).
+    const plotIdRows = await prisma.attendance.findMany({
+      where: { farmId: { in: estateIds }, attendanceDate: targetDate, NOT: { plotId: null } },
+      select: { plotId: true },
+    });
+    const rosterPlotIds = [...new Set(plotIdRows.map((r) => r.plotId).filter((id): id is string => !!id))];
+    const rosterPlots = rosterPlotIds.length
+      ? await prisma.plot.findMany({
+          where: { id: { in: rosterPlotIds } },
+          select: { id: true, farmId: true, boundaryGeoJson: true, deletedAt: true, status: true },
+        })
+      : [];
+    const rosterPlotMap = new Map(rosterPlots.map((p) => [p.id, p]));
+
     if (estateIds.length === 0) {
       return NextResponse.json(
         {
@@ -99,6 +116,7 @@ export async function GET(request: NextRequest) {
             latitude: true,
             longitude: true,
             geofenceRadiusMeters: true,
+            boundaryGeoJson: true,
           },
         },
       },
@@ -128,6 +146,7 @@ export async function GET(request: NextRequest) {
       startLongitude: number | null;
       distanceMeters: number | null;
       withinGeofence: boolean;
+      geofenceBasis: string | null;
       startSelfieKey: string | null;
       endSelfieKey: string | null;
       exceptionReason: string | null;
@@ -146,8 +165,8 @@ export async function GET(request: NextRequest) {
 
         const att = attendanceMap.get(`${officer.id}_${estate.id}`);
         if (att) {
-          const startLat = att.startLatitude ? Number(att.startLatitude) : null;
-          const startLng = att.startLongitude ? Number(att.startLongitude) : null;
+          const startLat = att.startLatitude === null || att.startLatitude === undefined ? null : Number(att.startLatitude);
+          const startLng = att.startLongitude === null || att.startLongitude === undefined ? null : Number(att.startLongitude);
           let dist = att.exception?.distanceMeters ? Number(att.exception.distanceMeters) : null;
 
           if (dist === null && startLat !== null && startLng !== null) {
@@ -157,7 +176,16 @@ export async function GET(request: NextRequest) {
             );
           }
 
-          const inside = dist !== null ? dist <= estate.geofenceRadiusMeters : true;
+          // Canonical display verdict over stored check-in GPS (never a copy).
+          const verdict = attendanceDisplayVerdict({
+            startLat,
+            startLng,
+            farmId: estate.id,
+            farm: estate,
+            plot: att.plotId ? rosterPlotMap.get(att.plotId) ?? null : null,
+            storedBasis: att.geofenceBasis,
+          });
+          const inside = verdict.inside;
 
           let durationMinutes: number | null = null;
           if (att.startAt) {
@@ -182,6 +210,7 @@ export async function GET(request: NextRequest) {
             startLongitude: startLng,
             distanceMeters: dist !== null ? Math.round(dist) : null,
             withinGeofence: inside,
+            geofenceBasis: verdict.basis,
             startSelfieKey: att.startSelfieKey,
             endSelfieKey: att.endSelfieKey,
             exceptionReason: att.exceptionReason || att.exception?.reason || null,
@@ -207,6 +236,7 @@ export async function GET(request: NextRequest) {
             startLongitude: null,
             distanceMeters: null,
             withinGeofence: true,
+            geofenceBasis: null,
             startSelfieKey: null,
             endSelfieKey: null,
             exceptionReason: null,
@@ -225,8 +255,8 @@ export async function GET(request: NextRequest) {
       );
       if (!alreadyIncluded) {
         const estate = estates.find((e) => e.id === att.farmId) || att.farm;
-        const startLat = att.startLatitude ? Number(att.startLatitude) : null;
-        const startLng = att.startLongitude ? Number(att.startLongitude) : null;
+        const startLat = att.startLatitude === null || att.startLatitude === undefined ? null : Number(att.startLatitude);
+        const startLng = att.startLongitude === null || att.startLongitude === undefined ? null : Number(att.startLongitude);
         let dist = att.exception?.distanceMeters ? Number(att.exception.distanceMeters) : null;
         if (dist === null && startLat !== null && startLng !== null && estate) {
           dist = distanceMeters(
@@ -234,7 +264,17 @@ export async function GET(request: NextRequest) {
             { latitude: startLat, longitude: startLng }
           );
         }
-        const inside = dist !== null && estate ? dist <= estate.geofenceRadiusMeters : true;
+        const verdict = estate
+          ? attendanceDisplayVerdict({
+              startLat,
+              startLng,
+              farmId: estate.id,
+              farm: estate,
+              plot: att.plotId ? rosterPlotMap.get(att.plotId) ?? null : null,
+              storedBasis: att.geofenceBasis,
+            })
+          : { inside: true, basis: null as string | null };
+        const inside = verdict.inside;
         let durationMinutes: number | null = null;
         if (att.startAt) {
           const end = att.endAt ? new Date(att.endAt).getTime() : Date.now();
@@ -258,6 +298,7 @@ export async function GET(request: NextRequest) {
           startLongitude: startLng,
           distanceMeters: dist !== null ? Math.round(dist) : null,
           withinGeofence: inside,
+          geofenceBasis: verdict.basis,
           startSelfieKey: att.startSelfieKey,
           endSelfieKey: att.endSelfieKey,
           exceptionReason: att.exceptionReason || att.exception?.reason || null,

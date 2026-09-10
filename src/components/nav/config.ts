@@ -3,7 +3,7 @@ import type { Role } from "@prisma/client";
 export type NavItem = {
   href: string;
   label: string;
-  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap" | "User" | "AlertTriangle" | "Plot" | "Settings";
+  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap" | "User" | "AlertTriangle" | "Plot" | "Settings" | "Navigation";
   roles: Role[];
   isActive?: (pathname: string) => boolean;
 };
@@ -81,6 +81,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "AlertTriangle",
     roles: ["FARM_OFFICER"],
     isActive: (p) => p.startsWith("/officer/reports"),
+  },
+  {
+    href: "/officer/boundary",
+    label: "Walk",
+    icon: "Navigation",
+    roles: ["FARM_OFFICER"],
+    isActive: (p) => p.startsWith("/officer/boundary"),
   },
   {
     href: "/officer/profile",
@@ -192,7 +199,7 @@ export function getMobileNavForRole(role: Role): NavItem[] {
     return all.filter((i) => ["/owner/dashboard", "/owner/land", "/owner/operations", "/owner/records", "/owner/insights"].includes(i.href));
   }
   if (role === "FARM_OFFICER") {
-    return all.filter((i) => ["/officer/day", "/officer/reports", "/officer/profile"].includes(i.href));
+    return all.filter((i) => ["/officer/day", "/officer/reports", "/officer/boundary", "/officer/profile"].includes(i.href));
   }
   return all.slice(0, 5);
 }

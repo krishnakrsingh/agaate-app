@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icons } from "@/components/icons";
-import { FarmSwitcher } from "@/components/nav/farm-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/nav/config";
 import { BrandLogo } from "@/components/brand-logo";
@@ -30,19 +28,6 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ role, userName, onOpenCommandPalette }: DesktopSidebarProps) {
   const pathname = usePathname();
-  const [timeStr, setTimeStr] = useState<string>("");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const d = new Date();
-      setTimeStr(
-        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   async function handleSignOut() {
     try {
@@ -74,7 +59,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           },
           {
             href: "/onboarding",
-            label: "Onboarding Pipeline",
+            label: "Onboarding",
             icon: "Zap",
             badge: "Intake",
             isActive: (p) => p.startsWith("/onboarding") || p.startsWith("/farms/new"),
@@ -226,6 +211,12 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             icon: "Zap",
           },
           {
+            href: "/officer/boundary",
+            label: "Boundary Walk",
+            icon: "Navigation",
+            isActive: (p) => p.startsWith("/officer/boundary"),
+          },
+          {
             href: "/officer/profile",
             label: "Officer Profile",
             icon: "User",
@@ -280,29 +271,25 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
         <div className="sidebar-brand-row">
           <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
             <BrandLogo height={27} priority />
-            <span className="sidebar-brand-tag">OPS</span>
           </Link>
           <span className="sidebar-role-badge">
             {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}
           </span>
         </div>
 
-        {/* Farm / Estate Switcher Instrument */}
-        <div className="sidebar-switcher">
-          <FarmSwitcher />
-        </div>
-
-        {/* Quick ⌘K Command Finder Trigger */}
+        {/* Farm finder. There is deliberately NO estate dropdown here:
+            a 25-row menu cannot serve 1,00,000+ farms. Farm-finding lives in
+            the ⌘K palette (server search) + Unified Directory (faceted). */}
         {onOpenCommandPalette && (
           <button
             type="button"
             className="sidebar-search-btn"
             onClick={onOpenCommandPalette}
-            title="Search entities, navigation & actions (⌘K / Ctrl+K)"
+            title="Find a farm, client, task… (⌘K / Ctrl+K)"
           >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Icons.Search size={13} />
-              <span>Quick Action...</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <Icons.MapPin size={14} />
+              <span>Find a farm…</span>
             </span>
             <kbd className="sidebar-search-badge">⌘K</kbd>
           </button>
@@ -352,11 +339,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             <span className="telemetry-live-dot" />
             <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
           </span>
-          {timeStr && (
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px" }} suppressHydrationWarning>
-              {timeStr}
-            </span>
-          )}
         </div>
 
         <div className="sidebar-user-card">

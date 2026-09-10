@@ -65,10 +65,18 @@ export async function GET(request: NextRequest) {
         ...(where.AND || []),
         {
           OR: [
+            { id: { contains: search } },
             { name: { contains: search } },
             { location: { contains: search } },
+            { village: { contains: search } },
+            { taluk: { contains: search } },
+            { district: { contains: search } },
+            { state: { contains: search } },
+            { pincode: { contains: search } },
             { ownerName: { contains: search } },
+            { surveyNumber: { contains: search } },
             { client: { name: { contains: search } } },
+            { client: { code: { contains: search } } },
           ],
         },
       ];
