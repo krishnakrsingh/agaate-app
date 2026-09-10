@@ -12,6 +12,8 @@ type Farm = { id: string; name: string; plots: Plot[] };
 
 const cropStages = ["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"];
 
+import { basisText, captureFieldGps as captureScoutGps } from "./scout-gps";
+
 export function FieldReports({
   initialFarmId, initialPlotId, initialCropCycleId, initialTab = "monitoring", onSuccess, onCancel, hideTabs = false,
 }: {
@@ -66,21 +68,35 @@ export function FieldReports({
         source: "file",
       }));
       const mediaIds = await uploadEvidencePhotos(farmId, "CROP_PHOTO", photoItems);
+      // Best-effort scouting GPS: verified inside the plot server-side.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      let gpsNote = "";
+      try {
+        gps = await captureScoutGps();
+      } catch {
+        gpsNote = "No GPS fix — submitting without location proof.";
+      }
       const res = await fetch("/api/monitoring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          farmId,
+          plotId,
           cropCycleId: cycleId,
           status: health,
           stage: f.get("stage"),
           impactPercent: health === "POOR" && f.get("impactPercent") ? Number(f.get("impactPercent")) : null,
           remarks: f.get("remarks") || null,
           mediaIds,
+          ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
         }),
       });
       setPending(false);
       if (!res.ok) throw new Error((await res.json()).error ?? "Submission failed.");
-      setMessage("Daily crop monitoring update recorded");
+      const done = await res.json().catch(() => ({}));
+      setMessage(
+        `Daily crop monitoring update recorded${done.geofenceBasis ? ` (verified inside ${basisText(done.geofenceBasis)})` : ""}${gpsNote ? ` ${gpsNote}` : ""}`
+      );
       setMonitoringPhotos([]);
       onSuccess?.();
     } catch (err: any) {

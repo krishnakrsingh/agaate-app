@@ -2,6 +2,7 @@
 import { FormEvent, useState, useEffect } from "react";
 import { Icons } from "./icons";
 import { PhotoUploadZone, PhotoItem, uploadEvidencePhotos } from "./photo-upload-zone";
+import { basisText, captureFieldGps as captureScoutGps } from "./scout-gps";
 import { useToast } from "./ui/toast";
 
 type Cycle = { id: string; cropName: string };
@@ -173,6 +174,16 @@ export function IncidentReportForm({
 
       setUploadProgress("Transmitting incident to central command…");
 
+      // Best-effort scouting GPS: verified inside the plot server-side, or
+      // auto-attached to the smallest containing fence (PLOT level).
+      // GPS failure never blocks the report.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      try {
+        gps = await captureScoutGps();
+      } catch {
+        gps = null;
+      }
+
       // 2. Submit incident payload
       const payload = {
         farmId,
@@ -184,6 +195,7 @@ export function IncidentReportForm({
         description: description.trim(),
         impactPercent: impactPercent !== "" ? Number(impactPercent) : null,
         mediaIds,
+        ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
       };
 
       const res = await fetch("/api/incidents", {
@@ -197,7 +209,14 @@ export function IncidentReportForm({
         throw new Error(body.error || "Failed to submit field incident.");
       }
 
-      toast.success("Field incident logged with photographic evidence.");
+      const done = await res.json().catch(() => ({}));
+      toast.success(
+        done.attachedPlotId && done.attachedPlotId !== finalPlotId
+          ? `Field incident logged — attached to plot by GPS (${basisText(done.geofenceBasis)}).`
+          : done.geofenceBasis
+            ? `Field incident logged (verified inside ${basisText(done.geofenceBasis)}).`
+            : "Field incident logged with photographic evidence."
+      );
       setPhotos([]);
       setDescription("");
       setUploadProgress(null);

@@ -15,11 +15,25 @@ import { ringAcres, type LngLat } from "@/lib/geo";
  * - `polygon` is a `[lng, lat]` ring (GeoJSON order, as returned by
  *   `parseBoundary`), or null when nothing is drawn yet.
  */
+export interface GeoMapPin {
+  key: string;
+  lat: number;
+  lng: number;
+  /** Fill color (use app-palette literals, e.g. #16a34a). */
+  color: string;
+  label: string;
+}
+
 export interface GeoMapProps {
   center: [number, number];
   polygon: LngLat[] | null;
   onChange: (ring: LngLat[] | null) => void;
   height?: number;
+  /**
+   * Optional status pins (task map, route stops). CircleMarkers only —
+   * no icon assets. Non-interactive except tooltips.
+   */
+  pins?: GeoMapPin[] | null;
   /**
    * Optional background fence (e.g. the parent farm boundary while drawing
    * a plot). Rendered dashed + non-interactive; never edited or emitted.
@@ -275,6 +289,39 @@ function TrackLayer({ track }: { track: LngLat[] | null }) {
 }
 
 /**
+ * Status pins layer (task map, route stops). CircleMarkers with tooltips —
+ * no icon assets, non-draggable, click-through except tooltip.
+ */
+function PinsLayer({ pins }: { pins: GeoMapPin[] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    const holder = map as unknown as { __pinLayers?: L.Layer[] };
+    for (const l of holder.__pinLayers ?? []) map.removeLayer(l);
+    holder.__pinLayers = [];
+    if (pins && pins.length > 0) {
+      const layers = pins
+        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
+        .map((p) => {
+          const m = L.circleMarker([p.lat, p.lng], {
+            radius: 9,
+            color: "#ffffff",
+            weight: 2,
+            fillColor: p.color,
+            fillOpacity: 1,
+            interactive: true,
+          });
+          m.bindTooltip(p.label, { direction: "top", offset: [0, -10] });
+          m.addTo(map);
+          return m;
+        });
+      holder.__pinLayers = layers;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, JSON.stringify(pins)]);
+  return null;
+}
+
+/**
  * Real OpenStreetMap-based parcel map (client-side only).
  *
  * IMPORTANT: import via `next/dynamic` with `{ ssr: false }`. This component
@@ -285,7 +332,7 @@ function TrackLayer({ track }: { track: LngLat[] | null }) {
  * <GeoMap center={[13.08, 77.59]} polygon={ring} onChange={setRing} height={360} />
  * ```
  */
-export function GeoMap({ center, polygon, onChange, height = 360, reference = null, track = null, interactive = true }: GeoMapProps) {
+export function GeoMap({ center, polygon, onChange, height = 360, reference = null, track = null, interactive = true, pins = null }: GeoMapProps) {
   // Client-side only: never render Leaflet during SSR.
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -340,8 +387,9 @@ export function GeoMap({ center, polygon, onChange, height = 360, reference = nu
           <TileLayer url={OSM_URL} attribution={OSM_ATTRIBUTION} maxZoom={19} />
         )}
         <GeomanController polygon={polygon} onChange={onChange} interactive={interactive} />
-        <ReferenceLayer ring={reference} fitWhenIdle={polygon === null && !track} />
+        <ReferenceLayer ring={reference} fitWhenIdle={polygon === null && !track && !pins} />
         <TrackLayer track={track} />
+        <PinsLayer pins={pins} />
         <Recenter center={center} hasPolygon={polygon !== null} />
       </MapContainer>
 

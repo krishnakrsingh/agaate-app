@@ -9,7 +9,8 @@
  * NEVER = no completion and no activity on record + no GPS hit in window.
  */
 
-import { pointInRing, parseBoundaryToRing, type LngLat } from "./geo-core";
+import { pointInRing, parseBoundaryToRing, representativePoint, type LngLat } from "./geo-core";
+import { distanceMeters } from "./business";
 
 export interface VisitPlot {
   id: string;
@@ -74,4 +75,70 @@ export function computePlotVisits(input: {
     if (ever) return { plotId: plot.id, name: plot.name, status: "MISSED", lastVisitAt: ever, via: null };
     return { plotId: plot.id, name: plot.name, status: "NEVER", lastVisitAt: null, via: null };
   });
+}
+
+export interface RouteStop {
+  plotId: string;
+  name: string;
+  status: "MISSED" | "NEVER";
+  lat: number;
+  lng: number;
+  /** Meters from the previous stop (0 for the first). */
+  legMeters: number;
+}
+
+/**
+ * Greedy nearest-neighbor walking order over unvisited fenced plots.
+ * Unfenced plots cannot be routed (no centroid) and are returned
+ * separately — never silently dropped, never faked.
+ */
+export function planVisitRoute(
+  start: { lat: number; lng: number },
+  visits: PlotVisit[],
+  fences: Record<string, LngLat[] | null>
+): { stops: RouteStop[]; unroutable: { plotId: string; name: string }[]; totalMeters: number } {
+  const targets = visits.filter((v) => v.status !== "VISITED");
+  const routable: { visit: PlotVisit; lat: number; lng: number }[] = [];
+  const unroutable: { plotId: string; name: string }[] = [];
+  for (const v of targets) {
+    const ring = fences[v.plotId];
+    if (!ring) {
+      unroutable.push({ plotId: v.plotId, name: v.name });
+      continue;
+    }
+    const [lng, lat] = representativePoint(ring);
+    routable.push({ visit: v, lat, lng });
+  }
+  const stops: RouteStop[] = [];
+  let curLat = start.lat;
+  let curLng = start.lng;
+  let totalMeters = 0;
+  const remaining = [...routable];
+  while (remaining.length > 0) {
+    let best = 0;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = distanceMeters(
+        { latitude: curLat, longitude: curLng },
+        { latitude: remaining[i].lat, longitude: remaining[i].lng }
+      );
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    const [next] = remaining.splice(best, 1);
+    totalMeters += bestDist;
+    stops.push({
+      plotId: next.visit.plotId,
+      name: next.visit.name,
+      status: next.visit.status === "MISSED" ? "MISSED" : "NEVER",
+      lat: next.lat,
+      lng: next.lng,
+      legMeters: Math.round(bestDist),
+    });
+    curLat = next.lat;
+    curLng = next.lng;
+  }
+  return { stops, unroutable, totalMeters: Math.round(totalMeters) };
 }

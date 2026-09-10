@@ -7,6 +7,8 @@ import { PlotForm } from "./plot-form";
 import { GridSplitForm } from "./grid-split-form";
 import { BoundaryHistory } from "./boundary-history";
 import { PlotCoverageCard } from "./plot-coverage-card";
+import { TaskMapCard } from "./task-map-card";
+import { VisitRouteCard } from "./visit-route-card";
 import { WeatherCard } from "./weather-card";
 import { FarmAccessManager } from "./farm-access-manager";
 import { FarmEditForm } from "./farm-edit-form";
@@ -538,6 +540,8 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
           )}
 
           <PlotCoverageCard farmId={farm.id} />
+          <TaskMapCard farmId={farm.id} />
+          <VisitRouteCard farmId={farm.id} farmCenter={[Number(farm.latitude), Number(farm.longitude)]} />
 
           {/* SPATIAL PLOT GRID */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 18 }}>
