@@ -7,211 +7,174 @@ import { emptyFarm } from "./onboarding-draft";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), { ssr: false });
 
-const inputStyle = { width: "100%" } as const;
+const inp: React.CSSProperties = { width: "100%", height: "34px", fontSize: 13 };
 
-function RowField({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function F({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
-    <div className="form-group" style={{ margin: 0 }}>
-      <label>{label}</label>
+    <div>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>{label}</label>
       {children}
-      {error && (
-        <span role="alert" style={{ color: "var(--semantic-error)", fontSize: 12 }}>
-          {error}
-        </span>
-      )}
+      {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
     </div>
   );
 }
 
-export function OnboardingStepFarms({
-  value,
-  onChange,
-  errors,
-}: {
-  value: FarmInput[];
-  onChange: (v: FarmInput[]) => void;
-  errors: Record<string, string>;
+export function OnboardingStepFarms({ value, onChange, errors }: {
+  value: FarmInput[]; onChange: (v: FarmInput[]) => void; errors: Record<string, string>;
 }) {
-  const [selected, setSelected] = useState(0);
+  const [sel, setSel] = useState(0);
   const [gpsBusy, setGpsBusy] = useState(false);
-  const [gpsError, setGpsError] = useState("");
+  const [gpsErr, setGpsErr] = useState("");
 
-  const clamped = Math.min(selected, Math.max(0, value.length - 1));
-  const current = value[clamped];
+  const idx = Math.min(sel, Math.max(0, value.length - 1));
+  const cur = value[idx];
 
-  const duplicateNames = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const f of value) {
-      const k = f.name.trim().toLowerCase();
-      if (k) counts.set(k, (counts.get(k) ?? 0) + 1);
-    }
-    return counts;
+  const dupNames = useMemo(() => {
+    const c = new Map<string, number>();
+    for (const f of value) { const k = f.name.trim().toLowerCase(); if (k) c.set(k, (c.get(k) ?? 0) + 1); }
+    return c;
   }, [value]);
 
-  const patch = (index: number, p: Partial<FarmInput>) => {
-    onChange(value.map((f, i) => (i === index ? { ...f, ...p } : f)));
-  };
+  const patch = (i: number, p: Partial<FarmInput>) => onChange(value.map((f, j) => (j === i ? { ...f, ...p } : f)));
+  const addRow = () => { if (value.length >= MAX_FARMS) return; onChange([...value, emptyFarm()]); setSel(value.length); };
+  const removeRow = (i: number) => { onChange(value.filter((_, j) => j !== i)); setSel(0); };
 
-  const addRow = () => {
-    if (value.length >= MAX_FARMS) return;
-    onChange([...value, emptyFarm()]);
-    setSelected(value.length);
-  };
-
-  const removeRow = (index: number) => {
-    onChange(value.filter((_, i) => i !== index));
-    setSelected(0);
-  };
-
-  const captureGps = () => {
-    setGpsError("");
-    if (!navigator.geolocation) {
-      setGpsError("Location is not supported on this device. Enter coordinates manually.");
-      return;
-    }
+  const gps = () => {
+    setGpsErr("");
+    if (!navigator.geolocation) { setGpsErr("Location not supported."); return; }
     setGpsBusy(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        patch(clamped, { latitude: pos.coords.latitude as unknown as number, longitude: pos.coords.longitude as unknown as number });
-        setGpsBusy(false);
-      },
-      (err) => {
-        setGpsBusy(false);
-        setGpsError(
-          err.code === 1 ? "Location permission was denied. Enter coordinates manually." : "Location is unavailable. Enter coordinates manually."
-        );
-      },
+      (p) => { patch(idx, { latitude: p.coords.latitude as unknown as number, longitude: p.coords.longitude as unknown as number }); setGpsBusy(false); },
+      (e) => { setGpsBusy(false); setGpsErr(e.code === 1 ? "Permission denied." : "Location unavailable."); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
-  const err = (i: number, field: string) => errors[`farms.${i}.${field}`];
-  const lat = Number(current?.latitude);
-  const lng = Number(current?.longitude);
+  const e = (i: number, f: string) => errors[`farms.${i}.${f}`];
+  const lat = Number(cur?.latitude), lng = Number(cur?.longitude);
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div className="section-block">
-        <div className="form-section-title">Step 2. Farms bulk add ({value.length}/{MAX_FARMS})</div>
-        <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
-          Add one row per farm. Select a row to edit its details and pin its location on the map.
-        </p>
-        {value.length === 0 && <p className="muted" style={{ fontSize: 13 }}>No farms yet. Use the button below to add the first farm row. Zero farms is allowed but flagged at review.</p>}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {value.map((f, i) => {
-            const rowErrors = Object.keys(errors).filter((k) => k.startsWith(`farms.${i}.`));
-            const dup = f.name.trim() && (duplicateNames.get(f.name.trim().toLowerCase()) ?? 0) > 1;
-            return (
-              <div
-                key={f.rowId ?? i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  border: `1px solid ${i === clamped ? "var(--ink)" : "var(--hairline)"}`,
-                  padding: "8px 10px",
-                  background: "var(--surface-card)",
-                }}
-              >
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelected(i)} aria-pressed={i === clamped}>
-                  Farm {i + 1}
-                </button>
-                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 13 }}>
-                  {f.name.trim() || <span className="muted">Unnamed farm</span>}
-                  {f.location.trim() ? <span className="muted"> — {f.location.trim()}</span> : null}
-                </span>
-                {dup && <span style={{ fontSize: 12, color: "var(--amber)" }}>Duplicate name</span>}
-                {rowErrors.length > 0 && (
-                  <span role="alert" style={{ fontSize: 12, color: "var(--semantic-error)" }}>
-                    {rowErrors.length} issue{rowErrors.length > 1 ? "s" : ""}
-                  </span>
-                )}
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeRow(i)} aria-label={`Remove farm ${i + 1}`}>
-                  <Icons.Trash size={14} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <button type="button" className="btn btn-secondary" onClick={addRow} disabled={value.length >= MAX_FARMS}>
-            <Icons.Plus size={15} />
-            <span>Add farm row</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Farm tab strip */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>
+            Farms <span style={{ fontWeight: 400 }}>{value.length}/{MAX_FARMS}</span>
+          </span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={addRow} disabled={value.length >= MAX_FARMS}>
+            <Icons.Plus size={13} /><span>Add farm</span>
           </button>
-          {value.length >= MAX_FARMS && <span className="muted" style={{ fontSize: 12 }}>Cap of {MAX_FARMS} farms reached for one onboarding.</span>}
         </div>
+
+        {value.length === 0 ? (
+          <div style={{ padding: "24px 0", textAlign: "center", borderTop: "1px solid var(--hairline)", borderBottom: "1px solid var(--hairline)", color: "var(--muted)", fontSize: 13 }}>
+            No farms yet — add the first one above.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {value.map((f, i) => {
+              const hasErr = Object.keys(errors).some((k) => k.startsWith(`farms.${i}.`));
+              const dup = f.name.trim() && (dupNames.get(f.name.trim().toLowerCase()) ?? 0) > 1;
+              const active = i === idx;
+              return (
+                <button
+                  key={f.rowId ?? i}
+                  type="button"
+                  onClick={() => setSel(i)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 12px",
+                    border: `1px solid ${active ? "var(--ink)" : hasErr ? "var(--semantic-error)" : "var(--hairline)"}`,
+                    borderRadius: "var(--radius-pill)", background: active ? "var(--ink)" : "transparent",
+                    color: active ? "#fff" : hasErr ? "var(--semantic-error)" : "var(--ink)",
+                    fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.1s",
+                  }}
+                >
+                  <span>{f.name.trim() || `Farm ${i + 1}`}</span>
+                  {(dup || hasErr) && <span style={{ opacity: 0.7 }}>⚠</span>}
+                  <span
+                    role="button"
+                    aria-label={`Remove ${f.name || `Farm ${i + 1}`}`}
+                    onClick={(ev) => { ev.stopPropagation(); removeRow(i); }}
+                    style={{ cursor: "pointer", opacity: 0.6, fontSize: 11, marginLeft: 2 }}
+                  >×</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {current && (
-        <div className="section-block" key={current.rowId ?? clamped}>
-          <div className="form-section-title">Farm {clamped + 1} details</div>
-          <div className="two-column">
-            <RowField label="Farm name" error={err(clamped, "name")}>
-              <input style={inputStyle} value={current.name} maxLength={120} onChange={(e) => patch(clamped, { name: e.target.value })} />
-            </RowField>
-            <RowField label="Location (village / town)" error={err(clamped, "location")}>
-              <input style={inputStyle} value={current.location} maxLength={180} onChange={(e) => patch(clamped, { location: e.target.value })} />
-            </RowField>
-            <RowField label="Latitude" error={err(clamped, "latitude")}>
-              <input style={inputStyle} type="number" step="any" value={current.latitude as unknown as string} onChange={(e) => patch(clamped, { latitude: e.target.value as unknown as number })} />
-            </RowField>
-            <RowField label="Longitude" error={err(clamped, "longitude")}>
-              <input style={inputStyle} type="number" step="any" value={current.longitude as unknown as string} onChange={(e) => patch(clamped, { longitude: e.target.value as unknown as number })} />
-            </RowField>
-            <RowField label="Total area (acres)" error={err(clamped, "totalArea")}>
-              <input style={inputStyle} type="number" step="0.01" min="0" value={current.totalArea as unknown as string} onChange={(e) => patch(clamped, { totalArea: e.target.value as unknown as number })} />
-            </RowField>
-            <RowField label="Cultivable area (acres)" error={err(clamped, "cultivableArea")}>
-              <input style={inputStyle} type="number" step="0.01" min="0" value={current.cultivableArea as unknown as string} onChange={(e) => patch(clamped, { cultivableArea: e.target.value as unknown as number })} />
-            </RowField>
-            <RowField label="Water source" error={err(clamped, "waterSource")}>
-              <input style={inputStyle} value={current.waterSource} maxLength={300} placeholder="e.g., Borewell + farm pond" onChange={(e) => patch(clamped, { waterSource: e.target.value })} />
-            </RowField>
-            <RowField label="Survey number" error={err(clamped, "surveyNumber")}>
-              <input style={inputStyle} value={current.surveyNumber ?? ""} maxLength={100} onChange={(e) => patch(clamped, { surveyNumber: e.target.value })} />
-            </RowField>
-            <RowField label="Village" error={err(clamped, "village")}>
-              <input style={inputStyle} value={current.village ?? ""} maxLength={100} onChange={(e) => patch(clamped, { village: e.target.value })} />
-            </RowField>
-            <RowField label="Taluk" error={err(clamped, "taluk")}>
-              <input style={inputStyle} value={current.taluk ?? ""} maxLength={100} onChange={(e) => patch(clamped, { taluk: e.target.value })} />
-            </RowField>
-            <RowField label="District" error={err(clamped, "district")}>
-              <input style={inputStyle} value={current.district ?? ""} maxLength={100} onChange={(e) => patch(clamped, { district: e.target.value })} />
-            </RowField>
-            <RowField label="State" error={err(clamped, "state")}>
-              <input style={inputStyle} value={current.state ?? ""} maxLength={100} onChange={(e) => patch(clamped, { state: e.target.value })} />
-            </RowField>
-            <RowField label="Soil type (optional)" error={err(clamped, "soilType")}>
-              <input style={inputStyle} value={current.soilType ?? ""} maxLength={100} placeholder="e.g., Red sandy loam" onChange={(e) => patch(clamped, { soilType: e.target.value })} />
-            </RowField>
+      {/* Farm detail — split: fields left, map right */}
+      {cur && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 24, alignItems: "start" }}>
+
+          {/* Left: fields in 2 sections */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Basic info</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
+                <F label="Farm name *" error={e(idx, "name")}>
+                  <input style={inp} value={cur.name} maxLength={120} onChange={(ev) => patch(idx, { name: ev.target.value })} />
+                </F>
+                <F label="Location *" error={e(idx, "location")}>
+                  <input style={inp} value={cur.location} maxLength={180} onChange={(ev) => patch(idx, { location: ev.target.value })} />
+                </F>
+                <F label="Water source *" error={e(idx, "waterSource")}>
+                  <input style={inp} value={cur.waterSource} maxLength={300} placeholder="Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} />
+                </F>
+                <F label="Total area (ac) *" error={e(idx, "totalArea")}>
+                  <input style={inp} type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} />
+                </F>
+                <F label="Cultivable area (ac) *" error={e(idx, "cultivableArea")}>
+                  <input style={inp} type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} />
+                </F>
+                <F label="Soil type" error={e(idx, "soilType")}>
+                  <input style={inp} value={cur.soilType ?? ""} maxLength={100} placeholder="Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} />
+                </F>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Land records</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
+                <F label="Survey no." error={e(idx, "surveyNumber")}><input style={inp} value={cur.surveyNumber ?? ""} maxLength={100} onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} /></F>
+                <F label="Village" error={e(idx, "village")}><input style={inp} value={cur.village ?? ""} maxLength={100} onChange={(ev) => patch(idx, { village: ev.target.value })} /></F>
+                <F label="Taluk" error={e(idx, "taluk")}><input style={inp} value={cur.taluk ?? ""} maxLength={100} onChange={(ev) => patch(idx, { taluk: ev.target.value })} /></F>
+                <F label="District" error={e(idx, "district")}><input style={inp} value={cur.district ?? ""} maxLength={100} onChange={(ev) => patch(idx, { district: ev.target.value })} /></F>
+                <F label="State" error={e(idx, "state")}><input style={inp} value={cur.state ?? ""} maxLength={100} onChange={(ev) => patch(idx, { state: ev.target.value })} /></F>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>GPS coordinates</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "12px 12px", alignItems: "end" }}>
+                <F label="Latitude *" error={e(idx, "latitude")}>
+                  <input style={inp} type="number" step="any" value={cur.latitude as unknown as string} onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} />
+                </F>
+                <F label="Longitude *" error={e(idx, "longitude")}>
+                  <input style={inp} type="number" step="any" value={cur.longitude as unknown as string} onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} />
+                </F>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 34, alignSelf: "end", marginBottom: e(idx,"latitude") || e(idx,"longitude") ? 18 : 0 }}>
+                  <Icons.MapPin size={13} /><span>{gpsBusy ? "…" : "GPS"}</span>
+                </button>
+              </div>
+              {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 4 }}>{gpsErr}</div>}
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={captureGps} disabled={gpsBusy}>
-              <Icons.MapPin size={14} />
-              <span>{gpsBusy ? "Capturing…" : "Use device GPS"}</span>
-            </button>
-            {gpsError && (
-              <span role="alert" style={{ fontSize: 12, color: "var(--semantic-error)" }}>
-                {gpsError}
-              </span>
-            )}
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Map pin</label>
+
+          {/* Right: map */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>Map pin</div>
             {hasCoords ? (
-              <GeoMap
-                center={[lat, lng]}
-                polygon={null}
-                onChange={() => undefined}
-                interactive={false}
-                height={260}
-                pins={[{ key: current.rowId ?? String(clamped), lat, lng, color: "#16a34a", label: current.name.trim() || `Farm ${clamped + 1}` }]}
-              />
+              <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--hairline)" }}>
+                <GeoMap center={[lat, lng]} polygon={null} onChange={() => undefined} interactive={false} height={300}
+                  pins={[{ key: cur.rowId ?? String(idx), lat, lng, color: "#16a34a", label: cur.name.trim() || `Farm ${idx + 1}` }]} />
+              </div>
             ) : (
-              <div className="muted" style={{ fontSize: 13, border: "1px dashed var(--hairline-strong)", padding: 16, textAlign: "center" }}>
-                Enter a valid latitude and longitude to preview the pin.
+              <div style={{ height: 140, border: "1.5px dashed var(--hairline-strong)", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--muted)", textAlign: "center", padding: 16 }}>
+                Enter lat/lng to preview map pin
               </div>
             )}
           </div>

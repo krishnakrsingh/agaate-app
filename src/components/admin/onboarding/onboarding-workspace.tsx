@@ -32,6 +32,14 @@ interface StageCounts {
   totalInFlight: number;
 }
 
+const STAGE_META: { key: string; label: string; short: string; emoji: string }[] = [
+  { key: "SURVEY_SOIL_TEST",  label: "Survey & Soil Test",  short: "Survey",      emoji: "🔬" },
+  { key: "PLOT_DEMARCATION",  label: "Plot Demarcation",    short: "Demarcation", emoji: "📐" },
+  { key: "BED_SOIL_PREP",     label: "Bed & Soil Prep",     short: "Bed Prep",    emoji: "🌱" },
+  { key: "IRRIGATION_LAYOUT", label: "Irrigation Layout",   short: "Irrigation",  emoji: "💧" },
+  { key: "HANDED_OVER",       label: "Handed Over",         short: "Done",        emoji: "✅" },
+];
+
 export function OnboardingWorkspace() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
@@ -153,7 +161,7 @@ export function OnboardingWorkspace() {
 
     for (const line of lines) {
       // Expect CSV format: name,location,lat,lng,totalArea,cultivableArea,waterSource
-      const parts = line.split(",").map((p) => p.trim().replace(/^["']|["']$/g, ""));
+      const parts = line.split(",").map((p) => p.trim().replace(/^['"]|['"]$/g, ""));
       if (parts.length < 6) {
         failCount++;
         continue;
@@ -190,123 +198,106 @@ export function OnboardingWorkspace() {
     loadPipeline();
   }
 
-  const stagesDef = [
-    { key: "SURVEY_SOIL_TEST", label: "1. Survey & Soil Test", count: stageCounts.SURVEY_SOIL_TEST },
-    { key: "PLOT_DEMARCATION", label: "2. Demarcation", count: stageCounts.PLOT_DEMARCATION },
-    { key: "BED_SOIL_PREP", label: "3. Bed Prep", count: stageCounts.BED_SOIL_PREP },
-    { key: "IRRIGATION_LAYOUT", label: "4. Irrigation", count: stageCounts.IRRIGATION_LAYOUT },
-    { key: "HANDED_OVER", label: "5. Handed Over", count: stageCounts.HANDED_OVER },
-  ];
+  const stageCountMap: Record<string, number> = {
+    SURVEY_SOIL_TEST: stageCounts.SURVEY_SOIL_TEST,
+    PLOT_DEMARCATION: stageCounts.PLOT_DEMARCATION,
+    BED_SOIL_PREP: stageCounts.BED_SOIL_PREP,
+    IRRIGATION_LAYOUT: stageCounts.IRRIGATION_LAYOUT,
+    HANDED_OVER: stageCounts.HANDED_OVER,
+  };
+
+  const nextStageMap: Record<string, string> = {
+    SURVEY_SOIL_TEST: "PLOT_DEMARCATION",
+    PLOT_DEMARCATION: "BED_SOIL_PREP",
+    BED_SOIL_PREP: "IRRIGATION_LAYOUT",
+    IRRIGATION_LAYOUT: "HANDED_OVER",
+    HANDED_OVER: "HANDED_OVER",
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
       {/* 1. Header & Quick Intake Actions */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-xl)",
-          padding: "20px 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "16px",
-        }}
-      >
+      <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-xl)", padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
         <div>
-          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+          <h2 style={{ fontSize: "20px", fontWeight: 700, color: "var(--ink)", margin: 0 }}>
             Onboarding Command Pipeline
           </h2>
-          <p style={{ fontSize: "14px", color: "var(--muted)", margin: "4px 0 0" }}>
+          <p style={{ fontSize: "13px", color: "var(--muted)", margin: "4px 0 0" }}>
             Real-time stage tracking, SLA bottleneck alerts, and dual intake engines for 1 farm to 500-farm enterprise portfolios.
           </p>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setBatchModalOpen(true)}
-          >
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBatchModalOpen(true)}>
             <Icons.Upload size={14} />
-            <span>Multi-Farm Batch Intake (500 Farms)</span>
+            <span>Multi-Farm Batch Intake</span>
           </button>
-
           <Link href="/farms/new" className="btn btn-primary btn-sm">
             <Icons.Plus size={14} />
-            <span>Single Farm Intake Wizard</span>
+            <span>New Client Onboarding</span>
           </Link>
         </div>
       </div>
 
-      {/* 2. 5-Stage Visual Workflow Stepper Bar */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          gap: "12px",
-        }}
-      >
-        {stagesDef.map((st) => {
+      {/* 2. 5-Stage Pill Filter Bar */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "10px" }}>
+        {STAGE_META.map((st) => {
           const isSelected = selectedStage === st.key;
+          const count = stageCountMap[st.key] ?? 0;
           return (
             <button
               key={st.key}
               type="button"
-              onClick={() => {
-                setSelectedStage(isSelected ? "ALL" : st.key);
-                setPage(1);
-              }}
+              onClick={() => { setSelectedStage(isSelected ? "ALL" : st.key); setPage(1); }}
               style={{
-                background: isSelected ? "var(--surface-strong)" : "var(--surface-card)",
-                border: isSelected ? "2px solid var(--primary)" : "1px solid var(--hairline)",
+                background: isSelected ? "var(--ink)" : "var(--surface-card)",
+                border: isSelected ? "1px solid var(--ink)" : "1px solid var(--hairline)",
                 borderRadius: "var(--radius-md)",
-                padding: "14px",
+                padding: "14px 12px",
                 textAlign: "left",
                 cursor: "pointer",
-                transition: "border-color 0.12s ease",
+                transition: "all 0.12s ease",
+                color: isSelected ? "#fff" : "inherit",
               }}
             >
-              <div style={{ fontSize: "11px", fontFamily: "var(--font-mono)", textTransform: "uppercase", color: "var(--muted)" }}>
-                {st.label}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <span style={{ fontSize: 14 }}>{st.emoji}</span>
+                <span style={{ fontSize: 10, fontFamily: "var(--font-mono)", textTransform: "uppercase" as const, color: isSelected ? "rgba(255,255,255,0.7)" : "var(--muted)", letterSpacing: "0.06em" }}>
+                  {st.short}
+                </span>
               </div>
-              <div style={{ fontSize: "22px", fontWeight: 600, color: "var(--ink)", marginTop: "4px" }}>
-                {st.count}
+              <div style={{ fontSize: "22px", fontWeight: 700, color: isSelected ? "#fff" : "var(--ink)", lineHeight: 1 }}>
+                {count}
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* 3. SLA Bottleneck Telemetry Ribbons */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          padding: "12px 18px",
-          background: "var(--canvas-soft)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-md)",
-          fontSize: "13px",
-          flexWrap: "wrap",
-        }}
-      >
-        <span style={{ fontWeight: 600, color: "var(--ink)" }}>SLA Health:</span>
+      {/* 3. SLA Health Ribbon */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 18px", background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", fontSize: "13px", flexWrap: "wrap" }}>
+        <span style={{ fontWeight: 700, color: "var(--ink)", fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>SLA Health</span>
+        <div style={{ width: 1, height: 16, background: "var(--hairline)", flexShrink: 0 }} />
+
         <button
           type="button"
           onClick={() => setSelectedSla(selectedSla === "OVERDUE" ? "ALL" : "OVERDUE")}
           style={{
-            background: selectedSla === "OVERDUE" ? "var(--red-light)" : "transparent",
-            color: "var(--red)",
-            border: "none",
-            fontWeight: 600,
-            cursor: "pointer",
-            padding: "4px 8px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "4px 10px",
             borderRadius: "var(--radius-pill)",
+            background: selectedSla === "OVERDUE" ? "var(--red-light)" : "transparent",
+            border: selectedSla === "OVERDUE" ? "1px solid var(--red)" : "1px solid transparent",
+            color: "var(--red)",
+            fontWeight: 700,
+            cursor: "pointer",
+            fontSize: 13,
           }}
         >
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)", flexShrink: 0 }} />
           {summary.slaOverdue} Overdue (&gt;45 days)
         </button>
 
@@ -314,20 +305,25 @@ export function OnboardingWorkspace() {
           type="button"
           onClick={() => setSelectedSla(selectedSla === "APPROACHING" ? "ALL" : "APPROACHING")}
           style={{
-            background: selectedSla === "APPROACHING" ? "var(--amber-light)" : "transparent",
-            color: "var(--amber)",
-            border: "none",
-            fontWeight: 600,
-            cursor: "pointer",
-            padding: "4px 8px",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "4px 10px",
             borderRadius: "var(--radius-pill)",
+            background: selectedSla === "APPROACHING" ? "var(--amber-light)" : "transparent",
+            border: selectedSla === "APPROACHING" ? "1px solid var(--amber)" : "1px solid transparent",
+            color: "var(--amber)",
+            fontWeight: 700,
+            cursor: "pointer",
+            fontSize: 13,
           }}
         >
-          {summary.slaApproaching} Approaching SLA (30–45 days)
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--amber)", flexShrink: 0 }} />
+          {summary.slaApproaching} Approaching (30–45 days)
         </button>
 
-        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
-          Total In-Flight: {summary.totalAcreage.toFixed(1)} acres
+        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", color: "var(--muted)", fontSize: 12 }}>
+          {summary.totalAcreage.toFixed(1)} ac in-flight
         </span>
       </div>
 
@@ -336,47 +332,31 @@ export function OnboardingWorkspace() {
         <input
           type="search"
           className="input-field"
-          placeholder="Search cases by farm name, survey no, district, owner..."
+          placeholder="Search by farm name, survey no, district, owner…"
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
           style={{ maxWidth: "340px", height: "36px", fontSize: "13px" }}
         />
 
         <select
           aria-label="Filter by Stage"
           value={selectedStage}
-          onChange={(e) => {
-            setSelectedStage(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => { setSelectedStage(e.target.value); setPage(1); }}
           style={{ height: "36px", fontSize: "13px" }}
         >
           <option value="ALL">All Stages</option>
-          <option value="SURVEY_SOIL_TEST">1. Survey & Soil Test</option>
-          <option value="PLOT_DEMARCATION">2. Plot Demarcation</option>
-          <option value="BED_SOIL_PREP">3. Bed & Soil Prep</option>
-          <option value="IRRIGATION_LAYOUT">4. Irrigation Layout</option>
-          <option value="HANDED_OVER">5. Handed Over</option>
+          {STAGE_META.map((st) => (
+            <option key={st.key} value={st.key}>{st.emoji} {st.label}</option>
+          ))}
         </select>
 
         {selectedIds.size > 0 && (
           <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-            <span style={{ fontSize: "13px", fontWeight: 600 }}>{selectedIds.size} selected</span>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => handleBulkAdvance("HANDED_OVER")}
-            >
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)" }}>{selectedIds.size} selected</span>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleBulkAdvance("HANDED_OVER")}>
               Handover Selected
             </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setSelectedIds(new Set())}
-            >
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSelectedIds(new Set())}>
               Clear
             </button>
           </div>
@@ -413,26 +393,22 @@ export function OnboardingWorkspace() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "32px", color: "var(--muted)" }}>
-                  Loading onboarding pipeline cases...
+                <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>
+                  Loading onboarding pipeline cases…
                 </td>
               </tr>
             ) : farms.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", padding: "32px", color: "var(--muted)" }}>
+                <td colSpan={7} style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>
                   No onboarding cases found matching active filters.
                 </td>
               </tr>
             ) : (
               farms.map((f) => {
-                const nextStageMap: Record<string, string> = {
-                  SURVEY_SOIL_TEST: "PLOT_DEMARCATION",
-                  PLOT_DEMARCATION: "BED_SOIL_PREP",
-                  BED_SOIL_PREP: "IRRIGATION_LAYOUT",
-                  IRRIGATION_LAYOUT: "HANDED_OVER",
-                  HANDED_OVER: "HANDED_OVER",
-                };
                 const nextStage = nextStageMap[f.setupStage] || "HANDED_OVER";
+                const nextMeta = STAGE_META.find((s) => s.key === nextStage);
+                const slaBg = f.slaStatus === "OVERDUE" ? "var(--red-light)" : f.slaStatus === "APPROACHING" ? "var(--amber-light)" : "var(--surface-strong)";
+                const slaColor = f.slaStatus === "OVERDUE" ? "var(--red)" : f.slaStatus === "APPROACHING" ? "var(--amber)" : "var(--muted)";
 
                 return (
                   <tr key={f.id}>
@@ -454,40 +430,23 @@ export function OnboardingWorkspace() {
                         {f.name}
                       </Link>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
-                        {f.ownerName} {f.client ? `(${f.client.name})` : ""} • {f.location}
+                        {f.ownerName}{f.client ? ` (${f.client.name})` : ""} · {f.location}
                       </div>
                     </td>
                     <td>
-                      <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", textTransform: "uppercase" }}>
-                        {f.setupStage.replaceAll("_", " ")}
-                      </span>
-                      <div style={{ width: "80px", height: "4px", background: "var(--hairline)", borderRadius: "2px", marginTop: "4px", overflow: "hidden" }}>
-                        <div style={{ width: `${f.setupProgress}%`, height: "100%", background: "var(--primary)" }} />
+                      <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--ink)" }}>
+                        {STAGE_META.find((s) => s.key === f.setupStage)?.emoji}{" "}
+                        {STAGE_META.find((s) => s.key === f.setupStage)?.label ?? f.setupStage.replaceAll("_", " ")}
+                      </div>
+                      {/* Progress bar */}
+                      <div style={{ width: "90px", height: "3px", background: "var(--hairline)", borderRadius: "2px", marginTop: "5px", overflow: "hidden" }}>
+                        <div style={{ width: `${f.setupProgress}%`, height: "100%", background: "var(--ink)", borderRadius: "2px" }} />
                       </div>
                     </td>
                     <td>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontFamily: "var(--font-mono)",
-                          fontWeight: 600,
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-pill)",
-                          background:
-                            f.slaStatus === "OVERDUE"
-                              ? "var(--red-light)"
-                              : f.slaStatus === "APPROACHING"
-                              ? "var(--amber-light)"
-                              : "var(--surface-strong)",
-                          color:
-                            f.slaStatus === "OVERDUE"
-                              ? "var(--red)"
-                              : f.slaStatus === "APPROACHING"
-                              ? "var(--amber)"
-                              : "var(--ink)",
-                        }}
-                      >
-                        {f.daysInStage}d • {f.slaStatus}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "11px", fontWeight: 700, padding: "3px 9px", borderRadius: "var(--radius-pill)", background: slaBg, color: slaColor }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: slaColor, flexShrink: 0 }} />
+                        {f.daysInStage}d · {f.slaStatus.replace("_", " ")}
                       </span>
                     </td>
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: "13px" }}>
@@ -498,17 +457,11 @@ export function OnboardingWorkspace() {
                     </td>
                     <td>
                       {f.setupStage !== "HANDED_OVER" ? (
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => handleAdvanceStage(f.id, nextStage)}
-                        >
-                          Advance → {nextStage.replaceAll("_", " ").slice(0, 8)}
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleAdvanceStage(f.id, nextStage)}>
+                          {nextMeta?.emoji} {nextMeta?.short ?? "Advance"}
                         </button>
                       ) : (
-                        <span className="status-badge active" style={{ fontSize: "10px" }}>
-                          COMPLETE
-                        </span>
+                        <span className="status-badge active" style={{ fontSize: "10px" }}>COMPLETE</span>
                       )}
                     </td>
                   </tr>
@@ -519,27 +472,17 @@ export function OnboardingWorkspace() {
         </table>
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-          >
-            ← Previous Page
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            ← Previous
           </button>
           <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
             Page {page} of {totalPages}
           </span>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            Next Page →
+          <button type="button" className="btn btn-secondary btn-sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+            Next →
           </button>
         </div>
       )}
@@ -549,79 +492,42 @@ export function OnboardingWorkspace() {
         <div
           role="dialog"
           aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 999,
-            display: "grid",
-            placeItems: "center",
-            background: "rgba(12, 10, 9, 0.4)",
-            padding: "20px",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 999, display: "grid", placeItems: "center", background: "rgba(12, 10, 9, 0.5)", padding: "20px" }}
         >
-          <div
-            style={{
-              background: "var(--canvas)",
-              border: "1px solid var(--hairline-strong)",
-              borderRadius: "var(--radius-xl)",
-              maxWidth: "600px",
-              width: "100%",
-              padding: "24px",
-              boxShadow: "var(--shadow-modal)",
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-          >
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--ink)", marginBottom: "6px" }}>
-              Enterprise Batch Farmland Provisioning
-            </h3>
-            <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "16px" }}>
-              Quickly intake up to 500 farms for enterprise clients without repeating the form 500 times. Paste CSV rows below:
-            </p>
+          <div style={{ background: "var(--canvas)", border: "1px solid var(--hairline-strong)", borderRadius: "var(--radius-xl)", maxWidth: "600px", width: "100%", padding: "0", boxShadow: "var(--shadow-modal)", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid var(--hairline)" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--ink)", margin: 0 }}>Enterprise Batch Farmland Provisioning</h3>
+              <p style={{ fontSize: "13px", color: "var(--muted)", margin: "5px 0 0" }}>
+                Intake up to 500 farms for enterprise clients. Paste CSV rows below.
+              </p>
+            </div>
 
-            <form onSubmit={handleBatchSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form onSubmit={handleBatchSubmit} style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
               <div className="form-group">
                 <label className="form-label">Target Client ID</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="e.g., client-1234 or paste Client CUID"
-                  value={batchClientId}
-                  onChange={(e) => setBatchClientId(e.target.value)}
-                  required
-                />
+                <input type="text" className="input-field" placeholder="e.g., client-1234 or paste Client CUID" value={batchClientId} onChange={(e) => setBatchClientId(e.target.value)} required />
               </div>
 
               <div className="form-group">
                 <label className="form-label">
-                  Farm Records (CSV format: Name, Location, Lat, Long, TotalAc, CultivableAc, WaterSource)
+                  Farm Records (CSV: Name, Location, Lat, Long, TotalAc, CultivableAc, WaterSource)
                 </label>
                 <textarea
                   className="input-field"
                   rows={8}
-                  placeholder={`"North Orchard 1", "Hosur, TN", 12.97, 77.59, 25.0, 20.0, "2x Borewells"
-"North Orchard 2", "Hosur, TN", 12.98, 77.60, 30.0, 25.0, "3x Borewells"`}
+                  placeholder={`"North Orchard 1", "Hosur, TN", 12.97, 77.59, 25.0, 20.0, "2x Borewells"\n"North Orchard 2", "Hosur, TN", 12.98, 77.60, 30.0, 25.0, "3x Borewells"`}
                   value={batchRawData}
                   onChange={(e) => setBatchRawData(e.target.value)}
                   required
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setBatchModalOpen(false)}
-                  disabled={isSubmittingBatch}
-                >
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setBatchModalOpen(false)} disabled={isSubmittingBatch}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSubmittingBatch}
-                >
-                  {isSubmittingBatch ? "Provisioning Farms..." : "Execute Batch Intake"}
+                <button type="submit" className="btn btn-primary" disabled={isSubmittingBatch}>
+                  {isSubmittingBatch ? "Provisioning Farms…" : "Execute Batch Intake"}
                 </button>
               </div>
             </form>

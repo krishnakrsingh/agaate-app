@@ -2,129 +2,93 @@
 import { useEffect, useRef, useState } from "react";
 import { previewClientCode, type ClientInput } from "./onboarding-schema";
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+const inp: React.CSSProperties = { width: "100%", height: "34px", fontSize: 13 };
+
+function F({ label, error, span, children }: { label: string; error?: string; span?: boolean; children: React.ReactNode }) {
   return (
-    <div className="form-group" style={{ margin: 0 }}>
-      <label>{label}</label>
+    <div style={{ gridColumn: span ? "1 / -1" : undefined }}>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>{label}</label>
       {children}
-      {error && (
-        <span role="alert" style={{ color: "var(--semantic-error)", fontSize: 12 }}>
-          {error}
-        </span>
-      )}
+      {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
     </div>
   );
 }
 
-const inputStyle = { width: "100%" } as const;
-
-export function OnboardingStepClient({
-  value,
-  onChange,
-  errors,
-  idempotencyKey,
-  asyncIssue,
-  onAsyncIssue,
-}: {
-  value: ClientInput;
-  onChange: (v: ClientInput) => void;
-  errors: Record<string, string>;
-  idempotencyKey: string;
-  asyncIssue: string | null;
-  onAsyncIssue: (msg: string | null) => void;
+export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, asyncIssue, onAsyncIssue }: {
+  value: ClientInput; onChange: (v: ClientInput) => void; errors: Record<string, string>;
+  idempotencyKey: string; asyncIssue: string | null; onAsyncIssue: (msg: string | null) => void;
 }) {
-  const set = (patch: Partial<ClientInput>) => onChange({ ...value, ...patch });
+  const set = (p: Partial<ClientInput>) => onChange({ ...value, ...p });
   const [checking, setChecking] = useState(false);
-  const [holder, setHolder] = useState<{ phoneHolder: string | null; emailHolder: string | null }>({ phoneHolder: null, emailHolder: null });
-  const lastQuery = useRef("");
+  const lastQ = useRef("");
 
   useEffect(() => {
-    const phone = (value.phone ?? "").trim();
-    const email = (value.email ?? "").trim();
-    if (!phone && !email) {
-      onAsyncIssue(null);
-      setHolder({ phoneHolder: null, emailHolder: null });
-      return;
-    }
-    const query = `${phone}::${email}`;
-    lastQuery.current = query;
-    setChecking(true);
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams();
-      if (phone) params.set("phone", phone);
-      if (email) params.set("email", email);
-      fetch(`/api/hq/onboarding/check-unique?${params.toString()}`, { cache: "no-store" })
+    const phone = (value.phone ?? "").trim(), email = (value.email ?? "").trim();
+    if (!phone && !email) { onAsyncIssue(null); return; }
+    const q = `${phone}::${email}`; lastQ.current = q; setChecking(true);
+    const t = setTimeout(() => {
+      const p = new URLSearchParams();
+      if (phone) p.set("phone", phone); if (email) p.set("email", email);
+      fetch(`/api/hq/onboarding/check-unique?${p}`, { cache: "no-store" })
         .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (lastQuery.current !== query || !d) return;
-          setHolder({ phoneHolder: d.phoneHolder ?? null, emailHolder: d.emailHolder ?? null });
-          const clash = d.phoneTaken
-            ? `Phone number already belongs to ${d.phoneHolder ?? "another record"}.`
-            : d.emailTaken
-              ? `Email address already belongs to ${d.emailHolder ?? "another record"}.`
-              : null;
-          onAsyncIssue(clash);
-        })
-        .catch(() => undefined)
-        .finally(() => {
-          if (lastQuery.current === query) setChecking(false);
-        });
+        .then((d) => { if (lastQ.current !== q || !d) return; const clash = d.phoneTaken ? `Phone belongs to ${d.phoneHolder ?? "another record"}.` : d.emailTaken ? `Email belongs to ${d.emailHolder ?? "another record"}.` : null; onAsyncIssue(clash); })
+        .catch(() => undefined).finally(() => { if (lastQ.current === q) setChecking(false); });
     }, 450);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [(value.phone ?? "").trim(), (value.email ?? "").trim()]);
 
   return (
-    <div className="section-block">
-      <div className="form-section-title">Step 1. Client information</div>
-      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
-        Client ID preview: <strong style={{ color: "var(--ink)" }}>{previewClientCode(idempotencyKey)}</strong>
-        <span style={{ marginLeft: 8 }}>The final ID is assigned on activation.</span>
-      </p>
-      <div className="two-column">
-        <Field label="Client / owner full name" error={errors["name"]}>
-          <input style={inputStyle} value={value.name} maxLength={120} placeholder="e.g., Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
-        </Field>
-        <Field label="Company / entity name (optional)" error={errors["companyName"]}>
-          <input style={inputStyle} value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} />
-        </Field>
-        <Field label="Mobile number" error={errors["phone"]}>
-          <input style={inputStyle} value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ phone: e.target.value })} />
-        </Field>
-        <Field label="Email address" error={errors["email"]}>
-          <input style={inputStyle} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} />
-        </Field>
-        <Field label="PAN (optional)" error={errors["panNumber"]}>
-          <input style={inputStyle} value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} />
-        </Field>
-        <Field label="GSTIN (optional)" error={errors["gstin"]}>
-          <input style={inputStyle} value={value.gstin ?? ""} maxLength={25} placeholder="29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} />
-        </Field>
-        <Field label="State" error={errors["state"]}>
-          <input style={inputStyle} value={value.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(e) => set({ state: e.target.value })} />
-        </Field>
-        <Field label="District" error={errors["district"]}>
-          <input style={inputStyle} value={value.district ?? ""} maxLength={100} placeholder="e.g., Chikkaballapur" onChange={(e) => set({ district: e.target.value })} />
-        </Field>
-        <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
-          <label>Billing address (optional)</label>
-          <input style={inputStyle} value={value.billingAddress ?? ""} maxLength={500} placeholder="Door no, street, town, PIN" onChange={(e) => set({ billingAddress: e.target.value })} />
-          {errors["billingAddress"] && (
-            <span role="alert" style={{ color: "var(--semantic-error)", fontSize: 12 }}>
-              {errors["billingAddress"]}
-            </span>
-          )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+
+      {/* Client ID */}
+      <div style={{ fontSize: 12, color: "var(--muted)" }}>
+        Preview ID: <code style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 700, fontSize: 13 }}>{previewClientCode(idempotencyKey)}</code>
+        <span style={{ marginLeft: 8 }}>— finalised on activation</span>
+      </div>
+
+      {/* Identity */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Identity & Contact</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px 20px" }}>
+          <F label="Full name *" error={errors["name"]}>
+            <input style={inp} value={value.name} maxLength={120} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
+          </F>
+          <F label="Company name" error={errors["companyName"]}>
+            <input style={inp} value={value.companyName ?? ""} maxLength={180} placeholder="Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} />
+          </F>
+          <div /> {/* spacer */}
+          <F label={`Mobile${checking ? " — checking…" : ""}`} error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
+            <input style={inp} value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="9876543210" onChange={(e) => set({ phone: e.target.value })} />
+          </F>
+          <F label="Email" error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
+            <input style={inp} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
+          </F>
         </div>
       </div>
-      {checking && <p className="muted" style={{ fontSize: 12 }}>Checking phone and email uniqueness…</p>}
-      {!checking && (holder.phoneHolder || holder.emailHolder) && !asyncIssue && (
-        <p className="muted" style={{ fontSize: 12 }}>Phone and email are available.</p>
-      )}
-      {asyncIssue && (
-        <div className="error" role="alert" style={{ marginTop: 8 }}>
-          <span>{asyncIssue}</span>
+
+      {/* Tax */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Tax & Location <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0 }}>(optional)</span></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px 20px" }}>
+          <F label="PAN" error={errors["panNumber"]}>
+            <input style={inp} value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} />
+          </F>
+          <F label="GSTIN" error={errors["gstin"]}>
+            <input style={inp} value={value.gstin ?? ""} maxLength={25} placeholder="29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} />
+          </F>
+          <div />
+          <F label="State" error={errors["state"]}>
+            <input style={inp} value={value.state ?? ""} maxLength={100} placeholder="Karnataka" onChange={(e) => set({ state: e.target.value })} />
+          </F>
+          <F label="District" error={errors["district"]}>
+            <input style={inp} value={value.district ?? ""} maxLength={100} placeholder="Chikkaballapur" onChange={(e) => set({ district: e.target.value })} />
+          </F>
+          <F label="Billing address" error={errors["billingAddress"]} span>
+            <input style={inp} value={value.billingAddress ?? ""} maxLength={500} placeholder="Door no, street, town, PIN" onChange={(e) => set({ billingAddress: e.target.value })} />
+          </F>
         </div>
-      )}
+      </div>
     </div>
   );
 }
