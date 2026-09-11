@@ -387,26 +387,16 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div className="farm-workspace">
       {/* =========================================================================
-         1. EXECUTIVE COMMAND HEADER
+         1. COMPACT EXECUTIVE HEADER (LINE-BASED & RESPONSIVE)
          ========================================================================= */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          padding: "18px 22px",
-          boxShadow: "var(--shadow-card)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
-          {/* Farm Title, Badges & Entity Subline */}
-          <div style={{ minWidth: 280, flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+      <header className="farm-exec-header">
+        <div className="farm-header-top">
+          {/* Farm Title & Badges */}
+          <div className="farm-title-group">
+            <h1 className="farm-title">{farm.name}</h1>
+            <div className="farm-badge-row">
               <StatusBadge status={farm.status} />
 
               <span
@@ -422,7 +412,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                 </span>
               ) : (
                 <span className="badge badge-amber" style={{ fontSize: 11, fontWeight: 600 }}>
-                  ⚠️ Boundary Demarcation Pending
+                  ⚠️ Demarcation Pending
                 </span>
               )}
 
@@ -440,86 +430,28 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                   background: "var(--surface-strong)",
                   border: "1px solid var(--hairline)",
                   borderRadius: "var(--radius-sm)",
-                  padding: "2px 8px",
+                  padding: "2px 7px",
                   fontSize: 11,
                   cursor: "pointer",
                   color: "var(--ink)",
                 }}
                 title={`Copy full ID: ${farm.id}`}
               >
-                <span>ID: {farm.id.slice(0, 10)}…</span>
+                <span>ID: {farm.id.slice(0, 8)}…</span>
                 <Icons.Copy size={10} />
               </button>
             </div>
-
-            <h1
-              style={{
-                fontSize: 24,
-                fontWeight: 700,
-                color: "var(--ink)",
-                margin: 0,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.25,
-              }}
-            >
-              {farm.name}
-            </h1>
-
-            {/* Subline: Client entity, Location, GPS, Survey number */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 6, fontSize: 12 }}>
-              {farm.client ? (
-                <Link
-                  href={`/clients/${farm.client.id}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    color: "var(--ink)",
-                    textDecoration: "none",
-                    fontWeight: 600,
-                  }}
-                  title={farm.client.companyName || farm.client.name}
-                >
-                  <Icons.Shield size={13} style={{ color: "var(--primary)" }} />
-                  <span>{farm.client.name}</span>
-                  {farm.client.code && <span className="mono-label" style={{ fontSize: 10 }}>({farm.client.code})</span>}
-                </Link>
-              ) : (
-                <span style={{ fontWeight: 500, color: "var(--body-strong)" }}>
-                  Owner: {farm.ownerName || "Private Estate"}
-                </span>
-              )}
-
-              <span className="muted">&bull;</span>
-
-              <span className="muted" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                <Icons.MapPin size={12} />
-                {[farm.village, farm.district, farm.state].filter(Boolean).join(", ") || farm.location}
-              </span>
-
-              <span className="muted">&bull;</span>
-
-              <span className="mono-label" style={{ fontSize: 11, color: "var(--muted)" }}>
-                {Number(farm.latitude).toFixed(4)}° N, {Number(farm.longitude).toFixed(4)}° E
-              </span>
-
-              <span className="muted">&bull;</span>
-
-              <span className="mono-label" style={{ fontSize: 11 }}>
-                {farm.surveyNumber ? `Survey #${farm.surveyNumber}` : "Survey # Pending"}
-              </span>
-            </div>
           </div>
 
-          {/* Action Bar on Header Right */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", flexShrink: 0 }}>
+          {/* Action Buttons */}
+          <div className="farm-actions-group">
             {!isHandedOver && stageIndex < SETUP_STAGES.length - 1 && (
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
                 disabled={advancing}
                 onClick={() => advanceStage(SETUP_STAGES[stageIndex + 1].key)}
-                style={{ fontSize: 12, height: 34 }}
+                style={{ fontSize: 12, height: 32 }}
               >
                 <span>{advancing ? "Advancing…" : `Advance to ${SETUP_STAGES[stageIndex + 1].label}`}</span>
                 <Icons.ArrowRight size={12} />
@@ -532,7 +464,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                 className="btn btn-primary btn-sm"
                 disabled={handingOver}
                 onClick={handover}
-                style={{ fontSize: 12, height: 34 }}
+                style={{ fontSize: 12, height: 32 }}
               >
                 <Icons.CheckCircle size={13} />
                 <span>{handingOver ? "Handing over…" : "Handover to Client"}</span>
@@ -540,7 +472,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             ) : (
               <span
                 className="badge badge-green"
-                style={{ fontSize: 12, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 5 }}
+                style={{ fontSize: 12, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 5 }}
               >
                 <Icons.Check size={12} />
                 <span>Handed Over &amp; Active</span>
@@ -551,7 +483,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={() => setActiveTab("settings")}
-              style={{ fontSize: 12, height: 34 }}
+              style={{ fontSize: 12, height: 32 }}
               title="Edit farm parameters"
             >
               <Icons.Settings size={13} />
@@ -559,147 +491,115 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             </button>
           </div>
         </div>
-      </div>
+
+        {/* Subline: Client entity, Location, GPS, Survey number */}
+        <div className="farm-subline">
+          {farm.client ? (
+            <Link
+              href={`/clients/${farm.client.id}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                color: "var(--ink)",
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+              title={farm.client.companyName || farm.client.name}
+            >
+              <Icons.Shield size={13} style={{ color: "var(--primary)" }} />
+              <span>{farm.client.name}</span>
+              {farm.client.code && <span className="mono-label" style={{ fontSize: 10 }}>({farm.client.code})</span>}
+            </Link>
+          ) : (
+            <span style={{ fontWeight: 500, color: "var(--body-strong)" }}>
+              Owner: {farm.ownerName || "Private Estate"}
+            </span>
+          )}
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Icons.MapPin size={12} />
+            {[farm.village, farm.district, farm.state].filter(Boolean).join(", ") || farm.location}
+          </span>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <span className="mono-label" style={{ fontSize: 11, color: "var(--muted)" }}>
+            {Number(farm.latitude).toFixed(4)}° N, {Number(farm.longitude).toFixed(4)}° E
+          </span>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <span className="mono-label" style={{ fontSize: 11 }}>
+            {farm.surveyNumber ? `Survey #${farm.surveyNumber}` : "Survey # Pending"}
+          </span>
+        </div>
+
+        {/* INLINE TELEMETRY STRIP (Line-based, replaces the 4 big cards!) */}
+        <div className="farm-telemetry-strip">
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Land:</span>
+            <span className="farm-telemetry-val">{farm.totalArea} ac claimed</span>
+            <span className="muted" style={{ fontSize: 11 }}>({farm.cultivableArea} ac cult.)</span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Parcels:</span>
+            <span className="farm-telemetry-val">{farm.plotsTotal} plots</span>
+            <span className="muted" style={{ fontSize: 11 }}>({activeCyclesCount} cycles)</span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Tasks:</span>
+            <span className="farm-telemetry-val">{farm.tasksOpen} open</span>
+            <span className="muted" style={{ fontSize: 11 }}>/ {farm.tasksTotal} total</span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Incidents:</span>
+            <span
+              className="farm-telemetry-val"
+              style={{ color: farm.incidentsOpen > 0 ? "var(--amber)" : "var(--ink)" }}
+            >
+              {farm.incidentsOpen > 0 ? `${farm.incidentsOpen} open` : "0 all clear"}
+            </span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Team:</span>
+            <span className="farm-telemetry-val">{farm.access.length} personnel</span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Geofence:</span>
+            <span className="farm-telemetry-val">{farm.geofenceRadiusMeters}m</span>
+          </div>
+
+          <span className="farm-telemetry-sep">&bull;</span>
+
+          <div className="farm-telemetry-item">
+            <span className="farm-telemetry-label">Pipeline:</span>
+            <span className="farm-telemetry-val">{farm.setupProgress}%</span>
+          </div>
+        </div>
+      </header>
 
       {/* =========================================================================
-         2. EXECUTIVE 4-PILLAR TELEMETRY RIBBON
+         2. LINE-BASED MODULE NAVIGATION TABS (NO PILLS, NO CLUNKY SCROLLBAR)
          ========================================================================= */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 12,
-        }}
-      >
-        {/* Pillar 1: Land & Boundary */}
-        <div
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            padding: "14px 16px",
-            boxShadow: "var(--shadow-card)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
-              LAND &amp; BOUNDARY
-            </span>
-            <Icons.Layers size={13} style={{ color: "var(--muted)" }} />
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            {farm.totalArea} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>ac claimed</span>
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
-            Cultivable: <strong style={{ color: "var(--ink)" }}>{farm.cultivableArea} ac</strong> &bull;{" "}
-            {farm.measuredAcres ? `${farm.measuredAcres} ac verified` : "Unmapped"}
-          </div>
-        </div>
-
-        {/* Pillar 2: Plots & Agronomy */}
-        <div
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            padding: "14px 16px",
-            boxShadow: "var(--shadow-card)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
-              PLOTS &amp; CROPS
-            </span>
-            <Icons.Plot size={13} style={{ color: "var(--muted)" }} />
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            {farm.plotsTotal} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>parcels</span>
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
-            Active cycles: <strong style={{ color: "var(--ink)" }}>{activeCyclesCount}</strong> &bull;{" "}
-            {farm.waterSource || "Borewell & Drip"}
-          </div>
-        </div>
-
-        {/* Pillar 3: Operations & Risks */}
-        <div
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            padding: "14px 16px",
-            boxShadow: "var(--shadow-card)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
-              OPERATIONS &amp; RISK
-            </span>
-            <Icons.Activity size={13} style={{ color: "var(--muted)" }} />
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: farm.incidentsOpen > 0 ? "var(--amber)" : "var(--ink)" }}>
-            {farm.incidentsOpen > 0 ? `${farm.incidentsOpen} Incident${farm.incidentsOpen > 1 ? "s" : ""}` : "All Clear"}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
-            Tasks: <strong style={{ color: "var(--ink)" }}>{farm.tasksOpen} open</strong> / {farm.tasksTotal} &bull;{" "}
-            Setup: {farm.setupProgress}%
-          </div>
-        </div>
-
-        {/* Pillar 4: Workforce & Governance */}
-        <div
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            padding: "14px 16px",
-            boxShadow: "var(--shadow-card)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
-              WORKFORCE &amp; GEOFENCE
-            </span>
-            <Icons.Users size={13} style={{ color: "var(--muted)" }} />
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
-            {farm.access.length} <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>personnel</span>
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)" }}>
-            Managers: <strong style={{ color: "var(--ink)" }}>{farm.access.filter((a) => a.canManage).length}</strong> &bull;{" "}
-            {farm.geofenceRadiusMeters}m geofence
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-         3. MODULE NAVIGATION TABS
-         ========================================================================= */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          background: "var(--surface-card)",
-          padding: "6px 8px",
-          borderRadius: "var(--radius-md)",
-          border: "1px solid var(--hairline)",
-          boxShadow: "var(--shadow-card)",
-          overflowX: "auto",
-          alignItems: "center",
-        }}
-      >
+      <nav className="farm-line-tabs" aria-label="Farm Management Tabs">
         {tabsConfig.map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -707,43 +607,14 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               key={t.key}
               type="button"
               onClick={() => setActiveTab(t.key)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
-                fontSize: 13,
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? "var(--ink)" : "var(--muted)",
-                background: isActive ? "var(--surface-strong)" : "transparent",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s ease",
-              }}
+              className={`farm-line-tab ${isActive ? "active" : ""}`}
             >
               <span>{t.label}</span>
               {t.count !== undefined && (
                 <span
-                  style={{
-                    fontSize: 11,
-                    padding: "1px 6px",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    background:
-                      t.key === "incidents" && t.count > 0
-                        ? "var(--amber-light)"
-                        : isActive
-                          ? "var(--surface-card)"
-                          : "var(--surface-strong)",
-                    color:
-                      t.key === "incidents" && t.count > 0
-                        ? "var(--amber)"
-                        : isActive
-                          ? "var(--ink)"
-                          : "var(--muted)",
-                  }}
+                  className={`farm-tab-badge ${isActive ? "active" : ""} ${
+                    t.key === "incidents" && t.count > 0 ? "urgent" : ""
+                  }`}
                 >
                   {t.count}
                 </span>
@@ -751,16 +622,18 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             </button>
           );
         })}
-      </div>
+      </nav>
+
       {/* =========================================================================
-         4. MODULE CONTENT PANELS
+         3. MODULE CONTENT PANELS (IMMEDIATELY VISIBLE IN UPPER FOLD!)
          ========================================================================= */}
+
 
       {/* -------------------------------------------------------------------------
          TAB: COCKPIT (OVERVIEW)
          ------------------------------------------------------------------------- */}
       {activeTab === "overview" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 14 }}>
+        <div className="farm-cockpit-grid">
           {/* Left Column: Spatial Digital Twin Cockpit */}
           <div
             style={{
@@ -797,7 +670,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             {/* Satellite Map */}
             <div
               style={{
-                height: 380,
+                height: 320,
                 borderRadius: "var(--radius-sm)",
                 overflow: "hidden",
                 border: "1px solid var(--hairline)",
@@ -808,7 +681,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                 center={farmCenter}
                 polygon={farmRing}
                 pins={plotPins}
-                height={380}
+                height={320}
                 interactive={false}
               />
 
@@ -853,9 +726,9 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </div>
             </div>
 
-            {/* Quick Plot Mini-Cards */}
+            {/* Quick Plot Line Rows */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
                   INTERNAL PARCELS ({farm.plots.length})
                 </span>
@@ -866,12 +739,13 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                     className="muted"
                     style={{ fontSize: 11, background: "none", border: "none", cursor: "pointer", padding: 0 }}
                   >
-                    View all &rarr;
+                    View in Studio &rarr;
                   </button>
                 )}
               </div>
+
               {farm.plots.length === 0 ? (
-                <div style={{ padding: "14px", textAlign: "center", fontSize: 12, color: "var(--muted)", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)" }}>
+                <div style={{ padding: "12px", textAlign: "center", fontSize: 12, color: "var(--muted)", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)" }}>
                   No internal plots demarcated yet.{" "}
                   <button
                     type="button"
@@ -885,28 +759,39 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", borderTop: "1px solid var(--hairline)" }}>
                   {farm.plots.slice(0, 4).map((p) => (
                     <Link
                       key={p.id}
                       href={`/plots/${p.id}`}
                       style={{
-                        padding: "8px 10px",
-                        background: "var(--canvas-soft)",
-                        border: "1px solid var(--hairline)",
-                        borderRadius: "var(--radius-sm)",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "8px 0",
+                        borderBottom: "1px solid var(--hairline)",
                         textDecoration: "none",
                         color: "inherit",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
+                        fontSize: 12,
                       }}
                     >
-                      <div style={{ fontWeight: 600, fontSize: 12, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {p.name}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <strong style={{ color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {p.name}
+                        </strong>
+                        <span className="muted">&bull;</span>
+                        <span style={{ fontFamily: "var(--font-mono)", color: "var(--muted)", whiteSpace: "nowrap" }}>
+                          {p.area} ac
+                        </span>
+                        {p.hasBoundary && (
+                          <span className="badge badge-green" style={{ fontSize: 9, padding: "1px 5px" }}>
+                            Fenced
+                          </span>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                        {p.area} ac &bull; {p.status}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                        <StatusBadge status={p.status} />
+                        <Icons.ArrowRight size={11} style={{ color: "var(--muted)" }} />
                       </div>
                     </Link>
                   ))}
@@ -915,23 +800,23 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             </div>
           </div>
 
-          {/* Right Column: Operational Engine & Baseline Telemetry */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Right Column: Operational Engine & Line-Based Telemetry */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {/* Setup Pipeline Stepper */}
             <div
               style={{
                 background: "var(--surface-card)",
                 border: "1px solid var(--hairline)",
                 borderRadius: "var(--radius-md)",
-                padding: 16,
+                padding: "14px 16px",
                 boxShadow: "var(--shadow-card)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
+                gap: 8,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                   Setup Pipeline Progress
                 </h3>
                 <span className="mono-label" style={{ fontSize: 11, fontWeight: 600 }}>
@@ -940,20 +825,20 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </div>
 
               {/* Progress bar */}
-              <div style={{ height: 6, background: "var(--surface-strong)", borderRadius: 3, overflow: "hidden" }}>
+              <div style={{ height: 4, background: "var(--surface-strong)", borderRadius: 2, overflow: "hidden" }}>
                 <div
                   style={{
                     height: "100%",
                     width: `${farm.setupProgress}%`,
                     background: isHandedOver ? "var(--green-ink)" : "var(--primary)",
-                    borderRadius: 3,
+                    borderRadius: 2,
                     transition: "width 0.3s ease",
                   }}
                 />
               </div>
 
               {/* 5-Step visual tracker */}
-              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 2 }}>
                 {SETUP_STAGES.map((s, i) => {
                   const isDone = i < stageIndex;
                   const isCurrent = i === stageIndex;
@@ -965,12 +850,12 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                       onClick={() => advanceStage(s.key)}
                       style={{
                         flex: 1,
-                        minWidth: 85,
-                        padding: "6px 8px",
+                        minWidth: 70,
+                        padding: "5px 6px",
                         borderRadius: "var(--radius-sm)",
                         fontSize: 11,
                         fontWeight: isCurrent ? 700 : 500,
-                        border: "1px solid var(--hairline)",
+                        border: isCurrent ? "1px solid var(--ink)" : "1px solid var(--hairline)",
                         cursor: isCurrent ? "default" : "pointer",
                         background: isDone
                           ? "var(--surface-strong)"
@@ -990,21 +875,21 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </div>
             </div>
 
-            {/* Baseline Soil & Hydrology Grid (Zero 'TBD' Clutter) */}
+            {/* Baseline Soil & Hydrology - Clean Line-Based Telemetry */}
             <div
               style={{
                 background: "var(--surface-card)",
                 border: "1px solid var(--hairline)",
                 borderRadius: "var(--radius-md)",
-                padding: 16,
+                padding: "14px 16px",
                 boxShadow: "var(--shadow-card)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
+                gap: 6,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                   Agronomy &amp; Infrastructure Baseline
                 </h3>
                 <button
@@ -1013,32 +898,32 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                   className="muted"
                   style={{ fontSize: 11, background: "none", border: "none", cursor: "pointer", padding: 0 }}
                 >
-                  Full details &rarr;
+                  Full specs &rarr;
                 </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12 }}>
-                <div style={{ padding: "8px 10px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Soil Classification</span>
+              <div style={{ display: "flex", flexDirection: "column", fontSize: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted">Soil Classification</span>
                   <strong style={{ color: "var(--ink)" }}>{farm.soilType || "Not profiled"}</strong>
                 </div>
 
-                <div style={{ padding: "8px 10px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>pH / Electrical Cond.</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted">pH &amp; Conductivity</span>
                   <strong style={{ color: "var(--ink)" }}>
                     {farm.soilPh ? `${farm.soilPh} pH` : "—"} / {farm.soilEc ? `${farm.soilEc} dS/m` : "—"}
                   </strong>
                 </div>
 
-                <div style={{ padding: "8px 10px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Hydrology Supply</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted">Hydrology Supply</span>
                   <strong style={{ color: "var(--ink)" }}>
-                    {farm.borewellCount ? `${farm.borewellCount} borewells` : "Surface source"}
+                    {farm.borewellCount ? `${farm.borewellCount} borewells` : "Surface source"} &bull; {farm.waterSource || "Drip"}
                   </strong>
                 </div>
 
-                <div style={{ padding: "8px 10px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Power &amp; Grid</span>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                  <span className="muted">Power &amp; Grid</span>
                   <strong style={{ color: "var(--ink)" }}>{farm.electricitySupply || "Standard Grid"}</strong>
                 </div>
               </div>
@@ -1051,23 +936,23 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                   background: "var(--amber-light)",
                   border: "1px solid var(--amber-light)",
                   borderRadius: "var(--radius-md)",
-                  padding: "12px 14px",
+                  padding: "10px 14px",
                   display: "flex",
                   alignItems: "flex-start",
                   gap: 10,
                 }}
               >
-                <Icons.AlertTriangle size={18} style={{ color: "var(--amber)", flexShrink: 0, marginTop: 2 }} />
+                <Icons.AlertTriangle size={16} style={{ color: "var(--amber)", flexShrink: 0, marginTop: 2 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <strong style={{ fontSize: 13, color: "var(--ink)" }}>
+                    <strong style={{ fontSize: 12, color: "var(--ink)" }}>
                       {farm.incidents[0]?.type || "Field Incident Open"}
                     </strong>
                     <span className="badge badge-amber" style={{ fontSize: 9 }}>
                       {farm.incidents[0]?.severity || "ACTION REQ"}
                     </span>
                   </div>
-                  <p style={{ margin: "2px 0 6px", fontSize: 12, color: "var(--ink)" }}>
+                  <p style={{ margin: "2px 0 4px", fontSize: 11, color: "var(--ink)" }}>
                     {farm.incidents[0]?.description || "Action requested by on-site field team."}
                   </p>
                   <button
@@ -1081,21 +966,21 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </div>
             )}
 
-            {/* Upcoming Field Tasks Queue */}
+            {/* Upcoming Field Tasks - Clean Line Rows */}
             <div
               style={{
                 background: "var(--surface-card)",
                 border: "1px solid var(--hairline)",
                 borderRadius: "var(--radius-md)",
-                padding: 16,
+                padding: "14px 16px",
                 boxShadow: "var(--shadow-card)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
+                gap: 8,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
                   Upcoming Field Tasks
                 </h3>
                 <button
@@ -1109,22 +994,20 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </div>
 
               {farm.tasks.length === 0 ? (
-                <div style={{ padding: "16px", textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
+                <div style={{ padding: "14px", textAlign: "center", fontSize: 12, color: "var(--muted)" }}>
                   No active field tasks scheduled.
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", flexDirection: "column", borderTop: "1px solid var(--hairline)" }}>
                   {farm.tasks.slice(0, 3).map((t) => (
                     <div
                       key={t.id}
                       style={{
-                        padding: "8px 10px",
-                        background: "var(--canvas-soft)",
-                        border: "1px solid var(--hairline)",
-                        borderRadius: "var(--radius-sm)",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
+                        padding: "8px 0",
+                        borderBottom: "1px solid var(--hairline)",
                         gap: 10,
                         fontSize: 12,
                       }}
@@ -1134,7 +1017,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                           {t.title}
                         </div>
                         <div className="muted" style={{ fontSize: 11 }}>
-                          {t.category} &bull; Assigned: {t.officer?.name || "Unassigned"}
+                          {t.category} &bull; {t.officer?.name || "Unassigned"}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
@@ -1625,113 +1508,159 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               background: "var(--surface-card)",
               border: "1px solid var(--hairline)",
               borderRadius: "var(--radius-md)",
-              padding: 18,
+              padding: 16,
+              boxShadow: "var(--shadow-card)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+                Client Entity &amp; Ownership Profile
+              </h3>
+              {farm.client && (
+                <Link href={`/clients/${farm.client.id}`} className="btn btn-secondary btn-sm" style={{ fontSize: 11, padding: "3px 10px" }}>
+                  <span>Open Client 360</span>
+                  <Icons.ArrowRight size={11} />
+                </Link>
+              )}
+            </div>
+
+            {farm.client ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, fontSize: 12 }}>
+                <div style={{ padding: "8px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Client Name</span>
+                  <strong style={{ color: "var(--ink)" }}>{farm.client.name}</strong>
+                  {farm.client.code && <div className="mono-label" style={{ fontSize: 10 }}>Code: {farm.client.code}</div>}
+                </div>
+
+                <div style={{ padding: "8px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Organization / Entity</span>
+                  <strong style={{ color: "var(--ink)" }}>{farm.client.companyName || "Private Estate Owner"}</strong>
+                </div>
+
+                <div style={{ padding: "8px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Direct Phone</span>
+                  <strong style={{ color: "var(--ink)" }}>{farm.client.phone || "—"}</strong>
+                </div>
+
+                <div style={{ padding: "8px 0", borderBottom: "1px solid var(--hairline)" }}>
+                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Email Address</span>
+                  <strong style={{ color: "var(--ink)" }}>{farm.client.email || "—"}</strong>
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: "10px 0", fontSize: 12, color: "var(--muted)" }}>
+                Owner: <strong style={{ color: "var(--ink)" }}>{farm.ownerName}</strong> (No linked corporate client record).
+              </div>
+            )}
+          </div>
+
+          {/* Onboarding Specs Matrix - Line-Based Specification Sheets */}
+          <div
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: 16,
               boxShadow: "var(--shadow-card)",
               display: "flex",
               flexDirection: "column",
               gap: 12,
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
-                Client Entity &amp; Ownership Profile
-              </h3>
-              {farm.client && (
-                <Link href={`/clients/${farm.client.id}`} className="btn btn-secondary btn-sm" style={{ fontSize: 12 }}>
-                  <span>Open Client 360</span>
-                  <Icons.ArrowRight size={12} />
-                </Link>
-              )}
-            </div>
-
-            {farm.client ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, fontSize: 13 }}>
-                <div style={{ padding: "10px 12px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Client Name</span>
-                  <strong style={{ color: "var(--ink)" }}>{farm.client.name}</strong>
-                  {farm.client.code && <div className="mono-label" style={{ fontSize: 10 }}>Code: {farm.client.code}</div>}
-                </div>
-
-                <div style={{ padding: "10px 12px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Organization / Entity</span>
-                  <strong style={{ color: "var(--ink)" }}>{farm.client.companyName || "Private Estate Owner"}</strong>
-                </div>
-
-                <div style={{ padding: "10px 12px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Direct Phone</span>
-                  <strong style={{ color: "var(--ink)" }}>{farm.client.phone || "—"}</strong>
-                </div>
-
-                <div style={{ padding: "10px 12px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)" }}>
-                  <span className="muted" style={{ display: "block", fontSize: 10 }}>Email</span>
-                  <strong style={{ color: "var(--ink)" }}>{farm.client.email || "—"}</strong>
-                </div>
-              </div>
-            ) : (
-              <div style={{ padding: "12px", background: "var(--canvas-soft)", borderRadius: "var(--radius-sm)", fontSize: 13 }}>
-                Owner: <strong>{farm.ownerName}</strong> (No linked corporate client record).
-              </div>
-            )}
-          </div>
-
-          {/* Onboarding Specs Matrix */}
-          <div
-            style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: 18,
-              boxShadow: "var(--shadow-card)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
               Onboarding Survey &amp; Agricultural Specifications
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
               {/* Box 1: Soil Chemistry & Profile */}
-              <div style={{ padding: 14, background: "var(--canvas-soft)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-sm)", display: "flex", flexDirection: "column", gap: 6 }}>
-                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: "0 0 6px" }}>
                   SOIL CHEMISTRY &amp; TERRAIN
                 </span>
-                <div style={{ fontSize: 13 }}>
-                  <div>Type: <strong>{farm.soilType || "Not profiled"}</strong></div>
-                  <div>Acidity: <strong>{farm.soilPh ? `${farm.soilPh} pH` : "Not measured"}</strong></div>
-                  <div>Conductivity: <strong>{farm.soilEc ? `${farm.soilEc} dS/m` : "Not measured"}</strong></div>
-                  <div>Organic Carbon: <strong>{farm.soilOrganicCarbon ? `${farm.soilOrganicCarbon}%` : "Not measured"}</strong></div>
-                  <div>Terrain Gradient: <strong>{farm.terrainType || "Standard plain"}</strong></div>
+                <div style={{ display: "flex", flexDirection: "column", fontSize: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Soil Type</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.soilType || "Not profiled"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Acidity (pH)</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.soilPh ? `${farm.soilPh} pH` : "Not measured"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Electrical Cond. (EC)</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.soilEc ? `${farm.soilEc} dS/m` : "Not measured"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Organic Carbon</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.soilOrganicCarbon ? `${farm.soilOrganicCarbon}%` : "Not measured"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                    <span className="muted">Terrain Gradient</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.terrainType || "Standard plain"}</strong>
+                  </div>
                 </div>
               </div>
 
               {/* Box 2: Hydrology & Power */}
-              <div style={{ padding: 14, background: "var(--canvas-soft)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-sm)", display: "flex", flexDirection: "column", gap: 6 }}>
-                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: "0 0 6px" }}>
                   HYDROLOGY &amp; POWER SOURCE
                 </span>
-                <div style={{ fontSize: 13 }}>
-                  <div>Water Source: <strong>{farm.waterSource}</strong></div>
-                  <div>Borewells: <strong>{farm.borewellCount ?? 0} borewells</strong></div>
-                  <div>Average Depth: <strong>{farm.borewellDepthFeet ? `${farm.borewellDepthFeet} ft` : "—"}</strong></div>
-                  <div>Yield Capacity: <strong>{farm.waterYieldGph ? `${farm.waterYieldGph.toLocaleString()} GPH` : "—"}</strong></div>
-                  <div>Power Supply: <strong>{farm.electricitySupply || "3-Phase / Grid"}</strong></div>
+                <div style={{ display: "flex", flexDirection: "column", fontSize: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Water Source</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.waterSource}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Borewells</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.borewellCount ?? 0} borewells</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Average Depth</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.borewellDepthFeet ? `${farm.borewellDepthFeet} ft` : "—"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Yield Capacity</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.waterYieldGph ? `${farm.waterYieldGph.toLocaleString()} GPH` : "—"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                    <span className="muted">Power Supply</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.electricitySupply || "3-Phase / Grid"}</strong>
+                  </div>
                 </div>
               </div>
 
               {/* Box 3: Commercial Terms & Legal Jurisdiction */}
-              <div style={{ padding: 14, background: "var(--canvas-soft)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-sm)", display: "flex", flexDirection: "column", gap: 6 }}>
-                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="eyebrow" style={{ fontSize: 10, color: "var(--muted)", margin: "0 0 6px" }}>
                   COMMERCIAL &amp; JURISDICTION
                 </span>
-                <div style={{ fontSize: 13 }}>
-                  <div>Contract Value: <strong>{farm.contractValue ? `₹${Number(farm.contractValue).toLocaleString("en-IN")}` : "Not booked"}</strong></div>
-                  <div>Survey Number: <strong>{farm.surveyNumber || "Pending revenue survey"}</strong></div>
-                  <div>Target Handover: <strong>{formatDate(farm.targetHandoverDate)}</strong></div>
-                  <div>Handed Over: <strong>{formatDate(farm.handedOverAt)}</strong></div>
-                  <div>Fencing: <strong>{farm.fencingType || "Standard perimeter"}</strong></div>
-                  <div>Jurisdiction: <strong>{[farm.village, farm.taluk, farm.district, farm.state, farm.pincode].filter(Boolean).join(", ") || farm.location}</strong></div>
+                <div style={{ display: "flex", flexDirection: "column", fontSize: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Contract Value</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.contractValue ? `₹${Number(farm.contractValue).toLocaleString("en-IN")}` : "Not booked"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Survey Number</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.surveyNumber || "Pending revenue survey"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Target Handover</span>
+                    <strong style={{ color: "var(--ink)" }}>{formatDate(farm.targetHandoverDate)}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--hairline)" }}>
+                    <span className="muted">Fencing Type</span>
+                    <strong style={{ color: "var(--ink)" }}>{farm.fencingType || "Standard perimeter"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                    <span className="muted">Jurisdiction</span>
+                    <strong style={{ color: "var(--ink)", textAlign: "right", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={[farm.village, farm.taluk, farm.district, farm.state, farm.pincode].filter(Boolean).join(", ") || farm.location}>
+                      {[farm.village, farm.district, farm.state].filter(Boolean).join(", ") || farm.location}
+                    </strong>
+                  </div>
                 </div>
               </div>
             </div>

@@ -1196,3 +1196,218 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   .app-brand-word { display: none; }
   .switcher-current-name { max-width: 65px; }
 }
+
+/* --- 19. Farm 360 Command Center & Line-Based Navigation --- */
+.farm-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.farm-exec-header {
+  background-color: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.farm-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.farm-title-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.farm-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.farm-badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.farm-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.farm-subline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.farm-telemetry-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--hairline);
+  padding-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.farm-telemetry-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.farm-telemetry-label {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.farm-telemetry-val {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.farm-telemetry-sep {
+  color: var(--hairline-strong);
+  user-select: none;
+}
+
+/* Line-based tab navigation */
+.farm-line-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border-bottom: 1px solid var(--hairline);
+  background-color: var(--surface-card);
+  padding: 0 12px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.farm-line-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.farm-line-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.farm-line-tab:hover {
+  color: var(--ink);
+}
+
+.farm-line-tab.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--ink);
+}
+
+.farm-tab-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  background-color: var(--surface-strong);
+  color: var(--muted);
+}
+
+.farm-tab-badge.active {
+  background-color: var(--surface-strong);
+  color: var(--ink);
+}
+
+.farm-tab-badge.urgent {
+  background-color: var(--amber-light);
+  color: var(--amber);
+}
+
+/* Cockpit Grid Responsive */
+.farm-cockpit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 960px) {
+  .farm-cockpit-grid {
+    grid-template-columns: 1fr;
+  }
+  .farm-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .farm-actions-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .farm-exec-header {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .farm-title {
+    font-size: 18px;
+  }
+  .farm-telemetry-strip {
+    gap: 6px;
+    font-size: 11px;
+  }
+  .farm-line-tab {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  .farm-telemetry-sep {
+    display: none;
+  }
+  .farm-telemetry-item {
+    background-color: var(--surface-strong);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+  }
+}
+
