@@ -14,6 +14,7 @@ import { POST as createPlotHandler } from "@/app/api/farms/[farmId]/plots/route"
 import { POST as createCropCycleHandler } from "@/app/api/plots/[plotId]/crop-cycles/route";
 import { POST as activateFarmHandler } from "@/app/api/farms/[farmId]/activate/route";
 import { GET as getTasksHandler, POST as createTaskHandler } from "@/app/api/tasks/route";
+import { POST as createOfficerTaskHandler } from "@/app/api/officer/tasks/route";
 import { PATCH as updateTaskHandler } from "@/app/api/tasks/[taskId]/route";
 import { POST as completeTaskHandler } from "@/app/api/tasks/[taskId]/complete/route";
 import { GET as getAttendanceHandler, POST as postAttendanceHandler } from "@/app/api/attendance/route";
@@ -454,6 +455,97 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(res.status).toBe(201);
       expect(data.assignedOfficerId).toBe(officerA.id);
       testTaskId = data.id;
+    });
+
+    it("creates task with photo evidence attachments and delivers primaryImageUrl (POST /api/tasks)", async () => {
+      const today = new Date();
+      const dateStr = today.toISOString().slice(0, 10);
+
+      // Create a verified media asset
+      const media = await prisma.mediaAsset.create({
+        data: {
+          storageKey: `evidence/${testFarmA.id}/${dateStr}/task-photo-test.jpg`,
+          kind: "ACTIVITY_EVIDENCE",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024,
+          farmId: testFarmA.id,
+          uploadedById: agronomist.id,
+          verifiedAt: new Date(),
+        },
+      });
+
+      const req = createJsonRequest(
+        "http://localhost:3000/api/tasks",
+        "POST",
+        {
+          farmId: testFarmA.id,
+          plotId: testPlot1.id,
+          cropCycleId: testCropCycle.id,
+          title: "Inspect Lateral Emitters with Photo Evidence",
+          description: "Check for clogging and attach photo reference",
+          category: "IRRIGATION_RECOMMENDATION",
+          priority: "HIGH",
+          date: dateStr,
+          assignedOfficerId: officerA.id,
+          mediaIds: [media.id],
+        },
+        agroCookie
+      );
+      const res = await withAuth(agroCookie, () => createTaskHandler(req));
+      const data = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(data.primaryImageUrl).toBeTruthy();
+      expect(data.media).toHaveLength(1);
+      expect(data.media[0].id).toBe(media.id);
+
+      // Verify GET /api/tasks also delivers primaryImageUrl
+      const getReq = createJsonRequest("http://localhost:3000/api/tasks", "GET", undefined, officerACookie);
+      const getRes = await withAuth(officerACookie, () => getTasksHandler(getReq));
+      const allTasks = await getRes.json();
+      const createdTask = allTasks.find((t: any) => t.id === data.id);
+      expect(createdTask).toBeDefined();
+      expect(createdTask.primaryImageUrl).toBeTruthy();
+    });
+
+    it("creates officer ad-hoc task with photo evidence (POST /api/officer/tasks)", async () => {
+      const today = new Date();
+      const dateStr = today.toISOString().slice(0, 10);
+
+      const media = await prisma.mediaAsset.create({
+        data: {
+          storageKey: `evidence/${testFarmA.id}/${dateStr}/officer-adhoc-photo.jpg`,
+          kind: "ACTIVITY_EVIDENCE",
+          mimeType: "image/jpeg",
+          sizeBytes: 2048,
+          farmId: testFarmA.id,
+          uploadedById: officerA.id,
+          verifiedAt: new Date(),
+        },
+      });
+
+      const req = createJsonRequest(
+        "http://localhost:3000/api/officer/tasks",
+        "POST",
+        {
+          farmId: testFarmA.id,
+          plotId: testPlot1.id,
+          category: "CULTURAL_PRACTICE",
+          title: "Field Leak Splice Fix with Camera Evidence",
+          instructions: "Coupled broken 16mm lateral",
+          priority: "URGENT",
+          startImmediately: true,
+          mediaIds: [media.id],
+        },
+        officerACookie
+      );
+      const res = await withAuth(officerACookie, () => createOfficerTaskHandler(req));
+      const data = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(data.status).toBe("IN_PROGRESS");
+      expect(data.primaryImageUrl).toBeTruthy();
+      expect(data.media).toHaveLength(1);
     });
 
     it("rejects task creation outside 7-day rolling window (422)", async () => {

@@ -1,0 +1,1 @@
+ALTER TABLE `Farm` ADD COLUMN `measuredAcres` DECIMAL(12,2) NULL;

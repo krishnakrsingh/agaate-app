@@ -24,7 +24,7 @@ export type CropRadarItem = {
   recentPhotosCount: number;
 };
 
-export function CropRadar({ items }: { items: CropRadarItem[] }) {
+export function CropRadar({ items, total }: { items: CropRadarItem[]; total?: number }) {
   const toast = useToast();
   const [selectedFarmFilter, setSelectedFarmFilter] = useState("ALL");
   const [selectedStageFilter, setSelectedStageFilter] = useState("ALL");
@@ -47,7 +47,7 @@ export function CropRadar({ items }: { items: CropRadarItem[] }) {
     return true;
   });
 
-  const totalCrops = items.length;
+  const totalCrops = total ?? items.length;
   const criticalStagesCount = items.filter(
     (i) => i.latestStage === "Flowering" || i.latestStage === "Fruiting"
   ).length;
@@ -135,9 +135,12 @@ export function CropRadar({ items }: { items: CropRadarItem[] }) {
         <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">
           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Total Supervised Crops</span>
           <div className="text-2xl font-bold text-white mt-2">
-            {totalCrops} <span className="text-xs text-zinc-500 font-normal">active cycles</span>
+            {totalCrops.toLocaleString()} <span className="text-xs text-zinc-500 font-normal">active cycles</span>
           </div>
-          <div className="text-xs text-zinc-500 mt-1">Across {farmNames.length} client farms</div>
+          <div className="text-xs text-zinc-500 mt-1">
+            Across {farmNames.length} client farms
+            {total != null && total > items.length && ` — showing ${items.length} most recent; narrow by farm`}
+          </div>
         </div>
 
         <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/60 backdrop-blur">

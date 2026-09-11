@@ -1,11 +1,30 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
+import { parseBoundary, toGeoJsonPolygon, ringAcres, type LngLat } from "@/lib/geo";
+
+const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
+  ssr: false,
+  loading: () => <div style={{ height: 300, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: 13 }}>Map loading…</div>,
+});
 
 const irrigationOptions = ["Drip", "Rain Pipe", "Sprinkler", "Flood", "Other"] as const;
 
-export function PlotForm({ farmId }: { farmId: string }) {
+const INDIA_CENTER: [number, number] = [20.59, 78.96];
+
+export function PlotForm({
+  farmId,
+  farmCenter,
+  farmBoundary,
+}: {
+  farmId: string;
+  /** [lat,lng] focus for the fence map (falls back to India center). */
+  farmCenter?: [number, number] | null;
+  /** Farm boundary GeoJSON string (any accepted form) shown as reference fence. */
+  farmBoundary?: string | null;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -14,6 +33,17 @@ export function PlotForm({ farmId }: { farmId: string }) {
 
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
+  const [ring, setRing] = useState<LngLat[] | null>(null);
+
+  const center = useMemo<[number, number]>(() => {
+    if (farmCenter && Number.isFinite(farmCenter[0]) && Number.isFinite(farmCenter[1])) return farmCenter;
+    const la = Number(lat);
+    const ln = Number(lng);
+    if (Number.isFinite(la) && Number.isFinite(ln)) return [la, ln];
+    return INDIA_CENTER;
+  }, [farmCenter, lat, lng]);
+  const reference = useMemo(() => parseBoundary(farmBoundary ?? null), [farmBoundary]);
+  const drawnAcres = ring ? ringAcres(ring) : 0;
 
   const capture = () => {
     if (!navigator.geolocation) {
@@ -73,6 +103,8 @@ export function PlotForm({ farmId }: { farmId: string }) {
       latitude: Number(f.get("latitude")),
       longitude: Number(f.get("longitude")),
       soilType: f.get("soilType") || null,
+      // Drawn fence: server validates containment + sets acres from geometry.
+      boundary: ring ? toGeoJsonPolygon(ring) : undefined,
       irrigation,
     };
 
@@ -91,9 +123,10 @@ export function PlotForm({ farmId }: { farmId: string }) {
       }
 
       setSuccess("Plot added successfully.");
-      router.refresh();
       formEl?.reset();
       setSelected(new Set(["Drip"]));
+      setRing(null);
+      window.location.reload();
     } catch {
       setPending(false);
       setError("Network error.");
@@ -122,8 +155,17 @@ export function PlotForm({ farmId }: { farmId: string }) {
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
-              <label>Plot Area (Acres)</label>
-              <input name="area" type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" required />
+              <label>Plot Area (Acres){ring ? " — set from fence" : ""}</label>
+              <input
+                name="area"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder="e.g., 2.5"
+                required={!ring}
+                disabled={!!ring}
+                title={ring ? `Server sets area from drawn fence (${drawnAcres.toFixed(2)} ac)` : undefined}
+              />
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
@@ -169,6 +211,22 @@ export function PlotForm({ farmId }: { farmId: string }) {
             <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
               <label>Soil Type (Optional)</label>
               <input name="soilType" placeholder="e.g., Red Sandy Loam (pH 6.8)" />
+            </div>
+
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 6 }}>
+                <label style={{ margin: 0 }}>Fence on Satellite (Optional)</label>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                  {ring
+                    ? `Drawn ${drawnAcres.toFixed(2)} ac — must sit inside the green farm fence`
+                    : farmBoundary
+                      ? "Draw inside the green farm fence — server sets acres from geometry"
+                      : "Satellite draw — server sets acres from geometry"}
+                </span>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <GeoMap center={center} polygon={ring} onChange={setRing} reference={reference} height={300} />
+              </div>
             </div>
           </div>
         </div>

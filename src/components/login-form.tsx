@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
+import { BrandLogo } from "./brand-logo";
 
 interface TestProfile {
   role: string;
@@ -76,6 +77,8 @@ const ALTERNATIVE_OFFICERS = [
   { name: "Pooja Deshmukh", region: "Nashik", email: "officer3@agaate.local" },
 ];
 
+const TEST_PASSWORD = "LocalAdminPassword-ChangeMe-123";
+
 export function LoginForm() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -83,7 +86,7 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [activeQuickEmail, setActiveQuickEmail] = useState<string | null>(null);
-  const [autoSubmit, setAutoSubmit] = useState(true);
+  const [copiedPass, setCopiedPass] = useState(false);
 
   async function performLogin(loginId: string, loginPass: string) {
     if (pending) return;
@@ -113,7 +116,7 @@ export function LoginForm() {
       } else if (userRole === "FARM_OFFICER") {
         targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {
-        targetUrl = "/agronomy/radar";
+        targetUrl = "/tasks";
       }
       window.location.replace(targetUrl);
     } catch {
@@ -128,28 +131,28 @@ export function LoginForm() {
     await performLogin(identifier, password);
   }
 
-  async function handleQuickLogin(email: string, fillOnly = false) {
+  async function handleQuickLogin(email: string) {
     if (pending) return;
+    setActiveQuickEmail(email);
     setIdentifier(email);
-    setPassword("LocalAdminPassword-ChangeMe-123");
-
-    if (autoSubmit && !fillOnly) {
-      setActiveQuickEmail(email);
-      await performLogin(email, "LocalAdminPassword-ChangeMe-123");
-    }
+    setPassword(TEST_PASSWORD);
+    await performLogin(email, TEST_PASSWORD);
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%", margin: "0 auto" }}>
       <div className="compact-card" style={{ padding: "28px 24px", gap: 20, boxShadow: "var(--shadow-card)", borderRadius: "var(--radius-md)" }}>
         <div>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>
-            <span className="eyebrow-dot" />
-            <span>AUTHENTICATED ACCESS</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <BrandLogo height={26} />
+            <div className="eyebrow" style={{ margin: 0 }}>
+              <span className="eyebrow-dot" />
+              <span>ACCESS PORTAL</span>
+            </div>
           </div>
-          <h2 className="section-title" style={{ margin: "0 0 4px", fontSize: "20px" }}>Sign in to Agaate</h2>
+          <h2 className="section-title" style={{ margin: "0 0 4px", fontSize: "19px" }}>Sign in to your account</h2>
           <p className="muted" style={{ margin: 0, fontSize: "13px" }}>
-            Precision farm operations and management portal.
+            Precision farm operations and agronomy management.
           </p>
         </div>
 
@@ -165,6 +168,7 @@ export function LoginForm() {
             <label htmlFor="login-identifier" style={{ fontSize: "13px", fontWeight: 600 }}>Mobile Number or Email</label>
             <input
               id="login-identifier"
+              name="email"
               type="text"
               required
               autoFocus
@@ -191,6 +195,7 @@ export function LoginForm() {
             </div>
             <input
               id="login-password"
+              name="password"
               type={showPassword ? "text" : "password"}
               required
               autoComplete="current-password"
@@ -207,8 +212,8 @@ export function LoginForm() {
             disabled={pending || !identifier || !password}
             style={{ width: "100%", marginTop: 4 }}
           >
-            <span>{pending && !activeQuickEmail ? "Authenticating…" : "Sign In to Operations"}</span>
-            {pending && !activeQuickEmail ? (
+            <span>{pending ? "Authenticating…" : "Sign In to Operations"}</span>
+            {pending ? (
               <Icons.Spinner className="spin" size={15} />
             ) : (
               <Icons.ArrowRight size={15} />
@@ -216,9 +221,9 @@ export function LoginForm() {
           </button>
         </form>
 
-        {/* Quick Sign-In For Testing */}
+        {/* Quick 1-Click Sign-In for 4 Persons of Authority (Testing Phase) */}
         <div style={{
-          marginTop: 10,
+          marginTop: 14,
           paddingTop: 18,
           borderTop: "1px dashed var(--line)",
           display: "flex",
@@ -227,41 +232,49 @@ export function LoginForm() {
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Icons.Zap size={14} style={{ color: "var(--green)" }} />
+              <Icons.Zap size={14} style={{ color: "var(--amber)" }} />
               <span className="mono-label" style={{ fontSize: "11px", letterSpacing: "0.06em", color: "var(--ink)", fontWeight: 700 }}>
-                QUICK TEST PROFILES
+                QUICK SIGN-IN: 4 PERSONS OF AUTHORITY
               </span>
             </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "11px", cursor: "pointer", userSelect: "none", margin: 0 }} className="muted">
-              <input
-                type="checkbox"
-                checked={autoSubmit}
-                onChange={(e) => setAutoSubmit(e.target.checked)}
-                style={{ width: 13, height: 13, accentColor: "var(--green)", cursor: "pointer" }}
-              />
-              <span>1-Click Sign In</span>
-            </label>
+            <span style={{
+              fontSize: "9.5px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              color: "var(--green)",
+              background: "var(--green-light)",
+              border: "1px solid rgba(36, 84, 58, 0.2)",
+              padding: "2px 6px",
+              borderRadius: "3px",
+              textTransform: "uppercase",
+            }}>
+              Testing Phase
+            </span>
           </div>
+
+          <p className="muted" style={{ margin: 0, fontSize: "11.5px", lineHeight: 1.4 }}>
+            Click any authority persona below to immediately authenticate into their role desk.
+          </p>
 
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
             gap: 8,
           }}>
             {TEST_PROFILES.map((profile) => {
               const Icon = profile.icon;
-              const isLoggingIn = activeQuickEmail === profile.email;
+              const isThisActive = pending && activeQuickEmail === profile.email;
               return (
                 <button
                   key={profile.role}
                   type="button"
                   disabled={pending}
                   onClick={() => handleQuickLogin(profile.email)}
-                  title={`Sign in as ${profile.roleLabel} (${profile.name})`}
+                  title={`1-Click Sign In as ${profile.roleLabel} (${profile.email})`}
                   style={{
                     textAlign: "left",
-                    background: "var(--canvas)",
-                    border: isLoggingIn ? `1.5px solid ${profile.accent}` : "1px solid var(--line)",
+                    background: isThisActive ? "var(--green-light)" : "var(--canvas)",
+                    border: `1px solid ${isThisActive ? "var(--green)" : "var(--line)"}`,
                     borderRadius: "var(--radius-sm)",
                     padding: "10px 12px",
                     display: "flex",
@@ -269,8 +282,7 @@ export function LoginForm() {
                     gap: 6,
                     transition: "all 0.15s ease",
                     cursor: pending ? "not-allowed" : "pointer",
-                    boxShadow: isLoggingIn ? "0 0 0 2px rgba(36, 84, 58, 0.15)" : "none",
-                    opacity: pending && !isLoggingIn ? 0.6 : 1,
+                    opacity: pending && !isThisActive ? 0.5 : 1,
                   }}
                   className="hover-glow"
                 >
@@ -293,7 +305,7 @@ export function LoginForm() {
                       <Icon size={11} />
                       {profile.badge}
                     </span>
-                    <span className="mono-label" style={{ fontSize: "9.5px", color: "var(--muted)" }}>
+                    <span className="mono-label" style={{ fontSize: "9px", color: "var(--muted)" }}>
                       {profile.target.replace("/", "")}
                     </span>
                   </div>
@@ -322,19 +334,19 @@ export function LoginForm() {
                     </span>
                     <span style={{
                       fontWeight: 650,
-                      color: isLoggingIn ? "var(--green)" : "var(--green)",
+                      color: isThisActive ? "var(--green-dark)" : "var(--green)",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 3,
                     }}>
-                      {isLoggingIn ? (
+                      {isThisActive ? (
                         <>
                           <Icons.Spinner className="spin" size={11} />
-                          <span>Entering…</span>
+                          <span>Signing in…</span>
                         </>
                       ) : (
                         <>
-                          <span>{autoSubmit ? "Sign In" : "Fill"}</span>
+                          <span>1-Click Sign In</span>
                           <Icons.ArrowRight size={10} />
                         </>
                       )}
@@ -345,44 +357,81 @@ export function LoginForm() {
             })}
           </div>
 
-          {/* Regional Officers footer */}
+          {/* Test credentials info pill */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 6,
+            fontSize: "10.5px",
+            padding: "6px 10px",
+            background: "var(--stone)",
+            borderRadius: "var(--radius-xs)",
+            border: "1px solid var(--stone)",
+          }}>
+            <span style={{ color: "var(--muted)" }}>
+              Test Password: <strong style={{ color: "var(--ink)", fontFamily: "var(--font-mono)" }}>{TEST_PASSWORD}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(TEST_PASSWORD);
+                setCopiedPass(true);
+                setTimeout(() => setCopiedPass(false), 2000);
+              }}
+              className="btn btn-link"
+              style={{ fontSize: "10.5px", padding: 0, display: "inline-flex", alignItems: "center", gap: 3, color: "var(--green)" }}
+            >
+              <Icons.Copy size={11} />
+              <span>{copiedPass ? "Copied!" : "Copy Password"}</span>
+            </button>
+          </div>
+
+          {/* Regional Field Officers */}
           <div style={{
             display: "flex",
             alignItems: "center",
             flexWrap: "wrap",
             gap: 6,
             fontSize: "10.5px",
-            padding: "8px 10px",
+            padding: "6px 10px",
             background: "var(--stone)",
             borderRadius: "var(--radius-xs)",
-            border: "1px solid var(--line)",
+            border: "1px solid var(--stone)",
             color: "var(--muted)",
           }}>
             <span style={{ fontWeight: 600, color: "var(--ink)" }}>Regional Officers:</span>
             {ALTERNATIVE_OFFICERS.map((alt) => {
-              const isLoggingIn = activeQuickEmail === alt.email;
+              const isThisAltActive = pending && activeQuickEmail === alt.email;
               return (
                 <button
                   key={alt.email}
                   type="button"
                   onClick={() => handleQuickLogin(alt.email)}
                   disabled={pending}
-                  className="btn btn-link"
+                  className="btn btn-link hover-glow"
                   style={{
                     fontSize: "10.5px",
-                    padding: "2px 6px",
-                    background: "var(--canvas)",
-                    border: "1px solid var(--line)",
+                    padding: "2px 8px",
+                    background: isThisAltActive ? "var(--green-light)" : "var(--canvas)",
+                    border: `1px solid ${isThisAltActive ? "var(--green)" : "var(--line)"}`,
                     borderRadius: "3px",
                     color: "var(--blue)",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 4,
                   }}
-                  title={`Sign in as ${alt.name} (${alt.region})`}
+                  title={`1-Click Sign In as ${alt.name} (${alt.email})`}
                 >
-                  {isLoggingIn && <Icons.Spinner className="spin" size={9} />}
-                  <span>{alt.name.split(" ")[0]} ({alt.region})</span>
+                  {isThisAltActive ? (
+                    <>
+                      <Icons.Spinner className="spin" size={10} />
+                      <span>{alt.name.split(" ")[0]}…</span>
+                    </>
+                  ) : (
+                    <span>{alt.name.split(" ")[0]} ({alt.region}) &rarr;</span>
+                  )}
                 </button>
               );
             })}

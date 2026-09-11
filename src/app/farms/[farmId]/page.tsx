@@ -1,9 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadUrl } from "@/lib/storage";
-import { FarmHubClient } from "@/components/farm-hub-client";
+import { FarmCommandCenter } from "@/components/admin/farm-command-center";
 import { Navbar } from "@/components/navbar";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,10 @@ export default async function FarmDetailPage({
   const { farmId } = await params;
   const session = await requireSession();
 
+  if (session.role === "SUPER_ADMIN") {
+    redirect(`/hq/farms/${farmId}`);
+  }
+
   try {
     await requireFarmAccess(farmId);
   } catch {
@@ -23,8 +27,14 @@ export default async function FarmDetailPage({
   }
 
   let farm;
+  let plotsTotal = 0;
+  let incidentsTotal = 0;
   try {
-    farm = await prisma.farm.findUniqueOrThrow({
+    // Bounded hub query: plots capped at 200 + total, incidents capped at
+    // recent 50 + total. The old build loaded every plot and every incident
+    // with a sequential signed-URL round-trip per row, blocking TTFB.
+    [farm, plotsTotal, incidentsTotal] = await Promise.all([
+    prisma.farm.findUniqueOrThrow({
       where: { id: farmId },
       include: {
         monitoring: {
@@ -33,13 +43,16 @@ export default async function FarmDetailPage({
         },
         incidents: {
           orderBy: { createdAt: "desc" },
+          take: 50,
           include: {
-            media: true,
+            media: { take: 1 },
             reporter: { select: { name: true } },
           },
         },
         plots: {
           where: { deletedAt: null },
+          orderBy: { name: "asc" },
+          take: 200,
           include: {
             irrigation: true,
             cropCycles: {
@@ -55,15 +68,19 @@ export default async function FarmDetailPage({
             user: { select: { id: true, name: true, email: true, role: true } },
           },
         },
+        client: {
+          select: { id: true, name: true, code: true, phone: true },
+        },
       },
-    });
+    }),
+    prisma.plot.count({ where: { farmId, deletedAt: null } }),
+    prisma.incident.count({ where: { farmId } }),
+    ]);
   } catch {
     return notFound();
   }
 
-  const canManage =
-    session.role === "SUPER_ADMIN" ||
-    farm.access.some((a) => a.userId === session.userId && a.canManage);
+  const canManage = farm.access.some((a) => a.userId === session.userId && a.canManage);
 
   // Serialized numbers and Dates to strings for React Client Component
   const serializedFarm = {
@@ -78,7 +95,35 @@ export default async function FarmDetailPage({
     cultivableArea: farm.cultivableArea.toString(),
     waterSource: farm.waterSource,
     status: farm.status,
+    setupStage: farm.setupStage,
+    setupProgress: farm.setupProgress,
+    handedOverAt: farm.handedOverAt ? farm.handedOverAt.toISOString() : null,
+    surveyNumber: farm.surveyNumber,
+    village: farm.village,
+    taluk: farm.taluk,
+    district: farm.district,
+    state: farm.state,
+    pincode: farm.pincode,
+    terrainType: farm.terrainType,
+    fencingType: farm.fencingType,
+    borewellCount: farm.borewellCount,
+    borewellDepthFeet: farm.borewellDepthFeet,
+    waterYieldGph: farm.waterYieldGph,
+    electricitySupply: farm.electricitySupply,
+    soilPh: farm.soilPh ? farm.soilPh.toString() : null,
+    soilEc: farm.soilEc ? farm.soilEc.toString() : null,
+    soilOrganicCarbon: farm.soilOrganicCarbon ? farm.soilOrganicCarbon.toString() : null,
+    proposedCrops: farm.proposedCrops,
+    contractValue: farm.contractValue ? farm.contractValue.toString() : null,
+    targetHandoverDate: farm.targetHandoverDate ? farm.targetHandoverDate.toISOString() : null,
+    client: farm.client ? {
+      id: farm.client.id,
+      name: farm.client.name,
+      code: farm.client.code,
+      phone: farm.client.phone,
+    } : null,
     geofenceRadiusMeters: farm.geofenceRadiusMeters,
+    boundaryGeoJson: farm.boundaryGeoJson,
     plots: farm.plots.map((p) => ({
       id: p.id,
       name: p.name,
@@ -87,6 +132,8 @@ export default async function FarmDetailPage({
       longitude: p.longitude.toString(),
       soilType: p.soilType,
       status: p.status,
+      boundaryGeoJson: p.boundaryGeoJson,
+      measuredAcres: p.measuredAcres ? p.measuredAcres.toString() : null,
       irrigation: p.irrigation.map((ir) => ({
         type: ir.type,
         details: ir.details,
@@ -159,13 +206,17 @@ export default async function FarmDetailPage({
         role: a.user.role,
       },
     })),
+    plotsTotal,
+    plotsTruncated: plotsTotal > farm.plots.length,
+    incidentsTotal,
+    incidentsTruncated: incidentsTotal > farm.incidents.length,
   };
 
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <FarmHubClient
+        <FarmCommandCenter
           farm={serializedFarm}
           role={session.role}
           canManage={canManage}

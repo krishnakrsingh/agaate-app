@@ -77,7 +77,7 @@ export function WeatherCard({ farmId }: { farmId: string }) {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 80px), 1fr))", gap: 8 }}>
-              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)" }}>
                 <div style={{ fontSize: "11px", color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icons.Droplet size={11} />
                   <span>Humidity</span>
@@ -85,7 +85,7 @@ export function WeatherCard({ farmId }: { farmId: string }) {
                 <strong className="data" style={{ fontSize: "14px", color: "var(--ink)" }}>{weather.current.relative_humidity_2m ?? "—"}%</strong>
               </div>
 
-              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)" }}>
                 <div style={{ fontSize: "11px", color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icons.Wind size={11} />
                   <span>Wind</span>
@@ -93,7 +93,7 @@ export function WeatherCard({ farmId }: { farmId: string }) {
                 <strong className="data" style={{ fontSize: "14px", color: "var(--ink)" }}>{weather.current.wind_speed_10m ?? "—"} km/h</strong>
               </div>
 
-              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+              <div style={{ padding: "8px 10px", background: "var(--stone)", borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)" }}>
                 <div style={{ fontSize: "11px", color: "var(--blue)", display: "flex", alignItems: "center", gap: 4 }}>
                   <Icons.CloudRain size={11} />
                   <span>Rain Max</span>

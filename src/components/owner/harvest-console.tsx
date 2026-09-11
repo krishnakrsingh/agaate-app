@@ -383,7 +383,7 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
                         borderRadius: "var(--radius-pill)",
                         background: log.grade === "GRADE_A" ? "var(--green-light)" : "var(--stone)",
                         color: log.grade === "GRADE_A" ? "var(--green-dark)" : "var(--ink)",
-                        border: "1px solid var(--line)",
+                        border: log.grade === "GRADE_A" ? "1px solid var(--green-light)" : "1px solid var(--stone)",
                       }}
                     >
                       {log.grade.replaceAll("_", " ")}

@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icons } from "./icons";
-import { getNavForRole, getMobileNavForRole, isActiveItem } from "./nav/config";
+import { getNavForRole, getMobileNavForRole, isActiveItem, ROLE_LABELS } from "./nav/config";
 import { FarmSwitcher } from "./nav/farm-switcher";
 import { ProfileMenu } from "./nav/profile-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { CommandPalette } from "./nav/command-palette";
 import { DesktopSidebar } from "./layout/desktop-sidebar";
+import { BrandLogo } from "./brand-logo";
 
 type Role = "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
 
@@ -45,16 +46,12 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
     Package: Icons.Package,
     Coins: Icons.Coins,
     Truck: Icons.Truck,
+    Navigation: Icons.Navigation,
     Stethoscope: Icons.Stethoscope,
     TrendingUp: Icons.TrendingUp,
     Zap: Icons.Zap,
-  };
-
-  const roleLabels: Record<string, string> = {
-    SUPER_ADMIN: "SUPER ADMIN",
-    FARM_ADMIN: "FARM OWNER",
-    AGRONOMIST: "AGRONOMIST",
-    FARM_OFFICER: "FARM MANAGER",
+    User: Icons.User,
+    AlertTriangle: Icons.AlertTriangle,
   };
 
   return (
@@ -80,13 +77,8 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
           {/* Left: Brand & Farm Switcher Instrument */}
           <div className="app-header-left">
             <Link href="/" className="app-brand" aria-label="Agaate Precision Agriculture Home">
-              <span className="app-brand-mark">
-                <Icons.Sprout size={16} />
-              </span>
-              <div className="app-brand-text">
-                <span className="app-brand-word">AGAATE</span>
-                <span className="app-brand-tag">OPS CONSOLE</span>
-              </div>
+              <BrandLogo height={26} priority />
+              <span className="app-brand-tag">OPS</span>
             </Link>
 
             <div className="app-header-sep" aria-hidden />
@@ -127,17 +119,19 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
 
             {/* Role Badge */}
             <div className="header-role-badge">
-              {roleLabels[role] ?? role.replaceAll("_", " ")}
+              {ROLE_LABELS[role] ?? role.replaceAll("_", " ")}
             </div>
 
             {/* Quick 1-Click Theme Toggle */}
             <ThemeToggle />
 
-            {/* Separator */}
-            <div className="app-header-sep" aria-hidden />
-
-            {/* Profile Dropdown */}
-            <ProfileMenu role={role} userName={userName} />
+            {/* Profile Dropdown (Only for roles without dedicated bottom Profile tab) */}
+            {role !== "FARM_OFFICER" && (
+              <>
+                <div className="app-header-sep" aria-hidden />
+                <ProfileMenu role={role} userName={userName} />
+              </>
+            )}
           </div>
         </div>
       </header>

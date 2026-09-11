@@ -2,13 +2,23 @@
 import { FormEvent, useState, useEffect } from "react";
 import { Icons } from "./icons";
 import { PhotoUploadZone, PhotoItem, uploadEvidencePhotos } from "./photo-upload-zone";
+import { basisText, captureFieldGps as captureScoutGps } from "./scout-gps";
 import { useToast } from "./ui/toast";
 
 type Cycle = { id: string; cropName: string };
 type Plot = { id: string; name: string; cropCycles: Cycle[] };
 type Farm = { id: string; name: string; plots: Plot[] };
 
-const incidentTypes = [
+const CATEGORIES = [
+  { id: "pest", label: "Pest / Disease", icon: "🐛", defaultType: "Pest Damage" },
+  { id: "irrigation", label: "Irrigation / Pipe", icon: "💧", defaultType: "Irrigation Leakage" },
+  { id: "equipment", label: "Motor / Power", icon: "⚡", defaultType: "Pump / Motor Failure" },
+  { id: "crop", label: "Crop Distress", icon: "🌱", defaultType: "Nutrient Deficiency" },
+  { id: "trellis", label: "Trellis / Net", icon: "🏗", defaultType: "Trellis / Net Damage" },
+  { id: "other", label: "Other Hazard", icon: "⚠️", defaultType: "Other Operational Hazard" },
+];
+
+const ALL_TYPES = [
   "Pest Damage",
   "Disease Infestation",
   "Nutrient Deficiency",
@@ -42,12 +52,19 @@ export function IncidentReportForm({
   const [plotId, setPlotId] = useState(initialPlotId || "");
   const [cycleId, setCycleId] = useState(initialCropCycleId || "");
 
-  const [incidentLevel, setIncidentLevel] = useState<"CROP" | "PLOT" | "FARM">("CROP");
+  // Category and Type
+  const [selectedCategory, setSelectedCategory] = useState("pest");
+  const [incidentType, setIncidentType] = useState("Pest Damage");
+
+  // Severity
   const [severity, setSeverity] = useState<"CRITICAL" | "HIGH" | "MEDIUM" | "LOW">("HIGH");
-  const [incidentType, setIncidentType] = useState(incidentTypes[0]);
+
+  // Content
   const [description, setDescription] = useState("");
+  const [affectsCrop, setAffectsCrop] = useState(true);
   const [impactPercent, setImpactPercent] = useState<number | "">("");
 
+  // Photos & Progress
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -81,23 +98,60 @@ export function IncidentReportForm({
   const activePlot = farm?.plots.find((p) => p.id === plotId);
   const availableCrops = activePlot?.cropCycles ?? [];
 
+  // When plot changes, auto-select first active crop cycle if available
+  useEffect(() => {
+    if (availableCrops.length > 0) {
+      setCycleId(availableCrops[0].id);
+      setAffectsCrop(true);
+    } else {
+      setCycleId("");
+      setAffectsCrop(false);
+    }
+  }, [plotId, availableCrops.length]);
+
+  const handleCategorySelect = (catId: string) => {
+    setSelectedCategory(catId);
+    const cat = CATEGORIES.find((c) => c.id === catId);
+    if (cat) {
+      setIncidentType(cat.defaultType);
+      if (catId === "irrigation" || catId === "equipment" || catId === "trellis") {
+        setAffectsCrop(false);
+      } else {
+        if (availableCrops.length > 0) setAffectsCrop(true);
+      }
+    }
+  };
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!farmId) {
       setError("Please select a farm estate.");
       return;
     }
-    if (incidentLevel === "PLOT" && !plotId) {
-      setError("Please select the affected plot.");
-      return;
-    }
-    if (incidentLevel === "CROP" && (!plotId || !cycleId)) {
-      setError("Please select both the plot and active crop cycle.");
-      return;
-    }
+
     if (!description.trim()) {
-      setError("Please provide details of the incident.");
+      setError("Please describe what occurred in the field.");
       return;
+    }
+
+    // Determine backend relational level:
+    // 1. If no plot or "FARM_WIDE" -> level: "FARM", plotId: null, cropCycleId: null
+    // 2. If plot selected:
+    //    - If affectsCrop && cycleId -> level: "CROP", plotId: plotId, cropCycleId: cycleId
+    //    - Otherwise -> level: "PLOT", plotId: plotId, cropCycleId: null
+    let level: "FARM" | "PLOT" | "CROP" = "FARM";
+    let finalPlotId: string | null = null;
+    let finalCropCycleId: string | null = null;
+
+    if (plotId && plotId !== "FARM_WIDE") {
+      finalPlotId = plotId;
+      if (affectsCrop && cycleId) {
+        level = "CROP";
+        finalCropCycleId = cycleId;
+      } else {
+        level = "PLOT";
+        finalCropCycleId = null;
+      }
     }
 
     setPending(true);
@@ -105,7 +159,7 @@ export function IncidentReportForm({
     setUploadProgress(null);
 
     try {
-      // 1. Upload photos to S3 with progress updates
+      // 1. Upload photos with resilient direct/S3 fallback
       let mediaIds: string[] = [];
       if (photos.length > 0) {
         mediaIds = await uploadEvidencePhotos(
@@ -113,24 +167,35 @@ export function IncidentReportForm({
           "INCIDENT_PHOTO",
           photos,
           (idx, total) => {
-            setUploadProgress(`Securing evidence photo ${idx} of ${total} on S3…`);
+            setUploadProgress(`Securing evidence photo ${idx} of ${total}…`);
           }
         );
       }
 
-      setUploadProgress("Recording incident in central operations log…");
+      setUploadProgress("Transmitting incident to central command…");
+
+      // Best-effort scouting GPS: verified inside the plot server-side, or
+      // auto-attached to the smallest containing fence (PLOT level).
+      // GPS failure never blocks the report.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      try {
+        gps = await captureScoutGps();
+      } catch {
+        gps = null;
+      }
 
       // 2. Submit incident payload
       const payload = {
         farmId,
-        plotId: incidentLevel !== "FARM" ? plotId || null : null,
-        cropCycleId: incidentLevel === "CROP" ? cycleId || null : null,
-        level: incidentLevel,
+        plotId: finalPlotId,
+        cropCycleId: finalCropCycleId,
+        level,
         type: incidentType,
         severity,
         description: description.trim(),
         impactPercent: impactPercent !== "" ? Number(impactPercent) : null,
         mediaIds,
+        ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
       };
 
       const res = await fetch("/api/incidents", {
@@ -144,7 +209,14 @@ export function IncidentReportForm({
         throw new Error(body.error || "Failed to submit field incident.");
       }
 
-      toast.success("Field incident logged with photographic evidence.");
+      const done = await res.json().catch(() => ({}));
+      toast.success(
+        done.attachedPlotId && done.attachedPlotId !== finalPlotId
+          ? `Field incident logged — attached to plot by GPS (${basisText(done.geofenceBasis)}).`
+          : done.geofenceBasis
+            ? `Field incident logged (verified inside ${basisText(done.geofenceBasis)}).`
+            : "Field incident logged with photographic evidence."
+      );
       setPhotos([]);
       setDescription("");
       setUploadProgress(null);
@@ -160,279 +232,77 @@ export function IncidentReportForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="compact-card"
       style={{
-        padding: 24,
-        gap: 20,
-        borderRadius: "var(--radius-md)",
-        boxShadow: "var(--shadow-card)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        padding: "16px 18px",
+        borderRadius: "16px",
+        border: "1px solid var(--card)",
+        backgroundColor: "var(--card)",
       }}
     >
-      {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      {/* 1. COMPACT HEADER */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
         <div>
-          <div className="eyebrow" style={{ color: "var(--red)" }}>
-            <span className="eyebrow-dot" style={{ backgroundColor: "var(--red)" }} />
-            <span>FIELD HAZARD ESCALATION</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "var(--red)" }} />
+            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--red)" }}>
+              FIELD HAZARD ESCALATION
+            </span>
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, margin: "4px 0 0", color: "var(--ink)" }}>
-            Report Agricultural Field Incident
+          <h2 style={{ fontSize: "17px", fontWeight: 750, color: "var(--ink)", margin: 0, lineHeight: 1.2 }}>
+            Report Field Incident
           </h2>
-          <p className="muted" style={{ margin: "2px 0 0", fontSize: 13 }}>
-            Document crop distress, infrastructure failures, or operational hazards with real-time photographic evidence.
+          <p className="muted" style={{ margin: "2px 0 0", fontSize: "12px" }}>
+            Snap evidence photos, tag location, and notify agronomy.
           </p>
         </div>
 
         {onCancel && (
           <button
             type="button"
-            className="btn btn-sm btn-secondary"
+            className="btn btn-secondary"
             onClick={onCancel}
+            style={{
+              width: 32,
+              height: 32,
+              padding: 0,
+              borderRadius: "9999px",
+              display: "grid",
+              placeItems: "center",
+            }}
             title="Cancel"
           >
-            <Icons.X size={15} />
+            <Icons.X size={14} />
           </button>
         )}
       </div>
 
       {error && (
-        <div className="alert alert-danger" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Icons.AlertTriangle size={16} />
+        <div
+          className="alert alert-danger"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            fontSize: "12px",
+            borderRadius: "10px",
+          }}
+        >
+          <Icons.AlertTriangle size={14} />
           <span>{error}</span>
         </div>
       )}
 
-      {/* 1. SEVERITY LEVEL SELECTOR */}
-      <div className="form-group" style={{ margin: 0 }}>
-        <label style={{ fontWeight: 600, color: "var(--ink)" }}>Severity Level</label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-          <button
-            type="button"
-            className={`btn ${severity === "CRITICAL" ? "btn-danger" : "btn-secondary"}`}
-            style={{
-              padding: "8px 12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              border: severity === "CRITICAL" ? "2px solid var(--red)" : "1px solid var(--line)",
-            }}
-            onClick={() => setSeverity("CRITICAL")}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700 }}>
-              <Icons.AlertTriangle size={14} /> CRITICAL
-            </div>
-            <span style={{ fontSize: 10, opacity: 0.8 }}>Immediate Ops Halt</span>
-          </button>
-
-          <button
-            type="button"
-            className={`btn ${severity === "HIGH" ? "btn-amber" : "btn-secondary"}`}
-            style={{
-              padding: "8px 12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              border: severity === "HIGH" ? "2px solid var(--amber)" : "1px solid var(--line)",
-            }}
-            onClick={() => setSeverity("HIGH")}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700 }}>
-              <Icons.AlertTriangle size={14} /> HIGH
-            </div>
-            <span style={{ fontSize: 10, opacity: 0.8 }}>Action in 24 Hours</span>
-          </button>
-
-          <button
-            type="button"
-            className={`btn ${severity === "MEDIUM" ? "btn-primary" : "btn-secondary"}`}
-            style={{
-              padding: "8px 12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-            }}
-            onClick={() => setSeverity("MEDIUM")}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700 }}>
-              <Icons.Activity size={14} /> MEDIUM
-            </div>
-            <span style={{ fontSize: 10, opacity: 0.8 }}>Shift Monitoring</span>
-          </button>
-
-          <button
-            type="button"
-            className={`btn ${severity === "LOW" ? "btn-green" : "btn-secondary"}`}
-            style={{
-              padding: "8px 12px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-            }}
-            onClick={() => setSeverity("LOW")}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700 }}>
-              <Icons.CheckCircle size={14} /> LOW
-            </div>
-            <span style={{ fontSize: 10, opacity: 0.8 }}>Routine Advisory</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. OPERATIONAL SCOPE & TARGET */}
+      {/* 2. CAMERA-FIRST PHOTO EVIDENCE ZONE */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 14,
-          padding: 16,
-          backgroundColor: "var(--canvas)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--radius-xs)",
-        }}
-      >
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Scope Level</label>
-          <select
-            value={incidentLevel}
-            onChange={(e: any) => setIncidentLevel(e.target.value)}
-            className="input-field"
-          >
-            <option value="CROP">Crop Specific (Beds / Plantings)</option>
-            <option value="PLOT">Plot Infrastructure (Pumps, Pipes, Soil)</option>
-            <option value="FARM">Estate Wide (Main Power, Roads, Perimeter)</option>
-          </select>
-        </div>
-
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Target Estate</label>
-          <select
-            value={farmId}
-            onChange={(e) => {
-              setFarmId(e.target.value);
-              setPlotId("");
-              setCycleId("");
-            }}
-            className="input-field"
-            required
-          >
-            {farms.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {incidentLevel !== "FARM" && (
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Target Land Plot</label>
-            <select
-              value={plotId}
-              onChange={(e) => {
-                setPlotId(e.target.value);
-                setCycleId("");
-              }}
-              className="input-field"
-              required
-            >
-              <option value="">Select plot…</option>
-              {farm?.plots.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {incidentLevel === "CROP" && (
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Active Crop Cycle</label>
-            <select
-              value={cycleId}
-              onChange={(e) => setCycleId(e.target.value)}
-              className="input-field"
-              disabled={!availableCrops.length}
-              required
-            >
-              <option value="">Select crop…</option>
-              {availableCrops.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.cropName}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* 3. CLASSIFICATION & ESTIMATED IMPACT */}
-      <div className="two-column">
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Incident Classification</label>
-          <select
-            value={incidentType}
-            onChange={(e) => setIncidentType(e.target.value)}
-            className="input-field"
-            required
-          >
-            {incidentTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Estimated Yield / Area Impact (%)</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              value={impactPercent === "" ? 0 : impactPercent}
-              onChange={(e) => setImpactPercent(Number(e.target.value))}
-              style={{ flex: 1 }}
-            />
-            <input
-              type="number"
-              min="0"
-              max="100"
-              placeholder="e.g. 25"
-              value={impactPercent}
-              onChange={(e) =>
-                setImpactPercent(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              className="input-field"
-              style={{ width: 80, textAlign: "center" }}
-            />
-            <span style={{ fontSize: 13, color: "var(--muted)" }}>%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. DETAILS & IMMEDIATE MITIGATION */}
-      <div className="form-group" style={{ margin: 0 }}>
-        <label>Incident Details &amp; Mitigation Actions Taken</label>
-        <textarea
-          rows={3}
-          className="input-field"
-          placeholder="Describe symptoms, affected rows or acreage, probable cause, and any containment steps executed immediately."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-      </div>
-
-      {/* 5. REDESIGNED VISUAL EVIDENCE PHOTO UPLOAD */}
-      <div
-        style={{
-          padding: 16,
-          backgroundColor: "var(--canvas)",
-          border: "1px solid var(--line)",
-          borderRadius: "var(--radius-xs)",
+          padding: "12px",
+          backgroundColor: "var(--stone)",
+          border: "1px solid var(--stone)",
+          borderRadius: "12px",
         }}
       >
         <PhotoUploadZone
@@ -444,6 +314,298 @@ export function IncidentReportForm({
         />
       </div>
 
+      {/* 3. QUICK 1-TAP CATEGORY CHIPS */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink)" }}>
+            Incident Category
+          </label>
+          <span className="muted" style={{ fontSize: "11px" }}>Tap to select</span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            overflowX: "auto",
+            padding: "2px 0",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {CATEGORIES.map((cat) => {
+            const active = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleCategorySelect(cat.id)}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  fontWeight: active ? 700 : 500,
+                  borderRadius: "9999px",
+                  border: active ? "1px solid var(--ink)" : "1px solid var(--line)",
+                  backgroundColor: active ? "var(--ink)" : "var(--canvas)",
+                  color: active ? "var(--canvas)" : "var(--ink)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  transition: "all 0.12s ease",
+                  flexShrink: 0,
+                }}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Detailed classification picker */}
+        <select
+          value={incidentType}
+          onChange={(e) => setIncidentType(e.target.value)}
+          className="input-field"
+          style={{ height: "34px", fontSize: "12px", borderRadius: "8px", marginTop: 2 }}
+          required
+        >
+          {ALL_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* 4. DETAILS & IMMEDIATE MITIGATION */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink)" }}>
+          Observations &amp; Immediate Action Taken
+        </label>
+        <textarea
+          rows={3}
+          className="input-field"
+          placeholder="Describe symptoms, affected rows or acreage, probable cause, and any containment steps executed immediately..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          style={{ fontSize: "12.5px", borderRadius: "10px", lineHeight: 1.4 }}
+          required
+        />
+      </div>
+
+      {/* 5. LOCATION (SMART RELATIONAL MAPPING) */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: "12px",
+          backgroundColor: "var(--stone)",
+          border: "1px solid var(--stone)",
+          borderRadius: "12px",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink)" }}>
+            Location &amp; Affected Area
+          </span>
+          {activePlot && availableCrops.length > 0 && affectsCrop && (
+            <span
+              style={{
+                fontSize: "10.5px",
+                fontWeight: 700,
+                color: "var(--green-dark)",
+                backgroundColor: "var(--green-light)",
+                border: "1px solid var(--green-light)",
+                padding: "2px 8px",
+                borderRadius: "9999px",
+              }}
+            >
+              🌱 Linked: {availableCrops.find((c) => c.id === cycleId)?.cropName || availableCrops[0].cropName}
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: farms.length > 1 ? "1fr 1fr" : "1fr", gap: 8 }}>
+          {farms.length > 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span className="muted" style={{ fontSize: "11px" }}>Estate</span>
+              <select
+                value={farmId}
+                onChange={(e) => {
+                  setFarmId(e.target.value);
+                  setPlotId("");
+                  setCycleId("");
+                }}
+                className="input-field"
+                style={{ height: "32px", fontSize: "12px", borderRadius: "8px" }}
+                required
+              >
+                {farms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <span className="muted" style={{ fontSize: "11px" }}>Affected Plot / Facility</span>
+            <select
+              value={plotId}
+              onChange={(e) => setPlotId(e.target.value)}
+              className="input-field"
+              style={{ height: "32px", fontSize: "12px", borderRadius: "8px" }}
+            >
+              <option value="">General / Entire Farm Infrastructure</option>
+              {farm?.plots.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* If plot has crop, allow toggling whether it damages crop or infrastructure only */}
+        {plotId && availableCrops.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+            <span className="muted" style={{ fontSize: "11.5px" }}>Crop Impact:</span>
+            <div style={{ display: "inline-flex", gap: 4 }}>
+              <button
+                type="button"
+                onClick={() => setAffectsCrop(true)}
+                className="select-chip select-chip-pill"
+                data-selected={affectsCrop}
+                style={{ padding: "3px 9px", fontSize: "11px" }}
+              >
+                Crop Affected
+              </button>
+              <button
+                type="button"
+                onClick={() => setAffectsCrop(false)}
+                className="select-chip select-chip-pill"
+                data-selected={!affectsCrop}
+                data-tone="neutral"
+                style={{ padding: "3px 9px", fontSize: "11px" }}
+              >
+                Infrastructure Only
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 6. COMPACT SEVERITY SELECTOR (36PX CAPSULE BUTTONS) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <label style={{ fontSize: "12px", fontWeight: 700, color: "var(--ink)" }}>
+            Severity Level
+          </label>
+          <span className="muted" style={{ fontSize: "11px" }}>
+            {severity === "CRITICAL"
+              ? "Immediate ops halt"
+              : severity === "HIGH"
+              ? "Action within 24h"
+              : severity === "MEDIUM"
+              ? "Monitor within shift"
+              : "Routine advisory"}
+          </span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          {[
+            { key: "LOW", label: "Low", icon: "🟢", tone: undefined },
+            { key: "MEDIUM", label: "Medium", icon: "🟡", tone: "neutral" },
+            { key: "HIGH", label: "High", icon: "🟠", tone: "amber" },
+            { key: "CRITICAL", label: "Critical", icon: "🔴", tone: "red" },
+          ].map((s) => {
+            return (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSeverity(s.key as any)}
+                className="select-chip select-chip-pill"
+                data-selected={severity === s.key}
+                data-tone={s.tone}
+                style={{ height: 36, fontSize: "12px" }}
+              >
+                <span>{s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 7. OPTIONAL COLLAPSIBLE DETAILS (AREA / YIELD LOSS) */}
+      <details style={{ fontSize: "12px" }}>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontWeight: 600,
+            color: "var(--muted)",
+            userSelect: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <span>💡 Optional: Estimated Area / Yield Impact %</span>
+        </summary>
+        <div
+          style={{
+            marginTop: 6,
+            padding: "10px 12px",
+            borderRadius: "10px",
+            backgroundColor: "var(--stone)",
+            border: "1px solid var(--stone)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span className="muted" style={{ fontSize: "11px" }}>Quick Presets:</span>
+            {[10, 25, 50, 75].map((pct) => (
+              <button
+                key={pct}
+                type="button"
+                onClick={() => setImpactPercent(pct)}
+                style={{
+                  padding: "2px 8px",
+                  fontSize: "11px",
+                  fontWeight: impactPercent === pct ? 700 : 500,
+                  borderRadius: "9999px",
+                  border: impactPercent === pct ? "1px solid var(--ink)" : "1px solid var(--line)",
+                  backgroundColor: impactPercent === pct ? "var(--ink)" : "var(--card)",
+                  color: impactPercent === pct ? "var(--canvas)" : "var(--ink)",
+                  cursor: "pointer",
+                }}
+              >
+                {pct}%
+              </button>
+            ))}
+            <input
+              type="number"
+              min="0"
+              max="100"
+              placeholder="Custom %"
+              value={impactPercent}
+              onChange={(e) =>
+                setImpactPercent(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="input-field"
+              style={{ width: 84, height: 28, textAlign: "center", fontSize: "11.5px", borderRadius: "6px" }}
+            />
+          </div>
+        </div>
+      </details>
+
       {/* UPLOAD PROGRESS NOTIFICATION */}
       {uploadProgress && (
         <div
@@ -451,48 +613,52 @@ export function IncidentReportForm({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            padding: "10px 14px",
-            backgroundColor: "rgba(59, 130, 246, 0.1)",
-            border: "1px solid var(--blue)",
+            gap: 8,
+            padding: "8px 12px",
+            fontSize: "12px",
+            borderRadius: "10px",
           }}
         >
-          <Icons.Refresh size={16} className="animate-spin" />
-          <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500 }}>
-            {uploadProgress}
-          </span>
+          <Icons.Refresh size={14} className="animate-spin" />
+          <span style={{ fontWeight: 550 }}>{uploadProgress}</span>
         </div>
       )}
 
-      {/* SUBMISSION FOOTER */}
+      {/* 8. SUBMISSION FOOTER */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           borderTop: "1px solid var(--line)",
-          paddingTop: 16,
-          flexWrap: "wrap",
-          gap: 12,
+          paddingTop: 12,
+          gap: 10,
         }}
       >
-        <div className="muted" style={{ fontSize: 12 }}>
+        <span className="muted" style={{ fontSize: "11.5px" }}>
           {photos.length > 0 ? (
-            <span style={{ color: "var(--green)" }}>
-              ✓ {photos.length} evidence photo(s) ready to attach
+            <span style={{ color: "var(--green-dark)", fontWeight: 600 }}>
+              ✓ {photos.length} photo(s) attached
             </span>
           ) : (
-            <span>Attach photos to expedite agronomist diagnosis</span>
+            "Photos recommended"
           )}
-        </div>
+        </span>
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           {onCancel && (
             <button
               type="button"
               className="btn btn-secondary"
               onClick={onCancel}
               disabled={pending}
+              style={{
+                borderRadius: "9999px",
+                height: 36,
+                padding: "0 14px",
+                fontSize: "12px",
+                fontWeight: 600,
+              }}
             >
               Cancel
             </button>
@@ -502,10 +668,19 @@ export function IncidentReportForm({
             type="submit"
             className="btn btn-danger"
             disabled={pending}
-            style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 160 }}
+            style={{
+              borderRadius: "9999px",
+              height: 36,
+              padding: "0 18px",
+              fontSize: "12.5px",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
           >
-            <Icons.AlertTriangle size={16} />
-            <span>{pending ? "Transmitting…" : "Submit Incident"}</span>
+            <Icons.AlertTriangle size={15} />
+            <span>{pending ? "Transmitting…" : "Submit Incident Report"}</span>
           </button>
         </div>
       </div>

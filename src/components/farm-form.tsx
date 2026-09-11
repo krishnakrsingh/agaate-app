@@ -103,7 +103,7 @@ export function FarmForm() {
   }
 
   return (
-    <article className="compact-card" style={{ padding: 28, gap: 20 }}>
+    <article style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="page-header" style={{ paddingBottom: 14 }}>
         <div>
           <div className="eyebrow">
@@ -114,10 +114,10 @@ export function FarmForm() {
         </div>
       </div>
 
-      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="section-block">
           <div className="form-section-title">1. General Information</div>
-          <div className="two-column" style={{ marginTop: 12 }}>
+          <div className="two-column">
             <div className="form-group" style={{ margin: 0 }}>
               <label>Farm Name</label>
               <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
@@ -145,19 +145,14 @@ export function FarmForm() {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="section-block">
           <div className="form-section-title">2. Geodata &amp; Acreage</div>
-          <div className="two-column" style={{ marginTop: 12 }}>
+          <div className="two-column">
             <div className="form-group" style={{ margin: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                 <label>Latitude</label>
-                <button
-                  type="button"
-                  className="text-action"
-                  onClick={capture}
-                  style={{ fontSize: "11px" }}
-                >
-                  + Capture GPS
+                <button type="button" className="btn btn-secondary btn-sm" onClick={capture}>
+                  Capture GPS
                 </button>
               </div>
               <input

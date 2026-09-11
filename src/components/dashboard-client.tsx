@@ -1,1726 +1,1428 @@
 "use client";
+
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
-import { EmptyState } from "./ui/empty-state";
-import { StatusBadge, RoleBadge } from "./ui/badge";
+import { StatusBadge } from "./ui/badge";
 import { useToast } from "./ui/toast";
-import { formatTime } from "@/lib/business";
+import { FarmSetupStage } from "@prisma/client";
 
-type Farm = {
-  id: string;
-  name: string;
-  location: string;
-  ownerName: string;
-  clientPhone?: string | null;
-  soilType?: string | null;
-  waterSource?: string | null;
-  status: string;
-  totalArea: string;
-  cultivableArea: string;
-  adminName: string;
-  officerCount: number;
-  todayAttendanceCount: number;
-  todayTasksTotal: number;
-  todayTasksCompleted: number;
-  plots: {
-    id: string;
-    name: string;
-    cropCycles: { id: string; cropName: string; status: string }[];
-  }[];
-  access: { user: { id: string; name: string; role: string } }[];
-};
-
-type MetricData = {
+export type MacroTelemetry = {
+  totalClients: number;
   totalFarms: number;
   activeFarms: number;
   setupFarms: number;
+  totalAcreage: number;
+  totalCultivable: number;
   totalPlots: number;
-  totalCrops: number;
-  totalTasks: number;
-  completedTasks: number;
-  delayedAlerts: number;
-  pendingIncidents: number;
+  inFlightSetups: number;
 };
 
-type WorkforceSummary = {
-  totalOfficers: number;
-  onDutyCount: number;
-  completedCount: number;
-  exceptionPendingCount: number;
-  notClockedInCount: number;
-  withinGeofenceCount: number;
-  complianceRate: number;
-};
-
-type RosterPreviewItem = {
-  attendanceId: string;
-  officerId: string;
-  officerName: string;
-  officerEmail: string;
-  farmId: string;
-  farmName: string;
+export type SetupPipelineItem = {
+  id: string;
+  name: string;
+  surveyNumber?: string | null;
+  village?: string | null;
+  taluk?: string | null;
+  district?: string | null;
+  state?: string | null;
+  location: string;
+  ownerName: string;
+  clientPhone?: string | null;
+  clientName: string;
+  clientCode: string;
+  totalArea: string;
+  cultivableArea: string;
+  plotsCount: number;
   status: string;
-  startAt: string | null;
-  endAt: string | null;
-  distanceMeters: number | null;
-  withinGeofence: boolean;
-  startSelfieKey: string | null;
-  exceptionId: string | null;
-  exceptionReason: string | null;
+  setupStage: FarmSetupStage;
+  setupProgress: number;
+  soilType?: string | null;
+  soilPh?: string | null;
+  waterSource?: string | null;
+  fencingType?: string | null;
+  targetHandoverDate?: string | null;
+  daysInStage?: number;
+  slaStatus?: "ON_TRACK" | "APPROACHING" | "OVERDUE";
+  createdAt: string;
+  updatedAt?: string;
+  handedOverAt?: string | null;
 };
 
-type PendingException = {
+export type ClientDirectoryItem = {
   id: string;
-  distanceMeters: number;
-  reason: string;
-  officerName: string;
-  officerEmail: string;
-  farmName: string;
-  farmId: string;
-  time: string | null;
-};
-
-type PendingLocation = {
-  id: string;
-  farmId: string;
-  farmName: string;
-  farmLocation: string;
-  proposedLat: string;
-  proposedLng: string;
-  reason: string;
-  date: string;
-};
-
-type Alert = {
-  id: string;
-  cropName: string;
-  plotName: string;
-  farmName: string;
-  farmId: string;
-  stage: string;
-  impactPercent: string | null;
-  remarks: string | null;
-  imageUrl?: string | null;
-  date: string;
-};
-
-type Incident = {
-  id: string;
-  type: string;
-  severity: string;
-  description: string;
-  impactPercent?: string | null;
-  farmName: string;
-  farmId: string;
-  plotName?: string;
-  cropName?: string;
+  code: string;
+  name: string;
+  companyName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  state?: string | null;
+  district?: string | null;
   status: string;
-  imageUrl?: string | null;
-  date: string;
+  createdAt: string;
+  totalFarms: number;
+  activeFarmsCount: number;
+  setupFarmsCount: number;
+  totalAcreage: number;
+  totalCultivable: number;
+  farms: {
+    id: string;
+    name: string;
+    status: string;
+    setupStage: string;
+    setupProgress: number;
+    cultivableArea: string;
+  }[];
+  owners: {
+    id: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+  }[];
 };
 
-export function DashboardClient({
-  farms,
-  metrics,
-  workforceSummary,
-  rosterPreview = [],
-  pendingExceptions = [],
-  pendingLocations = [],
-  poorHealthAlerts = [],
-  activeIncidents = [],
-  userName = "Administrator",
-  role = "SUPER_ADMIN",
-}: {
-  farms: Farm[];
-  metrics: MetricData;
-  workforceSummary: WorkforceSummary;
-  rosterPreview?: RosterPreviewItem[];
-  pendingExceptions?: PendingException[];
-  pendingLocations?: PendingLocation[];
-  poorHealthAlerts?: Alert[];
-  activeIncidents?: Incident[];
+interface DashboardClientProps {
+  macroTelemetry: MacroTelemetry;
+  stageCounts: Record<FarmSetupStage, number>;
+  initialPipelineFarms: SetupPipelineItem[];
+  initialClients: ClientDirectoryItem[];
   userName?: string;
   role?: string;
-}) {
+}
+
+const STAGE_METADATA: Record<
+  FarmSetupStage,
+  { label: string; stepNumber: number; nextStage?: FarmSetupStage; defaultProgress: number; desc: string }
+> = {
+  SURVEY_SOIL_TEST: {
+    label: "Survey & Soil Testing",
+    stepNumber: 1,
+    nextStage: "PLOT_DEMARCATION",
+    defaultProgress: 20,
+    desc: "Topographic mapping & soil/water laboratory test",
+  },
+  PLOT_DEMARCATION: {
+    label: "Plot Demarcation",
+    stepNumber: 2,
+    nextStage: "BED_SOIL_PREP",
+    defaultProgress: 40,
+    desc: "Boundary fencing, roads, and parcel zoning",
+  },
+  BED_SOIL_PREP: {
+    label: "Bed & Soil Preparation",
+    stepNumber: 3,
+    nextStage: "IRRIGATION_LAYOUT",
+    defaultProgress: 60,
+    desc: "Tilling, raised beds, compost, and mulching",
+  },
+  IRRIGATION_LAYOUT: {
+    label: "Irrigation Layout",
+    stepNumber: 4,
+    nextStage: "HANDED_OVER",
+    defaultProgress: 80,
+    desc: "Drip manifolds, venturi injectors, and pump tests",
+  },
+  HANDED_OVER: {
+    label: "Handed Over (Client Live)",
+    stepNumber: 5,
+    defaultProgress: 100,
+    desc: "Final audit passed & client operations unlocked",
+  },
+};
+
+const STAGES_ORDER: FarmSetupStage[] = [
+  "SURVEY_SOIL_TEST",
+  "PLOT_DEMARCATION",
+  "BED_SOIL_PREP",
+  "IRRIGATION_LAYOUT",
+  "HANDED_OVER",
+];
+
+export function DashboardClient({
+  macroTelemetry,
+  stageCounts,
+  initialPipelineFarms,
+  initialClients,
+  userName = "Super Administrator",
+}: DashboardClientProps) {
   const router = useRouter();
   const toast = useToast();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [soilFilter, setSoilFilter] = useState<string>("ALL");
-  const [sortBy, setSortBy] = useState<"name" | "acreage_desc" | "acreage_asc" | "plots" | "progress">("name");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(20);
+
+  const [activeTab, setActiveTab] = useState<"PIPELINE" | "CLIENTS" | "REGIONAL">("PIPELINE");
+  const [pipelineFarms, setPipelineFarms] = useState<SetupPipelineItem[]>(initialPipelineFarms);
+  // Clients directory is server-paginated (the old build filtered the first
+  // 20 rows in memory and reported wrong counts). See /clients for the full
+  // directory; the dashboard keeps a bounded preview wired to the same API.
+  const [clients, setClients] = useState<ClientDirectoryItem[]>(initialClients);
+  const [clientsTotal, setClientsTotal] = useState<number | null>(null);
+  const [clientsPage, setClientsPage] = useState(1);
+  const [clientsLoading, setClientsLoading] = useState(false);
+
+  // Server-side pagination & filter states for 100,000+ scale
+  const [pipelineSearch, setPipelineSearch] = useState("");
+  const [pipelineStageFilter, setPipelineStageFilter] = useState<string>("ALL");
+  const [pipelineSlaFilter, setPipelineSlaFilter] = useState<string>("ALL");
+  const [pipelineStateFilter, setPipelineStateFilter] = useState<string>("ALL");
+  const [pipelineSortBy, setPipelineSortBy] = useState<string>("updatedAt");
+  const [pipelinePage, setPipelinePage] = useState(1);
+  const [pipelineLimit, setPipelineLimit] = useState(25);
+  const [pipelineTotalCount, setPipelineTotalCount] = useState(macroTelemetry.inFlightSetups);
+  const [pipelineTotalPages, setPipelineTotalPages] = useState(Math.max(1, Math.ceil(macroTelemetry.inFlightSetups / 25)));
+  const [pipelineLoading, setPipelineLoading] = useState(false);
+  const [liveStageCounts, setLiveStageCounts] = useState<Record<FarmSetupStage, number> & { totalInFlight?: number }>(stageCounts);
+  const [liveSummaryStats, setLiveSummaryStats] = useState({
+    totalInFlightAcreage: 0,
+    slaOverdueCount: 0,
+    slaApproachingCount: 0,
+  });
+  const [selectedDossierFarm, setSelectedDossierFarm] = useState<SetupPipelineItem | null>(null);
+
+  // Client Directory search & filter states
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientStateFilter, setClientStateFilter] = useState<string>("ALL");
+
+  // Modals & async action states
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientDirectoryItem | null>(null);
 
-  // Selfies lightbox modal
-  const [lightboxSelfie, setLightboxSelfie] = useState<{
-    url: string | null;
-    officer: string;
-    loading: boolean;
-  } | null>(null);
-
-  // Incident detail lightbox modal
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
-
-  const isSuperAdmin = role === "SUPER_ADMIN";
-  const isFarmAdmin = role === "FARM_ADMIN";
-
-  const totalPendingApprovals =
-    pendingExceptions.length + pendingLocations.length;
-
-  const actionItemsCount =
-    pendingExceptions.length +
-    pendingLocations.length +
-    activeIncidents.length +
-    poorHealthAlerts.length;
-
-  const [activeConsoleTab, setActiveConsoleTab] = useState<
-    "ACTIONS" | "WORKFORCE" | "ESTATES"
-  >(actionItemsCount > 0 ? "ACTIONS" : "WORKFORCE");
-
-  const filteredFarms = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const result = farms.filter((f) => {
-      const matchStatus = statusFilter === "ALL" || f.status === statusFilter;
-      const matchSoil = soilFilter === "ALL" || (f.soilType && f.soilType === soilFilter);
-      const matchSearch =
-        !q ||
-        f.name.toLowerCase().includes(q) ||
-        f.location.toLowerCase().includes(q) ||
-        f.adminName.toLowerCase().includes(q) ||
-        f.ownerName.toLowerCase().includes(q) ||
-        (f.clientPhone && f.clientPhone.toLowerCase().includes(q)) ||
-        (f.soilType && f.soilType.toLowerCase().includes(q));
-      return matchStatus && matchSoil && matchSearch;
-    });
-
-    result.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "acreage_desc") return Number(b.cultivableArea) - Number(a.cultivableArea);
-      if (sortBy === "acreage_asc") return Number(a.cultivableArea) - Number(b.cultivableArea);
-      if (sortBy === "plots") return b.plots.length - a.plots.length;
-      if (sortBy === "progress") {
-        const progA = a.todayTasksTotal > 0 ? a.todayTasksCompleted / a.todayTasksTotal : 0;
-        const progB = b.todayTasksTotal > 0 ? b.todayTasksCompleted / b.todayTasksTotal : 0;
-        return progB - progA;
-      }
-      return 0;
-    });
-
-    return result;
-  }, [farms, statusFilter, soilFilter, search, sortBy]);
-
-  const totalPages = Math.ceil(filteredFarms.length / pageSize) || 1;
-  const paginatedFarms = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredFarms.slice(start, start + pageSize);
-  }, [filteredFarms, page, pageSize]);
-
-  // Reset page when filters change
+  // Debounced server fetch for 100,000+ farms scale
   useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, soilFilter, sortBy, pageSize]);
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      setPipelineLoading(true);
+      const params = new URLSearchParams({
+        page: String(pipelinePage),
+        limit: String(pipelineLimit),
+        stage: pipelineStageFilter,
+        sla: pipelineSlaFilter,
+        state: pipelineStateFilter === "ALL" ? "" : pipelineStateFilter,
+        sortBy: pipelineSortBy,
+      });
+      if (pipelineSearch.trim()) {
+        params.set("search", pipelineSearch.trim());
+      }
 
-  const totalAcreage = farms
-    .reduce((acc, f) => acc + Number(f.totalArea || 0), 0)
-    .toFixed(1);
+      fetch(`/api/admin/setup-pipeline?${params.toString()}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!isMounted || !data) return;
+          setPipelineFarms(data.farms || []);
+          if (data.pagination) {
+            setPipelineTotalCount(data.pagination.totalCount);
+            setPipelineTotalPages(data.pagination.totalPages);
+          }
+          if (data.stageCounts) {
+            setLiveStageCounts(data.stageCounts);
+          }
+          if (data.summaryStats) {
+            setLiveSummaryStats(data.summaryStats);
+          }
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (isMounted) setPipelineLoading(false);
+        });
+    }, 250);
 
-  const handleReviewException = async (
-    exceptionId: string,
-    decision: "APPROVED" | "REJECTED"
-  ) => {
-    setProcessingId(exceptionId);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [pipelineSearch, pipelineStageFilter, pipelineSlaFilter, pipelineStateFilter, pipelineSortBy, pipelinePage, pipelineLimit]);
+
+
+  // Filtered clients — server-driven via /api/admin/clients (debounced).
+  // Replaces the previous in-memory filter over the first 20 rows.
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      setClientsLoading(true);
+      const params = new URLSearchParams({ limit: "20", offset: String((clientsPage - 1) * 20) });
+      if (clientSearch.trim()) params.set("search", clientSearch.trim());
+      if (clientStateFilter !== "ALL") params.set("state", clientStateFilter);
+      fetch(`/api/admin/clients?${params.toString()}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!isMounted || !data) return;
+          setClients(data.clients || []);
+          if (typeof data.total === "number") setClientsTotal(data.total);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (isMounted) setClientsLoading(false);
+        });
+    }, 300);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [clientSearch, clientStateFilter, clientsPage]);
+
+  const filteredClients = clients;
+
+  // Advance farm to next stage
+  const handleAdvanceStage = async (farm: SetupPipelineItem) => {
+    const currentMeta = STAGE_METADATA[farm.setupStage];
+    if (!currentMeta.nextStage) return;
+
+    const nextStage = currentMeta.nextStage;
+    const nextMeta = STAGE_METADATA[nextStage];
+
+    // If next stage is HANDED_OVER, use the dedicated handover endpoint
+    if (nextStage === "HANDED_OVER") {
+      await handleHandover(farm.id, farm.name);
+      return;
+    }
+
+    setProcessingId(farm.id);
     try {
-      const res = await fetch(`/api/attendance-exceptions/${exceptionId}`, {
+      const res = await fetch("/api/admin/setup-pipeline", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: decision }),
+        body: JSON.stringify({
+          farmId: farm.id,
+          setupStage: nextStage,
+          setupProgress: nextMeta.defaultProgress,
+        }),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Approval request failed.");
+        throw new Error(body.error || "Failed to advance stage.");
       }
 
-      toast.success(
-        decision === "APPROVED"
-          ? "Geofence exception authorized."
-          : "Geofence exception rejected."
+      setPipelineFarms((prev) =>
+        prev.map((f) =>
+          f.id === farm.id
+            ? { ...f, setupStage: nextStage, setupProgress: nextMeta.defaultProgress }
+            : f
+        )
       );
+
+      toast.success(`${farm.name} advanced to ${nextMeta.label}.`);
       router.refresh();
     } catch (err: any) {
-      toast.error(err.message || "Failed to process decision.");
+      toast.error(err.message || "Failed to advance setup stage.");
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleReviewLocation = async (
-    requestId: string,
-    decision: "APPROVED" | "REJECTED"
-  ) => {
-    setProcessingId(requestId);
+  // 1-Click Handover and Activation
+  const handleHandover = async (farmId: string, farmName: string) => {
+    setProcessingId(farmId);
     try {
-      const res = await fetch(`/api/location-change-requests/${requestId}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/farms/${farmId}/handover`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: decision }),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Location review failed.");
+        throw new Error(body.error || "Handover failed.");
       }
 
-      toast.success(`Location request ${decision.toLowerCase()}.`);
+      const data = await res.json();
+
+      setPipelineFarms((prev) =>
+        prev.map((f) =>
+          f.id === farmId
+            ? {
+                ...f,
+                setupStage: "HANDED_OVER",
+                setupProgress: 100,
+                status: "ACTIVE",
+                handedOverAt: data.handedOverAt,
+              }
+            : f
+        )
+      );
+
+      toast.success(`Estate ${farmName} successfully handed over! Client access unlocked.`);
       router.refresh();
     } catch (err: any) {
-      toast.error(err.message || "Failed to process location decision.");
+      toast.error(err.message || "Handover operation failed.");
     } finally {
       setProcessingId(null);
-    }
-  };
-
-  const viewSelfie = async (key: string, officer: string) => {
-    setLightboxSelfie({ url: null, officer, loading: true });
-    try {
-      const res = await fetch(`/api/attendance/selfie?key=${encodeURIComponent(key)}`);
-      if (!res.ok) throw new Error("Could not load selfie photo.");
-      const data = await res.json();
-      setLightboxSelfie({ url: data.url, officer, loading: false });
-    } catch {
-      toast.error("Could not fetch selfie verification.");
-      setLightboxSelfie(null);
     }
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      {/* ── 1. EXECUTIVE COMMAND HEADER & AUTHORITATIVE ACTIONS BAR ── */}
-      <div className="page-header">
+      {/* ── 1. EXECUTIVE COMMAND HEADER & DIRECT ACTIONS ── */}
+      <div className="page-header" style={{ paddingBottom: 16 }}>
         <div className="page-header-content">
           <div className="eyebrow">
             <span className="eyebrow-dot" />
-            <span>
-              {isSuperAdmin
-                ? "GLOBAL EXECUTIVE COMMAND &bull; SUPER ADMIN"
-                : isFarmAdmin
-                ? "ESTATE OPERATIONS COCKPIT &bull; FARM ADMIN"
-                : "CENTRAL AGRONOMY CONSOLE"}
-            </span>
+            <span>ENTERPRISE COMMAND • AGARTE HQ DIRECTIVE</span>
           </div>
-          <h1 className="page-title">
-            {isSuperAdmin
-              ? "Estate Operations & Workforce Command"
-              : "Farm Operations Cockpit"}
-          </h1>
-          <p className="muted" style={{ marginTop: 4 }}>
-            {isSuperAdmin
-              ? "Multi-estate operational telemetry, live field presence, geofence compliance, and executive authorizations."
-              : "Today's field muster, shift execution progress, and estate operational signals."}
+          <h1 className="page-title">National Farm Infrastructure &amp; Client Directorate</h1>
+          <p className="muted" style={{ marginTop: 4, maxWidth: 760 }}>
+            Master operational oversight across {macroTelemetry.totalClients.toLocaleString()} client accounts and{" "}
+            {macroTelemetry.totalFarms.toLocaleString()} estates. Tracking the 5-stage turnkey setup pipeline from raw land survey to client handover.
           </p>
         </div>
 
-        {/* Authoritative Command Actions */}
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          {/* Approvals Button with dynamic notification badge */}
-          {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
-            <Link
-              href="/admin/approvals"
-              className={`btn ${totalPendingApprovals > 0 ? "btn-danger" : "btn-secondary"}`}
-              style={{ position: "relative" }}
-            >
-              <Icons.Shield size={15} />
-              <span>Approvals</span>
-              {totalPendingApprovals > 0 && (
-                <span
-                  style={{
-                    backgroundColor: "var(--red)",
-                    color: "#fff",
-                    borderRadius: "10px",
-                    padding: "2px 7px",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    marginLeft: 4,
-                  }}
-                >
-                  {totalPendingApprovals}
-                </span>
-              )}
-            </Link>
-          )}
-
-          {/* Workforce & Live Attendance Roster */}
-          {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
-            <Link href="/admin/attendance" className="btn btn-green">
-              <Icons.Users size={15} />
-              <span>Live Workforce ({workforceSummary.onDutyCount} Active)</span>
-            </Link>
-          )}
-
-          {/* Provision New Estate */}
-          {isSuperAdmin && (
-            <Link href="/farms/new" className="btn btn-primary">
-              <Icons.Plus size={15} />
-              <span>Provision Estate</span>
-            </Link>
-          )}
-
-          {/* User Access Management */}
-          {isSuperAdmin && (
-            <Link href="/admin/users" className="btn btn-secondary">
-              <Icons.Key size={15} />
-              <span>Team &amp; Access</span>
-            </Link>
-          )}
-
-          {/* System Audit Trail */}
-          {["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
-            <Link href="/admin/audit" className="btn btn-secondary">
-              <Icons.Activity size={15} />
-              <span>Audit Trail</span>
-            </Link>
-          )}
-
-          <Link href="/reports/daily" className="btn btn-secondary">
-            <Icons.FileText size={15} />
-            <span>Daily Report</span>
+        {/* Global Master Actions */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", alignSelf: "flex-start" }}>
+          <Link href="/farms/new" className="btn btn-primary">
+            <Icons.Plus size={15} />
+            <span>Onboard Client &amp; Farm</span>
+          </Link>
+          <Link href="/admin/users" className="btn btn-secondary">
+            <Icons.Users size={15} />
+            <span>Client &amp; Staff Accounts</span>
+          </Link>
+          <Link href="/admin/audit" className="btn btn-secondary">
+            <Icons.Activity size={15} />
+            <span>Audit Trail</span>
+          </Link>
+          <Link href="/admin/attendance" className="btn btn-secondary">
+            <Icons.Users size={15} />
+            <span>Field Workforce</span>
           </Link>
         </div>
       </div>
-      {/* ── 2. EXECUTIVE PULSE KPI DECK (Modern Floating Cards) ── */}
-      <div className="metric-summary-row">
-        <div className="metric-summary-item">
-          <span className="metric-label">Managed Estates</span>
-          <div className="metric-value">{metrics.totalFarms}</div>
-          <div className="metric-sub">{metrics.activeFarms} ACTIVE &bull; {metrics.setupFarms} IN SETUP</div>
-        </div>
 
+      {/* ── 2. MACRO ENTERPRISE KPI DECK (10,000+ CLIENT CAPACITY) ── */}
+      <div className="metric-summary-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
         <div className="metric-summary-item">
-          <span className="metric-label">Live Field Presence</span>
-          <div className="metric-value" style={{ color: "var(--green)" }}>{workforceSummary.onDutyCount}</div>
-          <div className="metric-sub" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span className="telemetry-live-dot" /> {workforceSummary.complianceRate}% GEOFENCE COMPLIANT
+          <span className="metric-label">Enterprise Clients</span>
+          <div className="metric-value" style={{ color: "var(--ink)" }}>
+            {macroTelemetry.totalClients.toLocaleString()}
           </div>
+          <div className="metric-sub">Active client accounts across India</div>
         </div>
 
         <div className="metric-summary-item">
-          <span className="metric-label">Authoritative Action Items</span>
-          <div
-            className="metric-value"
-            style={{ color: actionItemsCount > 0 ? "var(--amber)" : "var(--muted)" }}
-          >
-            {actionItemsCount}
+          <span className="metric-label">Turnkey Setups In-Flight</span>
+          <div className="metric-value" style={{ color: "var(--amber)" }}>
+            {macroTelemetry.inFlightSetups.toLocaleString()}
           </div>
           <div className="metric-sub">
-            {totalPendingApprovals} APPROVALS &bull; {activeIncidents.length} HAZARDS
+            {stageCounts.SURVEY_SOIL_TEST} Survey • {stageCounts.PLOT_DEMARCATION} Plots • {stageCounts.BED_SOIL_PREP} Beds • {stageCounts.IRRIGATION_LAYOUT} Drip
           </div>
         </div>
 
         <div className="metric-summary-item">
-          <span className="metric-label">Cultivable Land</span>
-          <div className="metric-value">{totalAcreage} <span style={{ fontSize: 16 }}>ac</span></div>
-          <div className="metric-sub">{metrics.totalPlots} LAND PLOTS MANAGED</div>
+          <span className="metric-label">Farmland Under Mgmt</span>
+          <div className="metric-value" style={{ color: "var(--green)" }}>
+            {Math.round(macroTelemetry.totalCultivable).toLocaleString()}{" "}
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>
+              / {Math.round(macroTelemetry.totalAcreage).toLocaleString()} Ac
+            </span>
+          </div>
+          <div className="metric-sub">{macroTelemetry.totalPlots.toLocaleString()} demarcated parcels ready</div>
+        </div>
+
+        <div className="metric-summary-item">
+          <span className="metric-label">Live Handed-Over Estates</span>
+          <div className="metric-value" style={{ color: "var(--ink)" }}>
+            {macroTelemetry.activeFarms.toLocaleString()}{" "}
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--muted)" }}>
+              / {macroTelemetry.totalFarms.toLocaleString()} Total
+            </span>
+          </div>
+          <div className="metric-sub">{stageCounts.HANDED_OVER} completed handovers</div>
         </div>
       </div>
 
-      {/* ── 3. SEGMENTED COMMAND CONSOLE NAVIGATION ── */}
+      {/* ── 3. SEGMENTED PRIMARY NAVIGATION ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 14 }}>
         <div className="tabs-nav" style={{ padding: 6, gap: 6 }}>
           <button
             type="button"
-            className={`tab-btn ${activeConsoleTab === "ACTIONS" ? "active" : ""}`}
-            onClick={() => setActiveConsoleTab("ACTIONS")}
+            className={`tab-btn ${activeTab === "PIPELINE" ? "active" : ""}`}
+            onClick={() => setActiveTab("PIPELINE")}
           >
-            <Icons.AlertTriangle size={15} />
-            <span>Action Center</span>
-            {actionItemsCount > 0 && (
-              <span className="badge badge-amber" style={{ fontSize: 11, padding: "2px 8px" }}>
-                {actionItemsCount}
-              </span>
-            )}
+            <Icons.Layers size={15} />
+            <span>Turnkey Setup Pipeline</span>
+            <span className="badge badge-amber" style={{ fontSize: 11, padding: "2px 8px" }}>
+              {macroTelemetry.inFlightSetups} Active
+            </span>
           </button>
 
           <button
             type="button"
-            className={`tab-btn ${activeConsoleTab === "WORKFORCE" ? "active" : ""}`}
-            onClick={() => setActiveConsoleTab("WORKFORCE")}
+            className={`tab-btn ${activeTab === "CLIENTS" ? "active" : ""}`}
+            onClick={() => setActiveTab("CLIENTS")}
           >
             <Icons.Users size={15} />
-            <span>Workforce Presence</span>
-            <span className="badge badge-green" style={{ fontSize: 11, padding: "2px 8px" }}>
-              {workforceSummary.onDutyCount} On Duty
+            <span>Client Accounts Directory</span>
+            <span className="badge badge-muted" style={{ fontSize: 11, padding: "2px 8px" }}>
+              {macroTelemetry.totalClients.toLocaleString()}
             </span>
           </button>
 
           <button
             type="button"
-            className={`tab-btn ${activeConsoleTab === "ESTATES" ? "active" : ""}`}
-            onClick={() => setActiveConsoleTab("ESTATES")}
+            className={`tab-btn ${activeTab === "REGIONAL" ? "active" : ""}`}
+            onClick={() => setActiveTab("REGIONAL")}
           >
-            <Icons.Farm size={15} />
-            <span>Estate Portfolio</span>
-            <span className="badge badge-muted" style={{ fontSize: 11, padding: "2px 8px" }}>
-              {farms.length}
-            </span>
+            <Icons.MapPin size={15} />
+            <span>National Footprint</span>
           </button>
         </div>
+      </div>
 
-        {activeConsoleTab === "ESTATES" && (
+      {/* ── 4. TAB 1: 5-STAGE TURNKEY SETUP PIPELINE (KANBAN BOARD) ── */}
+      {activeTab === "PIPELINE" && (
+        <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* 1. STAGE TELEMETRY FUNNEL DECK (100,000+ FARMS CAPACITY) */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <div
+              onClick={() => {
+                setPipelineStageFilter("ALL");
+                setPipelinePage(1);
+              }}
+              className="compact-card"
+              style={{
+                padding: "12px 14px",
+                cursor: "pointer",
+                border: pipelineStageFilter === "ALL" ? "2px solid var(--green)" : "1px solid var(--line)",
+                background: pipelineStageFilter === "ALL" ? "var(--green-light)" : "var(--canvas)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="mono-label" style={{ fontSize: 10, color: "var(--ink-soft)" }}>ALL IN-FLIGHT</span>
+                <span className="badge badge-amber" style={{ fontSize: 10, padding: "1px 6px" }}>
+                  {liveStageCounts.totalInFlight ?? macroTelemetry.inFlightSetups}
+                </span>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 700, margin: "4px 0 2px", color: "var(--ink)" }}>
+                Total Pipeline
+              </div>
+              <div className="muted" style={{ fontSize: 11 }}>
+                All 5 stages across India
+              </div>
+            </div>
+
+            {STAGES_ORDER.map((st) => {
+              const meta = STAGE_METADATA[st];
+              const count = liveStageCounts[st] ?? 0;
+              const isSelected = pipelineStageFilter === st;
+              const isHandover = st === "HANDED_OVER";
+
+              return (
+                <div
+                  key={st}
+                  onClick={() => {
+                    setPipelineStageFilter(isSelected ? "ALL" : st);
+                    setPipelinePage(1);
+                  }}
+                  className="compact-card"
+                  style={{
+                    padding: "12px 14px",
+                    cursor: "pointer",
+                    border: isSelected ? "2px solid var(--green)" : "1px solid var(--line)",
+                    background: isSelected ? "var(--green-light)" : "var(--canvas)",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="mono-label" style={{ fontSize: 10, color: "var(--ink-soft)" }}>
+                      STAGE {meta.stepNumber} OF 5
+                    </span>
+                    <span
+                      className={`badge ${isHandover ? "badge-green" : count > 0 ? "badge-amber" : "badge-muted"}`}
+                      style={{ fontSize: 10, padding: "1px 6px" }}
+                    >
+                      {count}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, margin: "4px 0 2px", color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {meta.label}
+                  </div>
+                  <div className="muted" style={{ fontSize: 11, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {meta.desc}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. HIGH-DENSITY OPERATIONAL CONTROLS TOOLBAR */}
           <div
-            className="card"
+            className="compact-card"
             style={{
+              padding: "14px 18px",
               display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
               justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
               gap: 12,
-              padding: "10px 14px",
             }}
           >
-            {/* Left: Status filter pills & Search */}
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-              <div style={{ display: "flex", gap: 4, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${statusFilter === "ALL" ? "btn-primary" : "btn-ghost"}`}
-                  style={{ fontSize: 11, padding: "4px 8px" }}
-                  onClick={() => setStatusFilter("ALL")}
-                >
-                  All ({farms.length})
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${statusFilter === "ACTIVE" ? "btn-primary" : "btn-ghost"}`}
-                  style={{ fontSize: 11, padding: "4px 8px" }}
-                  onClick={() => setStatusFilter("ACTIVE")}
-                >
-                  Active ({metrics.activeFarms})
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm ${statusFilter === "SETUP" ? "btn-primary" : "btn-ghost"}`}
-                  style={{ fontSize: 11, padding: "4px 8px" }}
-                  onClick={() => setStatusFilter("SETUP")}
-                >
-                  Setup ({metrics.setupFarms})
-                </button>
-              </div>
-
-              {/* Live search input */}
-              <div style={{ position: "relative", width: 220 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Search input */}
+              <div style={{ position: "relative", width: 280 }}>
                 <input
                   type="text"
+                  placeholder="Search farm, Khasra/survey #, client, district..."
+                  value={pipelineSearch}
+                  onChange={(e) => {
+                    setPipelineSearch(e.target.value);
+                    setPipelinePage(1);
+                  }}
                   className="input-field"
-                  style={{ width: "100%", fontSize: 12, padding: "5px 28px 5px 26px" }}
-                  placeholder="Filter by estate, client..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ fontSize: 12, padding: "6px 28px 6px 28px" }}
                 />
-                <span style={{ position: "absolute", left: 8, top: 8, color: "var(--muted)", pointerEvents: "none" }}>
-                  <Icons.Search size={12} />
+                <span style={{ position: "absolute", left: 9, top: 9, color: "var(--muted)", pointerEvents: "none" }}>
+                  <Icons.Search size={13} />
                 </span>
-                {search && (
+                {pipelineSearch && (
                   <button
                     type="button"
-                    onClick={() => setSearch("")}
-                    style={{ position: "absolute", right: 8, top: 7, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
+                    onClick={() => {
+                      setPipelineSearch("");
+                      setPipelinePage(1);
+                    }}
+                    style={{ position: "absolute", right: 8, top: 8, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
                   >
                     <Icons.X size={12} />
                   </button>
                 )}
               </div>
 
-              {/* Soil Type filter */}
+              {/* Stage Filter */}
               <select
-                value={soilFilter}
-                onChange={(e) => setSoilFilter(e.target.value)}
+                value={pipelineStageFilter}
+                onChange={(e) => {
+                  setPipelineStageFilter(e.target.value);
+                  setPipelinePage(1);
+                }}
                 className="input-field"
-                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
+                style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
               >
-                <option value="ALL">All Soils</option>
-                <option value="RED_LOAMY">Red Loamy</option>
-                <option value="BLACK_CLAY">Black Clay</option>
-                <option value="SANDY_LOAM">Sandy Loam</option>
-                <option value="LATERITE">Laterite</option>
-                <option value="ALLUVIAL">Alluvial</option>
+                <option value="ALL">All 5 Pipeline Stages</option>
+                {STAGES_ORDER.map((st) => (
+                  <option key={st} value={st}>
+                    Stage {STAGE_METADATA[st].stepNumber}: {STAGE_METADATA[st].label} ({liveStageCounts[st] ?? 0})
+                  </option>
+                ))}
               </select>
 
-              {/* Sort By */}
+              {/* SLA Health Filter */}
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                value={pipelineSlaFilter}
+                onChange={(e) => {
+                  setPipelineSlaFilter(e.target.value);
+                  setPipelinePage(1);
+                }}
                 className="input-field"
-                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
+                style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
               >
-                <option value="name">Sort: Name (A-Z)</option>
-                <option value="acreage_desc">Sort: Acreage (High to Low)</option>
-                <option value="acreage_asc">Sort: Acreage (Low to High)</option>
-                <option value="plots">Sort: Plot Count</option>
-                <option value="progress">Sort: Task Progress</option>
+                <option value="ALL">All SLA Statuses</option>
+                <option value="ON_TRACK">On Track (&lt;30 days)</option>
+                <option value="APPROACHING">Approaching SLA (30-45 days)</option>
+                <option value="OVERDUE">Overdue / Delayed (&gt;45 days)</option>
+              </select>
+
+              {/* Region Filter */}
+              <select
+                value={pipelineStateFilter}
+                onChange={(e) => {
+                  setPipelineStateFilter(e.target.value);
+                  setPipelinePage(1);
+                }}
+                className="input-field"
+                style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
+              >
+                <option value="ALL">All States / Regions</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Gujarat">Gujarat</option>
+              </select>
+
+              {/* Sort Order */}
+              <select
+                value={pipelineSortBy}
+                onChange={(e) => {
+                  setPipelineSortBy(e.target.value);
+                  setPipelinePage(1);
+                }}
+                className="input-field"
+                style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
+              >
+                <option value="updatedAt">Sort: Recently Updated</option>
+                <option value="targetHandoverDate">Sort: Target Handover Date</option>
+                <option value="totalArea">Sort: Total Acreage (Desc)</option>
+                <option value="setupProgress">Sort: Stage Progress (%)</option>
               </select>
             </div>
 
-            {/* Right: View Mode & Page Size */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ display: "flex", gap: 3, backgroundColor: "var(--stone)", padding: 3, borderRadius: "var(--radius-sm)" }}>
-                <button
-                  type="button"
-                  title="Dense Table View"
-                  onClick={() => setViewMode("table")}
-                  className={`btn btn-sm ${viewMode === "table" ? "btn-primary" : "btn-ghost"}`}
-                  style={{ padding: "4px 8px" }}
-                >
-                  <Icons.ClipboardList size={13} />
-                </button>
-                <button
-                  type="button"
-                  title="Grid Cards View"
-                  onClick={() => setViewMode("grid")}
-                  className={`btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost"}`}
-                  style={{ padding: "4px 8px" }}
-                >
-                  <Icons.Layers size={13} />
-                </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {pipelineLoading && (
+                <span className="muted" style={{ fontSize: 12 }}>
+                  Refreshing data...
+                </span>
+              )}
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                Showing {pipelineFarms.length} of {pipelineTotalCount} estates
               </div>
-
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="input-field"
-                style={{ fontSize: 12, padding: "4px 8px", width: "auto" }}
-              >
-                <option value={20}>20 / page</option>
-                <option value={50}>50 / page</option>
-                <option value={100}>100 / page</option>
-              </select>
             </div>
           </div>
-        )}
 
-        {activeConsoleTab === "WORKFORCE" && (
-          <Link
-            href="/admin/attendance"
-            className="btn btn-secondary"
-            style={{ fontSize: 13, padding: "7px 14px", borderRadius: "var(--radius-pill)" }}
-          >
-            <Icons.Users size={14} />
-            <span>Open Full Attendance Muster Roll &rarr;</span>
-          </Link>
-        )}
-      </div>
+          {/* 3. DATA-DENSE OPERATIONAL WORKLIST TABLE */}
+          <div className="compact-card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, textAlign: "left" }}>
+                <thead>
+                  <tr style={{ background: "var(--surface-strong)", borderBottom: "1px solid var(--line)" }}>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>ESTATE &amp; CADASTRAL RECORD</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>CLIENT ACCOUNT</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>ACREAGE &amp; ZONING</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>SOIL &amp; HYDROLOGY</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>TURNKEY STAGE &amp; PROGRESS</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)" }}>SLA &amp; TIMELINE</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 700, color: "var(--ink)", textAlign: "right" }}>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pipelineFarms.map((farm) => {
+                    const meta = STAGE_METADATA[farm.setupStage] || STAGE_METADATA.SURVEY_SOIL_TEST;
+                    const isHandover = farm.setupStage === "HANDED_OVER";
+                    const isReadyForHandover = farm.setupStage === "IRRIGATION_LAYOUT";
 
-      {/* ── 4. CONSOLE VIEW 1: ACTION CENTER ── */}
-      {activeConsoleTab === "ACTIONS" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {actionItemsCount === 0 ? (
-            <EmptyState
-              title="All Operations Nominal"
-              description="No unresolved geofence breaches, boundary modification requests, or active crop hazards require executive intervention."
-            />
-          ) : (
-            <>
-              {/* Geofence Breach Exceptions */}
-              {pendingExceptions.length > 0 && (
-                <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div className="eyebrow" style={{ color: "var(--amber)" }}>
-                    <span className="eyebrow-dot" style={{ backgroundColor: "var(--amber)" }} />
-                    <span>OUTSIDE-GEOFENCE ATTENDANCE EXCEPTIONS ({pendingExceptions.length})</span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
-                    {pendingExceptions.map((ex) => (
-                      <div
-                        key={ex.id}
-                        className="compact-card"
+                    return (
+                      <tr
+                        key={farm.id}
                         style={{
-                          padding: 22,
-                          gap: 16,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
+                          borderBottom: "1px solid var(--line)",
+                          background: isHandover ? "var(--green-light)" : "var(--canvas)",
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 16 }}>
-                              {ex.officerName}
-                            </div>
-                            <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                              {ex.farmName} &bull; {ex.time ? formatTime(ex.time) : "Today"}
-                            </div>
+                        {/* Estate & Cadastral */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+                          <Link
+                            href={`/farms/${farm.id}`}
+                            style={{ fontWeight: 700, color: "var(--ink)", fontSize: 13, textDecoration: "none" }}
+                          >
+                            {farm.name}
+                          </Link>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                            {farm.surveyNumber ? (
+                              <span className="badge badge-stone font-mono" style={{ fontSize: 10 }}>
+                                #{farm.surveyNumber}
+                              </span>
+                            ) : null}
+                            <span className="muted" style={{ fontSize: 11 }}>
+                              📍 {farm.village ? `${farm.village}, ` : ""}{farm.district || farm.location}
+                            </span>
                           </div>
-                          <span className="badge badge-amber">
-                            <Icons.AlertTriangle size={12} /> +{ex.distanceMeters}m Breach
-                          </span>
-                        </div>
+                        </td>
 
-                        <div
-                          style={{
-                            backgroundColor: "var(--amber-light)",
-                            borderRadius: "var(--radius-sm)",
-                            padding: "12px 14px",
-                            fontSize: 13,
-                            color: "var(--ink)",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          <strong style={{ fontSize: 11, textTransform: "uppercase", color: "var(--amber)", display: "block", marginBottom: 4 }}>
-                            Officer Reason Declared:
-                          </strong>
-                          &ldquo;{ex.reason}&rdquo;
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            disabled={processingId === ex.id}
-                            onClick={() => handleReviewException(ex.id, "REJECTED")}
-                            style={{ borderRadius: "var(--radius-sm)", fontSize: 12, padding: "6px 14px" }}
-                          >
-                            <Icons.X size={13} />
-                            <span>Reject</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-green"
-                            disabled={processingId === ex.id}
-                            onClick={() => handleReviewException(ex.id, "APPROVED")}
-                            style={{ borderRadius: "var(--radius-sm)", fontSize: 12, padding: "6px 14px" }}
-                          >
-                            <Icons.Check size={13} />
-                            <span>Authorize Shift</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Farm Perimeter Change Requests */}
-              {pendingLocations.length > 0 && (
-                <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div className="eyebrow" style={{ color: "var(--blue)" }}>
-                    <span className="eyebrow-dot" style={{ backgroundColor: "var(--blue)" }} />
-                    <span>PERIMETER &amp; BOUNDARY RE-CALIBRATION REQUESTS ({pendingLocations.length})</span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
-                    {pendingLocations.map((loc) => (
-                      <div
-                        key={loc.id}
-                        className="compact-card"
-                        style={{
-                          padding: 22,
-                          gap: 16,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 16 }}>
-                              {loc.farmName}
-                            </div>
-                            <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                              {loc.farmLocation} &bull; Requested on {loc.date}
-                            </div>
+                        {/* Client Account */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+                          <div style={{ fontWeight: 600, color: "var(--ink)" }}>
+                            {farm.clientName}
                           </div>
-                          <span className="badge badge-blue">
-                            <Icons.MapPin size={12} /> Boundary Change
-                          </span>
-                        </div>
-
-                        <div
-                          style={{
-                            backgroundColor: "var(--blue-light)",
-                            borderRadius: "var(--radius-sm)",
-                            padding: "12px 14px",
-                            fontSize: 13,
-                            color: "var(--ink)",
-                          }}
-                        >
-                          <div>Proposed GPS: <code>{loc.proposedLat}, {loc.proposedLng}</code></div>
-                          <div className="muted" style={{ marginTop: 4 }}>Reason: &ldquo;{loc.reason}&rdquo;</div>
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            disabled={processingId === loc.id}
-                            onClick={() => handleReviewLocation(loc.id, "REJECTED")}
-                            style={{ borderRadius: "var(--radius-sm)", fontSize: 12, padding: "6px 14px" }}
-                          >
-                            <Icons.X size={13} />
-                            <span>Reject</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-green"
-                            disabled={processingId === loc.id}
-                            onClick={() => handleReviewLocation(loc.id, "APPROVED")}
-                            style={{ borderRadius: "var(--radius-sm)", fontSize: 12, padding: "6px 14px" }}
-                          >
-                            <Icons.Check size={13} />
-                            <span>Update Perimeter</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Active Agricultural Incidents with Photos */}
-              {activeIncidents.length > 0 && (
-                <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div className="eyebrow" style={{ color: "var(--red)" }}>
-                    <span className="eyebrow-dot" style={{ backgroundColor: "var(--red)" }} />
-                    <span>OPERATIONAL HAZARDS &amp; FIELD INCIDENTS ({activeIncidents.length})</span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {activeIncidents.map((inc) => (
-                      <div
-                        key={inc.id}
-                        className="compact-card hover-glow"
-                        style={{
-                          padding: 18,
-                          gap: 14,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => setSelectedIncident(inc)}
-                      >
-                        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                          <div
-                            style={{
-                              width: 96,
-                              height: 96,
-                              minWidth: 96,
-                              borderRadius: "var(--radius-sm)",
-                              overflow: "hidden",
-                              backgroundColor: "var(--stone)",
-                              position: "relative",
-                            }}
-                          >
-                            {inc.imageUrl ? (
-                              <img
-                                src={inc.imageUrl}
-                                alt={inc.type}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: 4,
-                                  color: "var(--muted)",
-                                  fontSize: 10,
-                                }}
-                              >
-                                <Icons.AlertTriangle size={24} style={{ color: inc.severity === "CRITICAL" ? "var(--red)" : "var(--amber)" }} />
-                                <span>No Photo</span>
-                              </div>
-                            )}
-                            {inc.imageUrl && (
-                              <span
-                                style={{
-                                  position: "absolute",
-                                  bottom: 4,
-                                  right: 4,
-                                  backgroundColor: "rgba(0,0,0,0.7)",
-                                  color: "#fff",
-                                  borderRadius: "var(--radius-pill)",
-                                  padding: "2px 6px",
-                                  fontSize: 9,
-                                  fontWeight: 600,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 3,
-                                }}
-                              >
-                                <Icons.Camera size={10} /> Photo
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                            <span className="badge badge-muted font-mono" style={{ fontSize: 9 }}>
+                              {farm.clientCode}
+                            </span>
+                            {farm.clientPhone && (
+                              <span className="muted font-mono" style={{ fontSize: 10 }}>
+                                {farm.clientPhone}
                               </span>
                             )}
                           </div>
+                        </td>
 
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontWeight: 600, color: "var(--ink)", fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                {inc.type}
-                              </span>
-                              <span
-                                className={`badge ${
-                                  inc.severity === "CRITICAL"
-                                    ? "badge-danger"
-                                    : inc.severity === "HIGH"
-                                    ? "badge-amber"
-                                    : "badge-blue"
-                                }`}
-                              >
-                                {inc.severity}
-                              </span>
-                            </div>
+                        {/* Acreage & Zoning */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+                          <div>
+                            <strong>{farm.cultivableArea}</strong> / {farm.totalArea} Ac
+                          </div>
+                          <div className="muted" style={{ fontSize: 10, marginTop: 2 }}>
+                            {farm.plotsCount} Parcels Demarcated
+                          </div>
+                        </td>
 
-                            <div className="muted" style={{ fontSize: 12 }}>
-                              {inc.farmName} {inc.plotName ? `• ${inc.plotName}` : ""}
-                            </div>
+                        {/* Soil & Hydrology */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+                          <div>{farm.soilType || "Red Sandy Loam"}</div>
+                          <div className="muted" style={{ fontSize: 10, marginTop: 2 }}>
+                            💧 {farm.waterSource || "Borewell Grid"}
+                          </div>
+                        </td>
 
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: 13,
-                                color: "var(--ink)",
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                                lineHeight: 1.4,
-                              }}
+                        {/* Turnkey Stage & Progress */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top", minWidth: 200 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <span
+                              className={`badge ${isHandover ? "badge-green" : "badge-amber"}`}
+                              style={{ fontSize: 10, padding: "1px 6px" }}
                             >
-                              {inc.description}
-                            </p>
-
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                              <span>Reported {inc.date}</span>
-                              {inc.impactPercent && (
-                                <span style={{ color: "var(--amber)", fontWeight: 600 }}>
-                                  Impact: {inc.impactPercent}%
-                                </span>
-                              )}
-                            </div>
+                              Stage {meta.stepNumber}: {meta.label}
+                            </span>
+                            <span style={{ fontWeight: 700, fontSize: 11, color: isHandover ? "var(--green)" : "var(--ink)" }}>
+                              {farm.setupProgress}%
+                            </span>
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Poor Crop Health Alerts */}
-              {poorHealthAlerts.length > 0 && (
-                <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div className="eyebrow" style={{ color: "var(--red)" }}>
-                    <span className="eyebrow-dot" style={{ backgroundColor: "var(--red)" }} />
-                    <span>CROP HEALTH DISTRESS WARNINGS ({poorHealthAlerts.length})</span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 16 }}>
-                    {poorHealthAlerts.map((a) => (
-                      <Link
-                        key={a.id}
-                        href={`/farms/${a.farmId}`}
-                        className="compact-card hover-glow"
-                        style={{
-                          padding: 18,
-                          gap: 12,
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "var(--shadow-card)",
-                          textDecoration: "none",
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-                          {a.imageUrl && (
+                          <div style={{ width: "100%", height: 5, background: "var(--surface-strong)", borderRadius: 3, overflow: "hidden" }}>
                             <div
                               style={{
-                                width: 96,
-                                height: 96,
-                                minWidth: 96,
-                                borderRadius: "var(--radius-sm)",
-                                overflow: "hidden",
-                                backgroundColor: "var(--stone)",
+                                width: `${farm.setupProgress}%`,
+                                height: "100%",
+                                background: isHandover ? "var(--green)" : "var(--amber)",
+                                transition: "width 0.3s ease",
                               }}
-                            >
-                              <img
-                                src={a.imageUrl}
-                                alt={a.cropName}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            </div>
-                          )}
+                            />
+                          </div>
+                        </td>
 
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontWeight: 600, color: "var(--ink)", fontSize: 15 }}>
-                                {a.farmName} &bull; {a.cropName}
-                              </span>
-                              <span className="badge badge-danger">POOR HEALTH</span>
-                            </div>
-                            <div className="muted" style={{ fontSize: 12 }}>
-                              Plot: {a.plotName} &bull; Stage: {a.stage} &bull; Impact: {a.impactPercent ? `${a.impactPercent}%` : "Unspecified"}
-                            </div>
-                            {a.remarks && (
-                              <div style={{ fontSize: 12, color: "var(--ink)", fontStyle: "italic", lineHeight: 1.4 }}>
-                                &ldquo;{a.remarks}&rdquo;
-                              </div>
+                        {/* SLA & Timeline */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span
+                              className={`badge ${
+                                isHandover
+                                  ? "badge-green"
+                                  : farm.slaStatus === "OVERDUE"
+                                  ? "badge-rose"
+                                  : farm.slaStatus === "APPROACHING"
+                                  ? "badge-amber"
+                                  : "badge-green"
+                              }`}
+                              style={{ fontSize: 10 }}
+                            >
+                              {isHandover
+                                ? "HANDED OVER"
+                                : farm.slaStatus === "OVERDUE"
+                                ? "OVERDUE"
+                                : farm.slaStatus === "APPROACHING"
+                                ? "APPROACHING"
+                                : "ON TRACK"}
+                            </span>
+                          </div>
+                          <div className="muted font-mono" style={{ fontSize: 10, marginTop: 3 }}>
+                            {farm.daysInStage !== undefined ? `${farm.daysInStage} days in stage` : "Current stage"}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td style={{ padding: "10px 14px", verticalAlign: "top", textAlign: "right" }}>
+                          <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, flexWrap: "wrap" }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDossierFarm(farm)}
+                              className="btn btn-sm btn-outline"
+                              style={{ fontSize: 11, padding: "4px 8px" }}
+                              title="Inspect complete technical dossier"
+                            >
+                              Dossier
+                            </button>
+
+                            {isReadyForHandover && (
+                              <button
+                                type="button"
+                                onClick={() => handleHandover(farm.id, farm.name)}
+                                disabled={processingId === farm.id}
+                                className="btn btn-sm btn-primary"
+                                style={{
+                                  fontSize: 11,
+                                  padding: "4px 8px",
+                                  background: "var(--green)",
+                                  borderColor: "var(--green)",
+                                }}
+                              >
+                                {processingId === farm.id ? "Activating..." : "1-Click Handover"}
+                              </button>
+                            )}
+
+                            {meta.nextStage && !isReadyForHandover && !isHandover && (
+                              <button
+                                type="button"
+                                onClick={() => handleAdvanceStage(farm)}
+                                disabled={processingId === farm.id}
+                                className="btn btn-sm btn-secondary"
+                                style={{ fontSize: 11, padding: "4px 8px" }}
+                              >
+                                {processingId === farm.id ? "..." : `Advance →`}
+                              </button>
+                            )}
+
+                            {isHandover && (
+                              <Link
+                                href="/owner/dashboard"
+                                className="btn btn-sm btn-ghost"
+                                style={{ fontSize: 11, padding: "4px 8px", color: "var(--green-dark)" }}
+                              >
+                                Live Cockpit
+                              </Link>
                             )}
                           </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                        </td>
+                      </tr>
+                    );
+                  })}
 
-      {/* ── 5. CONSOLE VIEW 2: WORKFORCE PRESENCE ── */}
-      {activeConsoleTab === "WORKFORCE" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* Workforce Telemetry Breakdown Ribbon */}
-          <div className="metric-summary-row">
-            <div className="metric-summary-item">
-              <span className="metric-label">Staff Scheduled</span>
-              <div className="metric-value">{workforceSummary.totalOfficers}</div>
-              <div className="metric-sub">{workforceSummary.totalOfficers - workforceSummary.notClockedInCount} CLOCKED IN TODAY</div>
+                  {pipelineFarms.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: "40px 16px", textAlign: "center" }} className="muted">
+                        No farmland infrastructure setups matched your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
 
-            <div className="metric-summary-item">
-              <span className="metric-label">Active On Duty</span>
-              <div className="metric-value" style={{ color: "var(--green)" }}>{workforceSummary.onDutyCount}</div>
-              <div className="metric-sub" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span className="telemetry-live-dot" /> LIVE IN FIELD
+            {/* Pagination Controls */}
+            <div
+              style={{
+                padding: "12px 18px",
+                background: "var(--surface-strong)",
+                borderTop: "1px solid var(--line)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                Showing page {pipelinePage} of {pipelineTotalPages} ({pipelineTotalCount} total estates)
               </div>
-            </div>
 
-            <div className="metric-summary-item">
-              <span className="metric-label">Geofence Compliance</span>
-              <div className="metric-value" style={{ color: workforceSummary.complianceRate >= 90 ? "var(--green)" : "var(--amber)" }}>
-                {workforceSummary.complianceRate}%
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <select
+                  value={pipelineLimit}
+                  onChange={(e) => {
+                    setPipelineLimit(Number(e.target.value));
+                    setPipelinePage(1);
+                  }}
+                  className="input-field"
+                  style={{ fontSize: 11, padding: "4px 8px", width: "auto" }}
+                >
+                  <option value={20}>20 per page</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setPipelinePage((p) => Math.max(1, p - 1))}
+                  disabled={pipelinePage <= 1}
+                  className="btn btn-sm btn-secondary"
+                  style={{ fontSize: 11, padding: "4px 10px" }}
+                >
+                  ← Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPipelinePage((p) => Math.min(pipelineTotalPages, p + 1))}
+                  disabled={pipelinePage >= pipelineTotalPages}
+                  className="btn btn-sm btn-secondary"
+                  style={{ fontSize: 11, padding: "4px 10px" }}
+                >
+                  Next →
+                </button>
               </div>
-              <div className="metric-sub">{workforceSummary.withinGeofenceCount} VERIFIED ON-SITE</div>
-            </div>
-
-            <div className="metric-summary-item">
-              <span className="metric-label">Distance Exceptions</span>
-              <div className="metric-value" style={{ color: workforceSummary.exceptionPendingCount > 0 ? "var(--amber)" : "var(--muted)" }}>
-                {workforceSummary.exceptionPendingCount}
-              </div>
-              <div className="metric-sub">{workforceSummary.exceptionPendingCount > 0 ? "NEEDS AUTHORIZATION" : "ZERO UNRESOLVED"}</div>
-            </div>
-
-            <div className="metric-summary-item">
-              <span className="metric-label">Shifts Completed</span>
-              <div className="metric-value">{workforceSummary.completedCount}</div>
-              <div className="metric-sub">{workforceSummary.notClockedInCount} NOT YET CLOCKED IN</div>
             </div>
           </div>
 
-          {/* Officer Presence Cards */}
-          {rosterPreview.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div className="eyebrow" style={{ color: "var(--green)" }}>
-                  <span className="eyebrow-dot" style={{ backgroundColor: "var(--green)" }} />
-                  <span>FIELD ROSTER PRESENCE &amp; RECENT CLOCK-INS</span>
-                </div>
-                <span className="muted" style={{ fontSize: 12 }}>
-                  Verified via hardware GPS and photo evidence
-                </span>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
-                {rosterPreview.map((item) => {
-                  const isPending = item.status === "EXCEPTION_PENDING";
-                  const isOnDuty = item.status === "OPEN" || item.status === "EXCEPTION_APPROVED";
-
-                  return (
-                    <div
-                      key={item.attendanceId}
-                      className="compact-card"
-                      style={{
-                        padding: 20,
-                        gap: 14,
-                        borderRadius: "var(--radius-md)",
-                        boxShadow: "var(--shadow-card)",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div
-                            style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: "50%",
-                              backgroundColor: isOnDuty ? "var(--green-light)" : "var(--stone)",
-                              color: isOnDuty ? "var(--green-dark)" : "var(--muted)",
-                              fontWeight: 700,
-                              fontSize: 15,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.officerName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 15 }}>
-                              {item.officerName}
-                            </div>
-                            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                              {item.farmName} &bull; Clock-in: {formatTime(item.startAt)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          {isPending ? (
-                            <span className="badge badge-amber">EXCEPTION PENDING</span>
-                          ) : isOnDuty ? (
-                            <span className="badge badge-green">ON DUTY</span>
-                          ) : (
-                            <span className="badge badge-blue">COMPLETED</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
-                        <div>
-                          {item.withinGeofence ? (
-                            <span style={{ color: "var(--green)", display: "flex", alignItems: "center", gap: 5, fontWeight: 500 }}>
-                              <Icons.Check size={14} /> On-Site ({item.distanceMeters ?? 0}m)
-                            </span>
-                          ) : (
-                            <span style={{ color: "var(--amber)", display: "flex", alignItems: "center", gap: 5, fontWeight: 500 }}>
-                              <Icons.AlertTriangle size={14} /> Outside Geofence (+{item.distanceMeters ?? 0}m)
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ display: "flex", gap: 8 }}>
-                          {item.startSelfieKey && (
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-secondary"
-                              style={{ padding: "4px 10px", fontSize: 12, borderRadius: "var(--radius-pill)" }}
-                              onClick={() => viewSelfie(item.startSelfieKey!, item.officerName)}
-                              title="Inspect Selfie Proof"
-                            >
-                              <Icons.Camera size={13} />
-                              <span>Selfie</span>
-                            </button>
-                          )}
-
-                          {isPending && item.exceptionId && ["SUPER_ADMIN", "FARM_ADMIN"].includes(role) && (
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-green"
-                              style={{ padding: "4px 10px", fontSize: 12, borderRadius: "var(--radius-pill)" }}
-                              disabled={processingId === item.exceptionId}
-                              onClick={() => handleReviewException(item.exceptionId!, "APPROVED")}
-                            >
-                              <Icons.Check size={13} />
-                              <span>Approve</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <EmptyState
-              title="No Active Check-Ins"
-              description="No officers have clocked in today yet. When field officers start shifts at their assigned estates, their presence and compliance metrics will stream here in real-time."
-            />
-          )}
-        </div>
-      )}
-
-      {/* ── 6. CONSOLE VIEW 3: ESTATE PORTFOLIO ── */}
-      {activeConsoleTab === "ESTATES" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {filteredFarms.length === 0 ? (
-            <div className="card" style={{ padding: 48, textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", backgroundColor: "var(--stone)", color: "var(--muted)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                <Icons.Farm size={22} />
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 6px" }}>No Matching Estates Found</h3>
-              <p className="muted" style={{ fontSize: 12, maxWidth: 360, margin: "0 auto 16px" }}>
-                No estates found matching &ldquo;{search}&rdquo; with the selected status/soil filters.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
-                  setStatusFilter("ALL");
-                  setSoilFilter("ALL");
-                }}
-                className="btn btn-sm btn-primary"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-              >
-                Reset All Filters
-              </button>
-            </div>
-          ) : viewMode === "table" ? (
-            /* ── A. DENSE ENTERPRISE DATA TABLE ── */
-            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
-                <table className="data-table" style={{ width: "100%", margin: 0 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left" }}>Estate &amp; Location</th>
-                      <th style={{ textAlign: "left" }}>Client / Owner</th>
-                      <th style={{ textAlign: "left" }}>Status</th>
-                      <th style={{ textAlign: "left" }}>Acreage &amp; Land</th>
-                      <th style={{ textAlign: "left" }}>Parcels &amp; Crops</th>
-                      <th style={{ textAlign: "left" }}>Today&apos;s Field Work</th>
-                      <th style={{ textAlign: "right" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedFarms.map((f) => {
-                      const activeCrops = f.plots.flatMap((p) => p.cropCycles).filter((c) => c.status === "ACTIVE");
-                      const taskProgress = f.todayTasksTotal > 0
-                        ? Math.round((f.todayTasksCompleted / f.todayTasksTotal) * 100)
-                        : 0;
-
-                      return (
-                        <tr key={f.id}>
-                          {/* 1. Estate & Location */}
-                          <td>
-                            <Link
-                              href={`/farms/${f.id}`}
-                              style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", textDecoration: "none" }}
-                            >
-                              {f.name}
-                            </Link>
-                            <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginTop: 3 }}>
-                              <Icons.MapPin size={11} />
-                              <span style={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.location}</span>
-                              {f.soilType && (
-                                <span className="badge badge-muted font-mono" style={{ fontSize: 9 }}>
-                                  {f.soilType.replace("_", " ")}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* 2. Client / Owner */}
-                          <td>
-                            <div style={{ fontWeight: 600, color: "var(--ink)" }}>{f.ownerName}</div>
-                            {f.clientPhone ? (
-                              <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontFamily: "monospace", marginTop: 2 }}>
-                                <span>{f.clientPhone}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(f.clientPhone!);
-                                    toast.success(`Copied ${f.ownerName}'s phone number`);
-                                  }}
-                                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
-                                  title="Copy Phone Number"
-                                >
-                                  <Icons.Copy size={11} />
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="muted font-mono" style={{ fontSize: 10 }}>Admin: {f.adminName}</span>
-                            )}
-                          </td>
-
-                          {/* 3. Status */}
-                          <td>
-                            <StatusBadge status={f.status} />
-                          </td>
-
-                          {/* 4. Acreage */}
-                          <td style={{ minWidth: 140 }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", marginBottom: 4 }}>
-                              <strong style={{ color: "var(--ink)" }}>{f.cultivableArea} ac</strong>
-                              <span className="muted">of {f.totalArea} ac</span>
-                            </div>
-                            <div style={{ width: "100%", height: 6, backgroundColor: "var(--stone)", borderRadius: "var(--radius-pill)", overflow: "hidden" }}>
-                              <div
-                                style={{
-                                  height: "100%",
-                                  backgroundColor: "var(--green)",
-                                  borderRadius: "var(--radius-pill)",
-                                  width: `${Math.min(100, Math.round((Number(f.cultivableArea) / Math.max(1, Number(f.totalArea))) * 100))}%`,
-                                }}
-                              />
-                            </div>
-                          </td>
-
-                          {/* 5. Parcels & Crops */}
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                              <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
-                                {f.plots.length} {f.plots.length === 1 ? "Plot" : "Plots"}
-                              </span>
-                              {activeCrops.slice(0, 2).map((c, i) => (
-                                <span
-                                  key={`${c.id}-${i}`}
-                                  className="badge badge-green font-mono"
-                                  style={{ fontSize: 10 }}
-                                >
-                                  {c.cropName}
-                                </span>
-                              ))}
-                              {activeCrops.length > 2 && (
-                                <span className="muted font-mono" style={{ fontSize: 10 }}>
-                                  +{activeCrops.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* 6. Today's Field Work */}
-                          <td>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                              {f.todayTasksTotal > 0 ? (
-                                <span className="badge badge-blue font-mono" style={{ fontSize: 10 }}>
-                                  Tasks: {f.todayTasksCompleted}/{f.todayTasksTotal} ({taskProgress}%)
-                                </span>
-                              ) : (
-                                <span className="muted font-mono" style={{ fontSize: 10 }}>No tasks today</span>
-                              )}
-                              {f.todayAttendanceCount > 0 && (
-                                <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                                  <span className="telemetry-live-dot" />
-                                  <span>{f.todayAttendanceCount} Workers On Duty</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* 7. Actions */}
-                          <td style={{ textAlign: "right" }}>
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                              <Link
-                                href={`/owner/calendar?farmId=${f.id}`}
-                                className="btn btn-sm btn-secondary"
-                                style={{ padding: "4px 8px" }}
-                                title="Operations Calendar"
-                              >
-                                <Icons.Calendar size={13} />
-                              </Link>
-                              <Link
-                                href={`/admin/attendance?farmId=${f.id}`}
-                                className="btn btn-sm btn-secondary"
-                                style={{ padding: "4px 8px" }}
-                                title="Attendance Muster"
-                              >
-                                <Icons.Users size={13} />
-                              </Link>
-                              <Link
-                                href={`/farms/${f.id}`}
-                                className="btn btn-sm btn-primary"
-                                style={{ padding: "4px 10px", fontSize: 11 }}
-                              >
-                                <span>Manage &rarr;</span>
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            /* ── B. GRID CARDS VIEW ── */
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {paginatedFarms.map((f) => {
-                const activeCrops = f.plots.flatMap((p) => p.cropCycles).filter((c) => c.status === "ACTIVE");
-                const taskProgress = f.todayTasksTotal > 0
-                  ? Math.round((f.todayTasksCompleted / f.todayTasksTotal) * 100)
-                  : 0;
-
-                return (
-                  <div
-                    key={f.id}
-                    className="compact-card"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      padding: 18,
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--line)",
-                      backgroundColor: "var(--canvas)",
-                      gap: 14,
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                        <div>
-                          <Link
-                            href={`/farms/${f.id}`}
-                            style={{
-                              fontSize: 16,
-                              fontWeight: 700,
-                              color: "var(--ink)",
-                              textDecoration: "none",
-                            }}
-                          >
-                            {f.name}
-                          </Link>
-                          <div className="muted" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginTop: 4 }}>
-                            <Icons.MapPin size={12} />
-                            <span>{f.location}</span>
-                            <span>&bull;</span>
-                            <span>{f.ownerName}</span>
-                          </div>
-                        </div>
-                        <StatusBadge status={f.status} />
-                      </div>
-
-                      {/* Cultivated Area Progress Bar */}
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontFamily: "monospace", marginBottom: 4, color: "var(--muted)" }}>
-                          <span>Cultivated Land</span>
-                          <span style={{ fontWeight: 700, color: "var(--ink)" }}>
-                            {f.cultivableArea} of {f.totalArea} Acres
-                          </span>
-                        </div>
-                        <div style={{ height: 6, backgroundColor: "var(--stone)", borderRadius: "var(--radius-pill)", overflow: "hidden" }}>
-                          <div
-                            style={{
-                              height: "100%",
-                              backgroundColor: "var(--green)",
-                              borderRadius: "var(--radius-pill)",
-                              width: `${Math.min(100, Math.round((Number(f.cultivableArea) / Math.max(1, Number(f.totalArea))) * 100))}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Metadata badges */}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, fontSize: 11 }}>
-                        <span className="badge badge-muted font-mono">
-                          {f.plots.length} Plots
-                        </span>
-                        {activeCrops.map((c, idx) => (
-                          <span
-                            key={`${c.id}-${idx}`}
-                            className="badge badge-green font-mono"
-                          >
-                            {c.cropName}
-                          </span>
-                        ))}
-                        {f.todayTasksTotal > 0 && (
-                          <span className="badge badge-blue font-mono">
-                            Tasks: {f.todayTasksCompleted}/{f.todayTasksTotal} ({taskProgress}%)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Bar */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-                      <Link
-                        href={`/admin/attendance?farmId=${f.id}`}
-                        className="btn btn-sm btn-secondary"
-                        style={{ fontSize: 12, padding: "5px 12px", borderRadius: "var(--radius-pill)" }}
-                      >
-                        Roster
-                      </Link>
-
-                      <Link
-                        href={`/farms/${f.id}`}
-                        className="btn btn-sm btn-primary"
-                        style={{ fontSize: 12, padding: "5px 14px", borderRadius: "var(--radius-pill)" }}
-                      >
-                        Manage Estate &rarr;
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── PAGINATION CONTROLS (Both Table and Grid) ── */}
-          {filteredFarms.length > 0 && (
+          {/* 4. TECHNICAL DOSSIER INSPECTION MODAL */}
+          {selectedDossierFarm && (
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
-                padding: "10px 16px",
-                backgroundColor: "var(--stone)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--line)",
-                fontSize: 12,
-                color: "var(--muted)",
-              }}
-            >
-              <div style={{ fontFamily: "monospace" }}>
-                Showing <strong style={{ color: "var(--ink)" }}>{(page - 1) * pageSize + 1}</strong> to{" "}
-                <strong style={{ color: "var(--ink)" }}>{Math.min(page * pageSize, filteredFarms.length)}</strong> of{" "}
-                <strong style={{ color: "var(--ink)" }}>{filteredFarms.length.toLocaleString()}</strong> Estates
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="btn btn-sm btn-secondary"
-                  style={{ fontSize: 11, padding: "4px 10px" }}
-                >
-                  Previous
-                </button>
-                <span style={{ fontFamily: "monospace", padding: "0 6px" }}>
-                  Page <strong style={{ color: "var(--ink)" }}>{page}</strong> of <strong style={{ color: "var(--ink)" }}>{totalPages}</strong>
-                </span>
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="btn btn-sm btn-secondary"
-                  style={{ fontSize: 11, padding: "4px 10px" }}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── 6. SELFIE LIGHTBOX MODAL ── */}
-      {lightboxSelfie && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.75)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            padding: 20,
-          }}
-          onClick={() => setLightboxSelfie(null)}
-        >
-          <div
-            className="compact-card"
-            style={{
-              maxWidth: 400,
-              width: "100%",
-              padding: 20,
-              gap: 14,
-              backgroundColor: "var(--canvas)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: 16 }}>{lightboxSelfie.officer} &bull; Verification Selfie</h3>
-              <button
-                type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => setLightboxSelfie(null)}
-              >
-                <Icons.X size={14} />
-              </button>
-            </div>
-
-            <div
-              style={{
-                width: "100%",
-                height: 300,
-                backgroundColor: "var(--line)",
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0, 0, 0, 0.45)",
+                backdropFilter: "blur(2px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                overflow: "hidden",
-                border: "1px solid var(--line)",
+                zIndex: 1000,
+                padding: 16,
               }}
+              onClick={() => setSelectedDossierFarm(null)}
             >
-              {lightboxSelfie.loading ? (
-                <div className="muted">Retrieving photo…</div>
-              ) : lightboxSelfie.url ? (
-                <img
-                  src={lightboxSelfie.url}
-                  alt="Officer Selfie"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <div className="error">Photo asset not found.</div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span className="badge badge-green">
-                <Icons.CheckCircle size={12} /> Verified S3 Asset
-              </span>
-              <button
-                type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => setLightboxSelfie(null)}
+              <div
+                className="compact-card"
+                style={{
+                  width: "100%",
+                  maxWidth: 700,
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                  padding: 24,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 18,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
+                }}
+                onClick={(e) => e.stopPropagation()}
               >
-                Close
-              </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <span className="mono-label" style={{ fontSize: 10, color: "var(--ink-soft)" }}>
+                      FARMLAND INFRASTRUCTURE DOSSIER
+                    </span>
+                    <h2 style={{ fontSize: 18, margin: "4px 0 2px", fontWeight: 700 }}>
+                      {selectedDossierFarm.name}
+                    </h2>
+                    <p className="muted" style={{ margin: 0, fontSize: 12 }}>
+                      📍 {selectedDossierFarm.location}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDossierFarm(null)}
+                    className="btn btn-sm btn-ghost"
+                    style={{ padding: 4 }}
+                  >
+                    <Icons.X size={16} />
+                  </button>
+                </div>
+
+                {/* Technical Parameters Matrix */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12, fontSize: 12 }}>
+                  <div style={{ background: "var(--surface-strong)", padding: 12, borderRadius: "var(--radius-sm)" }}>
+                    <div className="mono-label" style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>
+                      CADASTRAL &amp; LAND RECORD
+                    </div>
+                    <div>Survey/Khasra #: <strong>{selectedDossierFarm.surveyNumber || "Pending revenue upload"}</strong></div>
+                    <div>District &amp; State: <strong>{selectedDossierFarm.district || "N/A"}, {selectedDossierFarm.state || "N/A"}</strong></div>
+                    <div>Total Registered Area: <strong>{selectedDossierFarm.totalArea} Acres</strong></div>
+                    <div>Cultivable Area: <strong>{selectedDossierFarm.cultivableArea} Acres</strong></div>
+                  </div>
+
+                  <div style={{ background: "var(--surface-strong)", padding: 12, borderRadius: "var(--radius-sm)" }}>
+                    <div className="mono-label" style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>
+                      SOIL SCIENCE &amp; HYDROLOGY
+                    </div>
+                    <div>Primary Soil: <strong>{selectedDossierFarm.soilType || "Red Sandy Loam"}</strong></div>
+                    <div>Soil pH Baseline: <strong>{selectedDossierFarm.soilPh ? `${selectedDossierFarm.soilPh} (Neutral)` : "Testing in progress"}</strong></div>
+                    <div>Water Supply: <strong>{selectedDossierFarm.waterSource || "Borewell System"}</strong></div>
+                    <div>Security Fencing: <strong>{selectedDossierFarm.fencingType || "Standard Chainlink"}</strong></div>
+                  </div>
+
+                  <div style={{ background: "var(--surface-strong)", padding: 12, borderRadius: "var(--radius-sm)" }}>
+                    <div className="mono-label" style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>
+                      CLIENT ORGANIZATION
+                    </div>
+                    <div>Client Name: <strong>{selectedDossierFarm.clientName}</strong></div>
+                    <div>Account Code: <strong className="font-mono">{selectedDossierFarm.clientCode}</strong></div>
+                    <div>Mobile: <strong>{selectedDossierFarm.clientPhone || "N/A"}</strong></div>
+                  </div>
+
+                  <div style={{ background: "var(--surface-strong)", padding: 12, borderRadius: "var(--radius-sm)" }}>
+                    <div className="mono-label" style={{ fontSize: 10, color: "var(--muted)", marginBottom: 4 }}>
+                      PROJECT SLA &amp; TIMELINE
+                    </div>
+                    <div>Current Stage: <strong>Stage {STAGE_METADATA[selectedDossierFarm.setupStage]?.stepNumber || 1}: {STAGE_METADATA[selectedDossierFarm.setupStage]?.label}</strong></div>
+                    <div>Days in Stage: <strong>{selectedDossierFarm.daysInStage ?? 0} days</strong></div>
+                    <div>Target Handover: <strong>{selectedDossierFarm.targetHandoverDate ? new Date(selectedDossierFarm.targetHandoverDate).toLocaleDateString() : "Pending Schedule"}</strong></div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                  <Link
+                    href={`/farms/${selectedDossierFarm.id}`}
+                    className="btn btn-sm btn-primary"
+                    style={{ fontSize: 12 }}
+                  >
+                    Open Estate Management Hub →
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDossierFarm(null)}
+                    className="btn btn-sm btn-secondary"
+                    style={{ fontSize: 12 }}
+                  >
+                    Close Dossier
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </section>
       )}
 
-      {/* ── 7. INCIDENT EVIDENCE LIGHTBOX MODAL ── */}
-      {selectedIncident && (
+      {/* ── 5. TAB 2: ENTERPRISE CLIENT DIRECTORY ── */}
+      {activeTab === "CLIENTS" && (
+        <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Search & Filter Header */}
+          <div
+            className="compact-card"
+            style={{
+              padding: "12px 18px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ position: "relative", width: 300 }}>
+                <input
+                  type="text"
+                  placeholder="Search clients by name, code, phone, district... (server-side)"
+                  value={clientSearch}
+                  onChange={(e) => { setClientSearch(e.target.value); setClientsPage(1); }}
+                  className="input-field"
+                  style={{ fontSize: 12, padding: "6px 28px 6px 28px" }}
+                />
+                <span style={{ position: "absolute", left: 9, top: 9, color: "var(--muted)", pointerEvents: "none" }}>
+                  <Icons.Search size={13} />
+                </span>
+                {clientSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setClientSearch("")}
+                    style={{ position: "absolute", right: 8, top: 8, background: "none", border: "none", color: "var(--muted)", cursor: "pointer", padding: 0 }}
+                  >
+                    <Icons.X size={12} />
+                  </button>
+                )}
+              </div>
+
+              {/* State Filter */}
+              <select
+                value={clientStateFilter}
+                onChange={(e) => { setClientStateFilter(e.target.value); setClientsPage(1); }}
+                className="input-field"
+                style={{ fontSize: 12, padding: "6px 10px", width: "auto" }}
+              >
+                <option value="ALL">All States</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Gujarat">Gujarat</option>
+              </select>
+            </div>
+
+            <div style={{ fontSize: 12, color: "var(--muted)", display: "flex", gap: 8, alignItems: "center" }}>
+              {clientsLoading ? "Loading…" : clientsTotal != null ? `Showing ${filteredClients.length} of ${clientsTotal.toLocaleString()} accounts` : `Showing ${filteredClients.length} accounts`}
+              <Link href="/clients" style={{ fontSize: 12 }}>Open full directory →</Link>
+            </div>
+          </div>
+
+          {/* Client Table */}
+          <div className="compact-card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table className="data-table" style={{ width: "100%", margin: 0, fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th>Client Code &amp; Name</th>
+                    <th>Contact &amp; Verification</th>
+                    <th>State &amp; District</th>
+                    <th>Estates Portfolio</th>
+                    <th>Total Acreage</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: "right" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map((client) => (
+                    <tr key={client.id}>
+                      {/* Code & Name */}
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
+                            {client.code}
+                          </span>
+                          <div>
+                            <strong style={{ color: "var(--ink)", display: "block" }}>{client.name}</strong>
+                            {client.companyName && (
+                              <span className="muted" style={{ fontSize: 11 }}>{client.companyName}</span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          {client.phone && (
+                            <span className="font-mono" style={{ fontSize: 11, color: "var(--ink)" }}>
+                              📞 {client.phone}
+                            </span>
+                          )}
+                          {client.email && (
+                            <span className="muted" style={{ fontSize: 11 }}>
+                              ✉️ {client.email}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Region */}
+                      <td>
+                        <span style={{ fontWeight: 500, color: "var(--ink)" }}>
+                          {client.district ? `${client.district}, ` : ""}
+                          {client.state || "Karnataka"}
+                        </span>
+                      </td>
+
+                      {/* Estates Count */}
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <strong style={{ fontSize: 13, color: "var(--ink)" }}>
+                            {client.totalFarms} {client.totalFarms === 1 ? "Estate" : "Estates"}
+                          </strong>
+                          {client.setupFarmsCount > 0 && (
+                            <span className="badge badge-amber font-mono" style={{ fontSize: 9 }}>
+                              {client.setupFarmsCount} Setup
+                            </span>
+                          )}
+                          {client.activeFarmsCount > 0 && (
+                            <span className="badge badge-green font-mono" style={{ fontSize: 9 }}>
+                              {client.activeFarmsCount} Active
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Acreage */}
+                      <td>
+                        <span style={{ fontWeight: 600, color: "var(--ink)" }}>
+                          {Math.round(client.totalCultivable)} Ac
+                        </span>
+                        <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>
+                          / {Math.round(client.totalAcreage)} Ac
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td>
+                        <StatusBadge status={client.status} />
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedClient(client)}
+                            className="btn btn-sm btn-secondary"
+                            style={{ fontSize: 11, padding: "4px 8px" }}
+                          >
+                            <span>Inspect Portfolio →</span>
+                          </button>
+                          <Link
+                            href={`/farms/new?clientId=${client.id}`}
+                            className="btn btn-sm btn-ghost"
+                            style={{ fontSize: 11, padding: "4px 8px" }}
+                            title="Add Another Farm"
+                          >
+                            <Icons.Plus size={12} />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredClients.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "36px 12px", color: "var(--muted)" }}>
+                        No enterprise client accounts found matching your query.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 6. TAB 3: NATIONAL FOOTPRINT ── */}
+      {activeTab === "REGIONAL" && (
+        <section className="compact-card" style={{ padding: 24, gap: 20 }}>
+          <div className="page-header" style={{ border: "none", padding: 0 }}>
+            <div>
+              <div className="eyebrow" style={{ color: "var(--green)" }}>
+                <span className="eyebrow-dot" style={{ backgroundColor: "var(--green)" }} />
+                <span>CROSS-INDIA DISTRIBUTION</span>
+              </div>
+              <h2 className="section-title" style={{ fontSize: 18, marginTop: 4 }}>
+                Agaate National Farmland Presence
+              </h2>
+              <p className="muted" style={{ fontSize: 13, margin: "2px 0 0" }}>
+                Multi-state operational summary of clients, cultivable acreage, and active farm setup hubs.
+              </p>
+            </div>
+          </div>
+
+          {/* Real portfolio totals only — per-state breakdowns are not
+              fabricated. A state-level aggregation endpoint is the missing
+              backend contract (see /api/admin/clients?state= for filtered
+              counts); until it exists we show honest totals, not estimates. */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+            {[
+              { label: "Total clients", value: macroTelemetry.totalClients.toLocaleString() },
+              { label: "Total farms", value: macroTelemetry.totalFarms.toLocaleString() },
+              { label: "Cultivable acreage", value: macroTelemetry.totalCultivable.toLocaleString() },
+              { label: "Setups in flight", value: macroTelemetry.inFlightSetups.toLocaleString() },
+            ].map((s) => (
+              <div key={s.label} style={{ border: "1px solid var(--line)", borderRadius: "var(--radius-sm)", padding: 16, background: "var(--canvas)" }}>
+                <div style={{ fontSize: 11, fontFamily: "var(--font-mono)", textTransform: "uppercase", color: "var(--muted)" }}>{s.label}</div>
+                <div style={{ fontSize: 24, fontWeight: 700 }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+          <p className="muted" style={{ fontSize: 12 }}>Regional split by state needs a dedicated aggregation API — use <Link href="/clients">Clients</Link> and <Link href="/farms">Farms</Link> directories with state filters for real numbers.</p>
+        </section>
+      )}
+
+      {/* ── 7. CLIENT ACCOUNT INSPECTION MODAL ── */}
+      {selectedClient && (
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 9999,
-            padding: 20,
+            zIndex: 1000,
+            padding: 16,
           }}
-          onClick={() => setSelectedIncident(null)}
+          onClick={() => setSelectedClient(null)}
         >
           <div
             className="compact-card"
             style={{
-              maxWidth: 540,
+              maxWidth: 720,
               width: "100%",
-              padding: 24,
-              gap: 16,
-              backgroundColor: "var(--canvas)",
-              maxHeight: "90vh",
+              maxHeight: "85vh",
               overflowY: "auto",
+              padding: 24,
+              gap: 20,
+              background: "var(--canvas)",
+              borderRadius: "var(--radius-md)",
+              boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Modal Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <div className="eyebrow" style={{ color: "var(--red)" }}>
-                  <span className="eyebrow-dot" style={{ backgroundColor: "var(--red)" }} />
-                  <span>INCIDENT EVIDENCE &bull; {selectedIncident.severity}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="badge badge-muted font-mono" style={{ fontSize: 10 }}>
+                    {selectedClient.code}
+                  </span>
+                  <h2 style={{ fontSize: 18, margin: 0, fontWeight: 700 }}>
+                    {selectedClient.name}
+                  </h2>
                 </div>
-                <h3 style={{ margin: "4px 0 0", fontSize: 18, fontWeight: 700, color: "var(--ink)" }}>
-                  {selectedIncident.type}
-                </h3>
-                <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                  {selectedIncident.farmName} {selectedIncident.plotName ? `• Plot: ${selectedIncident.plotName}` : ""}
-                </div>
+                {selectedClient.companyName && (
+                  <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                    {selectedClient.companyName}
+                  </div>
+                )}
               </div>
-
               <button
                 type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => setSelectedIncident(null)}
+                onClick={() => setSelectedClient(null)}
+                className="btn btn-sm btn-ghost"
+                style={{ padding: 4 }}
               >
-                <Icons.X size={15} />
+                <Icons.X size={16} />
               </button>
             </div>
 
-            {selectedIncident.imageUrl && (
-              <div
-                style={{
-                  width: "100%",
-                  maxHeight: 320,
-                  borderRadius: "var(--radius-xs)",
-                  overflow: "hidden",
-                  border: "1px solid var(--line)",
-                  backgroundColor: "#000",
-                }}
-              >
-                <img
-                  src={selectedIncident.imageUrl}
-                  alt={selectedIncident.type}
-                  style={{ width: "100%", maxHeight: 320, objectFit: "contain" }}
-                />
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 13 }}>
+            {/* Client Telemetry Bar */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 12,
+                padding: 12,
+                background: "var(--stone)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: 12,
+              }}
+            >
               <div>
-                <span className="label" style={{ fontSize: 11 }}>INCIDENT DESCRIPTION</span>
-                <p style={{ margin: "4px 0 0", color: "var(--ink)", lineHeight: 1.5 }}>
-                  {selectedIncident.description}
-                </p>
+                <span className="mono-label" style={{ fontSize: 9 }}>TOTAL ESTATES</span>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", marginTop: 2 }}>
+                  {selectedClient.totalFarms} Farms
+                </div>
               </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 10,
-                  padding: 12,
-                  backgroundColor: "var(--canvas)",
-                  border: "1px solid var(--line)",
-                }}
-              >
-                <div>
-                  <span className="label" style={{ fontSize: 10 }}>SEVERITY</span>
-                  <div style={{ fontWeight: 600, color: "var(--ink)", marginTop: 2 }}>
-                    {selectedIncident.severity}
-                  </div>
+              <div>
+                <span className="mono-label" style={{ fontSize: 9 }}>CULTIVABLE ACREAGE</span>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--green)", marginTop: 2 }}>
+                  {Math.round(selectedClient.totalCultivable)} Ac
                 </div>
-                <div>
-                  <span className="label" style={{ fontSize: 10 }}>ESTIMATED IMPACT</span>
-                  <div style={{ fontWeight: 600, color: "var(--amber)", marginTop: 2 }}>
-                    {selectedIncident.impactPercent ? `${selectedIncident.impactPercent}% Yield Variance` : "Not specified"}
-                  </div>
-                </div>
-                <div>
-                  <span className="label" style={{ fontSize: 10 }}>STATUS</span>
-                  <div style={{ fontWeight: 600, color: "var(--ink)", marginTop: 2 }}>
-                    {selectedIncident.status}
-                  </div>
-                </div>
-                <div>
-                  <span className="label" style={{ fontSize: 10 }}>REPORT DATE</span>
-                  <div style={{ fontWeight: 600, color: "var(--ink)", marginTop: 2 }}>
-                    {selectedIncident.date}
-                  </div>
+              </div>
+              <div>
+                <span className="mono-label" style={{ fontSize: 9 }}>REGION</span>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)", marginTop: 2 }}>
+                  {selectedClient.state || "Karnataka"}
                 </div>
               </div>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderTop: "1px solid var(--line)",
-                paddingTop: 14,
-              }}
-            >
+            {/* Farms Portfolio List */}
+            <div>
+              <h4 style={{ fontSize: 13, marginBottom: 10, fontWeight: 700 }}>
+                Estates Owned by {selectedClient.name}
+              </h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {selectedClient.farms.map((f) => (
+                  <div
+                    key={f.id}
+                    style={{
+                      border: "1px solid var(--line)",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "10px 14px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      background: "var(--canvas)",
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: 13, color: "var(--ink)" }}>{f.name}</strong>
+                      <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>
+                        Acreage: {f.cultivableArea} Ac • Stage: {f.setupStage.replace(/_/g, " ")} ({f.setupProgress}%)
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <StatusBadge status={f.status} />
+                      <Link
+                        href={`/farms/${f.id}`}
+                        className="btn btn-sm btn-secondary"
+                        style={{ fontSize: 11, padding: "4px 8px" }}
+                      >
+                        Inspect Estate
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+                {selectedClient.farms.length === 0 && (
+                  <div className="muted" style={{ fontSize: 12, padding: "12px 0", textAlign: "center" }}>
+                    No farms registered under this client yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
               <Link
-                href={`/farms/${selectedIncident.farmId}`}
-                className="btn btn-sm btn-primary"
-                onClick={() => setSelectedIncident(null)}
+                href={`/farms/new?clientId=${selectedClient.id}`}
+                className="btn btn-secondary btn-sm"
               >
-                <span>View Estate &amp; Mitigation &rarr;</span>
+                <Icons.Plus size={13} />
+                <span>Onboard Additional Estate</span>
               </Link>
               <button
                 type="button"
-                className="btn btn-sm btn-secondary"
-                onClick={() => setSelectedIncident(null)}
+                onClick={() => setSelectedClient(null)}
+                className="btn btn-primary btn-sm"
               >
-                Close
+                Done
               </button>
             </div>
           </div>

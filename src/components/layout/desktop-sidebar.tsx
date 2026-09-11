@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
-import { FarmSwitcher } from "@/components/nav/farm-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/nav/config";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface NavLinkItem {
   href: string;
@@ -28,19 +29,6 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ role, userName, onOpenCommandPalette }: DesktopSidebarProps) {
   const pathname = usePathname();
-  const [timeStr, setTimeStr] = useState<string>("");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const d = new Date();
-      setTimeStr(
-        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   async function handleSignOut() {
     try {
@@ -50,85 +38,69 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
     }
   }
 
-  const roleLabels: Record<string, string> = {
-    SUPER_ADMIN: "SUPER ADMIN",
-    FARM_ADMIN: "FARM OWNER",
-    AGRONOMIST: "AGRONOMIST",
-    FARM_OFFICER: "FARM MANAGER",
-  };
-
-  const roleHomeUrls: Record<string, string> = {
-    SUPER_ADMIN: "/dashboard",
-    FARM_ADMIN: "/owner/dashboard",
-    AGRONOMIST: "/agronomy/radar",
-    FARM_OFFICER: "/officer/day",
-  };
-
   // Build role-tailored grouped navigation sections
   const sections: NavSection[] = [];
+
+  const [counts, setCounts] = useState<{ inbox?: number; onboarding?: number; missingBoundary?: number } | null>(null);
+
+  useEffect(() => {
+    if (role !== "SUPER_ADMIN") return;
+    fetch("/api/admin/counts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setCounts(d);
+      })
+      .catch(() => { /* badges are best-effort */ });
+  }, [role]);
 
   if (role === "SUPER_ADMIN") {
     sections.push(
       {
-        title: "HQ Command",
+        title: "PORTFOLIO",
         items: [
           {
-            href: "/dashboard",
-            label: "Command Center",
-            icon: "Farm",
-            isActive: (p) => p === "/dashboard" || (p.startsWith("/farms") && !p.startsWith("/farms/new")),
-          },
-          {
-            href: "/owner/calendar",
-            label: "Ops Calendar",
-            icon: "Calendar",
-          },
-          {
-            href: "/tasks",
-            label: "Global Tasks",
-            icon: "ClipboardList",
-          },
-        ],
-      },
-      {
-        title: "Client Portfolio",
-        items: [
-          {
-            href: "/farms/new",
-            label: "Onboard Client & Farm",
-            icon: "Plus",
-            badge: "Setup",
-            isActive: (p) => p.startsWith("/farms/new"),
-          },
-          {
-            href: "/admin/attendance",
-            label: "Workforce Presence",
+            href: "/hq",
+            label: "Overview",
             icon: "Activity",
+            badge: counts?.inbox ? String(counts.inbox > 99 ? "99+" : counts.inbox) : undefined,
+            isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
           },
           {
-            href: "/admin/users",
-            label: "Clients & Directory",
+            href: "/hq/clients",
+            label: "Clients",
             icon: "Users",
+            isActive: (p) => p.startsWith("/hq/clients") || p.startsWith("/clients"),
+          },
+          {
+            href: "/hq/farms",
+            label: "Farms",
+            icon: "Farm",
+            badge: counts?.missingBoundary ? `${counts.missingBoundary} no map` : undefined,
+            isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
+          },
+          {
+            href: "/hq/map",
+            label: "Map",
+            icon: "Navigation",
+            isActive: (p) => p.startsWith("/hq/map") || p.startsWith("/spatial"),
           },
         ],
       },
       {
-        title: "Governance & Audit",
+        title: "INTAKE & WORKFORCE",
         items: [
           {
-            href: "/admin/approvals",
-            label: "Approvals Desk",
-            icon: "Shield",
+            href: "/hq/onboarding",
+            label: "Onboarding",
+            icon: "Zap",
+            badge: counts?.onboarding ? String(counts.onboarding > 99 ? "99+" : counts.onboarding) : undefined,
+            isActive: (p) => p.startsWith("/hq/onboarding") || p.startsWith("/onboarding"),
           },
           {
-            href: "/admin/audit",
-            label: "Audit Trail",
-            icon: "FileText",
-          },
-          {
-            href: "/reports/daily",
-            label: "Shift Reports",
-            icon: "TrendingUp",
+            href: "/hq/people",
+            label: "People",
+            icon: "User",
+            isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
           },
         ],
       }
@@ -136,75 +108,65 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else if (role === "FARM_ADMIN") {
     sections.push(
       {
-        title: "Estate Operations",
+        title: "ESTATE",
         items: [
           {
             href: "/owner/dashboard",
-            label: "Cockpit",
+            label: "Home / Cockpit",
             icon: "Farm",
-            isActive: (p) => p.startsWith("/owner/dashboard") || p === "/dashboard",
+            isActive: (p) => p === "/owner/dashboard" || p === "/dashboard",
           },
           {
-            href: "/owner/calendar",
-            label: "Ops Calendar",
-            icon: "Calendar",
+            href: "/owner/farm",
+            label: "My Farm",
+            icon: "Plot",
+            isActive: (p) => p.startsWith("/owner/farm"),
           },
           {
-            href: "/owner/plots",
-            label: "Plots & Crops",
+            href: "/owner/land",
+            label: "Land & Plots",
             icon: "TrendingUp",
-            isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/plots"),
+            isActive: (p) => p.startsWith("/owner/land") || p.startsWith("/owner/plots") || p.startsWith("/plots"),
           },
+        ],
+      },
+      {
+        title: "EXECUTION",
+        items: [
           {
-            href: "/tasks",
-            label: "Field Tasks",
+            href: "/owner/operations",
+            label: "Operations",
             icon: "ClipboardList",
-          },
-        ],
-      },
-      {
-        title: "Logistics & Yield",
-        items: [
-          {
-            href: "/owner/harvest",
-            label: "Harvest Logistics",
-            icon: "Truck",
+            isActive: (p) => p.startsWith("/owner/operations") || p.startsWith("/tasks"),
           },
           {
-            href: "/owner/inventory",
-            label: "Shed Stock",
-            icon: "Package",
-          },
-          {
-            href: "/admin/attendance",
-            label: "Workforce Presence",
-            icon: "Activity",
-          },
-          {
-            href: "/owner/team",
-            label: "Laborers & Team",
+            href: "/owner/people",
+            label: "People & Labor",
             icon: "Users",
+            isActive: (p) => p.startsWith("/owner/people") || p.startsWith("/owner/team") || p.startsWith("/admin/attendance"),
+          },
+          {
+            href: "/owner/records",
+            label: "Logistics & Records",
+            icon: "Truck",
+            isActive: (p) => p.startsWith("/owner/records") || p.startsWith("/owner/harvest") || p.startsWith("/owner/inventory") || p.startsWith("/owner/financials"),
           },
         ],
       },
       {
-        title: "Finance & Insights",
+        title: "INTELLIGENCE",
         items: [
           {
-            href: "/owner/financials",
-            label: "Financials & P&L",
-            icon: "Coins",
+            href: "/owner/insights",
+            label: "Farm Insights",
+            icon: "Activity",
+            isActive: (p) => p.startsWith("/owner/insights") || p.startsWith("/owner/reports"),
           },
           {
-            href: "/owner/reports/brief",
-            label: "Executive Brief",
-            icon: "FileText",
-            badge: "PDF",
-          },
-          {
-            href: "/reports/daily",
-            label: "Daily Reports",
-            icon: "Calendar",
+            href: "/owner/settings",
+            label: "Settings",
+            icon: "Settings",
+            isActive: (p) => p.startsWith("/owner/settings"),
           },
         ],
       }
@@ -212,29 +174,25 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else if (role === "FARM_OFFICER") {
     sections.push(
       {
-        title: "Duty & Execution",
+        title: "DUTY & OPERATIONS",
         items: [
           {
             href: "/officer/day",
-            label: "My Day Desk",
+            label: "Daily Tasks",
             icon: "Sun",
             badge: "Live",
             isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
           },
           {
-            href: "/officer/quick-log",
-            label: "Quick Event Log",
-            icon: "Zap",
-          },
-          {
-            href: "/officer/crew",
-            label: "Crew Muster",
-            icon: "Users",
+            href: "/officer/reports",
+            label: "Incidents & Signals",
+            icon: "AlertTriangle",
+            isActive: (p) => p.startsWith("/officer/reports"),
           },
         ],
       },
       {
-        title: "Field Tracking",
+        title: "FIELD TRACKING",
         items: [
           {
             href: "/officer/harvest",
@@ -242,14 +200,26 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             icon: "Truck",
           },
           {
-            href: "/tasks",
-            label: "Assigned Tasks",
-            icon: "ClipboardList",
+            href: "/officer/crew",
+            label: "Crew Muster",
+            icon: "Users",
           },
           {
-            href: "/officer/reports",
-            label: "Visual Field Snaps",
-            icon: "Camera",
+            href: "/officer/quick-log",
+            label: "Quick Event Log",
+            icon: "Zap",
+          },
+          {
+            href: "/officer/boundary",
+            label: "Boundary Walk",
+            icon: "Navigation",
+            isActive: (p) => p.startsWith("/officer/boundary"),
+          },
+          {
+            href: "/officer/profile",
+            label: "Officer Profile",
+            icon: "User",
+            isActive: (p) => p.startsWith("/officer/profile"),
           },
         ],
       }
@@ -257,7 +227,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else {
     // Default / Agronomist fallback
     sections.push({
-      title: "Agronomy Suite",
+      title: "AGRONOMY SUITE",
       items: [
         {
           href: "/agronomy/radar",
@@ -290,44 +260,35 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   }
 
   const initials = userName ? userName.trim().charAt(0).toUpperCase() : "U";
-  const userRoleLabel = roleLabels[role] ?? role.replaceAll("_", " ");
-  const homeHref = roleHomeUrls[role] ?? "/";
+  const userRoleLabel = ROLE_LABELS[role] ?? role.replaceAll("_", " ");
+  const homeHref = ROLE_HOME_URLS[role] ?? "/";
 
   return (
     <aside className="app-desktop-sidebar" aria-label="Desktop Application Sidebar">
-      {/* 1. Header: Brand, Estate Switcher, Quick Action Search */}
+      {/* 1. Header: Brand, Switcher, Quick Action Search */}
       <div className="sidebar-header">
         <div className="sidebar-brand-row">
           <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
-            <span className="sidebar-brand-mark">
-              <Icons.Sprout size={16} />
-            </span>
-            <div className="app-brand-text">
-              <span className="sidebar-brand-word">AGAATE</span>
-              <span className="sidebar-brand-tag">OPS CONSOLE</span>
-            </div>
+            <BrandLogo height={27} priority />
           </Link>
           <span className="sidebar-role-badge">
             {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}
           </span>
         </div>
 
-        {/* Estate Switcher Instrument */}
-        <div className="sidebar-switcher">
-          <FarmSwitcher />
-        </div>
-
-        {/* Quick ⌘K Command Finder Trigger */}
+        {/* Farm finder. There is deliberately NO estate dropdown here:
+            a 25-row menu cannot serve 1,00,000+ farms. Farm-finding lives in
+            the ⌘K palette (server search) + Unified Directory (faceted). */}
         {onOpenCommandPalette && (
           <button
             type="button"
             className="sidebar-search-btn"
             onClick={onOpenCommandPalette}
-            title="Search estates, navigation & actions (⌘K / Ctrl+K)"
+            title="Find a farm, client, task… (⌘K / Ctrl+K)"
           >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Icons.Search size={13} />
-              <span>Quick Action...</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <Icons.MapPin size={14} />
+              <span>Find a farm…</span>
             </span>
             <kbd className="sidebar-search-badge">⌘K</kbd>
           </button>
@@ -372,20 +333,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
 
       {/* 3. Footer: Telemetry Clock, Profile, Theme Toggle & Sign Out */}
       <div className="sidebar-footer">
-        {/* Telemetry Status Line */}
         <div className="sidebar-telemetry-row">
           <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
             <span className="telemetry-live-dot" />
             <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
           </span>
-          {timeStr && (
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px" }} suppressHydrationWarning>
-              {timeStr}
-            </span>
-          )}
         </div>
 
-        {/* User Session Card */}
         <div className="sidebar-user-card">
           <div className="sidebar-user-info">
             <div className="sidebar-user-avatar" aria-hidden>{initials}</div>

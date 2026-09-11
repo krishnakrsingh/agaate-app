@@ -8,11 +8,12 @@ import { apiError, paginationParams } from "@/lib/api";
 
 const createUserSchema = z.object({
   name: z.string().min(2).max(100),
-  email: z.string().optional().nullable(),
+  email: z.string().email().max(254).optional().nullable(),
   phone: z.string().max(30).optional().nullable(),
-  password: z.string().min(6).max(128),
+  password: z.string().min(12).max(128),
   role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
   isSupervisor: z.boolean().default(false),
+  clientId: z.string().optional().nullable(),
   farmId: z.string().optional(),
   farmIds: z.array(z.string().min(1)).default([]),
   managesFarmIds: z.array(z.string().min(1)).default([]),
@@ -30,9 +31,13 @@ export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN"]);
-    const { limit, offset } = paginationParams(request.nextUrl.searchParams);
-
-    const farmIdParam = request.nextUrl.searchParams.get("farmId");
+    const sp = request.nextUrl.searchParams;
+    const { limit, offset } = paginationParams(sp);
+    const farmIdParam = sp.get("farmId");
+    const search = sp.get("search")?.trim();
+    const roleParam = sp.get("role")?.trim();
+    const clientIdParam = sp.get("clientId")?.trim();
+    const paginate = sp.get("paginate") === "true";
 
     let where: any = {};
     if (actor.role === "FARM_ADMIN") {
@@ -55,31 +60,68 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        isSupervisor: true,
-        role: true,
-        active: true,
-        createdAt: true,
-        farmAccess: {
-          select: {
-            farmId: true,
-            canManage: true,
-            farm: { select: { id: true, name: true } },
+    if (roleParam && roleParam !== "ALL") {
+      where.role = roleParam;
+    }
+
+    if (clientIdParam) {
+      where.clientId = clientIdParam;
+    }
+
+    if (search) {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { name: { contains: search } },
+            { email: { contains: search } },
+            { phone: { contains: search } },
+            { client: { name: { contains: search } } },
+          ],
+        },
+      ];
+    }
+
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          isSupervisor: true,
+          role: true,
+          active: true,
+          clientId: true,
+          client: {
+            select: { id: true, name: true, code: true },
+          },
+          createdAt: true,
+          farmAccess: {
+            select: {
+              farmId: true,
+              canManage: true,
+              farm: { select: { id: true, name: true } },
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      skip: offset,
-    });
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+    ]);
 
-    return NextResponse.json(users);
+    if (paginate) {
+      return NextResponse.json({ users, total, limit, offset });
+    }
+
+    return NextResponse.json(users, {
+      headers: {
+        "X-Total-Count": total.toString(),
+      },
+    });
   } catch (error) {
     return apiError(error);
   }
@@ -87,6 +129,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN"]);
     const input = createUserSchema.parse(await request.json());
@@ -117,7 +161,12 @@ export async function POST(request: NextRequest) {
       if (count !== farmIds.length) throw new Error("A selected farm no longer exists.");
     }
 
-    const normalizedPhone = input.phone ? input.phone.replace(/[^\d+]/g, "") : null;
+    const rawPhone = input.phone ? input.phone.replace(/[^\d+]/g, "") : null;
+    const digits = rawPhone?.replace(/[^\d]/g, "") ?? "";
+    const normalizedPhone = rawPhone && digits.length >= 10 && digits.length <= 15 ? rawPhone : null;
+    if (!input.email && !normalizedPhone) {
+      return NextResponse.json({ error: "Either mobile number or email address is required." }, { status: 422 });
+    }
     const normalizedEmail = (input.email && input.email.trim())
       ? input.email.trim().toLowerCase()
       : `${(normalizedPhone || "worker").replace(/[^\d]/g, "")}@worker.agaate.ag`;
@@ -144,6 +193,7 @@ export async function POST(request: NextRequest) {
           email: normalizedEmail,
           phone: normalizedPhone,
           isSupervisor: input.isSupervisor,
+          clientId: input.clientId || (actor.role === "FARM_ADMIN" ? actor.clientId : null),
           passwordHash,
           role: input.role,
           farmAccess: {

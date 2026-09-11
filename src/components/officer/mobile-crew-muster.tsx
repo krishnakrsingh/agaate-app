@@ -95,33 +95,7 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
   const calculatedTotalSpend = (Number(totalLabourers) || 0) * (Number(dailyWageRate) || 0);
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header */}
-      <div className="card" style={{ padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "var(--radius-sm)",
-              backgroundColor: "var(--stone)",
-              color: "var(--green)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icons.Users size={20} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0 }}>Daily Labour &amp; Crew Muster</h1>
-            <p className="muted" style={{ fontSize: 12, margin: "2px 0 0" }}>
-              Track daily field hands, contractors, and wage outflow for your farm.
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Farm & Date */}
@@ -157,10 +131,26 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
           </div>
         </div>
 
-        {/* Headcounts */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Total Labourers *</label>
+        {/* Tactile Total Labourers Stepper */}
+        <div style={{ background: "var(--stone)", padding: "16px", borderRadius: "var(--radius-sm)", border: "1px solid var(--stone)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <label style={{ fontSize: "13px", fontWeight: 700, color: "var(--ink)" }}>
+              Total Field Hands Today *
+            </label>
+            <span style={{ fontSize: "11px", color: "var(--muted)", fontWeight: 500 }}>
+              Morning roll call
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setTotalLabourers(String(Math.max(1, (Number(totalLabourers) || 1) - 1)))}
+              style={{ width: 48, height: 48, fontSize: "22px", fontWeight: 700, borderRadius: "var(--radius-sm)" }}
+            >
+              &minus;
+            </button>
             <input
               type="number"
               min="1"
@@ -168,78 +158,209 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
               onChange={(e) => setTotalLabourers(e.target.value)}
               required
               className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
+              style={{
+                width: 90,
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: "24px",
+                fontWeight: 800,
+                height: 48,
+                backgroundColor: "var(--canvas)",
+              }}
             />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setTotalLabourers(String((Number(totalLabourers) || 0) + 1))}
+              style={{ width: 48, height: 48, fontSize: "22px", fontWeight: 700, borderRadius: "var(--radius-sm)" }}
+            >
+              +
+            </button>
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Male Count</label>
-            <input
-              type="number"
-              min="0"
-              value={maleCount}
-              onChange={(e) => setMaleCount(e.target.value)}
-              className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Female Count</label>
-            <input
-              type="number"
-              min="0"
-              value={femaleCount}
-              onChange={(e) => setFemaleCount(e.target.value)}
-              className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
-            />
+          {/* Quick Accelerators */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 10 }}>
+            {[1, 5, 10].map((step) => (
+              <button
+                key={step}
+                type="button"
+                onClick={() => setTotalLabourers(String((Number(totalLabourers) || 0) + step))}
+                style={{
+                  fontSize: "12px",
+                  padding: "4px 12px",
+                  borderRadius: "var(--radius-pill)",
+                  border: "1px solid var(--line)",
+                  background: "var(--canvas)",
+                  color: "var(--ink)",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                +{step} Workers
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Shift hours & Wage Rate */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Shift (Hours)</label>
-            <input
-              type="number"
-              step="0.5"
-              value={hoursPerShift}
-              onChange={(e) => setHoursPerShift(e.target.value)}
-              className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
-            />
+        {/* Male & Female Breakdown */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--canvas)" }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 6 }}>
+              Male Workers
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setMaleCount(String(Math.max(0, (Number(maleCount) || 0) - 1)))}
+                style={{ width: 34, height: 34, padding: 0, fontSize: "16px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                type="number"
+                min="0"
+                value={maleCount}
+                onChange={(e) => setMaleCount(e.target.value)}
+                className="input-field"
+                style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "16px", height: 34 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setMaleCount(String((Number(maleCount) || 0) + 1))}
+                style={{ width: 34, height: 34, padding: 0, fontSize: "16px", fontWeight: 700 }}
+              >
+                +
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Daily Wage / Person (₹)</label>
-            <input
-              type="number"
-              step="1"
-              value={dailyWageRate}
-              onChange={(e) => setDailyWageRate(e.target.value)}
-              placeholder="e.g. 450"
-              className="input-field"
-              style={{ width: "100%", fontFamily: "monospace" }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Daily Payout</label>
-            <div style={{ padding: "8px 12px", borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", fontSize: 14, fontFamily: "monospace", fontWeight: 700, color: "var(--green)" }}>
-              ₹{calculatedTotalSpend.toLocaleString("en-IN")}
+          <div style={{ background: "var(--canvas)", padding: "12px", borderRadius: "var(--radius-xs)", border: "1px solid var(--canvas)" }}>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 6 }}>
+              Female Workers
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setFemaleCount(String(Math.max(0, (Number(femaleCount) || 0) - 1)))}
+                style={{ width: 34, height: 34, padding: 0, fontSize: "16px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                type="number"
+                min="0"
+                value={femaleCount}
+                onChange={(e) => setFemaleCount(e.target.value)}
+                className="input-field"
+                style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "16px", height: 34 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setFemaleCount(String((Number(femaleCount) || 0) + 1))}
+                style={{ width: 34, height: 34, padding: 0, fontSize: "16px", fontWeight: 700 }}
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Contractor Name */}
+        {/* Wage Rate & Live Outflow */}
+        <div style={{ background: "var(--canvas)", padding: "14px", borderRadius: "var(--radius-sm)", border: "1px solid var(--canvas)", display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <label style={{ fontSize: 12, fontWeight: 650, color: "var(--ink)", margin: 0 }}>
+              Daily Wage Rate (₹ / Day)
+            </label>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[350, 400, 450, 500].map((rate) => (
+                <button
+                  key={rate}
+                  type="button"
+                  onClick={() => setDailyWageRate(String(rate))}
+                  className="select-chip"
+                  data-selected={dailyWageRate === String(rate)}
+                >
+                  ₹{rate}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div>
+              <input
+                type="number"
+                step="10"
+                value={dailyWageRate}
+                onChange={(e) => setDailyWageRate(e.target.value)}
+                placeholder="₹ Rate"
+                className="input-field"
+                style={{ fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 700 }}
+              />
+            </div>
+            <div>
+              <select
+                value={hoursPerShift}
+                onChange={(e) => setHoursPerShift(e.target.value)}
+                className="input-field"
+                style={{ fontSize: 13 }}
+              >
+                <option value="4">4h (Half Day)</option>
+                <option value="8">8h (Standard Shift)</option>
+                <option value="10">10h (Overtime Shift)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Live Wage Calculation Hero */}
+            <div
+            style={{
+              background: "var(--green-light)",
+              border: "1px solid var(--green-light)",
+              borderRadius: "var(--radius-xs)",
+              padding: "10px 14px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 2,
+            }}
+          >
+            <span style={{ fontSize: "12px", color: "var(--ink-soft)", fontWeight: 600 }}>
+              Daily Labour Outflow ({totalLabourers || 0} hands &times; ₹{dailyWageRate || 0}):
+            </span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "18px", fontWeight: 800, color: "var(--green)" }}>
+              ₹{calculatedTotalSpend.toLocaleString("en-IN")}
+            </span>
+          </div>
+        </div>
+
+        {/* Contractor Chips & Name */}
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Labour Contractor / Gang Leader</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 6 }}>
+            Labour Contractor / Gang Leader
+          </label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+            {["Direct Field Hands", "Murugan Contractor", "Local Village Gang"].map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setContractorName(c)}
+                className="select-chip select-chip-pill"
+                data-selected={contractorName === c}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
           <input
             type="text"
             value={contractorName}
             onChange={(e) => setContractorName(e.target.value)}
-            placeholder="e.g. Ramesh Maistry / Local Gang"
+            placeholder="e.g. Ramesh Maistry / Gang Name"
             className="input-field"
             style={{ width: "100%" }}
           />
@@ -247,12 +368,14 @@ export function MobileCrewMuster({ farms }: { farms: Farm[] }) {
 
         {/* Notes */}
         <div>
-          <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>Work Description / Plot Assignments</label>
+          <label style={{ display: "block", fontSize: 12, fontWeight: 650, color: "var(--ink)", marginBottom: 4 }}>
+            Work Description / Plot Assignments
+          </label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="e.g. 6 weeding in Plot 1, 4 harvesting in Plot 3"
+            placeholder="e.g. 6 weeding Plot 1, 4 staking Plot 3"
             className="input-field"
             style={{ width: "100%" }}
           />

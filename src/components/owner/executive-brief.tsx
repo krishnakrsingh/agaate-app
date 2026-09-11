@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
@@ -44,12 +45,14 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
     if (!selectedFarmId) return;
     setLoading(true);
     try {
-      const [harvestRes, expRes, crewRes, invRes, plotRes] = await Promise.all([
+      const [harvestRes, expRes, crewRes, invRes, plotRes, rxRes, incRes] = await Promise.all([
         fetch(`/api/harvest?farmId=${selectedFarmId}`),
         fetch(`/api/expenses?farmId=${selectedFarmId}`),
         fetch(`/api/crew?farmId=${selectedFarmId}`),
         fetch(`/api/inventory?farmId=${selectedFarmId}`),
         fetch(`/api/farms/${selectedFarmId}/plots`),
+        fetch(`/api/prescriptions?farmId=${selectedFarmId}&limit=100`),
+        fetch(`/api/incidents?farmId=${selectedFarmId}&limit=100&status=OPEN`),
       ]);
 
       const harvests = harvestRes.ok ? await harvestRes.json() : [];
@@ -57,6 +60,8 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
       const crewMusters = crewRes.ok ? await crewRes.json() : [];
       const inventory = invRes.ok ? await invRes.json() : [];
       const plots = plotRes.ok ? await plotRes.json() : [];
+      const prescriptions = rxRes.ok ? await rxRes.json() : [];
+      const openIncidents = incRes.ok ? await incRes.json() : [];
 
       const now = new Date();
       const cutoffDays = timeRange === "7D" ? 7 : 30;
@@ -119,9 +124,9 @@ export function ExecutiveBrief({ farms }: { farms: Farm[] }) {
         otherSpend,
         labourShiftCount,
         activeCrops,
-        prescriptionsCount: 2,
+        prescriptionsCount: Array.isArray(prescriptions) ? prescriptions.length : 0,
         lowStockItems,
-        hazardsCount: 0,
+        hazardsCount: Array.isArray(openIncidents) ? openIncidents.length : 0,
       });
     } catch {
       toast.show("Error loading executive report data", "error");
@@ -266,7 +271,7 @@ _Generated via Agaate Precision Farm Intelligence_`;
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Executive Top Banner Card */}
-          <div className="card" style={{ padding: 24, border: "1px solid var(--line)" }}>
+          <div className="card" style={{ padding: 24, border: "1px solid var(--card)" }}>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 16, paddingBottom: 20, borderBottom: "1px solid var(--line)" }}>
               <div>
                 <span style={{ fontSize: 11, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--green)", fontWeight: 700 }}>
@@ -279,7 +284,7 @@ _Generated via Agaate Precision Farm Intelligence_`;
               </div>
 
               <div style={{ textAlign: "right" }}>
-                <div style={{ padding: "10px 16px", backgroundColor: "var(--stone)", borderRadius: "var(--radius-sm)", border: "1px solid var(--line)" }}>
+                <div style={{ padding: "10px 16px", backgroundColor: "var(--stone)", borderRadius: "var(--radius-sm)", border: "1px solid var(--stone)" }}>
                   <span className="muted" style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", display: "block" }}>
                     Net Operational Margin
                   </span>
@@ -412,7 +417,7 @@ _Generated via Agaate Precision Farm Intelligence_`;
               </button>
             </div>
 
-            <pre style={{ margin: 0, padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--line)", fontSize: 12, fontFamily: "monospace", color: "var(--ink)", whiteSpace: "pre-wrap", lineHeight: 1.5, overflowX: "auto" }}>
+            <pre style={{ margin: 0, padding: 14, borderRadius: "var(--radius-xs)", backgroundColor: "var(--stone)", border: "1px solid var(--stone)", fontSize: 12, fontFamily: "monospace", color: "var(--ink)", whiteSpace: "pre-wrap", lineHeight: 1.5, overflowX: "auto" }}>
               {generateWhatsAppText()}
             </pre>
           </div>

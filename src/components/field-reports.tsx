@@ -4,34 +4,15 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "./icons";
 import { IncidentReportForm } from "./incident-report-form";
-import { compressImage } from "@/lib/image-compress";
+import { uploadEvidencePhotos, PhotoItem } from "./photo-upload-zone";
 
 type Cycle = { id: string; cropName: string };
 type Plot = { id: string; name: string; cropCycles: Cycle[] };
 type Farm = { id: string; name: string; plots: Plot[] };
 
-const incidentTypes = ["Disease Infestation", "Pest Damage", "Nutrient Deficiency", "Water Stress", "Pump / Motor Failure", "Irrigation Leakage", "Labour Shortage", "Other"];
 const cropStages = ["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"];
 
-async function uploadPhotos(farmId: string, kind: "CROP_PHOTO" | "INCIDENT_PHOTO", files: FormDataEntryValue[]) {
-  const ids: string[] = [];
-  for (const file of files) {
-    if (!(file instanceof File) || !file.size) continue;
-    const processed = await compressImage(file);
-    const signed = await fetch("/api/uploads/presign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ farmId, kind, mimeType: processed.type, sizeBytes: processed.size }),
-    });
-    if (!signed.ok) throw new Error((await signed.json()).error ?? "Could not prepare upload.");
-    const { uploadUrl, mediaId } = await signed.json();
-    const stored = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": processed.type }, body: processed });
-    if (!stored.ok) throw new Error("Photo upload failed.");
-    await fetch(`/api/uploads/${mediaId}/complete`, { method: "POST" });
-    ids.push(mediaId);
-  }
-  return ids;
-}
+import { basisText, captureFieldGps as captureScoutGps } from "./scout-gps";
 
 export function FieldReports({
   initialFarmId, initialPlotId, initialCropCycleId, initialTab = "monitoring", onSuccess, onCancel, hideTabs = false,
@@ -46,9 +27,7 @@ export function FieldReports({
   const [cycleId, setCycleId] = useState(initialCropCycleId || "");
   const [tab, setTab] = useState<"monitoring" | "incident">(initialTab);
   const [health, setHealth] = useState<"GOOD" | "POOR">("GOOD");
-  const [incidentLevel, setIncidentLevel] = useState<"FARM" | "PLOT" | "CROP">("CROP");
   const [monitoringPhotos, setMonitoringPhotos] = useState<string[]>([]);
-  const [incidentPhotos, setIncidentPhotos] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -78,26 +57,46 @@ export function FieldReports({
     const f = new FormData(e.currentTarget);
     try {
       if (!farmId || !plotId || !cycleId) throw new Error("Select farm, plot, and crop cycle.");
-      const photos = f.getAll("photos");
-      if (!photos.length || !(photos[0] instanceof File) || !photos[0].size) {
+      const photos = f.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
+      if (!photos.length) {
         throw new Error("At least one crop photo is required.");
       }
-      const mediaIds = await uploadPhotos(farmId, "CROP_PHOTO", photos);
+      const photoItems: PhotoItem[] = photos.map((file, i) => ({
+        id: `${i}`,
+        file,
+        previewUrl: "",
+        source: "file",
+      }));
+      const mediaIds = await uploadEvidencePhotos(farmId, "CROP_PHOTO", photoItems);
+      // Best-effort scouting GPS: verified inside the plot server-side.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      let gpsNote = "";
+      try {
+        gps = await captureScoutGps();
+      } catch {
+        gpsNote = "No GPS fix — submitting without location proof.";
+      }
       const res = await fetch("/api/monitoring", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          farmId,
+          plotId,
           cropCycleId: cycleId,
           status: health,
           stage: f.get("stage"),
           impactPercent: health === "POOR" && f.get("impactPercent") ? Number(f.get("impactPercent")) : null,
           remarks: f.get("remarks") || null,
           mediaIds,
+          ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
         }),
       });
       setPending(false);
       if (!res.ok) throw new Error((await res.json()).error ?? "Submission failed.");
-      setMessage("Crop monitoring logged successfully.");
+      const done = await res.json().catch(() => ({}));
+      setMessage(
+        `Daily crop monitoring update recorded${done.geofenceBasis ? ` (verified inside ${basisText(done.geofenceBasis)})` : ""}${gpsNote ? ` ${gpsNote}` : ""}`
+      );
       setMonitoringPhotos([]);
       onSuccess?.();
     } catch (err: any) {
@@ -106,46 +105,12 @@ export function FieldReports({
     }
   }
 
-  async function submitIncident(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setPending(true);
-    setMessage("");
-    const f = new FormData(e.currentTarget);
-    try {
-      if (!farmId) throw new Error("Please select a farm.");
-      const photos = f.getAll("photos");
-      const mediaIds = await uploadPhotos(farmId, "INCIDENT_PHOTO", photos);
-      const res = await fetch("/api/incidents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          farmId,
-          plotId: incidentLevel !== "FARM" ? plotId || null : null,
-          cropCycleId: incidentLevel === "CROP" ? cycleId || null : null,
-          level: incidentLevel,
-          type: f.get("type"),
-          severity: f.get("severity") || null,
-          description: f.get("description"),
-          mediaIds,
-        }),
-      });
-      setPending(false);
-      if (!res.ok) throw new Error((await res.json()).error ?? "Incident submission failed.");
-      setMessage("Field incident logged.");
-      setIncidentPhotos([]);
-      onSuccess?.();
-    } catch (err: any) {
-      setPending(false);
-      setMessage(err.message ?? "Error submitting incident.");
-    }
-  }
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {!hideTabs && (
         <div className="tabs-nav">
           <button type="button" className={`tab-btn ${tab === "monitoring" ? "active" : ""}`} onClick={() => setTab("monitoring")}>
-            <Icons.Eye size={14} /><span>Daily Crop Health Monitoring</span>
+            <Icons.Eye size={14} /><span>Daily Crop Health &amp; Stage Capture</span>
           </button>
           <button type="button" className={`tab-btn ${tab === "incident" ? "active" : ""}`} onClick={() => setTab("incident")}>
             <Icons.AlertTriangle size={14} /><span>Report Field Incident</span>
@@ -242,7 +207,7 @@ export function FieldReports({
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
             <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
-              <Icons.Check size={16} /><span>{pending ? "Logging…" : "Log Crop Health"}</span>
+              <Icons.Check size={16} /><span>{pending ? "Submitting…" : "Submit Daily Monitoring"}</span>
             </button>
           </div>
         </form>

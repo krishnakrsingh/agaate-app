@@ -27,7 +27,7 @@ export function ActivateFarmButton({ farmId }: { farmId: string }) {
       }
 
       toast.success("Farm activated successfully! You can now assign officers and dispatch daily tasks.");
-      router.refresh();
+      window.location.reload();
     } catch {
       setPending(false);
       setMessage("Network error. Please try again.");

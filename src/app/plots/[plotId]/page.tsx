@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { PlotEditForm } from "@/components/plot-edit-form";
+import { BoundaryHistory } from "@/components/boundary-history";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -22,7 +24,7 @@ export default async function PlotPage({
       where: { id: plotId },
       include: {
         irrigation: true,
-        farm: { select: { id: true, name: true } },
+        farm: { select: { id: true, name: true, boundaryGeoJson: true, latitude: true, longitude: true } },
       },
     });
     await requireFarmAccess(plot.farmId, true);
@@ -52,6 +54,11 @@ export default async function PlotPage({
             <p className="muted">
               Configure boundaries, area, and irrigation infrastructure for {plot.farm.name}.
             </p>
+            <div style={{ marginTop: 10 }}>
+              <Link href={`/officer/boundary?plotId=${plot.id}`} className="btn btn-secondary btn-sm">
+                Walk plot fence with GPS
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -62,12 +69,19 @@ export default async function PlotPage({
             area: plot.area.toString(),
             latitude: plot.latitude.toString(),
             longitude: plot.longitude.toString(),
+            measuredAcres: plot.measuredAcres ? plot.measuredAcres.toString() : null,
             irrigation: plot.irrigation.map((i) => ({
               type: i.type,
               details: i.details,
             })),
           }}
+          farmBoundary={plot.farm.boundaryGeoJson}
+          farmCenter={[Number(plot.farm.latitude), Number(plot.farm.longitude)]}
         />
+
+        <div style={{ marginTop: 20 }}>
+          <BoundaryHistory entityType="PLOT" entityId={plot.id} canRestore currentBoundary={plot.boundaryGeoJson} />
+        </div>
       </main>
     </>
   );

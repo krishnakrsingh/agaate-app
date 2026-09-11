@@ -1,0 +1,9 @@
+
+> agaate-app@1.0.0 start
+> next start
+
+▲ Next.js 16.3.3
+- Local:         http://localhost:3000
+- Network:       http://10.18.123.9:3000
+✓ Ready in 451ms
+✓ Running next.config.ts took 83ms

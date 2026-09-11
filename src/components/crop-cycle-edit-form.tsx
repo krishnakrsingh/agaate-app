@@ -130,7 +130,7 @@ export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string;
       </div>
 
       {/* Bed Prep */}
-      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)", display: "flex", flexDirection: "column", gap: 8 }}>
         <label className="check"><input type="checkbox" checked={bedPrepEnabled} onChange={(e) => setBedPrepEnabled(e.target.checked)} /><strong>Bed Preparation Required</strong></label>
         {bedPrepEnabled && (
           <div className="two-column" style={{ marginTop: 8 }}>
@@ -142,7 +142,7 @@ export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string;
       </div>
 
       {/* Mulching */}
-      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)", display: "flex", flexDirection: "column", gap: 8 }}>
         <label className="check"><input type="checkbox" checked={mulchEnabled} onChange={(e) => setMulchEnabled(e.target.checked)} /><strong>Mulch Film Enabled</strong></label>
         {mulchEnabled && (
           <div className="two-column" style={{ marginTop: 8 }}>
@@ -153,7 +153,7 @@ export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string;
       </div>
 
       {/* Milestones & Presets */}
-      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ background: "var(--stone)", padding: 16, borderRadius: "var(--radius-xs)", border: "1px solid var(--stone)", display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <strong style={{ fontSize: "14px" }}>Milestone Schedule &amp; Support Activities</strong>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -165,7 +165,7 @@ export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string;
         </div>
 
         {cycle.milestones.map((m, idx) => (
-          <div key={m.id} className="two-column" style={{ background: "var(--canvas)", padding: 12, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+          <div key={m.id} className="two-column" style={{ background: "var(--canvas)", padding: 12, borderRadius: "var(--radius-xs)", border: "1px solid var(--canvas)" }}>
             <div className="form-group" style={{ margin: 0 }}><label>Milestone</label><input name={`milestoneName${idx}`} defaultValue={m.name} required /></div>
             <div className="form-group" style={{ margin: 0 }}><label>Target Date</label><input name={`milestoneDate${idx}`} type="date" defaultValue={dateVal(m.targetDate)} required /></div>
             <div className="form-group wide" style={{ margin: 0 }}><label>Remarks</label><input name={`milestoneRemarks${idx}`} defaultValue={m.remarks ?? ""} /></div>
@@ -174,7 +174,7 @@ export function CropCycleEditForm({ plotId, cycleId, farmId }: { plotId: string;
         ))}
 
         {extras.map((extra) => (
-          <div key={extra.tempId} className="two-column" style={{ background: "var(--green-light)", padding: 12, borderRadius: "var(--radius-xs)", border: "1px solid var(--line)" }}>
+          <div key={extra.tempId} className="two-column" style={{ background: "var(--green-light)", padding: 12, borderRadius: "var(--radius-xs)", border: "1px solid var(--green-light)" }}>
             <div className="form-group" style={{ margin: 0 }}><label>New Activity</label><input value={extra.name} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, name: e.target.value } : x))} placeholder="Activity Name" required /></div>
             <div className="form-group" style={{ margin: 0 }}><label>Target Date</label><input type="date" value={extra.targetDate} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, targetDate: e.target.value } : x))} required /></div>
             <div className="form-group wide" style={{ margin: 0 }}><label>Remarks</label><input value={extra.remarks} onChange={(e) => setExtras((prev) => prev.map((x) => x.tempId === extra.tempId ? { ...x, remarks: e.target.value } : x))} placeholder="Instructions" /></div>

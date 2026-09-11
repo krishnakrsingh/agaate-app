@@ -3,12 +3,15 @@
 import { FormEvent, useState } from "react";
 import { Icons } from "./icons";
 import { compressImage } from "@/lib/image-compress";
+import { basisText, captureFieldGps as captureCompletionGps } from "./scout-gps";
 
 export function TaskCompletionForm({
   taskId,
   farmId,
   taskTitle,
   milestoneName,
+  plotId,
+  plotName,
   onComplete,
   onCancel,
 }: {
@@ -16,11 +19,15 @@ export function TaskCompletionForm({
   farmId: string;
   taskTitle: string;
   milestoneName?: string | null;
+  plotId?: string | null;
+  plotName?: string | null;
   onComplete: () => void;
   onCancel?: () => void;
 }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [gpsNote, setGpsNote] = useState("");
+  const [verdict, setVerdict] = useState<string | null>(null);
   const [labourers, setLabourers] = useState<number | "">("");
   const [hours, setHours] = useState<number | "">("");
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -46,42 +53,62 @@ export function TaskCompletionForm({
       for (const rawFile of form.getAll("evidence")) {
         if (!(rawFile instanceof File) || !rawFile.size) continue;
         const file = await compressImage(rawFile);
-        const signed = await fetch("/api/uploads/presign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            farmId,
-            kind: "ACTIVITY_EVIDENCE",
-            mimeType: file.type || "image/jpeg",
-            sizeBytes: file.size,
-          }),
-        });
+        try {
+          const signed = await fetch("/api/uploads/presign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              farmId,
+              kind: "ACTIVITY_EVIDENCE",
+              mimeType: file.type || "image/jpeg",
+              sizeBytes: file.size,
+            }),
+          });
 
-        if (!signed.ok) {
-          const body = await signed.json().catch(() => ({}));
-          throw new Error(body.error ?? "Unable to prepare evidence upload.");
+          if (!signed.ok) throw new Error("Presign failed");
+          const upload = await signed.json();
+          const stored = await fetch(upload.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type || "image/jpeg" },
+            body: file,
+          });
+
+          if (!stored.ok) throw new Error("Evidence photo upload failed.");
+
+          const confirmed = await fetch(`/api/uploads/${upload.mediaId}/complete`, { method: "POST" });
+          if (!confirmed.ok) throw new Error("Verification failed");
+          mediaIds.push(upload.mediaId);
+        } catch {
+          // Direct server upload fallback
+          const directData = new FormData();
+          directData.append("file", file);
+          directData.append("farmId", farmId);
+          directData.append("kind", "ACTIVITY_EVIDENCE");
+          const directRes = await fetch("/api/uploads/direct", {
+            method: "POST",
+            body: directData,
+          });
+          if (directRes.ok) {
+            const { mediaId } = await directRes.json();
+            mediaIds.push(mediaId);
+          }
         }
-
-        const upload = await signed.json();
-        const stored = await fetch(upload.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type || "image/jpeg" },
-          body: file,
-        });
-
-        if (!stored.ok) throw new Error("Evidence photo upload failed.");
-
-        const confirmed = await fetch(`/api/uploads/${upload.mediaId}/complete`, { method: "POST" });
-        if (!confirmed.ok) {
-          const body = await confirmed.json().catch(() => ({}));
-          throw new Error(body.error ?? "Evidence upload could not be verified.");
-        }
-        mediaIds.push(upload.mediaId);
       }
 
       const materialName = String(form.get("materialName") || "").trim();
       const actualBedsCreated = form.get("actualBedsCreated");
       const actualPlants = form.get("actualPlants");
+
+      // Best-effort completion GPS: when the task names a plot, the server
+      // verifies presence inside it. GPS failure never blocks completion —
+      // the server only gates when coordinates arrive.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      try {
+        gps = await captureCompletionGps();
+        setGpsNote(`GPS ±${Math.round(gps.accuracyMeters)}m attached.`);
+      } catch {
+        setGpsNote(plotId ? "No GPS fix — completing without location proof." : "");
+      }
 
       const response = await fetch(`/api/tasks/${taskId}/complete`, {
         method: "POST",
@@ -101,12 +128,21 @@ export function TaskCompletionForm({
           labour: labourers && hours ? [{ labourers: Number(labourers), hours: Number(hours) }] : [],
           ...(actualBedsCreated ? { actualBedsCreated: Number(actualBedsCreated) } : {}),
           ...(actualPlants ? { actualPlants: Number(actualPlants) } : {}),
+          ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
         }),
       });
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
+        if (body.geofenceBasis) {
+          setVerdict(`Server: outside ${basisText(body.geofenceBasis)} — ${body.error ?? "rejected"}`);
+        }
         throw new Error(body.error ?? "Completion recording failed.");
+      }
+
+      const done = await response.json().catch(() => ({}));
+      if (done.geofenceBasis) {
+        setVerdict(`Server verified inside ${basisText(done.geofenceBasis)}.`);
       }
 
       onComplete();
@@ -128,7 +164,7 @@ export function TaskCompletionForm({
         padding: 20,
         backgroundColor: "var(--stone)",
         borderRadius: "var(--radius-sm)",
-        border: "1px solid var(--line)",
+        border: "1px solid var(--stone)",
         display: "grid",
         gap: 16,
       }}
@@ -187,7 +223,7 @@ export function TaskCompletionForm({
       )}
 
       {/* Materials Used */}
-      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
+      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
         <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Icons.Layers size={13} color="var(--green)" />
           <span>Material Utilization (Optional)</span>
@@ -208,65 +244,148 @@ export function TaskCompletionForm({
         </div>
       </div>
 
-      {/* Labour Tracking */}
-      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", padding: 14, display: "grid", gap: 10 }}>
-        <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icons.Users size={13} color="var(--green)" />
-          <span>Labour Tracking (Optional)</span>
-        </div>
-        <div className="two-column">
-          <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: "12px" }}>Number of Labourers</label>
-            <input
-              name="labourers"
-              type="number"
-              min="1"
-              step="1"
-              value={labourers}
-              onChange={(e) => setLabourers(e.target.value ? Number(e.target.value) : "")}
-              placeholder="e.g., 4"
-            />
+      {/* Labour Tracking with Tactile Steppers */}
+      <div style={{ backgroundColor: "var(--canvas)", border: "1px solid var(--canvas)", borderRadius: "var(--radius-sm)", padding: 14, display: "grid", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Icons.Users size={14} style={{ color: "var(--green)" }} />
+            <span style={{ fontWeight: 600, color: "var(--ink)" }}>Labour Tracking (Optional)</span>
           </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label style={{ fontSize: "12px" }}>Hours Worked per Person</label>
-            <input
-              name="hours"
-              type="number"
-              min="0.1"
-              max="24"
-              step="0.1"
-              value={hours}
-              onChange={(e) => setHours(e.target.value ? Number(e.target.value) : "")}
-              placeholder="e.g., 5.5"
-            />
-          </div>
+          {calculatedLabourHours && (
+            <span className="badge badge-green" style={{ fontFamily: "var(--font-mono)", fontSize: "11px" }}>
+              {calculatedLabourHours} Man-Hours
+            </span>
+          )}
         </div>
 
-        {calculatedLabourHours && (
-          <div className="data" style={{ fontSize: "12px", color: "var(--green)", fontWeight: 550 }}>
-            Total Labour Utilization: {calculatedLabourHours} Man-Hours
+        <div className="two-column">
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: "12px", fontWeight: 650 }}>Number of Labourers</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setLabourers(Math.max(1, (Number(labourers) || 1) - 1))}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                name="labourers"
+                type="number"
+                min="1"
+                step="1"
+                value={labourers}
+                onChange={(e) => setLabourers(e.target.value ? Number(e.target.value) : "")}
+                placeholder="0"
+                className="input-field"
+                style={{ textAlign: "center", fontWeight: 700, fontSize: "15px", height: 36 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setLabourers((Number(labourers) || 0) + 1)}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                +
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+              {[2, 4, 8, 12].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setLabourers(preset)}
+                  className="select-chip"
+                  data-selected={labourers === preset}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label style={{ fontSize: "12px", fontWeight: 650 }}>Hours Worked per Person</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setHours(Math.max(0.5, (Number(hours) || 1) - 0.5))}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                &minus;
+              </button>
+              <input
+                name="hours"
+                type="number"
+                min="0.1"
+                max="24"
+                step="0.5"
+                value={hours}
+                onChange={(e) => setHours(e.target.value ? Number(e.target.value) : "")}
+                placeholder="0"
+                className="input-field"
+                style={{ textAlign: "center", fontWeight: 700, fontSize: "15px", height: 36 }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setHours((Number(hours) || 0) + 0.5)}
+                style={{ width: 36, height: 36, padding: 0, fontSize: "18px", fontWeight: 700 }}
+              >
+                +
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+              {[1, 2, 4, 8].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setHours(preset)}
+                  className="select-chip"
+                  data-selected={hours === preset}
+                >
+                  {preset}h
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Evidence Photos */}
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Photo Evidence (Optional)</label>
-        <input
-          type="file"
-          name="evidence"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          onChange={handlePhotoChange}
-        />
+        <label style={{ fontSize: "12px", fontWeight: 650 }}>Photo Evidence (Field Rear Camera)</label>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <label
+            className="btn btn-secondary btn-sm"
+            style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 14px" }}
+          >
+            <Icons.Camera size={16} style={{ color: "var(--green)" }} />
+            <span>Snap Field Photo</span>
+            <input
+              type="file"
+              name="evidence"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              multiple
+              onChange={handlePhotoChange}
+              style={{ display: "none" }}
+            />
+          </label>
+          <span className="muted" style={{ fontSize: "12px" }}>
+            {photoPreviews.length ? `${photoPreviews.length} photo(s) attached` : "Snaps upload directly to agronomy audit trail"}
+          </span>
+        </div>
         {photoPreviews.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             {photoPreviews.map((url, i) => (
               <img
                 key={i}
                 src={url}
                 alt={`Evidence preview ${i + 1}`}
-                style={{ width: 56, height: 56, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }}
+                style={{ width: 64, height: 64, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "2px solid var(--green)" }}
               />
             ))}
           </div>
@@ -274,6 +393,13 @@ export function TaskCompletionForm({
       </div>
 
       {error && <div className="error">{error}</div>}
+      {gpsNote && !error && <div style={{ fontSize: "12px", color: "var(--muted)" }}>{gpsNote}</div>}
+      {verdict && <div style={{ fontSize: "12px", color: "var(--muted)" }}>{verdict}</div>}
+      {plotName && (
+        <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+          Completing inside {plotName} — server verifies presence on submit.
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 12 }}>
         {onCancel && (
@@ -286,7 +412,7 @@ export function TaskCompletionForm({
           className="btn btn-green btn-sm"
           disabled={pending}
         >
-          {pending ? "Saving Evidence…" : "Confirm Activity Completion"}
+          {pending ? "Saving Evidence…" : "Complete Activity"}
         </button>
       </div>
     </form>

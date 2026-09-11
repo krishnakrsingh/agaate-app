@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { Icons } from "./icons";
 import { EmptyState } from "./ui/empty-state";
 import { CardSkeleton } from "./ui/skeleton";
@@ -15,22 +16,83 @@ type AuditLog = {
   actor: { name: string; email: string } | null;
 };
 
+const ACTION_OPTIONS = [
+  "ALL",
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "STATUS_CHANGE",
+  "ACTIVATE",
+  "ARCHIVE",
+  "RESTORE",
+  "BULK_UPDATE",
+  "ASSIGN_FARM_OFFICER",
+  "UNASSIGN_FARM_OFFICER",
+  "ATTENDANCE_EXCEPTION_APPROVED",
+  "ATTENDANCE_EXCEPTION_REJECTED",
+  "LOCATION_CHANGE_APPROVED",
+  "LOCATION_CHANGE_REJECTED",
+  "COMPLETE",
+  "CANCEL",
+];
+
+const ENTITY_OPTIONS = [
+  "ALL",
+  "Farm",
+  "Plot",
+  "CropCycle",
+  "Task",
+  "User",
+  "Client",
+  "FarmAccess",
+  "Incident",
+  "IncidentFollowUp",
+  "AttendanceException",
+  "LocationChangeRequest",
+  "CropMonitoring",
+  "AgronomyPrescription",
+  "HarvestLog",
+  "ExpenseLog",
+  "MediaAsset",
+];
+
 export function AuditConsole() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
+  const [entityFilter, setEntityFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchLogs = async () => {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const fetchLogs = async (p = page) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/audit-logs?limit=100");
+      const params = new URLSearchParams({ limit: "50", offset: String((p - 1) * 50) });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (actionFilter !== "ALL") params.set("action", actionFilter);
+      if (entityFilter !== "ALL") params.set("entityType", entityFilter);
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
+      const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (!res.ok) throw new Error("Could not load system audit records.");
-      const data = await res.json();
-      setLogs(data || []);
+      const h = res.headers.get("X-Total-Count");
+      setTotal(h == null ? null : Number(h));
+      setLogs((await res.json()) || []);
     } catch (err: any) {
       setError(err.message || "Network error loading audit trail.");
     } finally {
@@ -40,28 +102,31 @@ export function AuditConsole() {
 
   useEffect(() => {
     void fetchLogs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, actionFilter, entityFilter, dateFrom, dateTo, page]);
 
-  const actionTypes = useMemo(() => {
-    const set = new Set<string>();
-    for (const log of logs) {
-      set.add(log.action);
-    }
-    return Array.from(set);
-  }, [logs]);
+  const exportCsv = () => {
+    const rows = [
+      ["time", "action", "actor", "email", "entity", "entityId"],
+      ...logs.map((l) => [
+        l.createdAt,
+        l.action,
+        l.actor?.name || "system",
+        l.actor?.email || "",
+        l.entityType,
+        l.entityId,
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `audit-page${page}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
-      const matchAction = actionFilter === "ALL" || log.action === actionFilter;
-      const matchSearch =
-        !search ||
-        log.action.toLowerCase().includes(search.toLowerCase()) ||
-        log.entityType.toLowerCase().includes(search.toLowerCase()) ||
-        (log.actor?.name && log.actor.name.toLowerCase().includes(search.toLowerCase())) ||
-        (log.actor?.email && log.actor.email.toLowerCase().includes(search.toLowerCase()));
-      return matchAction && matchSearch;
-    });
-  }, [logs, actionFilter, search]);
+  const filteredLogs = logs;
 
   const getActionBadgeColor = (action: string) => {
     if (action.includes("APPROVED") || action.includes("CREATE")) return "badge-green";
@@ -90,34 +155,92 @@ export function AuditConsole() {
             <select
               className="input-field"
               value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
+              onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
               style={{ width: 200, padding: "6px 10px", fontSize: 13 }}
             >
-              <option value="ALL">All Actions ({logs.length})</option>
-              {actionTypes.map((act) => (
-                <option key={act} value={act}>
-                  {act}
-                </option>
+              {ACTION_OPTIONS.map((a) => (
+                <option key={a} value={a}>{a === "ALL" ? "All actions" : a}</option>
               ))}
             </select>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="label" style={{ fontSize: 11 }}>ENTITY:</span>
+            <select
+              className="input-field"
+              value={entityFilter}
+              onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
+              style={{ width: 170, padding: "6px 10px", fontSize: 13 }}
+            >
+              {ENTITY_OPTIONS.map((e) => (
+                <option key={e} value={e}>{e === "ALL" ? "All entities" : e}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="label" style={{ fontSize: 11 }}>FROM:</span>
+            <input
+              type="date"
+              className="input-field"
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+              style={{ padding: "6px 10px", fontSize: 13 }}
+            />
+            <span className="label" style={{ fontSize: 11 }}>TO:</span>
+            <input
+              type="date"
+              className="input-field"
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+              style={{ padding: "6px 10px", fontSize: 13 }}
+            />
           </div>
 
           <button
             type="button"
             className="btn btn-sm btn-secondary"
-            onClick={fetchLogs}
+            onClick={() => void fetchLogs()}
             title="Refresh Audit Trail"
           >
             <Icons.Refresh size={14} />
             <span>Sync</span>
           </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-secondary"
+            onClick={exportCsv}
+            disabled={logs.length === 0}
+            title="Export current page as CSV"
+          >
+            <span>Export CSV</span>
+          </button>
+          {(actionFilter !== "ALL" || entityFilter !== "ALL" || dateFrom || dateTo || debouncedSearch) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                setActionFilter("ALL");
+                setEntityFilter("ALL");
+                setDateFrom("");
+                setDateTo("");
+                setSearch("");
+                setPage(1);
+              }}
+            >
+              <span>Clear ✕</span>
+            </button>
+          )}
+          <span className="muted font-mono" style={{ fontSize: 11 }} role="status">
+            {total != null ? `${logs.length} OF ${total.toLocaleString()} SHOWN` : `${logs.length} SHOWN`}
+          </span>
         </div>
 
         <div style={{ position: "relative", width: 260 }}>
           <input
             type="text"
             className="input-field"
-            placeholder="Search actor or entity…"
+            placeholder="Search actor name, email, entity…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: 32 }}
@@ -197,8 +320,8 @@ export function AuditConsole() {
                   <div
                     style={{
                       padding: 12,
-                      backgroundColor: "var(--canvas)",
-                      border: "1px solid var(--line)",
+                      backgroundColor: "var(--stone)",
+                      border: "1px solid var(--stone)",
                       fontSize: 12,
                       fontFamily: "monospace",
                       overflowX: "auto",
@@ -217,6 +340,13 @@ export function AuditConsole() {
               </div>
             );
           })}
+          {total != null && total > 50 && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", justifyContent: "center", padding: 12 }}>
+              <button type="button" className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>← Prev</button>
+              <span className="muted font-mono" style={{ fontSize: 12 }}>PAGE {page} / {Math.max(1, Math.ceil(total / 50))}</span>
+              <button type="button" className="btn btn-secondary" disabled={page >= Math.ceil(total / 50)} onClick={() => setPage((p) => p + 1)}>Next →</button>
+            </div>
+          )}
         </div>
       )}
     </div>

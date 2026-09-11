@@ -1,7 +1,16 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
+import { parseBoundary, toGeoJsonPolygon, ringAcres, type LngLat } from "@/lib/geo";
+
+const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
+  ssr: false,
+  loading: () => <div style={{ height: 300, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: 13 }}>Map loading…</div>,
+});
+
+const INDIA_CENTER: [number, number] = [20.59, 78.96];
 
 type Plot = {
   id: string;
@@ -12,12 +21,22 @@ type Plot = {
   longitude: string;
   soilType: string | null;
   status: string;
+  boundaryGeoJson?: string | null;
+  measuredAcres?: string | number | null;
   irrigation: { type: string; details: string | null }[];
 };
 
 const options = ["Drip", "Rain Pipe", "Sprinkler", "Flood", "Other"] as const;
 
-export function PlotEditForm({ plot }: { plot: Plot }) {
+export function PlotEditForm({
+  plot,
+  farmBoundary,
+  farmCenter,
+}: {
+  plot: Plot;
+  farmBoundary?: string | null;
+  farmCenter?: [number, number] | null;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -27,6 +46,22 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
 
   const initialSelected = new Set(plot.irrigation.map((i) => i.type));
   const [selected, setSelected] = useState<Set<string>>(initialSelected);
+
+  const [ring, setRing] = useState<LngLat[] | null>(() => parseBoundary(plot.boundaryGeoJson ?? null));
+  const [ringDirty, setRingDirty] = useState(false);
+  const onRingChange = (r: LngLat[] | null) => {
+    setRing(r);
+    setRingDirty(true);
+  };
+
+  const center = useMemo<[number, number]>(() => {
+    if (farmCenter && Number.isFinite(farmCenter[0]) && Number.isFinite(farmCenter[1])) return farmCenter;
+    const la = Number(lat);
+    const ln = Number(lng);
+    if (Number.isFinite(la) && Number.isFinite(ln)) return [la, ln];
+    return INDIA_CENTER;
+  }, [farmCenter, lat, lng]);
+  const reference = useMemo(() => parseBoundary(farmBoundary ?? null), [farmBoundary]);
 
   function capture() {
     if (!navigator.geolocation) {
@@ -89,6 +124,8 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
           longitude: Number(f.get("longitude")),
           soilType: f.get("soilType") || null,
           status: f.get("status"),
+          // Fence edited only when touched: omitted = keep, null = clear.
+          ...(ringDirty ? { boundary: ring ? toGeoJsonPolygon(ring) : null } : {}),
           irrigation,
         }),
       });
@@ -206,8 +243,32 @@ export function PlotEditForm({ plot }: { plot: Plot }) {
                 <option value="FALLOW">Fallow</option>
                 <option value="ARCHIVED">Archived</option>
               </select>
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 6 }}>
+                <label style={{ margin: 0 }}>Fence on Satellite</label>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                  {plot.measuredAcres ? `Server-measured ${plot.measuredAcres} ac · ` : ""}
+                  {ring && ringDirty
+                    ? `redrawn ${ringAcres(ring).toFixed(2)} ac — saving sets acres from fence`
+                    : "redraw to move the fence (must stay inside the green farm fence)"}
+                </span>
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <GeoMap center={center} polygon={ring} onChange={onRingChange} reference={reference} height={300} />
+              </div>
+              {ring && (
+                <button
+                  type="button"
+                  className="text-action"
+                  style={{ fontSize: 12, marginTop: 6 }}
+                  onClick={() => onRingChange(null)}
+                >
+                  Remove fence (keep point location)
+                </button>
+              )}
             </div>
           </div>
+        </div>
         </div>
 
         {/* Irrigation Setup */}

@@ -1,9 +1,11 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
 import { PrintableSpraySheet } from "./printable-spray-sheet";
+import { PhotoUploadZone, PhotoItem, uploadEvidencePhotos } from "@/components/photo-upload-zone";
 
 type Plot = {
   id: string;
@@ -67,15 +69,18 @@ const RECIPE_PRESETS = [
   },
 ];
 
-export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
+export function WeeklyPlanner({ farms, farmsTotal }: { farms: Farm[]; farmsTotal?: number }) {
   const toast = useToast();
   const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPrintSheet, setShowPrintSheet] = useState(false);
   const [targetDayIndex, setTargetDayIndex] = useState(0);
   const [pending, setPending] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
   // Form states
   const [selectedPlotId, setSelectedPlotId] = useState("");
@@ -118,6 +123,50 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
     }
   }, [officers, assignedOfficerId]);
 
+  // Load persisted tasks for the selected farm + visible week. The old build
+  // only showed tasks created in the current session; a refresh wiped the
+  // board even though the tasks exist server-side.
+  useEffect(() => {
+    if (!selectedFarmId || weekDays.length !== 7) return;
+    const ctrl = new AbortController();
+    setTasksLoading(true);
+    setTasks([]);
+    const params = new URLSearchParams({
+      farmId: selectedFarmId,
+      dateFrom: weekDays[0].dateStr,
+      dateTo: weekDays[6].dateStr,
+      limit: "200",
+    });
+    fetch(`/api/tasks?${params.toString()}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: any[]) => {
+        if (ctrl.signal.aborted) return;
+        const byDate = new Map(weekDays.map((d) => [d.dateStr, d.index]));
+        const server = (Array.isArray(list) ? list : []).map((t: any) => ({
+          id: t.id,
+          dayIndex: byDate.get(t.dueDate?.slice(0, 10)) ?? 0,
+          dateStr: t.dueDate?.slice(0, 10) ?? weekDays[0].dateStr,
+          plotId: t.plot?.id ?? "",
+          plotName: t.plot?.name ?? "Farm",
+          cropCycleId: t.cropCycle?.id,
+          cropName: t.cropCycle?.cropName,
+          category: t.category ?? "CROP_SPECIFIC",
+          title: t.title,
+          instructions: t.instructions ?? t.description ?? "",
+          priority: t.priority,
+          assignedOfficerId: t.assignedOfficerId ?? "",
+          officerName: t.assignedOfficer?.name ?? "Unassigned",
+        }));
+        setTasks(server);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!ctrl.signal.aborted) setTasksLoading(false);
+      });
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFarmId, weekOffset]);
+
   const handlePresetSelect = (preset: typeof RECIPE_PRESETS[0]) => {
     setSelectedCategory(preset.category);
     setTitle(preset.title);
@@ -126,6 +175,8 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
 
   const openAddTask = (dayIndex: number) => {
     setTargetDayIndex(dayIndex);
+    setPhotos([]);
+    setUploadProgress(null);
     setShowAddModal(true);
   };
 
@@ -141,7 +192,20 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
     const officer = officers.find((o) => o.id === assignedOfficerId);
 
     setPending(true);
+    setUploadProgress(null);
     try {
+      let mediaIds: string[] = [];
+      if (photos.length > 0) {
+        setUploadProgress(`Securing ${photos.length} photo(s)…`);
+        mediaIds = await uploadEvidencePhotos(
+          selectedFarm.id,
+          "ACTIVITY_EVIDENCE",
+          photos,
+          (curr, total) => setUploadProgress(`Uploading photo ${curr} of ${total}…`)
+        );
+      }
+      setUploadProgress("Dispatching operation…");
+
       const body = {
         farmId: selectedFarm.id,
         plotId: selectedPlotId,
@@ -153,6 +217,7 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
         instructions,
         priority,
         assignedOfficerId,
+        mediaIds,
       };
 
       const res = await fetch("/api/tasks", {
@@ -188,11 +253,13 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
       ]);
 
       toast.show(`Task dispatched to ${officer?.name} for ${day.dayName}!`, "success");
+      setPhotos([]);
       setShowAddModal(false);
     } catch (err: any) {
       toast.show(err.message || "Could not schedule task", "error");
     } finally {
       setPending(false);
+      setUploadProgress(null);
     }
   };
 
@@ -212,10 +279,14 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
           </div>
           <p className="text-sm text-zinc-400 mt-1">
             Build and dispatch precision 7-day spray, fertigation, and cultural practice schedules for on-site farm managers.
+            {tasksLoading && <span className="ml-2 text-xs text-zinc-500">Loading dispatched tasks…</span>}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          {farmsTotal != null && farmsTotal > farms.length && (
+            <span className="text-xs text-zinc-500">Showing {farms.length} of {farmsTotal.toLocaleString()} estates — find any farm in the Farms directory.</span>
+          )}
           {farms.length > 1 && (
             <select
               value={selectedFarmId}
@@ -426,6 +497,24 @@ export function WeeklyPlanner({ farms }: { farms: Farm[] }) {
                   required
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 mb-1">
+                  Reference &amp; Evidence Photos (Optional)
+                </label>
+                <PhotoUploadZone
+                  farmId={selectedFarm.id}
+                  kind="ACTIVITY_EVIDENCE"
+                  maxPhotos={4}
+                  onPhotosChange={setPhotos}
+                  isUploading={pending}
+                />
+                {uploadProgress && (
+                  <div className="text-xs text-emerald-400 mt-1 font-medium">
+                    ⏳ {uploadProgress}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

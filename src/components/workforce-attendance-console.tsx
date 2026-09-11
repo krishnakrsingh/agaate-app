@@ -60,6 +60,11 @@ export function WorkforceAttendanceConsole({
   const [error, setError] = useState("");
   const [roster, setRoster] = useState<RosterItem[]>([]);
   const [estates, setEstates] = useState<Estate[]>([]);
+  const [requiresFilter, setRequiresFilter] = useState(false);
+  const [estateCount, setEstateCount] = useState(0);
+  const [estateQuery, setEstateQuery] = useState("");
+  const [rosterPage, setRosterPage] = useState(1);
+  const ROSTER_PAGE_SIZE = 20;
   const [summary, setSummary] = useState<Summary>({
     totalOfficers: 0,
     onDutyCount: 0,
@@ -138,6 +143,9 @@ export function WorkforceAttendanceConsole({
       const data = await res.json();
       setRoster(data.roster || []);
       setEstates(data.estates || []);
+      setRequiresFilter(!!data.requiresEstateFilter);
+      setEstateCount(data.estateCount || 0);
+      setRosterPage(1);
       setSummary(
         data.summary || {
           totalOfficers: 0,
@@ -188,14 +196,15 @@ export function WorkforceAttendanceConsole({
   };
 
   const openSelfieLightbox = async (
-    key: string,
+    attendanceId: string,
     title: string,
     officer: string,
-    time: string
+    time: string,
+    slot: "start" | "end" = "start"
   ) => {
     setViewingSelfie({ url: null, title, officer, time, loading: true });
     try {
-      const res = await fetch(`/api/attendance/selfie?key=${encodeURIComponent(key)}`);
+      const res = await fetch(`/api/attendance/selfie?attendanceId=${encodeURIComponent(attendanceId)}&slot=${slot}`);
       if (!res.ok) throw new Error("Could not retrieve secure selfie photo.");
       const data = await res.json();
       setViewingSelfie({ url: data.url, title, officer, time, loading: false });
@@ -229,6 +238,19 @@ export function WorkforceAttendanceConsole({
       return true;
     });
   }, [roster, search, activeTab]);
+
+  const rosterTotalPages = Math.max(1, Math.ceil(filteredRoster.length / ROSTER_PAGE_SIZE));
+  const safeRosterPage = Math.min(rosterPage, rosterTotalPages);
+  const pagedRoster = filteredRoster.slice(
+    (safeRosterPage - 1) * ROSTER_PAGE_SIZE,
+    safeRosterPage * ROSTER_PAGE_SIZE
+  );
+  const estateMatches =
+    estateQuery.trim().length === 0
+      ? estates.slice(0, 50)
+      : estates
+          .filter((e) => `${e.name} ${e.location}`.toLowerCase().includes(estateQuery.trim().toLowerCase()))
+          .slice(0, 50);
 
   const stepDate = (days: number) => {
     const d = new Date(selectedDate);
@@ -307,19 +329,46 @@ export function WorkforceAttendanceConsole({
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="label" style={{ fontSize: 11, textTransform: "uppercase" }}>Estate:</span>
-            <select
-              className="input-field"
-              value={selectedFarmId}
-              onChange={(e) => setSelectedFarmId(e.target.value)}
-              style={{ width: 180, padding: "6px 10px", fontSize: 13 }}
-            >
-              <option value="ALL">All Managed Estates</option>
-              {estates.map((est) => (
-                <option key={est.id} value={est.id}>
-                  {est.name}
-                </option>
-              ))}
-            </select>
+            <div style={{ position: "relative" }}>
+              <input
+                className="input-field"
+                value={selectedFarmId === "ALL" ? estateQuery : estates.find((e) => e.id === selectedFarmId)?.name || estateQuery}
+                onChange={(e) => {
+                  setEstateQuery(e.target.value);
+                  if (selectedFarmId !== "ALL") setSelectedFarmId("ALL");
+                }}
+                placeholder={initialRole === "SUPER_ADMIN" ? "Type estate name to scope…" : "All Managed Estates"}
+                style={{ width: 200, padding: "6px 10px", fontSize: 13 }}
+              />
+              {(estateQuery.trim() || selectedFarmId !== "ALL") && estateMatches.length > 0 && (
+                <div style={{ position: "absolute", top: "100%", left: 0, minWidth: 240, background: "var(--canvas)", border: "1px solid var(--line)", borderRadius: 8, zIndex: 30, maxHeight: 220, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFarmId("ALL");
+                      setEstateQuery("");
+                    }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", background: "none", border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer", fontSize: 12 }}
+                  >
+                    All in scope (may be capped)
+                  </button>
+                  {estateMatches.map((est) => (
+                    <button
+                      key={est.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFarmId(est.id);
+                        setEstateQuery("");
+                      }}
+                      style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", background: selectedFarmId === est.id ? "var(--stone)" : "none", border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer", fontSize: 12 }}
+                    >
+                      <strong>{est.name}</strong>
+                      <span className="muted"> — {est.location}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button
@@ -345,6 +394,15 @@ export function WorkforceAttendanceConsole({
           )}
         </div>
       </div>
+
+      {requiresFilter && (
+        <div className="alert alert-danger" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icons.AlertTriangle size={16} />
+          <span>
+            Platform scope is {estateCount.toLocaleString()} estates — pick one estate above to load its roster. Broad loads are disabled at scale.
+          </span>
+        </div>
+      )}
 
       {/* OPERATIONAL TELEMETRY METRIC SUMMARY */}
       <section>
@@ -480,7 +538,23 @@ export function WorkforceAttendanceConsole({
         />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {filteredRoster.map((item) => {
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
+            <span>
+              Showing {(safeRosterPage - 1) * ROSTER_PAGE_SIZE + 1}–{Math.min(safeRosterPage * ROSTER_PAGE_SIZE, filteredRoster.length)} of {filteredRoster.length.toLocaleString()} staff
+            </span>
+            {rosterTotalPages > 1 && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={safeRosterPage <= 1} onClick={() => setRosterPage((p) => Math.max(1, p - 1))}>
+                  <span>Prev</span>
+                </button>
+                <span>Page {safeRosterPage} / {rosterTotalPages}</span>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={safeRosterPage >= rosterTotalPages} onClick={() => setRosterPage((p) => Math.min(rosterTotalPages, p + 1))}>
+                  <span>Next</span>
+                </button>
+              </div>
+            )}
+          </div>
+          {pagedRoster.map((item) => {
             const hasStarted = item.hasStarted;
             const isCompleted = item.hasEnded;
             const isExceptionPending = item.status === "EXCEPTION_PENDING";
@@ -605,7 +679,7 @@ export function WorkforceAttendanceConsole({
                       gap: 12,
                       padding: "10px 14px",
                       backgroundColor: "var(--canvas)",
-                      border: "1px solid var(--line)",
+                      border: "1px solid var(--canvas)",
                       fontSize: 13,
                     }}
                   >
@@ -639,17 +713,18 @@ export function WorkforceAttendanceConsole({
 
                     {/* SELFIE PROOFS */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {item.startSelfieKey && (
+                      {item.startSelfieKey && item.attendanceId && (
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
                           style={{ padding: "4px 8px", fontSize: 11 }}
                           onClick={() =>
                             openSelfieLightbox(
-                              item.startSelfieKey!,
+                              item.attendanceId!,
                               "Clock-In Verification Selfie",
                               item.officerName,
-                              formatTime(item.startAt)
+                              formatTime(item.startAt),
+                              "start"
                             )
                           }
                         >
@@ -658,17 +733,18 @@ export function WorkforceAttendanceConsole({
                         </button>
                       )}
 
-                      {item.endSelfieKey && (
+                      {item.endSelfieKey && item.attendanceId && (
                         <button
                           type="button"
                           className="btn btn-sm btn-secondary"
                           style={{ padding: "4px 8px", fontSize: 11 }}
                           onClick={() =>
                             openSelfieLightbox(
-                              item.endSelfieKey!,
+                              item.attendanceId!,
                               "Clock-Out Verification Selfie",
                               item.officerName,
-                              formatTime(item.endAt)
+                              formatTime(item.endAt),
+                              "end"
                             )
                           }
                         >
@@ -694,8 +770,8 @@ export function WorkforceAttendanceConsole({
                       flexWrap: "wrap",
                       gap: 12,
                       padding: "12px 16px",
-                      backgroundColor: "rgba(217, 119, 6, 0.08)",
-                      border: "1px solid var(--amber)",
+                      backgroundColor: "var(--amber-light)",
+                      border: "1px solid var(--amber-light)",
                     }}
                   >
                     <div style={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: "70%" }}>
@@ -787,12 +863,12 @@ export function WorkforceAttendanceConsole({
               style={{
                 width: "100%",
                 height: 320,
-                backgroundColor: "var(--line)",
+                backgroundColor: "var(--surface-strong)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "hidden",
-                border: "1px solid var(--line)",
+                border: "1px solid var(--surface-strong)",
               }}
             >
               {viewingSelfie.loading ? (
@@ -898,8 +974,8 @@ export function WorkforceAttendanceConsole({
                   type="password"
                   name="password"
                   required
-                  minLength={8}
-                  placeholder="Minimum 8 characters"
+                   minLength={12}
+                   placeholder="Minimum 12 characters"
                   className="input-field"
                   style={{ width: "100%" }}
                 />

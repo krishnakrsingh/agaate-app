@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { QuickLogger } from "@/components/officer/quick-logger";
 
+import { MobileOfficerHeader } from "@/components/officer/mobile-officer-header";
+
 export const dynamic = "force-dynamic";
 
 export default async function OfficerQuickLogPage() {
@@ -44,6 +46,11 @@ export default async function OfficerQuickLogPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell narrow">
+        <MobileOfficerHeader
+          title="Express Field Logger"
+          subtitle="Instant 1-tap logging for unassigned daily ground work and shed stock consumption."
+          officerName={session.name}
+        />
         <QuickLogger farms={serialized} />
       </main>
     </>

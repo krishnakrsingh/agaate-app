@@ -295,7 +295,7 @@ export function FinancialsConsole({ farms }: { farms: Farm[] }) {
                         padding: "2px 8px",
                         borderRadius: "var(--radius-pill)",
                         background: "var(--stone)",
-                        border: "1px solid var(--line)",
+                        border: "1px solid var(--stone)",
                         color: "var(--ink)",
                       }}
                     >

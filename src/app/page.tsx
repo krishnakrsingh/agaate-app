@@ -32,5 +32,5 @@ export default async function Home() {
     redirect("/agronomy/radar");
   }
 
-  redirect("/dashboard");
+  redirect("/operations");
 }

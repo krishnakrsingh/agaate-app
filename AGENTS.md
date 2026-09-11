@@ -54,3 +54,23 @@ Skill available:
 - `/graphify [path]`: Build or update the knowledge graph (`.agents/skills/graphify/SKILL.md`).
 
 <!-- END:graphify-rules -->
+
+<!-- BEGIN:no-ai-slop-rules -->
+
+# No AI Slop — Sharp, Human Prose & Anti-Slop Editor
+
+Edit drafts into sharper, more human writing while preserving the writer's personal voice, or detect AI-slop patterns without rewriting.
+
+Principles:
+- Preserve the writer's distinctive vocabulary, cadence, bluntness, and honesty.
+- Make the minimum effective edit; leave strong human sentences alone.
+- Be concrete and specific: names, numbers, dates, mechanisms over abstractions.
+- Active voice with human subjects; no throat-clearing openers or colon reveals.
+- Cut banned words: *delve, foster, leverage, utilize, facilitate, empower, streamline, robust, cutting-edge, paradigm shift, game changer, tapestry, realm, multifaceted, meticulous, intricate, transformative, supercharge, harness, ever-evolving*.
+- Cut empty phrases (*in today's world, it's important to note, at the end of the day*) and fake-profound kicker lines.
+- End on the last concrete point or next step—no summary recaps ("In conclusion").
+
+Skill available:
+- `/no-ai-slop`: Edit draft or detect AI patterns (`.agents/skills/no-ai-slop/SKILL.md`).
+
+<!-- END:no-ai-slop-rules -->

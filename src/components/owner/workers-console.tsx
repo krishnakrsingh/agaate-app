@@ -46,11 +46,12 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
   } | null>(null);
 
   const generateSimplePassword = () => {
-    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
     let pass = "";
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 9; i++) {
       pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    // ponytail: API requires min 12 chars — Ag@ (3) + 9 = 12
     setPassword("Ag@" + pass);
   };
 
@@ -211,25 +212,25 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
 
         {/* Stats Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginTop: 20 }}>
-          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
             <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>TOTAL ROSTER</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{workers.length}</div>
             <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Registered accounts</div>
           </div>
 
-          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
             <div className="mono-label" style={{ fontSize: "11px", color: "var(--green)" }}>FIELD SUPERVISORS</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--green)", marginTop: 2 }}>{supervisorsCount}</div>
             <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Task &amp; muster dispatch</div>
           </div>
 
-          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
             <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>FARM LABORERS</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{laborersCount}</div>
             <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Field operation hands</div>
           </div>
 
-          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--line)" }}>
+          <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
             <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>ACTIVE STATUS</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
               {workers.filter((w) => w.active).length} / {workers.length}
@@ -242,11 +243,9 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
       {/* ── 2. RECENT PROVISIONED WORKER ALERT BANNER ── */}
       {recentWorker && (
         <div
-          className="compact-card"
+          className="compact-card tone-green"
           style={{
             padding: 18,
-            border: "1px solid var(--green)",
-            background: "rgba(36, 84, 58, 0.05)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
@@ -289,7 +288,6 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                 type="button"
                 onClick={() => shareWorkerWhatsApp(recentWorker)}
                 className="btn btn-sm btn-secondary"
-                style={{ color: "#25D366" }}
               >
                 <Icons.Send size={13} />
                 <span>WhatsApp</span>
@@ -452,7 +450,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                           fontWeight: 600,
                           color: "var(--muted)",
                           background: "var(--stone)",
-                          border: "1px solid var(--line)",
+                          border: "1px solid var(--stone)",
                           padding: "2px 8px",
                           borderRadius: "var(--radius-pill)",
                         }}
@@ -491,7 +489,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                           type="button"
                           onClick={() => shareWorkerWhatsApp({ name: w.name, phone: w.phone })}
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: "11px", padding: "3px 8px", color: "#25D366" }}
+                          style={{ fontSize: "11px", padding: "3px 8px" }}
                           title="Share via WhatsApp"
                         >
                           <Icons.Send size={12} />
@@ -671,7 +669,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                   padding: 12,
                   borderRadius: "var(--radius-sm)",
                   background: "var(--stone)",
-                  border: "1px solid var(--line)",
+                  border: "1px solid var(--stone)",
                   display: "flex",
                   alignItems: "flex-start",
                   gap: 10,

@@ -30,12 +30,24 @@ const quickLogSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const { assertSameOrigin } = await import("@/lib/security");
+    assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["FARM_OFFICER", "FARM_ADMIN", "SUPER_ADMIN"]);
     const body = await request.json();
     const input = quickLogSchema.parse(body);
 
     await requireFarmAccess(input.farmId);
+    if (input.plotId) {
+      const plot = await prisma.plot.findUnique({ where: { id: input.plotId }, select: { farmId: true } });
+      if (!plot || plot.farmId !== input.farmId) return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+    }
+    if (input.cropCycleId) {
+      const cycle = await prisma.cropCycle.findUnique({ where: { id: input.cropCycleId }, select: { plot: { select: { farmId: true, id: true } } } });
+      if (!cycle || cycle.plot.farmId !== input.farmId || (input.plotId && cycle.plot.id !== input.plotId)) {
+        return NextResponse.json({ error: "Validation failed" }, { status: 422 });
+      }
+    }
 
     const now = new Date();
     const today = utcDateOnly(now);
@@ -86,28 +98,31 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 3. If inventory item was consumed, deduct stock and create transaction
+      // 3. If inventory item was consumed, deduct stock atomically — never silently clamp or ignore.
       if (input.inventoryItemId && input.inventoryQuantity) {
         const item = await tx.inventoryItem.findUnique({
           where: { id: input.inventoryItemId },
         });
-
-        if (item && item.farmId === input.farmId) {
-          const newQty = Number(item.quantityInStock) - input.inventoryQuantity;
-          await tx.inventoryItem.update({
-            where: { id: input.inventoryItemId },
-            data: { quantityInStock: Math.max(0, newQty) },
-          });
-
-          await tx.inventoryTransaction.create({
-            data: {
-              itemId: item.id,
-              type: "STOCK_OUT",
-              quantity: input.inventoryQuantity,
-              notes: `Consumed for Quick Log Task: ${input.title}`,
-            },
-          });
+        if (!item || item.farmId !== input.farmId) {
+          throw new Error("Validation failed");
         }
+        const roundedQty = Math.round(input.inventoryQuantity * 100) / 100;
+        const next = Math.round((Number(item.quantityInStock) - roundedQty) * 100) / 100;
+        if (next < 0) throw new Error("Insufficient stock in shed.");
+        const write = await tx.inventoryItem.updateMany({
+          where: { id: input.inventoryItemId, quantityInStock: item.quantityInStock },
+          data: { quantityInStock: next },
+        });
+        if (!write.count) throw new Error("Insufficient stock in shed.");
+
+        await tx.inventoryTransaction.create({
+          data: {
+            itemId: item.id,
+            type: "STOCK_OUT",
+            quantity: roundedQty,
+            notes: `Consumed for Quick Log Task: ${input.title}`,
+          },
+        });
       }
 
       return task;
