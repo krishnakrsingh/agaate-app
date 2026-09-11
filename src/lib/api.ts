@@ -24,7 +24,6 @@ export function apiError(error: unknown) {
     }
     return NextResponse.json({ error: "Database operation failed. Please check server logs." }, { status: 500 });
   }
-  }
   if (error instanceof Error && /not configured|provider is temporarily unavailable/i.test(error.message)) { console.error(error); return NextResponse.json({ error: "This integration is temporarily unavailable." }, { status: 503 }); }
   if (error instanceof Error) {
     // Never leak internal detail (S3 errors, stock levels, paths). Only

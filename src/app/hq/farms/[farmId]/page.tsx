@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -49,7 +50,7 @@ export default async function HqFarmDetailPage({
       prisma.farm.findUniqueOrThrow({
         where: { id: farmId },
         include: {
-          client: { select: { id: true, name: true, code: true, phone: true } },
+          client: { select: { id: true, name: true, code: true, phone: true, email: true, companyName: true } },
           plots: {
             where: { deletedAt: null },
             orderBy: { name: "asc" },
@@ -212,7 +213,14 @@ export default async function HqFarmDetailPage({
     updatedAt: farm.updatedAt.toISOString(),
     createdAt: farm.createdAt.toISOString(),
     client: farm.client
-      ? { id: farm.client.id, name: farm.client.name, code: farm.client.code, phone: farm.client.phone }
+      ? {
+          id: farm.client.id,
+          name: farm.client.name,
+          code: farm.client.code,
+          phone: farm.client.phone,
+          email: farm.client.email,
+          companyName: farm.client.companyName,
+        }
       : null,
     plots: farm.plots.map((p) => ({
       id: p.id,
@@ -222,6 +230,7 @@ export default async function HqFarmDetailPage({
       status: p.status,
       soilType: p.soilType,
       hasBoundary: !!p.boundaryGeoJson,
+      boundaryGeoJson: p.boundaryGeoJson,
       latitude: p.latitude.toString(),
       longitude: p.longitude.toString(),
       irrigation: p.irrigation.map((r) => r.type),
@@ -304,7 +313,9 @@ export default async function HqFarmDetailPage({
         <Breadcrumbs
           items={[{ label: "HQ" }, { label: "Farms", href: "/hq/farms" }, { label: farm.name }]}
         />
-        <HqFarm360 farm={serialized} />
+        <Suspense fallback={<div style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>Loading farm management…</div>}>
+          <HqFarm360 farm={serialized} />
+        </Suspense>
       </main>
     </>
   );

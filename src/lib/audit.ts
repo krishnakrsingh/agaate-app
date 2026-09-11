@@ -8,5 +8,4 @@ export async function audit(actorId: string | null, action: string, entityType: 
     // Audit must never fail the user request or leak: log server-side only.
     console.error(`[audit-failed] ${action} ${entityType}:${entityId}`, error);
   }
-  }
 }

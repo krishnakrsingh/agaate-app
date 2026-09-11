@@ -126,7 +126,6 @@ export async function POST(request: NextRequest) {
     if (!user?.active || !passwordOk) {
       return NextResponse.json({ error: isEmail ? "Invalid email or password." : "Invalid phone number or password." }, { status: 401 });
     }
-    }
 
     resetRateLimit(rateKey);
     resetRateLimit(ipKey);
