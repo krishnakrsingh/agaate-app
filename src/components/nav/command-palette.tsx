@@ -105,7 +105,6 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
         { id: "nav-farms", title: "Farms Portfolio", subtitle: "Cadastral registry, plots & history", category: "NAVIGATION", href: "/hq/farms", icon: "Farm" },
         { id: "nav-onboard", title: "Client Onboarding", subtitle: "Multi-farm setup wizard & drafts", category: "NAVIGATION", href: "/hq/onboarding", icon: "Zap", badge: "Pipeline" },
         { id: "nav-people", title: "People & Workforce", subtitle: "User credentials & estate assignments", category: "NAVIGATION", href: "/hq/people", icon: "User" },
-        { id: "nav-map", title: "Platform Map", subtitle: "Satellite GIS map & plot boundaries", category: "NAVIGATION", href: "/hq/map", icon: "Navigation" },
         { id: "act-new-onboard", title: "Onboard New Client", subtitle: "Intake client, 10-20 farms & plots", category: "ACTIONS", href: "/hq/onboarding/new", icon: "Plus", badge: "Action" },
       ];
     }

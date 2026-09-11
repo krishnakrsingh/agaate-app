@@ -78,13 +78,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             badge: counts?.missingBoundary ? `${counts.missingBoundary} no map` : undefined,
             isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
           },
-          {
-            href: "/hq/map",
-            label: "Map",
-            icon: "Navigation",
-            isActive: (p) => p.startsWith("/hq/map") || p.startsWith("/spatial"),
-          },
         ],
+
       },
       {
         title: "INTAKE & WORKFORCE",

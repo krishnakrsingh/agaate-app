@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function SpatialPage() {
   const session = await requireSession();
   if (session.role === "SUPER_ADMIN") {
-    redirect("/hq/map");
+    redirect("/hq");
   }
 
   return (

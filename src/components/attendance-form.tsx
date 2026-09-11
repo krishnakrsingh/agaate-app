@@ -483,7 +483,7 @@ function basisText(basis?: string | null) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Icons.CheckCircle size={16} style={{ color: "var(--green)" }} />
-          <span style={{ fontSize: "13px", color: "var(--ink)", fontWeight: 600 }}>
+          <span style={{ fontSize: "13px", color: "var(--ink)", fontWeight: 600 }} suppressHydrationWarning>
             Today&apos;s Field Shift Completed at {attendance.farm.name} (Clocked out at {new Date(attendance.endAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
           </span>
         </div>

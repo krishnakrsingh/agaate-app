@@ -282,7 +282,7 @@ export function OfficerProfileView({
             {isShiftActive ? "Active Shift In Progress" : todayAttendance ? "Today's Shift Completed" : "Off-Duty (Shift Not Started)"}
           </strong>
           {todayAttendance?.startAt && (
-            <span className="muted" style={{ fontSize: "12px" }}>
+            <span className="muted" style={{ fontSize: "12px" }} suppressHydrationWarning>
               • Clocked in at {new Date(todayAttendance.startAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}

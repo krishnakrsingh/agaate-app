@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "./tailwind-built.css";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeInitializer } from "@/components/theme-initializer";

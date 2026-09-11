@@ -377,7 +377,7 @@ export function OwnerCockpit({ initialFarms, initialTelemetry }: OwnerCockpitPro
 
                 <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>
                   Clocked In:{" "}
-                  <strong>
+                  <strong suppressHydrationWarning>
                     {activeManager.startAt
                       ? new Date(activeManager.startAt).toLocaleTimeString([], {
                           hour: "2-digit",

@@ -287,210 +287,82 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {/* Sleek Farm Registry Toolbar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          padding: "8px 14px",
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-md)",
-          boxShadow: "var(--shadow-card)",
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Left Side: Search + Filter Pills */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", flex: 1, minWidth: 260 }}>
-          {/* Search Box */}
-          <div style={{ position: "relative", width: 260, minWidth: 200, flexShrink: 0 }}>
-            <Icons.Search
-              size={14}
-              style={{
-                position: "absolute",
-                left: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--muted)",
-              }}
-            />
-            <input
-              className="input-field"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search farm, ID, survey #, client…"
-              style={{ paddingLeft: 32, paddingRight: 24, width: "100%", fontSize: 13, height: 34 }}
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                aria-label="Clear search"
-                style={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--muted)",
-                  padding: 0,
-                }}
-              >
-                <Icons.X size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Quick Filter Pills */}
-          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              className={`btn btn-sm ${boundaryFilter === "ALL" && !stalledOnly && statusFilter === "ALL" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => applyPreset({})}
-              style={{ fontSize: 12, padding: "4px 12px", height: 34 }}
-            >
-              All ({total.toLocaleString()})
+      {/* ── Toolbar ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        {/* Search */}
+        <div style={{ position: "relative", flexGrow: 1, flexShrink: 1, flexBasis: 200, maxWidth: 320 }}>
+          <Icons.Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+          <input
+            className="input-field"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search farm, ID, survey #, client…"
+            style={{ paddingLeft: 30, paddingRight: search ? 28 : 10, width: "100%", fontSize: 13 }}
+          />
+          {search && (
+            <button type="button" onClick={() => setSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", cursor: "pointer", color: "var(--muted)", display: "flex", padding: 0 }}>
+              <Icons.X size={12} />
             </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${boundaryFilter === "HAS_BOUNDARY" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => applyPreset({ boundary: "HAS_BOUNDARY" })}
-              style={{ fontSize: 12, padding: "4px 12px", height: 34 }}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green-ink)", display: "inline-block", marginRight: 5 }} />
-              Demarcated
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${boundaryFilter === "NO_BOUNDARY" ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => applyPreset({ boundary: "NO_BOUNDARY" })}
-              style={{ fontSize: 12, padding: "4px 12px", height: 34 }}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)", display: "inline-block", marginRight: 5 }} />
-              Needs Boundary
-            </button>
-            <button
-              type="button"
-              className={`btn btn-sm ${stalledOnly ? "btn-primary" : "btn-secondary"}`}
-              onClick={() => applyPreset({ stalled: true })}
-              style={{ fontSize: 12, padding: "4px 12px", height: 34 }}
-            >
-              Stalled &gt;30d
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Right Side: Status, Sort, View Toggle, Reset */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <select
-            className="input-field"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{ width: "auto", fontSize: 12, height: 34, padding: "4px 10px" }}
-          >
-            <option value="ALL">All Status</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-
-          <select
-            className="input-field"
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setPage(1);
-            }}
-            style={{ width: "auto", fontSize: 12, height: 34, padding: "4px 10px" }}
-          >
-            <option value="updatedAt">Sort: Recent</option>
-            <option value="createdAt">Sort: Newest</option>
-            <option value="totalArea">Sort: Acreage</option>
-            <option value="name">Sort: A–Z</option>
-          </select>
-
-          {/* View Mode Toggle: List vs Grid */}
-          <div
+        {/* Quick filter pills */}
+        {[
+          { label: `All (${total.toLocaleString()})`, active: boundaryFilter === "ALL" && !stalledOnly && statusFilter === "ALL", onClick: () => applyPreset({}) },
+          { dot: "var(--green-ink)", label: "Demarcated", active: boundaryFilter === "HAS_BOUNDARY", onClick: () => applyPreset({ boundary: "HAS_BOUNDARY" }) },
+          { dot: "var(--amber)", label: "Needs boundary", active: boundaryFilter === "NO_BOUNDARY", onClick: () => applyPreset({ boundary: "NO_BOUNDARY" }) },
+          { label: "Stalled >30d", active: stalledOnly, onClick: () => applyPreset({ stalled: true }) },
+        ].map(({ label, active, onClick, dot }) => (
+          <button key={label} type="button" onClick={onClick}
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              background: "var(--surface-strong)",
-              padding: 2,
-              borderRadius: "var(--radius-sm)",
-              border: "1px solid var(--hairline)",
-              height: 34,
-              boxSizing: "border-box",
+              display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", fontSize: 12, fontWeight: active ? 600 : 500,
+              borderRadius: 99, border: active ? "1.5px solid var(--ink)" : "1px solid var(--hairline)",
+              background: active ? "var(--ink)" : "var(--surface-card)",
+              color: active ? "var(--canvas)" : "var(--muted)",
+              cursor: "pointer", whiteSpace: "nowrap",
             }}
           >
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              title="List View"
-              aria-label="List View"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "4px 10px",
-                fontSize: 12,
-                fontWeight: viewMode === "list" ? 600 : 400,
-                borderRadius: "calc(var(--radius-sm) - 2px)",
-                border: "none",
-                cursor: "pointer",
-                background: viewMode === "list" ? "var(--surface-card)" : "transparent",
-                color: viewMode === "list" ? "var(--ink)" : "var(--muted)",
-                boxShadow: viewMode === "list" ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
-                height: "100%",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <Icons.List size={13} />
-              <span>List</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              title="Grid View"
-              aria-label="Grid View"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "4px 10px",
-                fontSize: 12,
-                fontWeight: viewMode === "grid" ? 600 : 400,
-                borderRadius: "calc(var(--radius-sm) - 2px)",
-                border: "none",
-                cursor: "pointer",
-                background: viewMode === "grid" ? "var(--surface-card)" : "transparent",
-                color: viewMode === "grid" ? "var(--ink)" : "var(--muted)",
-                boxShadow: viewMode === "grid" ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
-                height: "100%",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <Icons.Grid size={13} />
-              <span>Grid</span>
-            </button>
+            {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--canvas)" : dot, display: "inline-block", flexShrink: 0 }} />}
+            {label}
+          </button>
+        ))}
+
+        {/* Right: status + sort + view toggle + reset */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+          <select className="input-field" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ width: "auto", fontSize: 12 }}>
+            <option value="ALL">All statuses</option>
+            {STATUS_OPTIONS.map((s) => (<option key={s} value={s}>{s}</option>))}
+          </select>
+
+          <select className="input-field" value={sortBy} onChange={(e) => { setSortBy(e.target.value); setPage(1); }} style={{ width: "auto", fontSize: 12 }}>
+            <option value="updatedAt">Recent</option>
+            <option value="createdAt">Newest</option>
+            <option value="totalArea">Acreage</option>
+            <option value="name">A–Z</option>
+          </select>
+
+          {/* List/Grid toggle */}
+          <div style={{ display: "inline-flex", background: "var(--surface-strong)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)", overflow: "hidden" }}>
+            {(["list", "grid"] as const).map((mode) => (
+              <button key={mode} type="button" onClick={() => setViewMode(mode)} title={`${mode} view`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", fontSize: 12,
+                  border: "none", cursor: "pointer",
+                  background: viewMode === mode ? "var(--surface-card)" : "transparent",
+                  color: viewMode === mode ? "var(--ink)" : "var(--muted)",
+                  fontWeight: viewMode === mode ? 600 : 400,
+                }}
+              >
+                {mode === "list" ? <Icons.List size={13} /> : <Icons.Grid size={13} />}
+                {mode === "list" ? "List" : "Grid"}
+              </button>
+            ))}
           </div>
 
           {(search || statusFilter !== "ALL" || stageFilter !== "ALL" || boundaryFilter !== "ALL" || stalledOnly || clientId) && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => applyPreset({})}
-              style={{ fontSize: 12, padding: "4px 10px", height: 34 }}
-              title="Reset all filters"
-            >
-              <Icons.X size={12} style={{ marginRight: 4 }} />
-              <span>Reset</span>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => applyPreset({})} title="Reset all filters" style={{ fontSize: 12 }}>
+              <Icons.X size={12} /> Reset
             </button>
           )}
         </div>

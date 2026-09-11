@@ -21,7 +21,10 @@
    success/error semantics.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
 
 /* --- 1. ElevenLabs tokens --- */
 :root,
@@ -1001,16 +1004,16 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 
 /* --- 13. Tabs (pill segmented) --- */
 .tabs-nav {
-  display: inline-flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 3px;
   background-color: var(--surface-strong); border-radius: var(--radius-pill);
-  padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  padding: 3px; max-width: 100%; overflow-x: auto; scrollbar-width: none;
 }
 .tabs-nav::-webkit-scrollbar { display: none; }
 .tab-btn {
-  display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border: none;
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: none;
   background-color: transparent; color: var(--muted);
-  font-size: 15px; font-weight: 500; border-radius: var(--radius-pill);
-  cursor: pointer; white-space: nowrap; flex-shrink: 0; min-height: 40px;
+  font-size: 13px; font-weight: 500; border-radius: var(--radius-pill);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0; min-height: 34px;
 }
 .tab-btn:hover { color: var(--ink); }
 .tab-btn.active { background-color: var(--surface-card); color: var(--ink); box-shadow: var(--shadow-card); }
@@ -1076,11 +1079,11 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 }
 
 /* --- 16. Auth shell — editorial split with atmospheric orb --- */
-.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; background-color: var(--canvas-floor); }
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1.15fr; background-color: var(--canvas-floor); }
 .auth-panel {
   position: relative; overflow: hidden;
-  background-color: var(--canvas-floor); border-right: 1px solid var(--hairline);
-  padding: 96px 48px; display: flex; flex-direction: column; justify-content: space-between;
+  background-color: var(--canvas-floor);
+  padding: 80px 48px; display: flex; flex-direction: column; justify-content: space-between;
 }
 .auth-panel::before {
   content: ''; position: absolute; inset: -20%;
@@ -1091,11 +1094,11 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   opacity: 0.5; pointer-events: none;
 }
 .auth-panel > * { position: relative; }
-.auth-form-side { background-color: var(--surface-card); padding: 64px 48px; display: flex; align-items: center; justify-content: center; }
+.auth-form-side { background-color: var(--surface-card); border-right: 1px solid var(--hairline); padding: 64px 40px; display: flex; align-items: center; justify-content: center; }
 @media (max-width: 900px) {
-  .auth-shell { grid-template-columns: 1fr; }
-  .auth-panel { display: none; }
-  .auth-form-side { padding: 32px 20px; background-color: var(--canvas-floor); }
+  .auth-shell { grid-template-columns: 1fr !important; }
+  .auth-panel { display: none !important; }
+  .auth-form-side { padding: 32px 20px !important; background-color: var(--canvas-floor) !important; border-right: none !important; }
 }
 
 /* --- 17. Onboarding wizard --- */

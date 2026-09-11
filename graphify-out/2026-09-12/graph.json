@@ -979,6 +979,19 @@
       "source_location": "L11"
     },
     {
+      "id": "src_components_officer_mobile_officer_header_mobileofficerheaderprops",
+      "label": "MobileOfficerHeaderProps",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "mobileofficerheaderprops",
+      "source_file": "src/components/officer/mobile-officer-header.tsx",
+      "source_location": "L6"
+    },
+    {
       "id": "src_app_owner_calendar_page_props",
       "label": "Props",
       "_callable": true,
@@ -992,17 +1005,17 @@
       "source_location": "L14"
     },
     {
-      "id": "src_components_officer_mobile_officer_header_mobileofficerheaderprops",
-      "label": "MobileOfficerHeaderProps",
+      "id": "src_app_owner_people_page_props",
+      "label": "Props",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 130,
       "community_name": "accessibleFarmWhere",
       "file_type": "code",
-      "norm_label": "mobileofficerheaderprops",
-      "source_file": "src/components/officer/mobile-officer-header.tsx",
-      "source_location": "L6"
+      "norm_label": "props",
+      "source_file": "src/app/owner/people/page.tsx",
+      "source_location": "L11"
     },
     {
       "id": "src_components_hq_incident_drawer_auditentry",
@@ -1382,19 +1395,6 @@
       "source_location": "L31"
     },
     {
-      "id": "src_components_brand_logo_brandlogoprops",
-      "label": "BrandLogoProps",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "brandlogoprops",
-      "source_file": "src/components/brand-logo.tsx",
-      "source_location": "L5"
-    },
-    {
       "id": "src_components_hq_farm_360_farm360",
       "label": "Farm360",
       "_callable": true,
@@ -1590,6 +1590,19 @@
       "source_location": "L6"
     },
     {
+      "id": "src_components_brand_logo_brandlogoprops",
+      "label": "BrandLogoProps",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "brandlogoprops",
+      "source_file": "src/components/brand-logo.tsx",
+      "source_location": "L5"
+    },
+    {
       "id": "src_components_layout_desktop_sidebar_desktopsidebarprops",
       "label": "DesktopSidebarProps",
       "_callable": true,
@@ -1707,26 +1720,13 @@
       "source_location": "L14"
     },
     {
-      "id": "src_app_owner_people_page_props",
-      "label": "Props",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "props",
-      "source_file": "src/app/owner/people/page.tsx",
-      "source_location": "L11"
-    },
-    {
       "id": "src_components_agronomy_diagnostics_workbench_diagnosticcase",
       "label": "DiagnosticCase",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "diagnosticcase",
       "source_file": "src/components/agronomy/diagnostics-workbench.tsx",
@@ -1739,7 +1739,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "dispatchedrx",
       "source_file": "src/components/agronomy/diagnostics-workbench.tsx",
@@ -5227,52 +5227,52 @@
       "source_location": "L5"
     },
     {
-      "id": "src_app_farms_new_page_newfarmpage",
-      "label": "NewFarmPage()",
+      "id": "src_app_officer_crew_page_officercrewpage",
+      "label": "OfficerCrewPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 129,
-      "community_name": "farms/new/page.tsx",
+      "community_name": "crew/page.tsx",
       "file_type": "code",
-      "norm_label": "newfarmpage()",
-      "source_file": "src/app/farms/new/page.tsx",
+      "norm_label": "officercrewpage()",
+      "source_file": "src/app/officer/crew/page.tsx",
       "source_location": "L11"
     },
     {
-      "id": "src_components_farm_form_farmform",
-      "label": "FarmForm()",
+      "id": "src_app_officer_harvest_page_officerharvestpage",
+      "label": "OfficerHarvestPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 129,
-      "community_name": "farms/new/page.tsx",
+      "community_name": "crew/page.tsx",
       "file_type": "code",
-      "norm_label": "farmform()",
-      "source_file": "src/components/farm-form.tsx",
-      "source_location": "L6"
+      "norm_label": "officerharvestpage()",
+      "source_file": "src/app/officer/harvest/page.tsx",
+      "source_location": "L11"
     },
     {
-      "id": "src_components_farm_form_farmform_capture",
-      "label": "capture()",
+      "id": "src_app_officer_quick_log_page_officerquicklogpage",
+      "label": "OfficerQuickLogPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 129,
-      "community_name": "farms/new/page.tsx",
+      "community_name": "crew/page.tsx",
       "file_type": "code",
-      "norm_label": "capture()",
-      "source_file": "src/components/farm-form.tsx",
+      "norm_label": "officerquicklogpage()",
+      "source_file": "src/app/officer/quick-log/page.tsx",
+      "source_location": "L11"
+    },
+    {
+      "id": "src_components_officer_mobile_officer_header_mobileofficerheader",
+      "label": "MobileOfficerHeader()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "mobileofficerheader()",
+      "source_file": "src/components/officer/mobile-officer-header.tsx",
       "source_location": "L15"
-    },
-    {
-      "id": "src_components_farm_form_farmform_submit",
-      "label": "submit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 129,
-      "community_name": "farms/new/page.tsx",
-      "file_type": "code",
-      "norm_label": "submit()",
-      "source_file": "src/components/farm-form.tsx",
-      "source_location": "L39"
     },
     {
       "id": "src_app_agronomy_planning_page_agronomyplanningpage",
@@ -5297,42 +5297,6 @@
       "norm_label": "agronomyradarpage()",
       "source_file": "src/app/agronomy/radar/page.tsx",
       "source_location": "L9"
-    },
-    {
-      "id": "src_app_officer_crew_page_officercrewpage",
-      "label": "OfficerCrewPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "officercrewpage()",
-      "source_file": "src/app/officer/crew/page.tsx",
-      "source_location": "L11"
-    },
-    {
-      "id": "src_app_officer_harvest_page_officerharvestpage",
-      "label": "OfficerHarvestPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "officerharvestpage()",
-      "source_file": "src/app/officer/harvest/page.tsx",
-      "source_location": "L11"
-    },
-    {
-      "id": "src_app_officer_quick_log_page_officerquicklogpage",
-      "label": "OfficerQuickLogPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "officerquicklogpage()",
-      "source_file": "src/app/officer/quick-log/page.tsx",
-      "source_location": "L11"
     },
     {
       "id": "src_app_owner_calendar_page_operationscalendarpage",
@@ -5395,6 +5359,30 @@
       "source_location": "L9"
     },
     {
+      "id": "src_app_owner_land_page_ownerlandpage",
+      "label": "OwnerLandPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "ownerlandpage()",
+      "source_file": "src/app/owner/land/page.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "src_app_owner_people_page_ownerpeoplepage",
+      "label": "OwnerPeoplePage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "ownerpeoplepage()",
+      "source_file": "src/app/owner/people/page.tsx",
+      "source_location": "L15"
+    },
+    {
       "id": "src_app_owner_records_page_ownerrecordspage",
       "label": "OwnerRecordsPage()",
       "_callable": true,
@@ -5429,18 +5417,6 @@
       "norm_label": "ownersettingspage()",
       "source_file": "src/app/owner/settings/page.tsx",
       "source_location": "L10"
-    },
-    {
-      "id": "src_components_officer_mobile_officer_header_mobileofficerheader",
-      "label": "MobileOfficerHeader()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "mobileofficerheader()",
-      "source_file": "src/components/officer/mobile-officer-header.tsx",
-      "source_location": "L15"
     },
     {
       "id": "src_components_owner_executive_brief_executivebrief",
@@ -6535,78 +6511,6 @@
       "source_location": "L74"
     },
     {
-      "id": "src_components_brand_logo_brandlogo",
-      "label": "BrandLogo()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "brandlogo()",
-      "source_file": "src/components/brand-logo.tsx",
-      "source_location": "L17"
-    },
-    {
-      "id": "src_components_login_form_loginform",
-      "label": "LoginForm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "loginform()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L7"
-    },
-    {
-      "id": "src_components_login_form_loginform_performlogin",
-      "label": "performLogin()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "performlogin()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L16"
-    },
-    {
-      "id": "src_components_login_form_loginform_submit",
-      "label": "submit()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "submit()",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L52"
-    },
-    {
-      "id": "src_components_ui_auth_section_1_authsectionone",
-      "label": "AuthSectionOne()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "authsectionone()",
-      "source_file": "src/components/ui/auth-section-1.tsx",
-      "source_location": "L19"
-    },
-    {
-      "id": "src_components_ui_demo_default",
-      "label": "Default()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "default()",
-      "source_file": "src/components/ui/demo.tsx",
-      "source_location": "L3"
-    },
-    {
       "id": "src_app_api_farms_farmid_plots_generate_route_post",
       "label": "POST()",
       "_callable": true,
@@ -7001,18 +6905,6 @@
       "norm_label": "toggle()",
       "source_file": "src/components/plot-form.tsx",
       "source_location": "L72"
-    },
-    {
-      "id": "src_app_owner_land_page_ownerlandpage",
-      "label": "OwnerLandPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 158,
-      "community_name": "land/page.tsx",
-      "file_type": "code",
-      "norm_label": "ownerlandpage()",
-      "source_file": "src/app/owner/land/page.tsx",
-      "source_location": "L10"
     },
     {
       "id": "src_components_boundary_history_boundaryhistory",
@@ -7771,6 +7663,18 @@
       "source_location": "L32"
     },
     {
+      "id": "src_components_brand_logo_brandlogo",
+      "label": "BrandLogo()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "brandlogo()",
+      "source_file": "src/components/brand-logo.tsx",
+      "source_location": "L17"
+    },
+    {
       "id": "src_components_layout_desktop_sidebar_desktopsidebar",
       "label": "DesktopSidebar()",
       "_callable": true,
@@ -7903,28 +7807,40 @@
       "source_location": "L16"
     },
     {
+      "id": "src_components_ui_auth_section_1_authsectionone",
+      "label": "AuthSectionOne()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "authsectionone()",
+      "source_file": "src/components/ui/auth-section-1.tsx",
+      "source_location": "L19"
+    },
+    {
+      "id": "src_components_ui_demo_default",
+      "label": "Default()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "default()",
+      "source_file": "src/components/ui/demo.tsx",
+      "source_location": "L3"
+    },
+    {
       "id": "src_app_agronomy_diagnostics_page_agronomydiagnosticspage",
       "label": "AgronomyDiagnosticsPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "agronomydiagnosticspage()",
       "source_file": "src/app/agronomy/diagnostics/page.tsx",
       "source_location": "L14"
-    },
-    {
-      "id": "src_app_owner_people_page_ownerpeoplepage",
-      "label": "OwnerPeoplePage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "ownerpeoplepage()",
-      "source_file": "src/app/owner/people/page.tsx",
-      "source_location": "L15"
     },
     {
       "id": "src_components_agronomy_diagnostics_workbench_diagnosticsworkbench",
@@ -7932,7 +7848,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "diagnosticsworkbench()",
       "source_file": "src/components/agronomy/diagnostics-workbench.tsx",
@@ -10816,7 +10732,43 @@
       "file_type": "code",
       "norm_label": "agronomyshowcasepanel()",
       "source_file": "src/components/agronomy-showcase-panel.tsx",
-      "source_location": "L6"
+      "source_location": "L5"
+    },
+    {
+      "id": "src_components_login_form_loginform",
+      "label": "LoginForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "auth.ts",
+      "file_type": "code",
+      "norm_label": "loginform()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_components_login_form_loginform_performlogin",
+      "label": "performLogin()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "auth.ts",
+      "file_type": "code",
+      "norm_label": "performlogin()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L17"
+    },
+    {
+      "id": "src_components_login_form_loginform_submit",
+      "label": "submit()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "auth.ts",
+      "file_type": "code",
+      "norm_label": "submit()",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L53"
     },
     {
       "id": "src_lib_auth_clearsession",
@@ -11491,6 +11443,18 @@
       "source_location": "L8"
     },
     {
+      "id": "src_app_farms_new_page_newfarmpage",
+      "label": "NewFarmPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "newfarmpage()",
+      "source_file": "src/app/farms/new/page.tsx",
+      "source_location": "L11"
+    },
+    {
       "id": "src_app_hq_analytics_page_hqanalyticspage",
       "label": "HqAnalyticsPage()",
       "_callable": true,
@@ -11503,15 +11467,15 @@
       "source_location": "L10"
     },
     {
-      "id": "src_app_hq_clients_clientid_page_hqclientdetailpage",
-      "label": "HqClientDetailPage()",
+      "id": "src_app_hq_clients_page_hqclientspage",
+      "label": "HqClientsPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 89,
       "community_name": "Navbar",
       "file_type": "code",
-      "norm_label": "hqclientdetailpage()",
-      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
+      "norm_label": "hqclientspage()",
+      "source_file": "src/app/hq/clients/page.tsx",
       "source_location": "L9"
     },
     {
@@ -11587,18 +11551,6 @@
       "source_location": "L11"
     },
     {
-      "id": "src_app_hq_people_page_hqpeoplepage",
-      "label": "HqPeoplePage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "hqpeoplepage()",
-      "source_file": "src/app/hq/people/page.tsx",
-      "source_location": "L8"
-    },
-    {
       "id": "src_app_hq_tasks_page_hqtaskspage",
       "label": "HqTasksPage()",
       "_callable": true,
@@ -11623,6 +11575,18 @@
       "source_location": "L8"
     },
     {
+      "id": "src_app_owner_operations_page_owneroperationspage",
+      "label": "OwnerOperationsPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "owneroperationspage()",
+      "source_file": "src/app/owner/operations/page.tsx",
+      "source_location": "L11"
+    },
+    {
       "id": "src_app_people_page_peoplepage",
       "label": "PeoplePage()",
       "_callable": true,
@@ -11633,18 +11597,6 @@
       "norm_label": "peoplepage()",
       "source_file": "src/app/people/page.tsx",
       "source_location": "L9"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_cropcycledetailpage",
-      "label": "CropCycleDetailPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "cropcycledetailpage()",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L14"
     },
     {
       "id": "src_app_plots_plotid_crop_cycles_new_page_newcropcyclepage",
@@ -11717,6 +11669,42 @@
       "norm_label": "breadcrumbs()",
       "source_file": "src/components/breadcrumbs.tsx",
       "source_location": "L10"
+    },
+    {
+      "id": "src_components_farm_form_farmform",
+      "label": "FarmForm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "farmform()",
+      "source_file": "src/components/farm-form.tsx",
+      "source_location": "L6"
+    },
+    {
+      "id": "src_components_farm_form_farmform_capture",
+      "label": "capture()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "capture()",
+      "source_file": "src/components/farm-form.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "src_components_farm_form_farmform_submit",
+      "label": "submit()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "submit()",
+      "source_file": "src/components/farm-form.tsx",
+      "source_location": "L39"
     },
     {
       "id": "src_components_nav_config_getmobilenavforrole",
@@ -11947,16 +11935,28 @@
       "source_location": "L10"
     },
     {
-      "id": "src_app_hq_clients_page_hqclientspage",
-      "label": "HqClientsPage()",
+      "id": "src_app_hq_clients_clientid_page_hqclientdetailpage",
+      "label": "HqClientDetailPage()",
       "_callable": true,
       "_origin": "ast",
       "community": 98,
       "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "hqclientspage()",
-      "source_file": "src/app/hq/clients/page.tsx",
+      "norm_label": "hqclientdetailpage()",
+      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
       "source_location": "L9"
+    },
+    {
+      "id": "src_app_hq_people_page_hqpeoplepage",
+      "label": "HqPeoplePage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "hqpeoplepage()",
+      "source_file": "src/app/hq/people/page.tsx",
+      "source_location": "L8"
     },
     {
       "id": "src_app_officer_day_page_officerdaypage",
@@ -11995,18 +11995,6 @@
       "source_location": "L9"
     },
     {
-      "id": "src_app_owner_operations_page_owneroperationspage",
-      "label": "OwnerOperationsPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "owneroperationspage()",
-      "source_file": "src/app/owner/operations/page.tsx",
-      "source_location": "L11"
-    },
-    {
       "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page_editcropcyclepage",
       "label": "EditCropCyclePage()",
       "_callable": true,
@@ -12017,6 +12005,18 @@
       "norm_label": "editcropcyclepage()",
       "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
       "source_location": "L11"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_cropcycledetailpage",
+      "label": "CropCycleDetailPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "cropcycledetailpage()",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
+      "source_location": "L14"
     },
     {
       "id": "src_app_spatial_page_spatialpage",
@@ -14587,26 +14587,81 @@
       "source_location": null
     },
     {
-      "id": "src_app_farms_new_page",
-      "label": "farms/new/page.tsx",
+      "id": "src_app_officer_crew_page",
+      "label": "crew/page.tsx",
       "_origin": "ast",
       "community": 129,
-      "community_name": "farms/new/page.tsx",
+      "community_name": "crew/page.tsx",
       "file_type": "code",
-      "norm_label": "farms/new/page.tsx",
-      "source_file": "src/app/farms/new/page.tsx",
+      "norm_label": "crew/page.tsx",
+      "source_file": "src/app/officer/crew/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_farms_new_page_dynamic",
+      "id": "src_app_officer_crew_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 129,
-      "community_name": "farms/new/page.tsx",
+      "community_name": "crew/page.tsx",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/farms/new/page.tsx",
+      "source_file": "src/app/officer/crew/page.tsx",
       "source_location": "L9"
+    },
+    {
+      "id": "src_app_officer_harvest_page",
+      "label": "officer/harvest/page.tsx",
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "officer/harvest/page.tsx",
+      "source_file": "src/app/officer/harvest/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_officer_harvest_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/officer/harvest/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_app_officer_quick_log_page",
+      "label": "quick-log/page.tsx",
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "quick-log/page.tsx",
+      "source_file": "src/app/officer/quick-log/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_officer_quick_log_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/officer/quick-log/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_components_officer_mobile_officer_header",
+      "label": "mobile-officer-header.tsx",
+      "_origin": "ast",
+      "community": 129,
+      "community_name": "crew/page.tsx",
+      "file_type": "code",
+      "norm_label": "mobile-officer-header.tsx",
+      "source_file": "src/components/officer/mobile-officer-header.tsx",
+      "source_location": "L1"
     },
     {
       "id": "agents_skills_ponytail_examples_rate_limit_1_using_slowapi_recommended_easiest",
@@ -14773,72 +14828,6 @@
       "source_location": "L7"
     },
     {
-      "id": "src_app_officer_crew_page",
-      "label": "crew/page.tsx",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "crew/page.tsx",
-      "source_file": "src/app/officer/crew/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_officer_crew_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/officer/crew/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_app_officer_harvest_page",
-      "label": "officer/harvest/page.tsx",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "officer/harvest/page.tsx",
-      "source_file": "src/app/officer/harvest/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_officer_harvest_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/officer/harvest/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_app_officer_quick_log_page",
-      "label": "quick-log/page.tsx",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "quick-log/page.tsx",
-      "source_file": "src/app/officer/quick-log/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_officer_quick_log_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 130,
-      "community_name": "accessibleFarmWhere",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/officer/quick-log/page.tsx",
-      "source_location": "L9"
-    },
-    {
       "id": "src_app_owner_calendar_page",
       "label": "owner/calendar/page.tsx",
       "_origin": "ast",
@@ -14949,6 +14938,72 @@
       "source_location": "L7"
     },
     {
+      "id": "src_app_owner_land_page",
+      "label": "land/page.tsx",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "land/page.tsx",
+      "source_file": "src/app/owner/land/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_owner_land_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/owner/land/page.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "src_app_owner_people_page",
+      "label": "owner/people/page.tsx",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "owner/people/page.tsx",
+      "source_file": "src/app/owner/people/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_owner_people_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/owner/people/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "src_app_owner_plots_page",
+      "label": "plots/page.tsx",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "plots/page.tsx",
+      "source_file": "src/app/owner/plots/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_owner_plots_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/owner/plots/page.tsx",
+      "source_location": "L3"
+    },
+    {
       "id": "src_app_owner_records_page",
       "label": "records/page.tsx",
       "_origin": "ast",
@@ -15015,15 +15070,26 @@
       "source_location": "L8"
     },
     {
-      "id": "src_components_officer_mobile_officer_header",
-      "label": "mobile-officer-header.tsx",
+      "id": "src_app_owner_team_page",
+      "label": "team/page.tsx",
       "_origin": "ast",
       "community": 130,
       "community_name": "accessibleFarmWhere",
       "file_type": "code",
-      "norm_label": "mobile-officer-header.tsx",
-      "source_file": "src/components/officer/mobile-officer-header.tsx",
+      "norm_label": "team/page.tsx",
+      "source_file": "src/app/owner/team/page.tsx",
       "source_location": "L1"
+    },
+    {
+      "id": "src_app_owner_team_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 130,
+      "community_name": "accessibleFarmWhere",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/owner/team/page.tsx",
+      "source_location": "L3"
     },
     {
       "id": "src_app_officer_reports_page",
@@ -16034,72 +16100,6 @@
       "source_location": "L71"
     },
     {
-      "id": "components_ui_auth_section_1",
-      "label": "components/ui/auth-section-1.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "components/ui/auth-section-1.tsx",
-      "source_file": "components/ui/auth-section-1.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "components_ui_demo",
-      "label": "components/ui/demo.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "components/ui/demo.tsx",
-      "source_file": "components/ui/demo.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_brand_logo",
-      "label": "brand-logo.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "brand-logo.tsx",
-      "source_file": "src/components/brand-logo.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_login_form",
-      "label": "login-form.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "login-form.tsx",
-      "source_file": "src/components/login-form.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_ui_auth_section_1",
-      "label": "src/components/ui/auth-section-1.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "src/components/ui/auth-section-1.tsx",
-      "source_file": "src/components/ui/auth-section-1.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_components_ui_demo",
-      "label": "src/components/ui/demo.tsx",
-      "_origin": "ast",
-      "community": 141,
-      "community_name": "brand-logo.tsx",
-      "file_type": "code",
-      "norm_label": "src/components/ui/demo.tsx",
-      "source_file": "src/components/ui/demo.tsx",
-      "source_location": "L1"
-    },
-    {
       "id": "src_app_api_farms_farmid_plots_generate_route",
       "label": "generate/route.ts",
       "_origin": "ast",
@@ -16569,50 +16569,6 @@
       "norm_label": "irrigationoptions",
       "source_file": "src/components/plot-form.tsx",
       "source_location": "L13"
-    },
-    {
-      "id": "src_app_owner_land_page",
-      "label": "land/page.tsx",
-      "_origin": "ast",
-      "community": 158,
-      "community_name": "land/page.tsx",
-      "file_type": "code",
-      "norm_label": "land/page.tsx",
-      "source_file": "src/app/owner/land/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_owner_land_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 158,
-      "community_name": "land/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/owner/land/page.tsx",
-      "source_location": "L8"
-    },
-    {
-      "id": "src_app_owner_plots_page",
-      "label": "plots/page.tsx",
-      "_origin": "ast",
-      "community": 158,
-      "community_name": "land/page.tsx",
-      "file_type": "code",
-      "norm_label": "plots/page.tsx",
-      "source_file": "src/app/owner/plots/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_owner_plots_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 158,
-      "community_name": "land/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/owner/plots/page.tsx",
-      "source_location": "L3"
     },
     {
       "id": "src_components_boundary_history",
@@ -17921,6 +17877,39 @@
       "source_location": "L19"
     },
     {
+      "id": "components_ui_auth_section_1",
+      "label": "components/ui/auth-section-1.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "components/ui/auth-section-1.tsx",
+      "source_file": "components/ui/auth-section-1.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "components_ui_demo",
+      "label": "components/ui/demo.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "components/ui/demo.tsx",
+      "source_file": "components/ui/demo.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_brand_logo",
+      "label": "brand-logo.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "brand-logo.tsx",
+      "source_file": "src/components/brand-logo.tsx",
+      "source_location": "L1"
+    },
+    {
       "id": "src_components_layout_desktop_sidebar",
       "label": "desktop-sidebar.tsx",
       "_origin": "ast",
@@ -17929,6 +17918,17 @@
       "file_type": "code",
       "norm_label": "desktop-sidebar.tsx",
       "source_file": "src/components/layout/desktop-sidebar.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_login_form",
+      "label": "login-form.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "login-form.tsx",
+      "source_file": "src/components/login-form.tsx",
       "source_location": "L1"
     },
     {
@@ -18031,11 +18031,33 @@
       "source_location": "L1"
     },
     {
+      "id": "src_components_ui_auth_section_1",
+      "label": "src/components/ui/auth-section-1.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "src/components/ui/auth-section-1.tsx",
+      "source_file": "src/components/ui/auth-section-1.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_components_ui_demo",
+      "label": "src/components/ui/demo.tsx",
+      "_origin": "ast",
+      "community": 24,
+      "community_name": "navbar.tsx",
+      "file_type": "code",
+      "norm_label": "src/components/ui/demo.tsx",
+      "source_file": "src/components/ui/demo.tsx",
+      "source_location": "L1"
+    },
+    {
       "id": "src_app_agronomy_diagnostics_page",
       "label": "diagnostics/page.tsx",
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "diagnostics/page.tsx",
       "source_file": "src/app/agronomy/diagnostics/page.tsx",
@@ -18046,62 +18068,18 @@
       "label": "dynamic",
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "dynamic",
       "source_file": "src/app/agronomy/diagnostics/page.tsx",
       "source_location": "L12"
     },
     {
-      "id": "src_app_owner_people_page",
-      "label": "owner/people/page.tsx",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "owner/people/page.tsx",
-      "source_file": "src/app/owner/people/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_owner_people_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/owner/people/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "src_app_owner_team_page",
-      "label": "team/page.tsx",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "team/page.tsx",
-      "source_file": "src/app/owner/team/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_owner_team_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 25,
-      "community_name": "owner/people/page.tsx",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/owner/team/page.tsx",
-      "source_location": "L3"
-    },
-    {
       "id": "src_components_agronomy_diagnostics_workbench",
       "label": "diagnostics-workbench.tsx",
       "_origin": "ast",
       "community": 25,
-      "community_name": "owner/people/page.tsx",
+      "community_name": "diagnostics/page.tsx",
       "file_type": "code",
       "norm_label": "diagnostics-workbench.tsx",
       "source_file": "src/components/agronomy/diagnostics-workbench.tsx",
@@ -26552,6 +26530,28 @@
       "source_location": "L6"
     },
     {
+      "id": "src_app_farms_new_page",
+      "label": "farms/new/page.tsx",
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "farms/new/page.tsx",
+      "source_file": "src/app/farms/new/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_farms_new_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/farms/new/page.tsx",
+      "source_location": "L9"
+    },
+    {
       "id": "src_app_hq_analytics_page",
       "label": "analytics/page.tsx",
       "_origin": "ast",
@@ -26574,25 +26574,25 @@
       "source_location": "L8"
     },
     {
-      "id": "src_app_hq_clients_clientid_page",
-      "label": "hq/clients/[clientId]/page.tsx",
+      "id": "src_app_hq_clients_page",
+      "label": "hq/clients/page.tsx",
       "_origin": "ast",
       "community": 89,
       "community_name": "Navbar",
       "file_type": "code",
-      "norm_label": "hq/clients/[clientid]/page.tsx",
-      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
+      "norm_label": "hq/clients/page.tsx",
+      "source_file": "src/app/hq/clients/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_hq_clients_clientid_page_dynamic",
+      "id": "src_app_hq_clients_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 89,
       "community_name": "Navbar",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
+      "source_file": "src/app/hq/clients/page.tsx",
       "source_location": "L7"
     },
     {
@@ -26728,28 +26728,6 @@
       "source_location": "L9"
     },
     {
-      "id": "src_app_hq_people_page",
-      "label": "hq/people/page.tsx",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "hq/people/page.tsx",
-      "source_file": "src/app/hq/people/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_hq_people_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/hq/people/page.tsx",
-      "source_location": "L6"
-    },
-    {
       "id": "src_app_hq_tasks_page",
       "label": "hq/tasks/page.tsx",
       "_origin": "ast",
@@ -26794,6 +26772,28 @@
       "source_location": "L6"
     },
     {
+      "id": "src_app_owner_operations_page",
+      "label": "owner/operations/page.tsx",
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "owner/operations/page.tsx",
+      "source_file": "src/app/owner/operations/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_owner_operations_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 89,
+      "community_name": "Navbar",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/owner/operations/page.tsx",
+      "source_location": "L9"
+    },
+    {
       "id": "src_app_people_page",
       "label": "app/people/page.tsx",
       "_origin": "ast",
@@ -26814,28 +26814,6 @@
       "norm_label": "dynamic",
       "source_file": "src/app/people/page.tsx",
       "source_location": "L7"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page",
-      "label": "[cycleId]/page.tsx",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "[cycleid]/page.tsx",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 89,
-      "community_name": "Navbar",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
-      "source_location": "L12"
     },
     {
       "id": "src_app_plots_plotid_crop_cycles_new_page",
@@ -27657,26 +27635,48 @@
       "source_location": "L4"
     },
     {
-      "id": "src_app_hq_clients_page",
-      "label": "hq/clients/page.tsx",
+      "id": "src_app_hq_clients_clientid_page",
+      "label": "hq/clients/[clientId]/page.tsx",
       "_origin": "ast",
       "community": 98,
       "community_name": "requireSession",
       "file_type": "code",
-      "norm_label": "hq/clients/page.tsx",
-      "source_file": "src/app/hq/clients/page.tsx",
+      "norm_label": "hq/clients/[clientid]/page.tsx",
+      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
       "source_location": "L1"
     },
     {
-      "id": "src_app_hq_clients_page_dynamic",
+      "id": "src_app_hq_clients_clientid_page_dynamic",
       "label": "dynamic",
       "_origin": "ast",
       "community": 98,
       "community_name": "requireSession",
       "file_type": "code",
       "norm_label": "dynamic",
-      "source_file": "src/app/hq/clients/page.tsx",
+      "source_file": "src/app/hq/clients/[clientId]/page.tsx",
       "source_location": "L7"
+    },
+    {
+      "id": "src_app_hq_people_page",
+      "label": "hq/people/page.tsx",
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "hq/people/page.tsx",
+      "source_file": "src/app/hq/people/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_hq_people_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/hq/people/page.tsx",
+      "source_location": "L6"
     },
     {
       "id": "src_app_officer_day_page",
@@ -27745,28 +27745,6 @@
       "source_location": "L7"
     },
     {
-      "id": "src_app_owner_operations_page",
-      "label": "owner/operations/page.tsx",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "owner/operations/page.tsx",
-      "source_file": "src/app/owner/operations/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_app_owner_operations_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "requireSession",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "src/app/owner/operations/page.tsx",
-      "source_location": "L9"
-    },
-    {
       "id": "src_app_plots_plotid_crop_cycles_cycleid_edit_page",
       "label": "edit/page.tsx",
       "_origin": "ast",
@@ -27787,6 +27765,28 @@
       "norm_label": "dynamic",
       "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/edit/page.tsx",
       "source_location": "L9"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page",
+      "label": "[cycleId]/page.tsx",
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "[cycleid]/page.tsx",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_plots_plotid_crop_cycles_cycleid_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 98,
+      "community_name": "requireSession",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "src/app/plots/[plotId]/crop-cycles/[cycleId]/page.tsx",
+      "source_location": "L12"
     },
     {
       "id": "src_app_spatial_page",
@@ -37977,7 +37977,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/login-form.tsx",
-      "source_location": "L54",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -53110,18 +53110,6 @@
       "weight": 1.0
     },
     {
-      "source": "src_components_agronomy_showcase_panel",
-      "target": "src_components_theme_toggle_themetoggle",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/components/agronomy-showcase-panel.tsx",
-      "source_location": "L4",
-      "weight": 1.0
-    },
-    {
       "source": "src_components_agronomy_weekly_planner",
       "target": "src_components_icons_icons",
       "relation": "imports",
@@ -55915,6 +55903,18 @@
       "context": "import",
       "source_file": "src/components/login-form.tsx",
       "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_login_form",
+      "target": "src_components_theme_toggle_themetoggle",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L6",
       "weight": 1.0
     },
     {
@@ -69131,18 +69131,6 @@
       "weight": 1.0
     },
     {
-      "source": "src_components_agronomy_showcase_panel",
-      "target": "src_components_theme_toggle",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/components/agronomy-showcase-panel.tsx",
-      "source_location": "L4",
-      "weight": 1.0
-    },
-    {
       "source": "src_components_agronomy_weekly_planner",
       "target": "src_components_icons",
       "relation": "imports_from",
@@ -71015,6 +71003,18 @@
       "context": "import",
       "source_file": "src/components/login-form.tsx",
       "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_login_form",
+      "target": "src_components_theme_toggle",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/components/login-form.tsx",
+      "source_location": "L6",
       "weight": 1.0
     },
     {
@@ -85495,7 +85495,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/agronomy-showcase-panel.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -89334,7 +89334,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/login-form.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0
     },
     {
@@ -89345,7 +89345,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/login-form.tsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -89356,7 +89356,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/login-form.tsx",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0
     },
     {

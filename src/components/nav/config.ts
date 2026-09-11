@@ -170,14 +170,8 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
   },
-  {
-    href: "/hq/map",
-    label: "Map",
-    icon: "Navigation",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/hq/map") || p.startsWith("/spatial"),
-  },
 ];
+
 
 export function getNavForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => item.roles.includes(role));

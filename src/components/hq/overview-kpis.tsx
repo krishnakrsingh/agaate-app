@@ -1,183 +1,206 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
-const STALLED_AFTER_DAYS = 30;
-
-function formatCompactAcres(acres: number): string {
-  if (acres >= 1_000_000) {
-    return `${(acres / 1_000_000).toFixed(2)}M ac`;
-  }
-  if (acres >= 1_000) {
-    return `${(acres / 1_000).toFixed(1)}k ac`;
-  }
-  return `${Math.round(acres)} ac`;
-}
-
 function formatNumber(num: number): string {
   return new Intl.NumberFormat("en-IN").format(num);
 }
 
 export async function OverviewKpis() {
   try {
-    const stalledBefore = new Date(Date.now() - STALLED_AFTER_DAYS * 24 * 60 * 60 * 1000);
-    const now = new Date();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const [
-      farmsTotal,
-      farmsSetup,
-      farmsUnmapped,
+      totalClients,
+      newClientsPastMonth,
+      activeFarms,
+      setupFarms,
+      activeCycles,
       officersCount,
-      farmAdminsCount,
-      stalledFarms,
+      agronomistsCount,
       incidentsOpen,
       criticalIncidents,
-      overdueTasks,
-      areaAggregation,
     ] = await Promise.all([
-      prisma.farm.count(),
+      prisma.client.count(),
+      prisma.client.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      prisma.farm.count({ where: { status: "ACTIVE" } }),
       prisma.farm.count({ where: { status: "SETUP" } }),
-      prisma.farm.count({ where: { boundaryGeoJson: null } }),
+      prisma.cropCycle.count({ where: { status: "ACTIVE" } }),
       prisma.user.count({ where: { role: "FARM_OFFICER", active: true } }),
-      prisma.user.count({ where: { role: "FARM_ADMIN", active: true } }),
-      prisma.farm.count({ where: { status: "SETUP", updatedAt: { lte: stalledBefore } } }),
+      prisma.user.count({ where: { role: "AGRONOMIST", active: true } }),
       prisma.incident.count({ where: { status: { in: ["OPEN", "ACKNOWLEDGED"] } } }),
       prisma.incident.count({ where: { status: { in: ["OPEN", "ACKNOWLEDGED"] }, severity: "CRITICAL" } }),
-      prisma.task.count({ where: { status: { notIn: ["COMPLETED", "CANCELLED"] }, dueDate: { lt: now } } }),
-      prisma.farm.aggregate({ _sum: { totalArea: true, cultivableArea: true } }),
     ]);
 
-    const totalAcres = Number(areaAggregation._sum.totalArea ?? 0);
-    const cultivableAcres = Number(areaAggregation._sum.cultivableArea ?? 0);
-    const cultivationRate = totalAcres > 0 ? ((cultivableAcres / totalAcres) * 100).toFixed(1) : "0.0";
-    const officerRatio = officersCount > 0 ? Math.round(farmsTotal / officersCount) : farmsTotal;
-    const stalledPercent = farmsSetup > 0 ? Math.round((stalledFarms / farmsSetup) * 100) : 0;
-
     return (
-      <div className="metric-grid" aria-label="Executive Operations Cockpit" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-        {/* Pillar 1: Land Portfolio & Cadastral Coverage */}
+      <div
+        style={{
+          borderTop: "1px solid var(--hairline, #e4dfd7)",
+          borderBottom: "1px solid var(--hairline, #e4dfd7)",
+          padding: "12px 0",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+          background: "transparent",
+        }}
+        aria-label="Platform Vitals Strip"
+      >
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--muted, #756f68)", marginRight: 4 }}>
+          Platform Vitals
+        </div>
+
+        {/* Pill 1: Clients */}
         <Link
-          href="/hq/map"
-          className="compact-card hover-glow"
-          style={{ textDecoration: "none", color: "inherit", gap: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+          href="/hq/clients"
+          style={{
+            textDecoration: "none",
+            color: "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--hairline, #dfd9cf)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            transition: "all 0.15s ease",
+          }}
         >
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-              <span className="metric-label">Land &amp; Cadastral Readiness</span>
-              <span className="badge badge-amber" style={{ fontSize: 11 }}>
-                {formatNumber(farmsUnmapped)} Unmapped
-              </span>
-            </div>
-            <div className="metric-value" style={{ marginTop: 6 }}>
-              {formatCompactAcres(totalAcres)}
-            </div>
-            <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-              {cultivationRate}% Cultivable ({formatCompactAcres(cultivableAcres)})
-            </div>
-          </div>
-          <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              {formatNumber(farmsTotal)} estates &middot; Cadastral risk: 99.8%
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
+          <strong>{formatNumber(totalClients)}</strong> Clients
+          {newClientsPastMonth > 0 && (
+            <span style={{ color: "var(--muted, #756f68)", fontSize: 11 }}>
+              (+{newClientsPastMonth}/mo)
             </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>Inspect GIS &rarr;</span>
-          </div>
+          )}
         </Link>
 
-        {/* Pillar 2: Workforce Coverage Ratio */}
-        <Link
-          href="/hq/people"
-          className="compact-card hover-glow"
-          style={{ textDecoration: "none", color: "inherit", gap: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
-        >
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-              <span className="metric-label">Workforce Fleet Density</span>
-              <span className="badge badge-amber" style={{ fontSize: 11 }}>
-                Coverage Deficit
-              </span>
-            </div>
-            <div className="metric-value" style={{ marginTop: 6 }}>
-              1 : {officerRatio}
-            </div>
-            <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-              Estates assigned per active field officer
-            </div>
-          </div>
-          <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              {officersCount} Officers &middot; {formatNumber(farmAdminsCount)} Client Admins
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>View Roster &rarr;</span>
-          </div>
-        </Link>
-
-        {/* Pillar 3: Onboarding Pipeline SLA */}
-        <Link
-          href="/hq/onboarding"
-          className="compact-card hover-glow"
-          style={{ textDecoration: "none", color: "inherit", gap: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
-        >
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-              <span className="metric-label">Onboarding Pipeline SLA</span>
-              <span className="badge badge-amber" style={{ fontSize: 11 }}>
-                {stalledPercent}% Stalled &gt;30d
-              </span>
-            </div>
-            <div className="metric-value" style={{ marginTop: 6 }}>
-              {formatNumber(stalledFarms)}
-            </div>
-            <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-              Stalled estates out of {formatNumber(farmsSetup)} currently in setup
-            </div>
-          </div>
-          <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              4 stages: Survey, Demarcation, Prep, Irrigation
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>Triage Pipeline &rarr;</span>
-          </div>
-        </Link>
-
-        {/* Pillar 4: Field Incidents & Agronomy Triage */}
+        {/* Pill 2: Managed Estates */}
         <Link
           href="/hq/farms"
-          className="compact-card hover-glow"
-          style={{ textDecoration: "none", color: "inherit", gap: 10, display: "flex", flexDirection: "column", justifyContent: "space-between" }}
+          style={{
+            textDecoration: "none",
+            color: "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--hairline, #dfd9cf)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            transition: "all 0.15s ease",
+          }}
         >
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-              <span className="metric-label">Incident &amp; Field Risk</span>
-              {criticalIncidents > 0 ? (
-                <span className="badge badge-danger" style={{ fontSize: 11 }}>
-                  {criticalIncidents} Critical Alert
-                </span>
-              ) : (
-                <span className="badge badge-blue" style={{ fontSize: 11 }}>
-                  {incidentsOpen} Active
-                </span>
-              )}
-            </div>
-            <div className="metric-value" style={{ marginTop: 6 }}>
-              {incidentsOpen} Alerts
-            </div>
-            <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
-              {criticalIncidents > 0 ? `${criticalIncidents} Critical, ` : ""}
-              {overdueTasks} Overdue agronomic tasks
-            </div>
-          </div>
-          <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              Escalation required across affected estates
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>Review Incidents &rarr;</span>
-          </div>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
+          <strong>{formatNumber(activeFarms)}</strong> Active Estates
+        </Link>
+
+        {/* Pill 3: Setup Pipeline */}
+        <Link
+          href="/hq/onboarding"
+          style={{
+            textDecoration: "none",
+            color: "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--hairline, #dfd9cf)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            transition: "all 0.15s ease",
+          }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--muted, #756f68)" }} />
+          <strong>{formatNumber(setupFarms)}</strong> In Setup Pipeline
+        </Link>
+
+        {/* Pill 4: Cultivation */}
+        <Link
+          href="/farms"
+          style={{
+            textDecoration: "none",
+            color: "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--hairline, #dfd9cf)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            transition: "all 0.15s ease",
+          }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
+          <strong>{formatNumber(activeCycles)}</strong> Active Crop Cycles
+        </Link>
+
+        {/* Pill 5: Staffing */}
+        <Link
+          href="/hq/people"
+          style={{
+            textDecoration: "none",
+            color: "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--hairline, #dfd9cf)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 500,
+            transition: "all 0.15s ease",
+          }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
+          <strong>{officersCount}</strong> Officers &middot; <strong>{agronomistsCount}</strong> Agronomists
+        </Link>
+
+        {/* Pill 6: Incidents Alert */}
+        <Link
+          href="/hq/incidents"
+          style={{
+            textDecoration: "none",
+            color: criticalIncidents > 0 ? "#ffffff" : "var(--ink, #0e0d0c)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: criticalIncidents > 0 ? "var(--ink, #0e0d0c)" : "var(--surface-strong, #f2efe9)",
+            border: "1px solid var(--ink, #0e0d0c)",
+            borderRadius: 9999,
+            padding: "5px 12px",
+            fontSize: 12,
+            fontWeight: 600,
+            marginLeft: "auto",
+            transition: "all 0.15s ease",
+          }}
+        >
+          {criticalIncidents > 0 ? (
+            <>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ffffff" }} />
+              {criticalIncidents} Critical Alert &middot; {incidentsOpen} Open
+            </>
+          ) : (
+            <>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
+              {incidentsOpen} Alerts &middot; Nominal
+            </>
+          )}
         </Link>
       </div>
     );
   } catch (error) {
     return (
-      <div className="error-banner" role="alert">
-        Operational telemetry is temporarily unavailable. Underlying records are unaffected.
+      <div style={{ padding: "8px 0", fontSize: 12, color: "var(--muted, #756f68)" }}>
+        Platform vitals unavailable.
       </div>
     );
   }
