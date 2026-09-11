@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
@@ -23,22 +24,8 @@ export default async function NewFarmPage() {
     );
   }
 
-  // If Super Admin, provide the complete Airbnb-style Client Onboarding & Handover Wizard
   if (session.role === "SUPER_ADMIN") {
-    return (
-      <>
-        <Navbar role={session.role} userName={session.name} />
-        <main className="shell">
-          <Breadcrumbs
-            items={[
-              { label: "Estates Command", href: "/dashboard" },
-              { label: "Onboard Client Farmland" },
-            ]}
-          />
-          <ClientOnboardingWizardV2 />
-        </main>
-      </>
-    );
+    redirect("/hq/onboarding/new");
   }
 
   // Farm Admin adding an additional estate to their portfolio

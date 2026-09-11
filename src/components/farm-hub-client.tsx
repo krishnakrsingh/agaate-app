@@ -138,6 +138,87 @@ const SETUP_STAGES = [
   },
 ] as const;
 
+function IncidentThumb({
+  url,
+  alt,
+  onClick,
+}: {
+  url?: string | null;
+  alt: string;
+  onClick: () => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!url || failed) {
+    return (
+      <div
+        style={{
+          width: 72,
+          height: 72,
+          minWidth: 72,
+          borderRadius: "var(--radius-sm)",
+          border: "1px solid var(--hairline)",
+          backgroundColor: "var(--surface-strong)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 3,
+          color: "var(--muted)",
+          fontSize: 9,
+          fontWeight: 600,
+          flexShrink: 0,
+        }}
+      >
+        <Icons.AlertTriangle size={18} style={{ opacity: 0.5 }} />
+        <span>NO MEDIA</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: 72,
+        height: 72,
+        minWidth: 72,
+        borderRadius: "var(--radius-sm)",
+        overflow: "hidden",
+        border: "1px solid var(--hairline)",
+        backgroundColor: "var(--surface-strong)",
+        cursor: "pointer",
+        position: "relative",
+        flexShrink: 0,
+      }}
+      onClick={onClick}
+      title="Click to view full photo"
+    >
+      <img
+        src={url}
+        alt={alt}
+        onError={() => setFailed(true)}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      <span
+        style={{
+          position: "absolute",
+          bottom: 2,
+          right: 2,
+          backgroundColor: "rgba(0,0,0,0.7)",
+          color: "#fff",
+          borderRadius: 3,
+          padding: "1px 4px",
+          fontSize: 9,
+          display: "inline-flex",
+          alignItems: "center",
+        }}
+      >
+        <Icons.Eye size={9} />
+      </span>
+    </div>
+  );
+}
+
 export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: string; canManage: boolean }) {
   const router = useRouter();
   const toast = useToast();
@@ -680,64 +761,11 @@ export function FarmHubClient({ farm, role, canManage }: { farm: Farm; role: str
               >
                 <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                   {/* Photo Thumbnail */}
-                  {inc.imageUrl ? (
-                    <div
-                      style={{
-                        width: 90,
-                        height: 90,
-                        minWidth: 90,
-                        borderRadius: "var(--radius-xs)",
-                        overflow: "hidden",
-                        border: "1px solid var(--line)",
-                        backgroundColor: "#000",
-                        cursor: "pointer",
-                        position: "relative",
-                      }}
-                      onClick={() => setSelectedIncidentPhoto(inc.imageUrl || null)}
-                      title="Click to view full photo"
-                    >
-                      <img
-                        src={inc.imageUrl}
-                        alt={inc.type}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                      <span
-                        style={{
-                          position: "absolute",
-                          bottom: 2,
-                          right: 2,
-                          backgroundColor: "rgba(0,0,0,0.65)",
-                          color: "#fff",
-                          borderRadius: 2,
-                          padding: "1px 4px",
-                          fontSize: 9,
-                        }}
-                      >
-                        <Icons.Eye size={9} />
-                      </span>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        width: 90,
-                        height: 90,
-                        minWidth: 90,
-                        borderRadius: "var(--radius-xs)",
-                        border: "1px solid var(--canvas)",
-                        backgroundColor: "var(--canvas)",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 4,
-                        color: "var(--muted)",
-                        fontSize: 10,
-                      }}
-                    >
-                      <Icons.AlertTriangle size={20} style={{ color: "var(--amber)" }} />
-                      <span>No Photo</span>
-                    </div>
-                  )}
+                  <IncidentThumb
+                    url={inc.imageUrl}
+                    alt={inc.type}
+                    onClick={() => setSelectedIncidentPhoto(inc.imageUrl || null)}
+                  />
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>

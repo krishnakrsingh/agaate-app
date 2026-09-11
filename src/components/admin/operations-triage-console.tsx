@@ -75,16 +75,91 @@ export interface TriageData {
   }>;
 }
 
+type QueueKind = "EXCEPTION" | "LOCATION" | "BOUNDARY" | "TASK" | "INCIDENT" | "SETUP";
+type QueueItem = {
+  key: string;
+  kind: QueueKind;
+  severity: "P0" | "P1" | "P2";
+  title: string;
+  detail: string;
+  farmName: string;
+  farmId: string;
+  href: string;
+  ageLabel: string;
+  ageDays: number;
+  rawId: string;
+};
+
+function severityRank(s: QueueItem["severity"]) {
+  return s === "P0" ? 0 : s === "P1" ? 1 : 2;
+}
+
+const CLAIM_KEY = "ops-claimed-v1";
+const TAB_KEY = "ops-tab-v1";
+
+function loadClaimed(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(CLAIM_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
 export function OperationsTriageConsole({ data }: { data: TriageData }) {
   const toast = useToast();
   const [exceptions, setExceptions] = useState(data.pendingExceptions);
   const [locations, setLocations] = useState(data.pendingLocations);
   const [selectedExceptions, setSelectedExceptions] = useState<Set<string>>(new Set());
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set());
   const [actingId, setActingId] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "ALL" | "EXCEPTIONS" | "LOCATIONS" | "BOUNDARIES" | "TASKS" | "SETUPS"
-  >("ALL");
+  >(() => {
+    try {
+      const t = localStorage.getItem(TAB_KEY);
+      return (t as any) || "ALL";
+    } catch {
+      return "ALL";
+    }
+  });
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"severity" | "newest" | "oldest">("severity");
+  const [mineOnly, setMineOnly] = useState(false);
+  const [claimed, setClaimed] = useState<Record<string, string>>(() => {
+    try {
+      return loadClaimed();
+    } catch {
+      return {};
+    }
+  });
+
+  const setTab = (t: typeof activeTab) => {
+    setActiveTab(t);
+    try {
+      localStorage.setItem(TAB_KEY, t);
+    } catch { /* noop */ }
+  };
+
+  const claim = (key: string) => {
+    setClaimed((prev) => {
+      const next = { ...prev, [key]: "me" };
+      try {
+        localStorage.setItem(CLAIM_KEY, JSON.stringify(next));
+      } catch { /* noop */ }
+      return next;
+    });
+  };
+  const unclaim = (key: string) => {
+    setClaimed((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      try {
+        localStorage.setItem(CLAIM_KEY, JSON.stringify(next));
+      } catch { /* noop */ }
+      return next;
+    });
+  };
 
   const totalAttentionCount =
     exceptions.length +
@@ -93,6 +168,109 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
     data.criticalTasks.length +
     data.openIncidents.length +
     data.stalledSetups.length;
+
+  const nowMs = Date.now();
+  const daysSince = (iso: string) => {
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return 0;
+    return Math.max(0, Math.floor((nowMs - t) / 86400000));
+  };
+
+  // Unified inbox: one sortable, searchable queue across all 6 sources.
+  const queue: QueueItem[] = [
+    ...exceptions.map((ex): QueueItem => ({
+      key: `ex:${ex.id}`,
+      kind: "EXCEPTION",
+      severity: ex.distanceMeters > 500 ? "P0" : ex.distanceMeters > 150 ? "P1" : "P2",
+      title: `${ex.userName} — +${Math.round(ex.distanceMeters)}m outside fence`,
+      detail: ex.reason || "No reason given",
+      farmName: ex.farmName,
+      farmId: ex.farmId,
+      href: `/farms/${ex.farmId}`,
+      ageLabel: ex.attendanceDate,
+      ageDays: daysSince(ex.attendanceDate),
+      rawId: ex.id,
+    })),
+    ...locations.map((loc): QueueItem => ({
+      key: `loc:${loc.id}`,
+      kind: "LOCATION",
+      severity: "P1",
+      title: `${loc.farmName} — centerpoint move requested`,
+      detail: loc.reason || "No reason given",
+      farmName: loc.farmName,
+      farmId: loc.farmId,
+      href: `/farms/${loc.farmId}`,
+      ageLabel: new Date(loc.createdAt).toLocaleDateString(),
+      ageDays: daysSince(loc.createdAt),
+      rawId: loc.id,
+    })),
+    ...data.openIncidents.map((inc): QueueItem => ({
+      key: `inc:${inc.id}`,
+      kind: "INCIDENT",
+      severity: (inc.severity || "HIGH") === "CRITICAL" ? "P0" : "P0",
+      title: `${inc.type} — ${inc.farmName}`,
+      detail: inc.description?.slice(0, 120) || `Reported by ${inc.reporterName}`,
+      farmName: inc.farmName,
+      farmId: inc.farmId,
+      href: `/farms/${inc.farmId}?tab=signals`,
+      ageLabel: new Date(inc.createdAt).toLocaleDateString(),
+      ageDays: daysSince(inc.createdAt),
+      rawId: inc.id,
+    })),
+    ...data.stalledSetups.map((s): QueueItem => ({
+      key: `setup:${s.id}`,
+      kind: "SETUP",
+      severity: s.daysInStage > 60 ? "P0" : "P1",
+      title: `${s.name} — stalled ${s.daysInStage}d in ${s.setupStage.replaceAll("_", " ")}`,
+      detail: `${s.clientName} • ${s.setupProgress}%`,
+      farmName: s.name,
+      farmId: s.id,
+      href: `/farms/${s.id}`,
+      ageLabel: `${s.daysInStage}d in stage`,
+      ageDays: s.daysInStage,
+      rawId: s.id,
+    })),
+    ...data.criticalTasks.map((t): QueueItem => ({
+      key: `task:${t.id}`,
+      kind: "TASK",
+      severity: t.priority === "CRITICAL" || t.priority === "HIGH" ? "P0" : "P1",
+      title: `${t.title} — overdue ${t.dueDate}`,
+      detail: `${t.farmName} • ${t.officerName} • ${t.status}`,
+      farmName: t.farmName,
+      farmId: t.farmId,
+      href: `/farms/${t.farmId}?tab=tasks`,
+      ageLabel: t.dueDate,
+      ageDays: daysSince(t.dueDate),
+      rawId: t.id,
+    })),
+    ...data.flaggedBoundaries.map((b): QueueItem => ({
+      key: `b:${b.id}`,
+      kind: "BOUNDARY",
+      severity: b.deltaPercent != null && Math.abs(b.deltaPercent) > 20 ? "P0" : "P2",
+      title: `${b.entityName} — area ${b.prevAcres ?? "?"} → ${b.measuredAcres ?? "removed"} ac`,
+      detail: `${b.farmName} • ${b.source.replaceAll("_", " ")} • ${b.actorName || "Officer"}`,
+      farmName: b.farmName,
+      farmId: b.farmId,
+      href: `/farms/${b.farmId}?tab=boundaries`,
+      ageLabel: new Date(b.createdAt).toLocaleDateString(),
+      ageDays: daysSince(b.createdAt),
+      rawId: b.id,
+    })),
+  ];
+
+  const filteredQueue = queue
+    .filter((q) => {
+      if (mineOnly && !claimed[q.key]) return false;
+      if (!query.trim()) return true;
+      const s = `${q.title} ${q.detail} ${q.farmName} ${q.kind}`.toLowerCase();
+      return s.includes(query.trim().toLowerCase());
+    })
+    .sort((a, b) => {
+      if (sort === "severity")
+        return severityRank(a.severity) - severityRank(b.severity) || b.ageDays - a.ageDays;
+      if (sort === "newest") return a.ageDays - b.ageDays;
+      return b.ageDays - a.ageDays;
+    });
 
   async function handleReviewException(id: string, status: "APPROVED" | "REJECTED") {
     setActingId(id);
@@ -137,6 +315,72 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
       setExceptions((prev) => prev.filter((x) => !ids.includes(x.id)));
       setSelectedExceptions(new Set());
       toast.success(`${ids.length} exceptions marked ${status.toLowerCase()}.`);
+    } catch (err: any) {
+      toast.error(err.message || "Bulk operation failed.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleBulkLocations(status: "APPROVED" | "REJECTED") {
+    const ids = Array.from(selectedLocations);
+    if (ids.length === 0) return;
+    setBulkBusy(true);
+    try {
+      const results = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/location-change-requests/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          })
+        )
+      );
+      const failed = results.filter((r) => !r.ok).length;
+      if (failed > 0) throw new Error(`${failed} location requests failed.`);
+      setLocations((prev) => prev.filter((l) => !ids.includes(l.id)));
+      setSelectedLocations(new Set());
+      toast.success(`${ids.length} location requests ${status.toLowerCase()}.`);
+    } catch (err: any) {
+      toast.error(err.message || "Bulk operation failed.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function handleQueueBulk(status: "APPROVED" | "REJECTED") {
+    // Unified bulk: exceptions go via bulk endpoint, locations via sequential PATCH.
+    const exIds = filteredQueue.filter((q) => q.kind === "EXCEPTION" && selectedExceptions.has(q.rawId)).map((q) => q.rawId);
+    const locIds = filteredQueue.filter((q) => q.kind === "LOCATION" && selectedLocations.has(q.rawId)).map((q) => q.rawId);
+    if (exIds.length === 0 && locIds.length === 0) return;
+    setBulkBusy(true);
+    try {
+      if (exIds.length > 0) {
+        const res = await fetch("/api/attendance-exceptions/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ exceptionIds: exIds, status }),
+        });
+        if (!res.ok) throw new Error("Bulk exception action failed.");
+        setExceptions((prev) => prev.filter((x) => !exIds.includes(x.id)));
+        setSelectedExceptions(new Set());
+      }
+      if (locIds.length > 0) {
+        await Promise.all(
+          locIds.map((id) =>
+            fetch(`/api/location-change-requests/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status }),
+            }).then((r) => {
+              if (!r.ok) throw new Error("Location bulk failed.");
+            })
+          )
+        );
+        setLocations((prev) => prev.filter((l) => !locIds.includes(l.id)));
+        setSelectedLocations(new Set());
+      }
+      toast.success(`Bulk ${status.toLowerCase()}: ${exIds.length + locIds.length} items.`);
     } catch (err: any) {
       toast.error(err.message || "Bulk operation failed.");
     } finally {
@@ -222,16 +466,22 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
           </div>
         </div>
 
-        {exceptions.length > 0 && selectedExceptions.size > 0 && (
+        {(selectedExceptions.size > 0 || selectedLocations.size > 0) && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              {selectedExceptions.size} selected
+              {selectedExceptions.size + selectedLocations.size} selected
             </span>
             <button
               type="button"
               className="btn btn-green btn-sm"
               disabled={bulkBusy}
-              onClick={() => handleBulkExceptions("APPROVED")}
+              onClick={() => {
+                if (selectedExceptions.size > 0 && selectedLocations.size === 0)
+                  handleBulkExceptions("APPROVED");
+                else if (selectedLocations.size > 0 && selectedExceptions.size === 0)
+                  handleBulkLocations("APPROVED");
+                else handleQueueBulk("APPROVED");
+              }}
             >
               <Icons.Check size={13} />
               <span>Approve Selected</span>
@@ -240,7 +490,13 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
               type="button"
               className="btn btn-secondary btn-sm"
               disabled={bulkBusy}
-              onClick={() => handleBulkExceptions("REJECTED")}
+              onClick={() => {
+                if (selectedExceptions.size > 0 && selectedLocations.size === 0)
+                  handleBulkExceptions("REJECTED");
+                else if (selectedLocations.size > 0 && selectedExceptions.size === 0)
+                  handleBulkLocations("REJECTED");
+                else handleQueueBulk("REJECTED");
+              }}
             >
               <Icons.X size={13} />
               <span>Reject Selected</span>
@@ -254,9 +510,9 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "ALL" ? "active" : ""}`}
-          onClick={() => setActiveTab("ALL")}
+          onClick={() => setTab("ALL")}
         >
-          <span>All Attention</span>
+          <span>Inbox</span>
           <span className="badge badge-stone" style={{ fontSize: 11, marginLeft: 6 }}>
             {totalAttentionCount}
           </span>
@@ -265,10 +521,10 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "EXCEPTIONS" ? "active" : ""}`}
-          onClick={() => setActiveTab("EXCEPTIONS")}
+          onClick={() => setTab("EXCEPTIONS")}
         >
           <Icons.Navigation size={13} />
-          <span>Attendance Geofence</span>
+          <span>Geofence</span>
           {exceptions.length > 0 && (
             <span className="badge badge-amber" style={{ fontSize: 11, marginLeft: 6 }}>
               {exceptions.length}
@@ -279,10 +535,10 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "LOCATIONS" ? "active" : ""}`}
-          onClick={() => setActiveTab("LOCATIONS")}
+          onClick={() => setTab("LOCATIONS")}
         >
           <Icons.MapPin size={13} />
-          <span>Location Shifts</span>
+          <span>Locations</span>
           {locations.length > 0 && (
             <span className="badge badge-amber" style={{ fontSize: 11, marginLeft: 6 }}>
               {locations.length}
@@ -293,10 +549,10 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "BOUNDARIES" ? "active" : ""}`}
-          onClick={() => setActiveTab("BOUNDARIES")}
+          onClick={() => setTab("BOUNDARIES")}
         >
           <Icons.Shield size={13} />
-          <span>Boundary Flags</span>
+          <span>Boundaries</span>
           {data.flaggedBoundaries.length > 0 && (
             <span className="badge badge-amber" style={{ fontSize: 11, marginLeft: 6 }}>
               {data.flaggedBoundaries.length}
@@ -307,10 +563,10 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "TASKS" ? "active" : ""}`}
-          onClick={() => setActiveTab("TASKS")}
+          onClick={() => setTab("TASKS")}
         >
           <Icons.ClipboardList size={13} />
-          <span>Overdue Work</span>
+          <span>Overdue</span>
           {(data.criticalTasks.length + data.openIncidents.length) > 0 && (
             <span className="badge badge-amber" style={{ fontSize: 11, marginLeft: 6 }}>
               {data.criticalTasks.length + data.openIncidents.length}
@@ -321,10 +577,10 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         <button
           type="button"
           className={`tab-btn ${activeTab === "SETUPS" ? "active" : ""}`}
-          onClick={() => setActiveTab("SETUPS")}
+          onClick={() => setTab("SETUPS")}
         >
           <Icons.Zap size={13} />
-          <span>Stalled Setup</span>
+          <span>Stalled</span>
           {data.stalledSetups.length > 0 && (
             <span className="badge badge-amber" style={{ fontSize: 11, marginLeft: 6 }}>
               {data.stalledSetups.length}
@@ -332,6 +588,153 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
           )}
         </button>
       </div>
+
+      {/* 2b. Unified inbox — only on ALL tab. Searchable, sortable, claimable. */}
+      {activeTab === "ALL" && totalAttentionCount > 0 && (
+        <section
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
+            borderRadius: "var(--radius-lg)",
+            padding: 16,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+              <input
+                className="input-field"
+                placeholder="Search inbox — officer, farm, reason…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                style={{ width: "100%", padding: "8px 12px 8px 32px", fontSize: 13 }}
+              />
+              <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }}>
+                <Icons.Search size={14} />
+              </span>
+            </div>
+            <select
+              className="input-field"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as any)}
+              style={{ fontSize: 13, padding: "8px 10px" }}
+              title="Sort queue"
+            >
+              <option value="severity">Sort: Severity first</option>
+              <option value="newest">Sort: Newest first</option>
+              <option value="oldest">Sort: Oldest / most overdue</option>
+            </select>
+            <button
+              type="button"
+              className={`btn btn-sm ${mineOnly ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setMineOnly((v) => !v)}
+              title="Show only items you claimed"
+            >
+              <span>{mineOnly ? "Mine only: on" : "Mine only"}</span>
+            </button>
+            <span className="muted" style={{ fontSize: 11 }}>
+              Showing first {filteredQueue.length} of {queue.length} (server caps at 50/type — open a tab for the full list)
+            </span>
+          </div>
+
+          <div style={{ overflowX: "auto" }}>
+            <table className="table" style={{ width: "100%", fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th style={{ width: 32 }}></th>
+                  <th>Severity</th>
+                  <th>Item</th>
+                  <th>Farm</th>
+                  <th>Age</th>
+                  <th>Owner</th>
+                  <th style={{ textAlign: "right" }}>Open</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredQueue.map((q) => {
+                  const isClaimed = !!claimed[q.key];
+                  const checkable = q.kind === "EXCEPTION" || q.kind === "LOCATION";
+                  const checked =
+                    q.kind === "EXCEPTION"
+                      ? selectedExceptions.has(q.rawId)
+                      : q.kind === "LOCATION"
+                        ? selectedLocations.has(q.rawId)
+                        : false;
+                  return (
+                    <tr key={q.key}>
+                      <td>
+                        {checkable ? (
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              if (q.kind === "EXCEPTION") {
+                                setSelectedExceptions((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(q.rawId)) next.delete(q.rawId);
+                                  else next.add(q.rawId);
+                                  return next;
+                                });
+                              } else {
+                                setSelectedLocations((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(q.rawId)) next.delete(q.rawId);
+                                  else next.add(q.rawId);
+                                  return next;
+                                });
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="muted" style={{ fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${q.severity === "P0" ? "badge-danger" : q.severity === "P1" ? "badge-amber" : "badge-stone"}`}
+                          style={{ fontSize: 11, fontWeight: 700 }}
+                        >
+                          {q.severity}
+                        </span>
+                        <div className="muted" style={{ fontSize: 10, marginTop: 2 }}>{q.kind}</div>
+                      </td>
+                      <td style={{ maxWidth: 340 }}>
+                        <div style={{ fontWeight: 600, color: "var(--ink)" }}>{q.title}</div>
+                        <div className="muted" style={{ fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 340 }}>{q.detail}</div>
+                      </td>
+                      <td>{q.farmName}</td>
+                      <td className="muted" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{q.ageLabel}</td>
+                      <td>
+                        {isClaimed ? (
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => unclaim(q.key)} title="Release claim">
+                            <span>Mine ✕</span>
+                          </button>
+                        ) : (
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => claim(q.key)} title="Claim for follow-up">
+                            <span>Claim</span>
+                          </button>
+                        )}
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <Link href={q.href} className="btn btn-secondary btn-sm">
+                          <span>Open</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {filteredQueue.length === 0 && (
+              <div style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+                No inbox items match “{query}”. Try clearing search or turning off Mine only.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* 3. Empty State When Calm */}
       {totalAttentionCount === 0 && (
@@ -381,7 +784,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
       )}
 
       {/* 4. Triage Section 1: Attendance Geofence Violations */}
-      {(activeTab === "ALL" || activeTab === "EXCEPTIONS") && exceptions.length > 0 && (
+      {activeTab === "EXCEPTIONS" && exceptions.length > 0 && (
         <section
           style={{
             background: "var(--surface)",
@@ -489,7 +892,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
       )}
 
       {/* 5. Triage Section 2: Farm Location Change Requests */}
-      {(activeTab === "ALL" || activeTab === "LOCATIONS") && locations.length > 0 && (
+      {activeTab === "LOCATIONS" && locations.length > 0 && (
         <section
           style={{
             background: "var(--surface)",
@@ -577,7 +980,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
       )}
 
       {/* 6. Triage Section 3: Flagged Geometry & Boundary Changes */}
-      {(activeTab === "ALL" || activeTab === "BOUNDARIES") && data.flaggedBoundaries.length > 0 && (
+      {activeTab === "BOUNDARIES" && data.flaggedBoundaries.length > 0 && (
         <section
           style={{
             background: "var(--surface)",
@@ -670,7 +1073,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
       )}
 
       {/* 7. Triage Section 4: Critical Overdue Tasks & Open High Incidents */}
-      {(activeTab === "ALL" || activeTab === "TASKS") &&
+      {activeTab === "TASKS" &&
         (data.criticalTasks.length > 0 || data.openIncidents.length > 0) && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 20 }}>
             {data.criticalTasks.length > 0 && (
@@ -775,7 +1178,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
         )}
 
       {/* 8. Triage Section 5: Stalled Setup Estates (>30d) */}
-      {(activeTab === "ALL" || activeTab === "SETUPS") && data.stalledSetups.length > 0 && (
+      {activeTab === "SETUPS" && data.stalledSetups.length > 0 && (
         <section
           style={{
             background: "var(--surface)",

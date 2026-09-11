@@ -237,9 +237,9 @@ export default async function OperationsPage() {
           <div>
             <div className="eyebrow" style={{ margin: 0 }}>
               <span className="eyebrow-dot" />
-              OPERATE • SUPER ADMIN DISPATCH
+              OPERATE • INBOX
             </div>
-            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Operations Center</h1>
+            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Inbox</h1>
           </div>
         </div>
 

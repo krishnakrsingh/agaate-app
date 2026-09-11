@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { Navbar } from "@/components/navbar";
 import { FarmRegistry } from "@/components/admin/farm-registry";
@@ -7,6 +8,9 @@ export const dynamic = "force-dynamic";
 
 export default async function FarmsPage() {
   const session = await requireSession();
+  if (session.role === "SUPER_ADMIN") {
+    redirect("/hq/farms");
+  }
 
   return (
     <>
@@ -16,9 +20,9 @@ export default async function FarmsPage() {
           <div>
             <div className="eyebrow" style={{ margin: 0 }}>
               <span className="eyebrow-dot" />
-              PORTFOLIO • ESTATE REGISTRY
+              FARMS • REGISTRY
             </div>
-            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Farm Portfolio</h1>
+            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Farms</h1>
           </div>
         </div>
 

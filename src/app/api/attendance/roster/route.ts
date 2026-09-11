@@ -21,7 +21,33 @@ export async function GET(request: NextRequest) {
     const targetDate = dateParam ? utcDateOnly(new Date(dateParam)) : utcDateOnly(new Date());
     const farmScope = await accessibleFarmWhere();
 
-    // Query estates accessible to current actor
+    // Query estates accessible to current actor — bounded at scale.
+    // Without a farm filter a SUPER_ADMIN scope can match lakhs of farms;
+    // refuse broad loads and force a scoped estate pick.
+    if (!farmIdParam && actor.role === "SUPER_ADMIN") {
+      const estateCount = await prisma.farm.count({ where: farmScope });
+      if (estateCount > 200) {
+        return NextResponse.json(
+          {
+            date: (dateParam || new Date().toISOString().slice(0, 10)).slice(0, 10),
+            summary: {
+              totalOfficers: 0,
+              onDutyCount: 0,
+              completedCount: 0,
+              exceptionPendingCount: 0,
+              notClockedInCount: 0,
+              withinGeofenceCount: 0,
+              complianceRate: 100,
+            },
+            roster: [],
+            estates: [],
+            requiresEstateFilter: true,
+            estateCount,
+          },
+          { headers: noStore }
+        );
+      }
+    }
     const estates = await prisma.farm.findMany({
       where: farmIdParam
         ? { AND: [farmScope, { id: farmIdParam }] }
@@ -37,6 +63,7 @@ export async function GET(request: NextRequest) {
         status: true,
       },
       orderBy: { name: "asc" },
+      take: 500,
     });
 
     const estateIds = estates.map((e) => e.id);
@@ -75,7 +102,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Query Farm Officers with access to these estates
+    // Query Farm Officers with access to these estates — bounded.
     const officers = await prisma.user.findMany({
       where: {
         role: "FARM_OFFICER",
@@ -86,6 +113,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
+      take: 2000,
       select: {
         id: true,
         name: true,

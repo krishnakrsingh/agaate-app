@@ -28,7 +28,16 @@ export async function GET(request: NextRequest) {
     }
     if (action && action !== "ALL") and.push({ action });
     if (entityType && entityType !== "ALL") and.push({ entityType });
-    if (q) and.push({ OR: [{ action: { contains: q } }, { entityType: { contains: q } }, { entityId: { contains: q } }] });
+    if (q)
+      and.push({
+        OR: [
+          { action: { contains: q } },
+          { entityType: { contains: q } },
+          { entityId: { contains: q } },
+          { actor: { name: { contains: q } } },
+          { actor: { email: { contains: q } } },
+        ],
+      });
     if (from || to) {
       const range: any = {};
       const f = from ? new Date(from) : null;

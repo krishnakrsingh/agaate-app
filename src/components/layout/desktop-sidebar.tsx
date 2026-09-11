@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/nav/config";
@@ -40,51 +41,66 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   // Build role-tailored grouped navigation sections
   const sections: NavSection[] = [];
 
+  const [counts, setCounts] = useState<{ inbox?: number; onboarding?: number; missingBoundary?: number } | null>(null);
+
+  useEffect(() => {
+    if (role !== "SUPER_ADMIN") return;
+    fetch("/api/admin/counts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setCounts(d);
+      })
+      .catch(() => { /* badges are best-effort */ });
+  }, [role]);
+
   if (role === "SUPER_ADMIN") {
     sections.push(
       {
-        title: "OPERATIONS",
+        title: "PORTFOLIO",
         items: [
           {
-            href: "/operations",
-            label: "Operations Triage",
+            href: "/hq",
+            label: "Overview",
             icon: "Activity",
-            isActive: (p) => p === "/operations" || p === "/dashboard",
+            badge: counts?.inbox ? String(counts.inbox > 99 ? "99+" : counts.inbox) : undefined,
+            isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
           },
           {
-            href: "/farms",
-            label: "Farm Portfolio",
+            href: "/hq/clients",
+            label: "Clients",
+            icon: "Users",
+            isActive: (p) => p.startsWith("/hq/clients") || p.startsWith("/clients"),
+          },
+          {
+            href: "/hq/farms",
+            label: "Farms",
             icon: "Farm",
-            isActive: (p) => p.startsWith("/farms") || p.startsWith("/clients") || p.startsWith("/directory"),
+            badge: counts?.missingBoundary ? `${counts.missingBoundary} no map` : undefined,
+            isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
           },
           {
-            href: "/spatial",
-            label: "Spatial Console",
+            href: "/hq/map",
+            label: "Map",
             icon: "Navigation",
-            isActive: (p) => p.startsWith("/spatial"),
-          },
-          {
-            href: "/onboarding",
-            label: "Setup Pipeline",
-            icon: "Zap",
-            isActive: (p) => p.startsWith("/onboarding"),
+            isActive: (p) => p.startsWith("/hq/map") || p.startsWith("/spatial"),
           },
         ],
       },
       {
-        title: "GOVERNANCE",
+        title: "INTAKE & WORKFORCE",
         items: [
           {
-            href: "/people",
-            label: "People & Workforce",
-            icon: "Users",
-            isActive: (p) => p.startsWith("/people") || p.startsWith("/admin/users") || p.startsWith("/admin/attendance"),
+            href: "/hq/onboarding",
+            label: "Onboarding",
+            icon: "Zap",
+            badge: counts?.onboarding ? String(counts.onboarding > 99 ? "99+" : counts.onboarding) : undefined,
+            isActive: (p) => p.startsWith("/hq/onboarding") || p.startsWith("/onboarding"),
           },
           {
-            href: "/system",
-            label: "Audit & System",
-            icon: "Shield",
-            isActive: (p) => p.startsWith("/system") || p.startsWith("/admin/audit") || p.startsWith("/admin/approvals"),
+            href: "/hq/people",
+            label: "People",
+            icon: "User",
+            isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
           },
         ],
       }

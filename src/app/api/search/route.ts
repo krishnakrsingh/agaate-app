@@ -88,20 +88,37 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const isHq = actor.role === "SUPER_ADMIN";
+
     return NextResponse.json(
       {
-        clients: clients.map((c) => ({ ...c, href: `/farms?search=${encodeURIComponent(c.name)}` })),
-        farms: farms.map((f) => ({ ...f, href: `/farms/${f.id}` })),
+        clients: clients.map((c) => ({
+          ...c,
+          href: isHq ? `/hq/clients/${c.id}` : `/farms?search=${encodeURIComponent(c.name)}`,
+        })),
+        farms: farms.map((f) => ({
+          ...f,
+          href: isHq ? `/hq/farms/${f.id}` : `/farms/${f.id}`,
+        })),
         plots: plots.map((p) => ({
           id: p.id,
           name: p.name,
           farmName: p.farm.name,
           area: Number(p.area),
-          href: `/farms/${p.farmId}?tab=plots`,
+          href: isHq ? `/hq/farms/${p.farmId}?tab=map` : `/farms/${p.farmId}?tab=plots`,
         })),
-        users: users.map((u) => ({ ...u, href: `/people` })),
-        tasks: tasks.map((t) => ({ ...t, href: `/farms/${t.farm.id}?tab=operations` })),
-        incidents: incidents.map((i) => ({ ...i, href: `/farms/${i.farm.id}?tab=operations` })),
+        users: users.map((u) => ({
+          ...u,
+          href: isHq ? `/hq/people` : `/people`,
+        })),
+        tasks: tasks.map((t) => ({
+          ...t,
+          href: isHq ? `/hq/farms/${t.farm.id}?tab=tasks` : `/farms/${t.farm.id}?tab=operations`,
+        })),
+        incidents: incidents.map((i) => ({
+          ...i,
+          href: isHq ? `/hq/farms/${i.farm.id}?tab=incidents` : `/farms/${i.farm.id}?tab=operations`,
+        })),
       },
       { headers: noStore }
     );

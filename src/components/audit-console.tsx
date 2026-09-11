@@ -16,6 +16,46 @@ type AuditLog = {
   actor: { name: string; email: string } | null;
 };
 
+const ACTION_OPTIONS = [
+  "ALL",
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "STATUS_CHANGE",
+  "ACTIVATE",
+  "ARCHIVE",
+  "RESTORE",
+  "BULK_UPDATE",
+  "ASSIGN_FARM_OFFICER",
+  "UNASSIGN_FARM_OFFICER",
+  "ATTENDANCE_EXCEPTION_APPROVED",
+  "ATTENDANCE_EXCEPTION_REJECTED",
+  "LOCATION_CHANGE_APPROVED",
+  "LOCATION_CHANGE_REJECTED",
+  "COMPLETE",
+  "CANCEL",
+];
+
+const ENTITY_OPTIONS = [
+  "ALL",
+  "Farm",
+  "Plot",
+  "CropCycle",
+  "Task",
+  "User",
+  "Client",
+  "FarmAccess",
+  "Incident",
+  "IncidentFollowUp",
+  "AttendanceException",
+  "LocationChangeRequest",
+  "CropMonitoring",
+  "AgronomyPrescription",
+  "HarvestLog",
+  "ExpenseLog",
+  "MediaAsset",
+];
+
 export function AuditConsole() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -26,6 +66,8 @@ export function AuditConsole() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
   const [entityFilter, setEntityFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,6 +86,8 @@ export function AuditConsole() {
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (actionFilter !== "ALL") params.set("action", actionFilter);
       if (entityFilter !== "ALL") params.set("entityType", entityFilter);
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
       const res = await fetch(`/api/audit-logs?${params.toString()}`);
       if (!res.ok) throw new Error("Could not load system audit records.");
       const h = res.headers.get("X-Total-Count");
@@ -59,7 +103,28 @@ export function AuditConsole() {
   useEffect(() => {
     void fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, actionFilter, entityFilter, page]);
+  }, [debouncedSearch, actionFilter, entityFilter, dateFrom, dateTo, page]);
+
+  const exportCsv = () => {
+    const rows = [
+      ["time", "action", "actor", "email", "entity", "entityId"],
+      ...logs.map((l) => [
+        l.createdAt,
+        l.action,
+        l.actor?.name || "system",
+        l.actor?.email || "",
+        l.entityType,
+        l.entityId,
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `audit-page${page}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const filteredLogs = logs;
 
@@ -87,23 +152,48 @@ export function AuditConsole() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="label" style={{ fontSize: 11 }}>ACTION:</span>
-            <input
+            <select
               className="input-field"
-              value={actionFilter === "ALL" ? "" : actionFilter}
-              onChange={(e) => { setActionFilter(e.target.value.trim() || "ALL"); setPage(1); }}
-              placeholder="All actions (server filter)"
+              value={actionFilter}
+              onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
               style={{ width: 200, padding: "6px 10px", fontSize: 13 }}
-            />
+            >
+              {ACTION_OPTIONS.map((a) => (
+                <option key={a} value={a}>{a === "ALL" ? "All actions" : a}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="label" style={{ fontSize: 11 }}>ENTITY:</span>
-            <input
+            <select
               className="input-field"
-              value={entityFilter === "ALL" ? "" : entityFilter}
-              onChange={(e) => { setEntityFilter(e.target.value.trim() || "ALL"); setPage(1); }}
-              placeholder="e.g. Farm, Task"
-              style={{ width: 160, padding: "6px 10px", fontSize: 13 }}
+              value={entityFilter}
+              onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
+              style={{ width: 170, padding: "6px 10px", fontSize: 13 }}
+            >
+              {ENTITY_OPTIONS.map((e) => (
+                <option key={e} value={e}>{e === "ALL" ? "All entities" : e}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="label" style={{ fontSize: 11 }}>FROM:</span>
+            <input
+              type="date"
+              className="input-field"
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+              style={{ padding: "6px 10px", fontSize: 13 }}
+            />
+            <span className="label" style={{ fontSize: 11 }}>TO:</span>
+            <input
+              type="date"
+              className="input-field"
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+              style={{ padding: "6px 10px", fontSize: 13 }}
             />
           </div>
 
@@ -116,6 +206,31 @@ export function AuditConsole() {
             <Icons.Refresh size={14} />
             <span>Sync</span>
           </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-secondary"
+            onClick={exportCsv}
+            disabled={logs.length === 0}
+            title="Export current page as CSV"
+          >
+            <span>Export CSV</span>
+          </button>
+          {(actionFilter !== "ALL" || entityFilter !== "ALL" || dateFrom || dateTo || debouncedSearch) && (
+            <button
+              type="button"
+              className="btn btn-sm btn-secondary"
+              onClick={() => {
+                setActionFilter("ALL");
+                setEntityFilter("ALL");
+                setDateFrom("");
+                setDateTo("");
+                setSearch("");
+                setPage(1);
+              }}
+            >
+              <span>Clear ✕</span>
+            </button>
+          )}
           <span className="muted font-mono" style={{ fontSize: 11 }} role="status">
             {total != null ? `${logs.length} OF ${total.toLocaleString()} SHOWN` : `${logs.length} SHOWN`}
           </span>
@@ -125,7 +240,7 @@ export function AuditConsole() {
           <input
             type="text"
             className="input-field"
-            placeholder="Search actor or entity…"
+            placeholder="Search actor name, email, entity…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: 32 }}

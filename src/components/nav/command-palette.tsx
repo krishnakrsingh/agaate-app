@@ -100,13 +100,13 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
   const baseItems: SearchableItem[] = useMemo(() => {
     if (role === "SUPER_ADMIN") {
       return [
-        { id: "nav-ops", title: "Operations Triage", subtitle: "Exception queues & urgent blockers", category: "NAVIGATION", href: "/operations", icon: "Activity" },
-        { id: "nav-farms", title: "Farm Portfolio", subtitle: "Estate registry & cadastral search", category: "NAVIGATION", href: "/farms", icon: "Farm" },
-        { id: "nav-spatial", title: "Spatial Console", subtitle: "Satellite map, geometry & walk tracks", category: "NAVIGATION", href: "/spatial", icon: "Navigation" },
-        { id: "nav-onboard", title: "Setup Pipeline", subtitle: "5-stage turnkey onboarding SLA", category: "NAVIGATION", href: "/onboarding", icon: "Zap", badge: "Pipeline" },
-        { id: "nav-people", title: "People & Workforce", subtitle: "User credentials & live attendance", category: "NAVIGATION", href: "/people", icon: "Users" },
-        { id: "nav-system", title: "Audit & System", subtitle: "Immutable platform audit trail", category: "NAVIGATION", href: "/system", icon: "Shield" },
-        { id: "act-new-farm", title: "Intake New Farm", subtitle: "Provision estate property", category: "ACTIONS", href: "/farms", icon: "Plus", badge: "Action" },
+        { id: "nav-overview", title: "HQ Overview", subtitle: "Platform metrics & alert inbox", category: "NAVIGATION", href: "/hq", icon: "Activity" },
+        { id: "nav-clients", title: "Clients Directory", subtitle: "Client profiles, estates & acreage", category: "NAVIGATION", href: "/hq/clients", icon: "Users" },
+        { id: "nav-farms", title: "Farms Portfolio", subtitle: "Cadastral registry, plots & history", category: "NAVIGATION", href: "/hq/farms", icon: "Farm" },
+        { id: "nav-onboard", title: "Client Onboarding", subtitle: "Multi-farm setup wizard & drafts", category: "NAVIGATION", href: "/hq/onboarding", icon: "Zap", badge: "Pipeline" },
+        { id: "nav-people", title: "People & Workforce", subtitle: "User credentials & estate assignments", category: "NAVIGATION", href: "/hq/people", icon: "User" },
+        { id: "nav-map", title: "Platform Map", subtitle: "Satellite GIS map & plot boundaries", category: "NAVIGATION", href: "/hq/map", icon: "Navigation" },
+        { id: "act-new-onboard", title: "Onboard New Client", subtitle: "Intake client, 10-20 farms & plots", category: "ACTIONS", href: "/hq/onboarding/new", icon: "Plus", badge: "Action" },
       ];
     }
     if (role === "FARM_ADMIN") {

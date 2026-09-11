@@ -60,6 +60,11 @@ export function WorkforceAttendanceConsole({
   const [error, setError] = useState("");
   const [roster, setRoster] = useState<RosterItem[]>([]);
   const [estates, setEstates] = useState<Estate[]>([]);
+  const [requiresFilter, setRequiresFilter] = useState(false);
+  const [estateCount, setEstateCount] = useState(0);
+  const [estateQuery, setEstateQuery] = useState("");
+  const [rosterPage, setRosterPage] = useState(1);
+  const ROSTER_PAGE_SIZE = 20;
   const [summary, setSummary] = useState<Summary>({
     totalOfficers: 0,
     onDutyCount: 0,
@@ -138,6 +143,9 @@ export function WorkforceAttendanceConsole({
       const data = await res.json();
       setRoster(data.roster || []);
       setEstates(data.estates || []);
+      setRequiresFilter(!!data.requiresEstateFilter);
+      setEstateCount(data.estateCount || 0);
+      setRosterPage(1);
       setSummary(
         data.summary || {
           totalOfficers: 0,
@@ -231,6 +239,19 @@ export function WorkforceAttendanceConsole({
     });
   }, [roster, search, activeTab]);
 
+  const rosterTotalPages = Math.max(1, Math.ceil(filteredRoster.length / ROSTER_PAGE_SIZE));
+  const safeRosterPage = Math.min(rosterPage, rosterTotalPages);
+  const pagedRoster = filteredRoster.slice(
+    (safeRosterPage - 1) * ROSTER_PAGE_SIZE,
+    safeRosterPage * ROSTER_PAGE_SIZE
+  );
+  const estateMatches =
+    estateQuery.trim().length === 0
+      ? estates.slice(0, 50)
+      : estates
+          .filter((e) => `${e.name} ${e.location}`.toLowerCase().includes(estateQuery.trim().toLowerCase()))
+          .slice(0, 50);
+
   const stepDate = (days: number) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + days);
@@ -308,19 +329,46 @@ export function WorkforceAttendanceConsole({
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span className="label" style={{ fontSize: 11, textTransform: "uppercase" }}>Estate:</span>
-            <select
-              className="input-field"
-              value={selectedFarmId}
-              onChange={(e) => setSelectedFarmId(e.target.value)}
-              style={{ width: 180, padding: "6px 10px", fontSize: 13 }}
-            >
-              <option value="ALL">All Managed Estates</option>
-              {estates.map((est) => (
-                <option key={est.id} value={est.id}>
-                  {est.name}
-                </option>
-              ))}
-            </select>
+            <div style={{ position: "relative" }}>
+              <input
+                className="input-field"
+                value={selectedFarmId === "ALL" ? estateQuery : estates.find((e) => e.id === selectedFarmId)?.name || estateQuery}
+                onChange={(e) => {
+                  setEstateQuery(e.target.value);
+                  if (selectedFarmId !== "ALL") setSelectedFarmId("ALL");
+                }}
+                placeholder={initialRole === "SUPER_ADMIN" ? "Type estate name to scope…" : "All Managed Estates"}
+                style={{ width: 200, padding: "6px 10px", fontSize: 13 }}
+              />
+              {(estateQuery.trim() || selectedFarmId !== "ALL") && estateMatches.length > 0 && (
+                <div style={{ position: "absolute", top: "100%", left: 0, minWidth: 240, background: "var(--canvas)", border: "1px solid var(--line)", borderRadius: 8, zIndex: 30, maxHeight: 220, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFarmId("ALL");
+                      setEstateQuery("");
+                    }}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", background: "none", border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer", fontSize: 12 }}
+                  >
+                    All in scope (may be capped)
+                  </button>
+                  {estateMatches.map((est) => (
+                    <button
+                      key={est.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFarmId(est.id);
+                        setEstateQuery("");
+                      }}
+                      style={{ display: "block", width: "100%", textAlign: "left", padding: "8px 12px", background: selectedFarmId === est.id ? "var(--stone)" : "none", border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer", fontSize: 12 }}
+                    >
+                      <strong>{est.name}</strong>
+                      <span className="muted"> — {est.location}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <button
@@ -346,6 +394,15 @@ export function WorkforceAttendanceConsole({
           )}
         </div>
       </div>
+
+      {requiresFilter && (
+        <div className="alert alert-danger" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icons.AlertTriangle size={16} />
+          <span>
+            Platform scope is {estateCount.toLocaleString()} estates — pick one estate above to load its roster. Broad loads are disabled at scale.
+          </span>
+        </div>
+      )}
 
       {/* OPERATIONAL TELEMETRY METRIC SUMMARY */}
       <section>
@@ -481,7 +538,23 @@ export function WorkforceAttendanceConsole({
         />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {filteredRoster.map((item) => {
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
+            <span>
+              Showing {(safeRosterPage - 1) * ROSTER_PAGE_SIZE + 1}–{Math.min(safeRosterPage * ROSTER_PAGE_SIZE, filteredRoster.length)} of {filteredRoster.length.toLocaleString()} staff
+            </span>
+            {rosterTotalPages > 1 && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={safeRosterPage <= 1} onClick={() => setRosterPage((p) => Math.max(1, p - 1))}>
+                  <span>Prev</span>
+                </button>
+                <span>Page {safeRosterPage} / {rosterTotalPages}</span>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={safeRosterPage >= rosterTotalPages} onClick={() => setRosterPage((p) => Math.min(rosterTotalPages, p + 1))}>
+                  <span>Next</span>
+                </button>
+              </div>
+            )}
+          </div>
+          {pagedRoster.map((item) => {
             const hasStarted = item.hasStarted;
             const isCompleted = item.hasEnded;
             const isExceptionPending = item.status === "EXCEPTION_PENDING";
@@ -901,8 +974,8 @@ export function WorkforceAttendanceConsole({
                   type="password"
                   name="password"
                   required
-                  minLength={8}
-                  placeholder="Minimum 8 characters"
+                   minLength={12}
+                   placeholder="Minimum 12 characters"
                   className="input-field"
                   style={{ width: "100%" }}
                 />

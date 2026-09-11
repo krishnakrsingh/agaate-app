@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
     const state = sp.get("state")?.trim();
     const district = sp.get("district")?.trim();
     const setupStage = sp.get("setupStage")?.trim();
+    const hasBoundary = sp.get("hasBoundary")?.trim();
+    const stalledOnly = sp.get("stalledOnly")?.trim() === "true";
     const { sortBy, order } = parseSort(sp, ["createdAt", "updatedAt", "name", "totalArea"], "createdAt");
 
     const where: any = {
@@ -58,6 +60,16 @@ export async function GET(request: NextRequest) {
     }
     if (district) {
       where.district = { contains: district };
+    }
+    if (hasBoundary === "YES") {
+      where.boundaryGeoJson = { not: null };
+    } else if (hasBoundary === "NO") {
+      where.boundaryGeoJson = null;
+    }
+    if (stalledOnly) {
+      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      where.status = "SETUP";
+      where.updatedAt = { lte: cutoff };
     }
 
     if (search) {
@@ -96,6 +108,10 @@ export async function GET(request: NextRequest) {
           where: { deletedAt: null },
           select: {
             id: true,
+            name: true,
+            area: true,
+            measuredAcres: true,
+            boundaryGeoJson: true,
             status: true,
             cropCycles: {
               where: { status: { in: ["PLANNED", "ACTIVE"] } },

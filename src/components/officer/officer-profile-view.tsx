@@ -874,7 +874,7 @@ export function OfficerProfileView({
                           minWidth: 90,
                           maxWidth: 90,
                           borderRadius: "10px",
-                          backgroundColor: "var(--stone)",
+                          backgroundColor: "var(--surface-strong)",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -882,11 +882,11 @@ export function OfficerProfileView({
                           gap: 3,
                           color: "var(--muted)",
                           flexShrink: 0,
-                          border: "1px solid var(--stone)",
+                          border: "1px solid var(--hairline)",
                         }}
                       >
-                        <Icons.AlertTriangle size={18} style={{ opacity: 0.45 }} />
-                        <span style={{ fontSize: "9px", fontWeight: 600 }}>No Photo</span>
+                        <Icons.AlertTriangle size={18} style={{ opacity: 0.5 }} />
+                        <span style={{ fontSize: "9px", fontWeight: 600 }}>NO MEDIA</span>
                       </div>
                     )}
 

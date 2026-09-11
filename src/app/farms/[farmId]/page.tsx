@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +15,10 @@ export default async function FarmDetailPage({
 }) {
   const { farmId } = await params;
   const session = await requireSession();
+
+  if (session.role === "SUPER_ADMIN") {
+    redirect(`/hq/farms/${farmId}`);
+  }
 
   try {
     await requireFarmAccess(farmId);
@@ -76,9 +80,7 @@ export default async function FarmDetailPage({
     return notFound();
   }
 
-  const canManage =
-    session.role === "SUPER_ADMIN" ||
-    farm.access.some((a) => a.userId === session.userId && a.canManage);
+  const canManage = farm.access.some((a) => a.userId === session.userId && a.canManage);
 
   // Serialized numbers and Dates to strings for React Client Component
   const serializedFarm = {

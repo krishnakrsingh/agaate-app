@@ -794,3 +794,26 @@ model AgronomyPrescription {
   @@index([cropCycleId])
   @@index([authorId])
 }
+
+/**
+ * HQ multi-step client onboarding drafts. One row per wizard session,
+ * keyed by a client-generated idempotency key so double-saves and
+ * double-submits collapse onto the same record. No FK to User by design:
+ * drafts must survive account deactivation (same rationale as
+ * BoundaryVersion history). Payload is the raw WizardData JSON.
+ */
+model OnboardingDraft {
+  id             String   @id @default(cuid())
+  idempotencyKey String   @unique
+  createdById    String
+  payload        Json
+  resultJson     Json?
+  status         String   @default("DRAFT")
+  clientName     String?
+  farmCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([createdById, updatedAt])
+  @@index([status, updatedAt])
+}

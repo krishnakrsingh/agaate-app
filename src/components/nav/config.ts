@@ -136,46 +136,46 @@ export const NAV_ITEMS: NavItem[] = [
 
   // ── 4. SUPER ADMIN (AGAATE HQ ECOSYSTEM OPERATIONS) ──
   {
-    href: "/operations",
-    label: "Operations",
+    href: "/hq",
+    label: "Overview",
     icon: "Activity",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p === "/operations" || p === "/dashboard",
+    isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
   },
   {
-    href: "/farms",
-    label: "Portfolio",
-    icon: "Farm",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/farms") || p.startsWith("/clients") || p.startsWith("/directory"),
-  },
-  {
-    href: "/spatial",
-    label: "Spatial",
-    icon: "Navigation",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/spatial"),
-  },
-  {
-    href: "/onboarding",
-    label: "Pipeline",
-    icon: "Zap",
-    roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/onboarding"),
-  },
-  {
-    href: "/people",
-    label: "People",
+    href: "/hq/clients",
+    label: "Clients",
     icon: "Users",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/people") || p.startsWith("/admin/users") || p.startsWith("/admin/attendance"),
+    isActive: (p) => p.startsWith("/hq/clients") || p.startsWith("/clients"),
   },
   {
-    href: "/system",
-    label: "Audit & System",
-    icon: "Shield",
+    href: "/hq/farms",
+    label: "Farms",
+    icon: "Farm",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/system") || p.startsWith("/admin/audit") || p.startsWith("/admin/approvals"),
+    isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
+  },
+  {
+    href: "/hq/onboarding",
+    label: "Onboarding",
+    icon: "Zap",
+    roles: ["SUPER_ADMIN"],
+    isActive: (p) => p.startsWith("/hq/onboarding") || p.startsWith("/onboarding"),
+  },
+  {
+    href: "/hq/people",
+    label: "People",
+    icon: "User",
+    roles: ["SUPER_ADMIN"],
+    isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
+  },
+  {
+    href: "/hq/map",
+    label: "Map",
+    icon: "Navigation",
+    roles: ["SUPER_ADMIN"],
+    isActive: (p) => p.startsWith("/hq/map") || p.startsWith("/spatial"),
   },
 ];
 
@@ -186,7 +186,7 @@ export function getNavForRole(role: Role): NavItem[] {
 export function getMobileNavForRole(role: Role): NavItem[] {
   const all = getNavForRole(role);
   if (role === "SUPER_ADMIN") {
-    return all.filter((i) => ["/operations", "/farms", "/spatial", "/onboarding", "/people"].includes(i.href));
+    return all.filter((i) => ["/hq", "/hq/clients", "/hq/farms", "/hq/onboarding", "/hq/people"].includes(i.href));
   }
   if (role === "FARM_ADMIN") {
     return all.filter((i) => ["/owner/dashboard", "/owner/land", "/owner/operations", "/owner/records", "/owner/insights"].includes(i.href));
@@ -210,7 +210,7 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 export const ROLE_HOME_URLS: Record<string, string> = {
-  SUPER_ADMIN: "/operations",
+  SUPER_ADMIN: "/hq",
   FARM_ADMIN: "/owner/dashboard",
   AGRONOMIST: "/agronomy/radar",
   FARM_OFFICER: "/officer/day",

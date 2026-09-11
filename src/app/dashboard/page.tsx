@@ -16,6 +16,6 @@ export default async function DashboardPage() {
     redirect("/agronomy/radar");
   }
 
-  // Super Admin lands directly on the rebuilt Operations Command Center
-  return <OperationsPage />;
+  // Super Admin lands directly on HQ
+  redirect("/hq");
 }

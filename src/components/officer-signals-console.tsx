@@ -835,7 +835,8 @@ export function OfficerSignalsConsole() {
                           minWidth: 90,
                           maxWidth: 90,
                           borderRadius: "10px",
-                          backgroundColor: "var(--stone)",
+                          backgroundColor: "var(--surface-strong)",
+                          border: "1px solid var(--hairline)",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -846,8 +847,8 @@ export function OfficerSignalsConsole() {
                           cursor: "pointer",
                         }}
                       >
-                        <Icons.AlertTriangle size={18} style={{ opacity: 0.45 }} />
-                        <span style={{ fontSize: "9px", fontWeight: 600 }}>No Photo</span>
+                        <Icons.AlertTriangle size={18} style={{ opacity: 0.5 }} />
+                        <span style={{ fontSize: "9px", fontWeight: 600 }}>NO MEDIA</span>
                       </div>
                     )}
 

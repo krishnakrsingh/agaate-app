@@ -27,7 +27,7 @@ export interface GeoMapPin {
 export interface GeoMapProps {
   center: [number, number];
   polygon: LngLat[] | null;
-  onChange: (ring: LngLat[] | null) => void;
+  onChange?: (ring: LngLat[] | null) => void;
   height?: number | string;
   /**
    * Optional status pins (task map, route stops). CircleMarkers only —
@@ -56,6 +56,11 @@ export interface GeoMapProps {
   saveLabel?: string;
   isSaving?: boolean;
   onClear?: () => void;
+  /**
+   * Compact thumbnail mode: hides overlay buttons and acreage banner for
+   * embedding in list cards.
+   */
+  compact?: boolean;
 }
 
 const ESRI_IMAGERY_URL =
@@ -533,7 +538,7 @@ function MapDrawingToolbar({
 export function GeoMap({
   center,
   polygon,
-  onChange,
+  onChange = () => {},
   height = 360,
   reference = null,
   track = null,
@@ -543,6 +548,7 @@ export function GeoMap({
   saveLabel,
   isSaving,
   onClear,
+  compact = false,
 }: GeoMapProps) {
   // Client-side only: never render Leaflet during SSR.
   const [isClient, setIsClient] = useState(false);
@@ -590,7 +596,8 @@ export function GeoMap({
         center={[center[0], center[1]]}
         zoom={15}
         style={{ height: "100%", width: "100%" }}
-        attributionControl
+        attributionControl={!compact}
+        zoomControl={!compact}
       >
         {base === "sat" ? (
           <TileLayer url={ESRI_IMAGERY_URL} attribution={ESRI_ATTRIBUTION} maxZoom={19} />
@@ -612,40 +619,44 @@ export function GeoMap({
         <Recenter center={center} hasPolygon={polygon !== null} />
       </MapContainer>
 
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 1000,
-          display: "flex",
-          gap: 6,
-        }}
-      >
-        <button type="button" style={toggleBtn(base === "sat")} onClick={() => setBase("sat")}>
-          Satellite
-        </button>
-        <button type="button" style={toggleBtn(base === "osm")} onClick={() => setBase("osm")}>
-          Map
-        </button>
-      </div>
+      {!compact && (
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            zIndex: 1000,
+            display: "flex",
+            gap: 6,
+          }}
+        >
+          <button type="button" style={toggleBtn(base === "sat")} onClick={() => setBase("sat")}>
+            Satellite
+          </button>
+          <button type="button" style={toggleBtn(base === "osm")} onClick={() => setBase("osm")}>
+            Map
+          </button>
+        </div>
+      )}
 
-      <div
-        style={{
-          position: "absolute",
-          left: 10,
-          bottom: 10,
-          zIndex: 1000,
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          color: "var(--ink)",
-          fontSize: 12,
-          fontWeight: 600,
-          padding: "6px 10px",
-        }}
-      >
-        {polygon ? `${acres.toFixed(2)} acres · ${pointCount} pts` : "Draw a polygon to measure acreage"}
-      </div>
+      {!compact && (
+        <div
+          style={{
+            position: "absolute",
+            left: 10,
+            bottom: 10,
+            zIndex: 1000,
+            background: "var(--surface-card)",
+            border: "1px solid var(--hairline)",
+            color: "var(--ink)",
+            fontSize: 12,
+            fontWeight: 600,
+            padding: "6px 10px",
+          }}
+        >
+          {polygon ? `${acres.toFixed(2)} acres · ${pointCount} pts` : "Draw a polygon to measure acreage"}
+        </div>
+      )}
     </div>
   );
 }
