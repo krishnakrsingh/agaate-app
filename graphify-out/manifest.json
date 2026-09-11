@@ -6,9 +6,9 @@
     "semantic_hash": "effa368837c2722432c83b5d28802f08"
   },
   "next-env.d.ts": {
-    "mtime": 1789124548.6707337,
-    "seen": 1789132330.2471051,
-    "ast_hash": "c7b887684e81cfa5830eeeb7286485f6",
+    "mtime": 1789132354.3184652,
+    "seen": 1789133816.8760788,
+    "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
     "semantic_hash": ""
   },
   "next.config.ts": {
@@ -18,9 +18,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1789029424.7242568,
-    "seen": 1789050138.0364392,
-    "ast_hash": "d8a133d4e0dc6da41558604db39e48b5",
+    "mtime": 1789132354.3311875,
+    "seen": 1789133816.8760886,
+    "ast_hash": "cd33e99cf7af90c3050368126acbe5bb",
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "src/app/api/auth/login/route.ts": {
-    "mtime": 1788970989.381159,
-    "seen": 1789050138.0365493,
-    "ast_hash": "8547da8acaf9f1fb5ac95886f6ed0706",
+    "mtime": 1789133004.7316718,
+    "seen": 1789133816.8762097,
+    "ast_hash": "afd2c2096a90135f121d87c1ae8a15cb",
     "semantic_hash": ""
   },
   "src/app/api/auth/logout/route.ts": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "src/app/layout.tsx": {
-    "mtime": 1788955805.97031,
-    "seen": 1788969559.915055,
-    "ast_hash": "d8c50359fbc1448adf103e4bd2a2072a",
+    "mtime": 1789132354.3613815,
+    "seen": 1789133816.8764713,
+    "ast_hash": "d4b83786c81f9f2ba9e5bfb32e4257e6",
     "semantic_hash": ""
   },
   "src/app/login/page.tsx": {
@@ -468,15 +468,15 @@
     "semantic_hash": ""
   },
   "src/lib/api.ts": {
-    "mtime": 1789032044.9401042,
-    "seen": 1789050138.0371404,
-    "ast_hash": "705634562ceb155279a0f5ab03e2f78d",
+    "mtime": 1789133038.3487933,
+    "seen": 1789133816.8769214,
+    "ast_hash": "ee9a1ae6d77dd9cf63c152e1b6dcc7a9",
     "semantic_hash": ""
   },
   "src/lib/audit.ts": {
-    "mtime": 1788945268.2269228,
-    "seen": 1788946217.4541528,
-    "ast_hash": "379332fe4097d5a14d0a25424a708554",
+    "mtime": 1789133111.7865713,
+    "seen": 1789133816.8769317,
+    "ast_hash": "05e6b32a1aabe54a4124acdd32fc0eaf",
     "semantic_hash": ""
   },
   "src/lib/auth.ts": {
@@ -2214,9 +2214,9 @@
     "semantic_hash": ""
   },
   "src/app/hq/farms/[farmId]/page.tsx": {
-    "mtime": 1789126928.0675402,
-    "seen": 1789132330.2474256,
-    "ast_hash": "3e3aad769a510b703ec56b49de8788ca",
+    "mtime": 1789132826.6791587,
+    "seen": 1789133816.8764389,
+    "ast_hash": "1ef794e104177992fd8bac8928f07c58",
     "semantic_hash": ""
   },
   "src/app/hq/farms/page.tsx": {
@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "src/components/hq/farm-360.tsx": {
-    "mtime": 1789128330.0088608,
-    "seen": 1789132330.247637,
-    "ast_hash": "cacacf40c13a539f869254320608f582",
+    "mtime": 1789133383.4278603,
+    "seen": 1789133816.8766892,
+    "ast_hash": "1dd8ee6dcb74ea5498781b0ac186e4d3",
     "semantic_hash": ""
   },
   "src/components/hq/farm-registry.tsx": {
@@ -2475,6 +2475,24 @@
     "mtime": 1789127163.5374289,
     "seen": 1789132330.247682,
     "ast_hash": "dfcf94b3f8d43d75f53e20d2eaa702c3",
+    "semantic_hash": ""
+  },
+  "prisma/migrations/20260909000000_add_missing_fields_and_tables/migration.sql": {
+    "mtime": 1789132354.3321998,
+    "seen": 1789133816.8760998,
+    "ast_hash": "d7c19e451cd814bedb5b3e4ddaf2b983",
+    "semantic_hash": ""
+  },
+  "prisma/migrations_upgrade.sql": {
+    "mtime": 1789132354.3342028,
+    "seen": 1789133816.8761308,
+    "ast_hash": "d7c19e451cd814bedb5b3e4ddaf2b983",
+    "semantic_hash": ""
+  },
+  "src/components/theme-initializer.tsx": {
+    "mtime": 1789132354.362737,
+    "seen": 1789133816.876889,
+    "ast_hash": "bb4fc540400ce0ed3658a6ad6814ad66",
     "semantic_hash": ""
   }
 }

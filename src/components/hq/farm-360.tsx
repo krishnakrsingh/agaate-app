@@ -14,6 +14,7 @@ import { FarmAccessManager } from "@/components/farm-access-manager";
 import { FarmEditForm } from "@/components/farm-edit-form";
 import { parseBoundary, toGeoJsonPolygon, type LngLat } from "@/lib/geo";
 import { HqCalendarPlatform } from "@/components/hq/calendar-platform";
+import { formatDate, formatDateTime } from "@/lib/business";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
   ssr: false,
@@ -174,17 +175,6 @@ type TabKey =
   | "files"
   | "settings";
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
-}
-
-function fmtDateTime(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
-}
-
 export function HqFarm360({ farm }: { farm: Farm360 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -250,7 +240,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
         at: t.createdAt,
         type: "TASK" as const,
         label: `Task: ${t.title}`,
-        detail: `Assigned to ${t.officer?.name || "Unassigned"} • Due ${fmtDate(t.dueDate)}${t.plot ? ` • Plot ${t.plot.name}` : ""}`,
+        detail: `Assigned to ${t.officer?.name || "Unassigned"} • Due ${formatDate(t.dueDate)}${t.plot ? ` • Plot ${t.plot.name}` : ""}`,
         badge: t.status,
       })),
       ...farm.incidents.map((i) => ({
@@ -1149,7 +1139,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                         <span className="mono-label" style={{ fontSize: 10 }}>
-                          Due {fmtDate(t.dueDate)}
+                          Due {formatDate(t.dueDate)}
                         </span>
                         <StatusBadge status={t.status} />
                       </div>
@@ -1483,7 +1473,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                         <StatusBadge status={t.status} />
                       </td>
                       <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
-                        {fmtDate(t.dueDate)}
+                        {formatDate(t.dueDate)}
                       </td>
                     </tr>
                   ))
@@ -1597,7 +1587,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                       <td>
                         <div style={{ color: "var(--ink)" }}>{i.description}</div>
                         <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>
-                          Reported: {fmtDateTime(i.createdAt)}
+                          Reported: {formatDateTime(i.createdAt)}
                         </div>
                       </td>
                       <td>
@@ -1738,8 +1728,8 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                 <div style={{ fontSize: 13 }}>
                   <div>Contract Value: <strong>{farm.contractValue ? `₹${Number(farm.contractValue).toLocaleString("en-IN")}` : "Not booked"}</strong></div>
                   <div>Survey Number: <strong>{farm.surveyNumber || "Pending revenue survey"}</strong></div>
-                  <div>Target Handover: <strong>{fmtDate(farm.targetHandoverDate)}</strong></div>
-                  <div>Handed Over: <strong>{fmtDate(farm.handedOverAt)}</strong></div>
+                  <div>Target Handover: <strong>{formatDate(farm.targetHandoverDate)}</strong></div>
+                  <div>Handed Over: <strong>{formatDate(farm.handedOverAt)}</strong></div>
                   <div>Fencing: <strong>{farm.fencingType || "Standard perimeter"}</strong></div>
                   <div>Jurisdiction: <strong>{[farm.village, farm.taluk, farm.district, farm.state, farm.pincode].filter(Boolean).join(", ") || farm.location}</strong></div>
                 </div>
@@ -1863,7 +1853,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                       </span>
                     )}
                     <span className="mono-label" style={{ fontSize: 11, color: "var(--muted)" }}>
-                      {fmtDateTime(item.at)}
+                      {formatDateTime(item.at)}
                     </span>
                   </div>
                 </div>
@@ -2058,7 +2048,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                         {f.incidentId ? `Incident ${f.incidentId.slice(0, 8)}` : ""}
                         {!f.executionId && !f.monitoringId && !f.incidentId ? "—" : ""}
                       </td>
-                      <td style={{ fontSize: 12 }}>{fmtDateTime(f.createdAt)}</td>
+                      <td style={{ fontSize: 12 }}>{formatDateTime(f.createdAt)}</td>
                       <td style={{ textAlign: "right" }}>
                         {f.url ? (
                           <a href={f.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ fontSize: 11, padding: "3px 10px" }}>
@@ -2109,7 +2099,7 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               color: "var(--muted)",
             }}
           >
-            Registered: {fmtDateTime(farm.createdAt)} &bull; Last updated: {fmtDateTime(farm.updatedAt)} &bull; System ID: {farm.id}
+            Registered: {formatDateTime(farm.createdAt)} &bull; Last updated: {formatDateTime(farm.updatedAt)} &bull; System ID: {farm.id}
           </div>
         </section>
       )}
