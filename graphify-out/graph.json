@@ -35686,7 +35686,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/hq/farm-360.tsx",
-      "source_location": "L1590",
+      "source_location": "L1473",
       "weight": 1.0
     },
     {
@@ -93378,5 +93378,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f22a19fbaf13aa2ea62312df53f508b12694ebd2"
+  "built_at_commit": "79d9e920360b5414e390e687a21949f88d19fb05"
 }

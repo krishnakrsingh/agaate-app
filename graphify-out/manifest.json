@@ -6,9 +6,9 @@
     "semantic_hash": "effa368837c2722432c83b5d28802f08"
   },
   "next-env.d.ts": {
-    "mtime": 1789132354.3184652,
-    "seen": 1789133816.8760788,
-    "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
+    "mtime": 1789134265.0735395,
+    "seen": 1789134525.2601495,
+    "ast_hash": "c7b887684e81cfa5830eeeb7286485f6",
     "semantic_hash": ""
   },
   "next.config.ts": {
@@ -2310,9 +2310,9 @@
     "semantic_hash": ""
   },
   "src/components/hq/farm-360.tsx": {
-    "mtime": 1789133383.4278603,
-    "seen": 1789133816.8766892,
-    "ast_hash": "1dd8ee6dcb74ea5498781b0ac186e4d3",
+    "mtime": 1789134414.1104352,
+    "seen": 1789134525.26071,
+    "ast_hash": "b2c3d81c5f06cf06ffb3024fabebd62f",
     "semantic_hash": ""
   },
   "src/components/hq/farm-registry.tsx": {
