@@ -15,9 +15,15 @@ export function apiError(error: unknown) {
   }
   if (error instanceof Error && (error.message === "Unauthenticated" || error.message === "Account is unavailable")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    console.error(error);
-    if (error.code === "P2025") return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
-    return NextResponse.json({ error: "The requested record could not be saved." }, { status: 409 });
+    console.error("[PrismaKnownRequestError]", error.code, error.message);
+    if (error.code === "P2002") {
+      return NextResponse.json({ error: "A record with this unique value already exists." }, { status: 409 });
+    }
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
+    }
+    return NextResponse.json({ error: "Database operation failed. Please check server logs." }, { status: 500 });
+  }
   }
   if (error instanceof Error && /not configured|provider is temporarily unavailable/i.test(error.message)) { console.error(error); return NextResponse.json({ error: "This integration is temporarily unavailable." }, { status: 503 }); }
   if (error instanceof Error) {
