@@ -29,6 +29,64 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ role, userName, onOpenCommandPalette }: DesktopSidebarProps) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sidebar-collapsed");
+      if (saved === "true") {
+        setCollapsed(true);
+        document.documentElement.setAttribute("data-sidebar-collapsed", "true");
+      }
+    } catch {
+      // ignore
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setCollapsed((prev) => {
+          const next = !prev;
+          try {
+            localStorage.setItem("sidebar-collapsed", String(next));
+            if (next) {
+              document.documentElement.setAttribute("data-sidebar-collapsed", "true");
+            } else {
+              document.documentElement.removeAttribute("data-sidebar-collapsed");
+            }
+          } catch {
+            // ignore
+          }
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const toggleCollapse = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebar-collapsed", String(next));
+        if (next) {
+          document.documentElement.setAttribute("data-sidebar-collapsed", "true");
+        } else {
+          document.documentElement.removeAttribute("data-sidebar-collapsed");
+        }
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   async function handleSignOut() {
     try {
@@ -62,7 +120,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             href: "/hq",
             label: "Overview",
             icon: "Activity",
-            badge: counts?.inbox ? String(counts.inbox > 99 ? "99+" : counts.inbox) : undefined,
             isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
           },
           {
@@ -75,7 +132,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             href: "/hq/farms",
             label: "Farms",
             icon: "Farm",
-            badge: counts?.missingBoundary ? `${counts.missingBoundary} no map` : undefined,
             isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
           },
         ],
@@ -88,7 +144,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             href: "/hq/onboarding",
             label: "Onboarding",
             icon: "Zap",
-            badge: counts?.onboarding ? String(counts.onboarding > 99 ? "99+" : counts.onboarding) : undefined,
             isActive: (p) => p.startsWith("/hq/onboarding") || p.startsWith("/onboarding"),
           },
           {
@@ -149,76 +204,77 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
         ],
       },
       {
-        title: "INTELLIGENCE",
+        title: "SETTINGS & CONFIG",
         items: [
           {
-            href: "/owner/insights",
-            label: "Farm Insights",
-            icon: "Activity",
-            isActive: (p) => p.startsWith("/owner/insights") || p.startsWith("/owner/reports"),
-          },
-          {
             href: "/owner/settings",
-            label: "Settings",
+            label: "Estate Settings",
             icon: "Settings",
             isActive: (p) => p.startsWith("/owner/settings"),
           },
         ],
       }
     );
-  } else if (role === "FARM_OFFICER") {
+  } else if (role === "AGRONOMIST") {
     sections.push(
       {
-        title: "DUTY & OPERATIONS",
+        title: "RADAR & PROTOCOLS",
         items: [
           {
-            href: "/officer/day",
-            label: "Daily Tasks",
-            icon: "Sun",
-            badge: "Live",
-            isActive: (p) => p.startsWith("/officer/day") || p.startsWith("/field/today"),
+            href: "/agronomy/radar",
+            label: "Clinical Radar",
+            icon: "Activity",
+            isActive: (p) => p.startsWith("/agronomy/radar") || p === "/agronomy",
           },
           {
-            href: "/officer/reports",
-            label: "Incidents & Signals",
-            icon: "AlertTriangle",
-            isActive: (p) => p.startsWith("/officer/reports"),
+            href: "/agronomy/prescriptions",
+            label: "Rx Directives",
+            icon: "FileText",
+            isActive: (p) => p.startsWith("/agronomy/prescriptions"),
+          },
+          {
+            href: "/agronomy/protocols",
+            label: "Stage Rules",
+            icon: "Sprout",
+            isActive: (p) => p.startsWith("/agronomy/protocols"),
           },
         ],
       },
       {
-        title: "FIELD TRACKING",
+        title: "DIAGNOSTICS & TELEMETRY",
         items: [
           {
-            href: "/officer/harvest",
-            label: "Harvest Logger",
-            icon: "Truck",
+            href: "/spatial",
+            label: "GIS Boundary Audit",
+            icon: "Compass",
+            isActive: (p) => p.startsWith("/spatial"),
           },
           {
-            href: "/officer/crew",
-            label: "Crew Muster",
-            icon: "Users",
-          },
-          {
-            href: "/officer/quick-log",
-            label: "Quick Event Log",
-            icon: "Zap",
-          },
-          {
-            href: "/officer/boundary",
-            label: "Boundary Walk",
-            icon: "Navigation",
-            isActive: (p) => p.startsWith("/officer/boundary"),
-          },
-          {
-            href: "/officer/profile",
-            label: "Officer Profile",
-            icon: "User",
-            isActive: (p) => p.startsWith("/officer/profile"),
+            href: "/sensor-network",
+            label: "Sensor Hub",
+            icon: "Droplet",
+            isActive: (p) => p.startsWith("/sensor-network") || p.startsWith("/sensors"),
           },
         ],
       }
     );
+  } else if (role === "FARM_OFFICER") {
+    sections.push({
+      title: "DAILY OPERATIONS",
+      items: [
+        {
+          href: "/officer/day",
+          label: "My Day",
+          icon: "Calendar",
+          isActive: (p) => p.startsWith("/officer/day"),
+        },
+        {
+          href: "/tasks",
+          label: "Tasks Ledger",
+          icon: "ClipboardList",
+        },
+      ],
+    });
   } else {
     // Default / Agronomist fallback
     sections.push({
@@ -259,42 +315,49 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   const homeHref = ROLE_HOME_URLS[role] ?? "/";
 
   return (
-    <aside className="app-desktop-sidebar" aria-label="Desktop Application Sidebar">
-      {/* 1. Header: Brand, Switcher, Quick Action Search */}
+    <aside
+      className={`app-desktop-sidebar ${collapsed ? "collapsed" : ""}`}
+      aria-label="Desktop Application Sidebar"
+    >
+      {/* 1. Header: Brand & Collapse Toggle */}
       <div className="sidebar-header">
-        <div className="sidebar-brand-row">
-          <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
-            <BrandLogo height={27} priority />
-          </Link>
-          <span className="sidebar-role-badge">
-            {role === "SUPER_ADMIN" ? "HQ" : "ESTATE"}
-          </span>
-        </div>
-
-        {/* Farm finder. There is deliberately NO estate dropdown here:
-            a 25-row menu cannot serve 1,00,000+ farms. Farm-finding lives in
-            the ⌘K palette (server search) + Unified Directory (faceted). */}
-        {onOpenCommandPalette && (
-          <button
-            type="button"
-            className="sidebar-search-btn"
-            onClick={onOpenCommandPalette}
-            title="Find a farm, client, task… (⌘K / Ctrl+K)"
+        {!collapsed ? (
+          <>
+            <Link href={homeHref} className="sidebar-brand" aria-label="Agaate Precision Home">
+              <BrandLogo variant="full" height={30} priority />
+            </Link>
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={toggleCollapse}
+              title="Collapse sidebar (⌘B)"
+              aria-label="Collapse sidebar"
+            >
+              <Icons.PanelLeftClose size={15} />
+            </button>
+          </>
+        ) : (
+          <Link
+            href={homeHref}
+            className="sidebar-brand"
+            aria-label="Agaate Precision Home"
+            title="Agaate Home"
           >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-              <Icons.MapPin size={14} />
-              <span>Find a farm…</span>
-            </span>
-            <kbd className="sidebar-search-badge">⌘K</kbd>
-          </button>
+            <BrandLogo variant="mark" height={32} priority />
+          </Link>
         )}
       </div>
 
       {/* 2. Navigation Container */}
       <div className="sidebar-nav-container">
-        {sections.map((sec) => (
+        {sections.map((sec, secIdx) => (
           <div key={sec.title} className="sidebar-nav-section">
-            <div className="sidebar-section-title">{sec.title}</div>
+            {!collapsed ? (
+              <div className="sidebar-section-title">{sec.title}</div>
+            ) : (
+              secIdx > 0 && <div className="sidebar-rail-divider" />
+            )}
+
             {sec.items.map((item) => {
               const active = item.isActive
                 ? item.isActive(pathname)
@@ -310,14 +373,15 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
                 >
                   <span className="sidebar-link-main">
                     <span className="sidebar-icon">
-                      <Icon size={16} />
+                      <Icon size={18} />
                     </span>
-                    <span className="sidebar-label">{item.label}</span>
+                    {!collapsed && <span className="sidebar-label">{item.label}</span>}
                   </span>
-                  {item.badge && (
-                    <span className="sidebar-badge">
-                      {item.badge}
-                    </span>
+                  {!collapsed && item.badge && (
+                    <span className="sidebar-badge">{item.badge}</span>
+                  )}
+                  {collapsed && (
+                    <span className="sidebar-tooltip">{item.label}</span>
                   )}
                 </Link>
               );
@@ -326,38 +390,87 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
         ))}
       </div>
 
-      {/* 3. Footer: Telemetry Clock, Profile, Theme Toggle & Sign Out */}
+      {/* 3. Footer */}
       <div className="sidebar-footer">
-        <div className="sidebar-telemetry-row">
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <span className="telemetry-live-dot" />
-            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
-          </span>
-        </div>
-
-        <div className="sidebar-user-card">
-          <div className="sidebar-user-info">
-            <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
-            <div className="sidebar-user-text">
-              <span className="sidebar-user-name" title={userName ?? "Console User"}>
-                {userName ?? "Console User"}
+        {!collapsed ? (
+          <>
+            <div className="sidebar-telemetry-row">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <span className="telemetry-live-dot" />
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
               </span>
-              <span className="sidebar-user-role">{userRoleLabel}</span>
             </div>
-          </div>
 
-          <div className="sidebar-user-actions">
-            <ThemeToggle />
+            <div className="sidebar-user-card">
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
+                <div className="sidebar-user-text">
+                  <span className="sidebar-user-name" title={userName ?? "Console User"}>
+                    {userName ?? "Console User"}
+                  </span>
+                  <span className="sidebar-user-role">{userRoleLabel}</span>
+                </div>
+              </div>
+
+              <div className="sidebar-user-actions">
+                <ThemeToggle variant="switch" />
+                <button
+                  type="button"
+                  className="sidebar-logout-btn"
+                  onClick={handleSignOut}
+                  title="Sign Out of Session"
+                >
+                  <Icons.LogOut size={14} />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="sidebar-rail-stack">
+            {/* User Avatar with Tooltip */}
+            <div
+              className="sidebar-rail-btn"
+              style={{ cursor: "default" }}
+              tabIndex={0}
+              aria-label={userName ?? "Console User"}
+            >
+              <div className="sidebar-user-avatar" style={{ width: 34, height: 34 }}>
+                {initials}
+              </div>
+              <span className="sidebar-tooltip">
+                {userName ?? "Console User"} ({userRoleLabel})
+              </span>
+            </div>
+
+            {/* Theme Toggle Button with Tooltip */}
+            <div className="sidebar-rail-btn" style={{ padding: 0 }}>
+              <ThemeToggle variant="button" />
+              <span className="sidebar-tooltip">Toggle theme</span>
+            </div>
+
+            {/* Sign Out Button with Tooltip */}
             <button
               type="button"
-              className="sidebar-logout-btn"
+              className="sidebar-rail-btn"
               onClick={handleSignOut}
-              title="Sign Out of Session"
+              aria-label="Sign out"
             >
-              <Icons.LogOut size={13} />
+              <Icons.LogOut size={16} />
+              <span className="sidebar-tooltip">Sign Out</span>
+            </button>
+
+            {/* Expand Rail Button with Tooltip */}
+            <button
+              type="button"
+              className="sidebar-rail-btn"
+              onClick={toggleCollapse}
+              aria-label="Expand sidebar"
+            >
+              <Icons.PanelLeftOpen size={17} />
+              <span className="sidebar-tooltip">Expand sidebar (⌘B)</span>
             </button>
           </div>
-        </div>
+        )}
       </div>
     </aside>
   );

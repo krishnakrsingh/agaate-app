@@ -123,7 +123,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
             </div>
 
             {/* Quick 1-Click Theme Toggle */}
-            <ThemeToggle />
+            <ThemeToggle variant="switch" />
 
             {/* Profile Dropdown (Only for roles without dedicated bottom Profile tab) */}
             {role !== "FARM_OFFICER" && (

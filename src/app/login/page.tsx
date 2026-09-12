@@ -49,10 +49,6 @@ export default async function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 20px;
-          border: 1px solid #e7e5e4;
-          background-color: #ffffff;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
           padding: clamp(16px, 2.5vw, 32px);
           box-sizing: border-box;
           overflow-y: auto;
@@ -61,10 +57,6 @@ export default async function LoginPage() {
         }
         .agaate-login-left::-webkit-scrollbar {
           display: none;
-        }
-        [data-theme="dark"] .agaate-login-left {
-          border-color: rgba(255, 255, 255, 0.08);
-          background-color: #0c0c0e;
         }
         .agaate-login-right {
           height: 100%;

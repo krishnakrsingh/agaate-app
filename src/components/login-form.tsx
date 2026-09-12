@@ -85,8 +85,6 @@ export function LoginForm() {
         }}
       >
         <BrandLogo height={44} priority />
-
-        <ThemeToggle />
       </div>
 
 

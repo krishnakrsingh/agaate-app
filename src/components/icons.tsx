@@ -80,5 +80,7 @@ export const Icons = {
   Navigation: i(<polygon points="3 11 22 2 13 21 11 13 3 11" />),
   List: i(<><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>),
   Grid: i(<><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></>),
+  PanelLeftClose: i(<><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /><path d="m16 15-3-3 3-3" /></>),
+  PanelLeftOpen: i(<><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /><path d="m13 15 3-3-3-3" /></>),
 };
 

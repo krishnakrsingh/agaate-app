@@ -1176,7 +1176,7 @@ export function OfficerProfileView({
             <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--ink)" }}>Display Appearance</div>
             <div style={{ fontSize: "12px", color: "var(--muted)" }}>Toggle light or dark high-contrast mode</div>
           </div>
-          <ThemeToggle />
+          <ThemeToggle variant="switch" />
         </div>
 
         {/* Secure Sign Out */}

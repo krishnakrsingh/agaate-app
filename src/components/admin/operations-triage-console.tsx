@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
@@ -115,24 +115,22 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "ALL" | "EXCEPTIONS" | "LOCATIONS" | "BOUNDARIES" | "TASKS" | "SETUPS"
-  >(() => {
-    try {
-      const t = localStorage.getItem(TAB_KEY);
-      return (t as any) || "ALL";
-    } catch {
-      return "ALL";
-    }
-  });
+  >("ALL");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"severity" | "newest" | "oldest">("severity");
   const [mineOnly, setMineOnly] = useState(false);
-  const [claimed, setClaimed] = useState<Record<string, string>>(() => {
+  const [claimed, setClaimed] = useState<Record<string, string>>({});
+
+  useEffect(() => {
     try {
-      return loadClaimed();
+      const t = localStorage.getItem(TAB_KEY);
+      if (t) setActiveTab(t as any);
+      const c = loadClaimed();
+      if (c) setClaimed(c);
     } catch {
-      return {};
+      // ignore
     }
-  });
+  }, []);
 
   const setTab = (t: typeof activeTab) => {
     setActiveTab(t);
