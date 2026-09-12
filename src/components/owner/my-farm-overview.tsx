@@ -43,7 +43,8 @@ export function MyFarmOverview({ farms }: { farms: FarmProfile[] }) {
   if (!farm) {
     return (
       <div style={{ padding: "40px", textAlign: "center", color: "var(--muted)" }}>
-        No farm estates associated with your account yet.
+        <p style={{ margin: "0 0 16px" }}>No farm estates associated with your account yet.</p>
+        <Link className="btn btn-secondary btn-sm" href="/farms/new">Onboard a farm</Link>
       </div>
     );
   }

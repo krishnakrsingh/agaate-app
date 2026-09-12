@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["FARM_OFFICER", "SUPER_ADMIN"]);
+    requireRole(actor.role, ["FARM_OFFICER", "FARM_ADMIN", "AGRONOMIST", "SUPER_ADMIN"]);
     const input = schema.parse(await request.json());
     await requireFarmAccess(input.farmId);
 

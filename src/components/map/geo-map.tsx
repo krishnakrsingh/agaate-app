@@ -598,6 +598,14 @@ export function GeoMap({
         style={{ height: "100%", width: "100%" }}
         attributionControl={!compact}
         zoomControl={!compact}
+        // Preview maps must never trap page scroll: disable all gestures
+        // when non-interactive so wheel/touch scroll passes through.
+        scrollWheelZoom={interactive}
+        dragging={interactive}
+        doubleClickZoom={interactive}
+        touchZoom={interactive}
+        boxZoom={interactive}
+        keyboard={interactive}
       >
         {base === "sat" ? (
           <TileLayer url={ESRI_IMAGERY_URL} attribution={ESRI_ATTRIBUTION} maxZoom={19} />

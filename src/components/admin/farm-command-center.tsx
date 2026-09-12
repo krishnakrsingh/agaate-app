@@ -16,7 +16,7 @@ import { FarmAccessManager } from "@/components/farm-access-manager";
 import { FarmEditForm } from "@/components/farm-edit-form";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
-import { parseBoundary, toGeoJsonPolygon, type LngLat } from "@/lib/geo";
+import { isBoundaryCorrupt, parseBoundary, toGeoJsonPolygon, type LngLat } from "@/lib/geo";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
   ssr: false,
@@ -81,6 +81,10 @@ export function FarmCommandCenter({
   const [savingFarmBoundary, setSavingFarmBoundary] = useState(false);
 
   const handleSaveFarmBoundary = async () => {
+    if (farmRingState && farmRingState.length < 4) {
+      toast.error("Draw at least 3 points (closed ring) before saving — incomplete shapes are not saved.");
+      return;
+    }
     setSavingFarmBoundary(true);
     try {
       const geoJsonString = farmRingState && farmRingState.length >= 4 ? toGeoJsonPolygon(farmRingState) : null;
@@ -395,6 +399,11 @@ export function FarmCommandCenter({
             </div>
 
             {/* Satellite Map */}
+            {isBoundaryCorrupt(farm.boundaryGeoJson) && (
+              <div role="alert" style={{ padding: "10px 14px", fontSize: 12, color: "var(--amber)", background: "var(--amber-light)", border: "1px solid var(--amber)", borderRadius: "var(--radius-md)" }}>
+                Stored fence is unreadable — redraw the estate perimeter and save.
+              </div>
+            )}
             <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--line)" }}>
               <GeoMap
                 center={farmCenter}

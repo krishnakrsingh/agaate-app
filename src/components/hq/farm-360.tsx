@@ -12,7 +12,7 @@ import { GridSplitForm } from "@/components/grid-split-form";
 import { BoundaryHistory } from "@/components/boundary-history";
 import { FarmAccessManager } from "@/components/farm-access-manager";
 import { FarmEditForm } from "@/components/farm-edit-form";
-import { parseBoundary, toGeoJsonPolygon, type LngLat } from "@/lib/geo";
+import { isBoundaryCorrupt, parseBoundary, toGeoJsonPolygon, type LngLat } from "@/lib/geo";
 import { HqCalendarPlatform } from "@/components/hq/calendar-platform";
 import { formatDate, formatDateTime } from "@/lib/business";
 
@@ -323,6 +323,10 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
   }
 
   async function saveBoundary() {
+    if (farmRing && farmRing.length < 4) {
+      toast.error("Incomplete shape — finish the polygon (3+ points) or clear it before saving.");
+      return;
+    }
     setSavingBoundary(true);
     try {
       const geoJsonString = farmRing && farmRing.length >= 4 ? toGeoJsonPolygon(farmRing) : null;
@@ -668,6 +672,11 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
             </div>
 
             {/* Satellite Map */}
+            {isBoundaryCorrupt(farm.boundaryGeoJson) && (
+              <div role="alert" style={{ marginBottom: 8, padding: "10px 14px", fontSize: 12, color: "var(--amber)", background: "var(--amber-light)", border: "1px solid var(--amber)", borderRadius: "var(--radius-md)" }}>
+                Stored fence is unreadable — redraw the estate perimeter in the Map tab and save.
+              </div>
+            )}
             <div
               style={{
                 height: 320,
@@ -1474,14 +1483,14 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 500 }}>{i.reporter.name}</div>
-                        <div className="mono-label" style={{ fontSize: 9 }}>ID: {i.reporter.id.slice(0, 8)}</div>
+                        <div style={{ fontWeight: 500 }}>{i.reporter?.name ?? "Former officer"}</div>
+                        <div className="mono-label" style={{ fontSize: 9 }}>ID: {(i.reporter?.id ?? "deleted").slice(0, 8)}</div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 600 }}>{i.followUpCount} actions</div>
                         {i.followUps.slice(0, 2).map((f) => (
                           <div key={f.id} className="muted" style={{ fontSize: 11 }}>
-                            {f.action} — {f.author.name}
+                            {f.action} — {f.author?.name ?? "Unknown"}
                           </div>
                         ))}
                       </td>

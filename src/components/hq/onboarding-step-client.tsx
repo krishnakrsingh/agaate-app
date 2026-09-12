@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { previewClientCode, type ClientInput } from "./onboarding-schema";
 
-const inp: React.CSSProperties = { width: "100%", height: "34px", fontSize: 13 };
+/* inp retired: global .input-field */
 
 function F({ label, error, span, children }: { label: string; error?: string; span?: boolean; children: React.ReactNode }) {
   return (
@@ -39,7 +39,7 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
   }, [(value.phone ?? "").trim(), (value.email ?? "").trim()]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div className="ob-section">
 
       {/* Client ID */}
       <div style={{ fontSize: 12, color: "var(--muted)" }}>
@@ -49,46 +49,44 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
 
       {/* Identity */}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Identity & Contact</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px 20px" }}>
+        <div className="ob-section-title">Identity & Contact</div>
+        <div className="ob-grid-3">
           <F label="Full name *" error={errors["name"]}>
-            <input style={inp} value={value.name} maxLength={120} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
+            <input className="input-field" value={value.name} maxLength={120} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
           </F>
           <F label="Company name" error={errors["companyName"]}>
-            <input style={inp} value={value.companyName ?? ""} maxLength={180} placeholder="Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} />
+            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} />
           </F>
-          <div /> {/* spacer */}
           <F label={`Mobile${checking ? " — checking…" : ""}`} error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
-            <input style={inp} value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="9876543210" onChange={(e) => set({ phone: e.target.value })} />
+            <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="9876543210" onChange={(e) => set({ phone: e.target.value })} />
           </F>
           <F label="Email" error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
-            <input style={inp} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
+            <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
           </F>
         </div>
       </div>
 
       {/* Tax */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Tax & Location <span style={{ fontWeight: 400, textTransform: "none" as const, letterSpacing: 0 }}>(optional)</span></div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "14px 20px" }}>
+      <details style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", padding: "8px 12px" }}>
+        <summary style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", cursor: "pointer" }}>Tax & Location (optional)</summary>
+        <div className="ob-grid-3" style={{ marginTop: 10 }}>
           <F label="PAN" error={errors["panNumber"]}>
-            <input style={inp} value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} />
+            <input className="input-field" value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} />
           </F>
           <F label="GSTIN" error={errors["gstin"]}>
-            <input style={inp} value={value.gstin ?? ""} maxLength={25} placeholder="29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} />
+            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} />
           </F>
-          <div />
           <F label="State" error={errors["state"]}>
-            <input style={inp} value={value.state ?? ""} maxLength={100} placeholder="Karnataka" onChange={(e) => set({ state: e.target.value })} />
+            <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="Karnataka" onChange={(e) => set({ state: e.target.value })} />
           </F>
           <F label="District" error={errors["district"]}>
-            <input style={inp} value={value.district ?? ""} maxLength={100} placeholder="Chikkaballapur" onChange={(e) => set({ district: e.target.value })} />
+            <input className="input-field" value={value.district ?? ""} maxLength={100} placeholder="Chikkaballapur" onChange={(e) => set({ district: e.target.value })} />
           </F>
           <F label="Billing address" error={errors["billingAddress"]} span>
-            <input style={inp} value={value.billingAddress ?? ""} maxLength={500} placeholder="Door no, street, town, PIN" onChange={(e) => set({ billingAddress: e.target.value })} />
+            <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door no, street, town, PIN" onChange={(e) => set({ billingAddress: e.target.value })} />
           </F>
         </div>
-      </div>
+      </details>
     </div>
   );
 }

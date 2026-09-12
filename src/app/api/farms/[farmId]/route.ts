@@ -20,6 +20,8 @@ const patchSchema = z.object({
   waterSource: z.string().min(2).max(180).optional(),
   geofenceRadiusMeters: z.coerce.number().int().min(50).max(10000).optional(),
   boundaryGeoJson: z.any().optional().nullable(),
+  // `boundary` accepted as an alias (plot API canonical name).
+  boundary: z.any().optional().nullable(),
   status: z.enum(["SETUP", "ACTIVE", "INACTIVE", "COMPLETED"]).optional(),
   // Explicit override for fence changes that would orphan existing plots.
   force: z.boolean().optional(),
@@ -97,7 +99,8 @@ export async function PATCH(
     // - undefined (absent) => no change, no version
     // - null / "" / [] => clear boundary (measuredAcres null) + version
     // - canonical GeoJSON string OR legacy [{lat,lng}] (stringified or raw) => validate + normalize + version
-    const { boundaryGeoJson: rawBoundary, force: _force, ...rest } = input;
+    const { boundaryGeoJson: rawCanonical, boundary: rawAlias, force: _force, ...rest } = input;
+    const rawBoundary = rawCanonical !== undefined ? rawCanonical : rawAlias;
     let boundaryIntent: { kind: "keep" } | { kind: "set"; geoJson: string; acres: number } | { kind: "clear" } = { kind: "keep" };
     if (rawBoundary !== undefined) {
       const isEmpty =

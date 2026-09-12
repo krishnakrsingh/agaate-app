@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Icons } from "@/components/icons";
 import { MIN_PASSWORD_LENGTH, type TeamInput } from "./onboarding-schema";
 
-const inp: React.CSSProperties = { width: "100%", height: "34px", fontSize: 13 };
+/* inp retired: global .input-field */
 
 function F({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
@@ -54,29 +54,29 @@ export function OnboardingStepTeam({ value, onChange, errors, clientName, client
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
             <F label="Full name" error={errors["name"]}>
               <div style={{ display: "flex", gap: 6 }}>
-                <input style={{ ...inp, flex: 1 }} value={value.name ?? ""} maxLength={100} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
+                <input className="input-field" style={{ flex: 1 }} value={value.name ?? ""} maxLength={100} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
                 {clientName.trim() && <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0, fontSize: 11 }} onClick={() => set({ name: clientName.trim() })}>Same as client</button>}
               </div>
             </F>
             <F label="Login email" error={errors["email"]}>
               <div style={{ display: "flex", gap: 6 }}>
-                <input style={{ ...inp, flex: 1 }} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
+                <input className="input-field" style={{ flex: 1 }} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
                 {clientEmail.trim() && <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0, fontSize: 11 }} onClick={() => set({ email: clientEmail.trim() })}>Same as client</button>}
               </div>
             </F>
             <F label="Phone (optional)" error={errors["phone"]}>
-              <input style={inp} value={value.phone ?? ""} maxLength={20} inputMode="tel" onChange={(e) => set({ phone: e.target.value })} />
+              <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" onChange={(e) => set({ phone: e.target.value })} />
             </F>
             <F label={`Password (min ${MIN_PASSWORD_LENGTH})`} error={errors["password"]}>
               <div style={{ display: "flex", gap: 6 }}>
-                <input style={{ ...inp, flex: 1, fontFamily: "monospace" }} type={showPw ? "text" : "password"} value={value.password ?? ""} maxLength={128} autoComplete="new-password" onChange={(e) => set({ password: e.target.value })} />
+                <input className="input-field" style={{ flex: 1, fontFamily: "monospace" }} type={showPw ? "text" : "password"} value={value.password ?? ""} maxLength={128} autoComplete="new-password" onChange={(e) => set({ password: e.target.value })} />
                 <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={() => setShowPw((s) => !s)} aria-label={showPw ? "Hide" : "Show"}>
                   <Icons.Eye size={13} />
                 </button>
               </div>
             </F>
             <F label="Confirm password" error={errors["confirmPassword"]}>
-              <input style={{ ...inp, fontFamily: "monospace" }} type={showPw ? "text" : "password"} value={value.confirmPassword ?? ""} maxLength={128} autoComplete="new-password" onChange={(e) => set({ confirmPassword: e.target.value })} />
+              <input className="input-field" style={{ fontFamily: "monospace" }} type={showPw ? "text" : "password"} value={value.confirmPassword ?? ""} maxLength={128} autoComplete="new-password" onChange={(e) => set({ confirmPassword: e.target.value })} />
             </F>
           </div>
           <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>Credentials are shown once on activation and never stored in plain text.</p>

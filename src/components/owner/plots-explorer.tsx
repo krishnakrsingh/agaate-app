@@ -1,10 +1,18 @@
 "use client";
 import { useState, FormEvent, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { formatDate } from "@/lib/business";
+import { parseBoundary, ringAcres, toGeoJsonPolygon } from "@/lib/geo";
+import { ringWithinRing } from "@/lib/geo-core";
+
+const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), {
+  ssr: false,
+  loading: () => <div style={{ height: 220, display: "grid", placeItems: "center", color: "var(--muted)", fontSize: 13 }}>Map loading…</div>,
+});
 
 type Plot = {
   id: string;
@@ -34,30 +42,24 @@ type Farm = {
   totalArea: string;
   latitude: string;
   longitude: string;
+  boundaryGeoJson?: string | null;
   plots: Plot[];
 };
 
 export function PlotsExplorer({ farms }: { farms: Farm[] }) {
   const router = useRouter();
   const toast = useToast();
-  const [selectedFarmId, setSelectedFarmId] = useState(farms.length > 1 ? "ALL" : farms[0]?.id || "");
+  const [selectedFarmId, setSelectedFarmId] = useState(farms[0]?.id || "");
   const [showAddModal, setShowAddModal] = useState(false);
   const [pending, setPending] = useState(false);
+  const [fence, setFence] = useState<[number, number][] | null>(null);
+  const [showFence, setShowFence] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "CULTIVATED" | "FALLOW">("ALL");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
   const isAll = selectedFarmId === "ALL";
   const selectedFarm = farms.find((f) => f.id === selectedFarmId) || farms[0];
-
-  if (!selectedFarm && farms.length === 0) {
-    return (
-      <div className="card" style={{ padding: 48, textAlign: "center" }}>
-        <Icons.AlertTriangle size={32} style={{ color: "var(--amber)", margin: "0 auto 12px" }} />
-        <p className="muted" style={{ fontSize: 13, margin: 0 }}>No farm assigned to your account.</p>
-      </div>
-    );
-  }
 
   // All plots across scope
   const allScopedPlots: (Plot & { farmName: string; farmId: string })[] = useMemo(() => {
@@ -108,11 +110,40 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
     ? farms.reduce((acc, f) => acc + Number(f.cultivableArea || 0), 0)
     : Number(selectedFarm?.cultivableArea || 0);
 
+  const farmRing = useMemo(
+    () => parseBoundary(selectedFarm?.boundaryGeoJson ?? null),
+    [selectedFarm?.boundaryGeoJson]
+  );
+  const fenceAcres = fence && fence.length >= 4 ? (() => { try { return ringAcres(fence); } catch { return 0; } })() : 0;
+  const fenceOutside = fence && fence.length >= 4 && farmRing && farmRing.length >= 4
+    ? (() => { try { return !ringWithinRing(fence, farmRing); } catch { return true; } })()
+    : false;
+
+  const openAddModal = () => { setFence(null); setShowFence(false); setShowAddModal(true); };
+
+  if (!selectedFarm && farms.length === 0) {
+    return (
+      <div className="card" style={{ padding: 48, textAlign: "center" }}>
+        <Icons.AlertTriangle size={32} style={{ color: "var(--amber)", margin: "0 auto 12px" }} />
+        <p className="muted" style={{ fontSize: 13, margin: "0 0 16px" }}>No farm assigned to your account.</p>
+        <Link className="btn btn-secondary btn-sm" href="/farms/new">Onboard a farm</Link>
+      </div>
+    );
+  }
+
   const handleCreatePlot = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isAll || !selectedFarm?.id) {
       // ponytail: never silently use farms[0] — force explicit estate choice
       toast.show("Select a specific estate before creating a plot", "error");
+      return;
+    }
+    if (fence && fence.length < 4) {
+      toast.show("Incomplete fence — finish the polygon or clear it.", "error");
+      return;
+    }
+    if (fenceOutside) {
+      toast.show("Plot fence must lie inside the estate fence.", "error");
       return;
     }
     setPending(true);
@@ -125,6 +156,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
       latitude: Number(form.get("latitude") || selectedFarm.latitude),
       longitude: Number(form.get("longitude") || selectedFarm.longitude),
       soilType: form.get("soilType") || null,
+      boundary: fence && fence.length >= 4 ? toGeoJsonPolygon(fence) : undefined,
       irrigation: [
         {
           type: form.get("irrigationType") || "Drip",
@@ -141,12 +173,14 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to create plot");
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to create plot");
       }
 
-      toast.show("New plot created successfully", "success");
+      toast.show(fence ? `Plot created (${fenceAcres.toFixed(2)} ac verified)` : "New plot created successfully", "success");
       setShowAddModal(false);
+      setFence(null);
+      setShowFence(false);
       router.refresh();
     } catch (err: any) {
       toast.show(err.message || "Error creating plot", "error");
@@ -156,7 +190,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {/* Header */}
       <div
         className="card"
@@ -165,16 +199,16 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 16,
-          padding: "16px 20px",
+          gap: 12,
+          padding: "12px 16px",
         }}
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
               <Icons.Layers size={20} style={{ color: "var(--green)" }} />
               Estate Plots &amp; Crop Registry
-            </h1>
+            </h2>
             <span className="badge badge-green font-mono">{allScopedPlots.length} Parcels</span>
           </div>
           <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>
@@ -201,7 +235,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
 
           <button
             type="button"
-            onClick={() => setShowAddModal(true)}
+            onClick={openAddModal}
             className="btn btn-sm btn-primary"
             style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, padding: "6px 14px" }}
           >
@@ -336,7 +370,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
           </p>
         </div>
       ) : viewMode === "grid" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
           {filteredPlots.map((plot) => {
             const activeCycle = plot.cropCycles.find((c) => c.status === "ACTIVE");
 
@@ -545,7 +579,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                 <Icons.Layers size={18} style={{ color: "var(--green)" }} />
-                Demarcate New Plot on {isAll ? farms[0]?.name : selectedFarm.name}
+                Demarcate New Plot on {selectedFarm.name}
               </h2>
               <button
                 type="button"
@@ -615,11 +649,52 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
                     style={{ width: "100%" }}
                   >
                     <option value="Drip">Drip Irrigation</option>
+                    <option value="Rain Pipe">Rain Pipe</option>
                     <option value="Sprinkler">Micro Sprinkler</option>
                     <option value="Flood">Canal / Basin Flood</option>
-                    <option value="Rainfed">Natural Rainfed</option>
+                    <option value="Other">Natural Rainfed / Other</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>
+                    Fence (optional){fenceAcres > 0 ? ` · ${fenceAcres.toFixed(2)} ac verified` : ""}
+                  </label>
+                  {fence && (
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => setFence(null)}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {!showFence ? (
+                  <button type="button" className="btn btn-secondary btn-sm" style={{ width: "100%", fontSize: 12 }} onClick={() => setShowFence(true)}>
+                    {farmRing ? "Draw fence inside estate boundary" : "Draw fence (draw estate fence first for containment check)"}
+                  </button>
+                ) : (
+                  <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden" }}>
+                    <GeoMap
+                      center={[Number(selectedFarm.latitude) || 20.59, Number(selectedFarm.longitude) || 78.96]}
+                      polygon={fence}
+                      onChange={setFence}
+                      reference={farmRing}
+                      interactive
+                      height={220}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", fontSize: 12, color: "var(--muted)" }}>
+                      <span>
+                        {fence && fence.length >= 4
+                          ? `${fenceAcres.toFixed(2)} ac${fenceOutside ? " — outside estate fence, redraw inside" : " — verified area applies on save"}`
+                          : "Trace the plot inside the dashed estate fence."}
+                      </span>
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => { setShowFence(false); setFence(null); }}>
+                        Hide
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {fenceOutside && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 4 }}>Plot fence must lie completely inside the estate fence.</div>}
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
@@ -632,7 +707,7 @@ export function PlotsExplorer({ farms }: { farms: Farm[] }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={pending}
+                  disabled={pending || fenceOutside}
                   className="btn btn-sm btn-primary"
                 >
                   {pending ? "Creating Plot..." : "Confirm & Save Plot"}

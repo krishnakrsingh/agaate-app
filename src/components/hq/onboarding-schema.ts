@@ -97,6 +97,13 @@ export const clientSchema = z
     }
   });
 
+/** Drawn boundary ring in [lng,lat] order (GeoMap shape). Null = pin only. */
+const boundaryRingField = z
+  .array(z.tuple([z.number().finite(), z.number().finite()]))
+  .max(501)
+  .optional()
+  .nullable();
+
 export const farmSchema = z
   .object({
     rowId: z.string().optional(),
@@ -113,6 +120,7 @@ export const farmSchema = z
     district: optionalText(100),
     state: optionalText(100),
     soilType: optionalText(100),
+    boundaryRing: boundaryRingField,
   })
   .superRefine((data, ctx) => {
     if (typeof data.totalArea === "number" && typeof data.cultivableArea === "number" && data.cultivableArea > data.totalArea) {
@@ -126,6 +134,7 @@ export const plotSchema = z.object({
   name: z.string().trim().min(2, "Plot name is required.").max(100),
   area: numField("Plot area", 0.01, 100000),
   soilType: optionalText(100),
+  boundaryRing: boundaryRingField,
 });
 
 export const teamSchema = z
@@ -184,10 +193,19 @@ export const submitSchema = z
     });
     const cultivable = new Map<string, number>();
     data.farms.forEach((f, i) => cultivable.set(f.rowId ?? `index:${i}`, Number(f.cultivableArea)));
+    const allocated = new Map<string, number>();
     data.plots.forEach((p, i) => {
       const cap = cultivable.get(p.farmRowId);
       if (cap !== undefined && Number(p.area) > cap) {
         ctx.addIssue({ code: "custom", path: ["plots", i, "area"], message: "Plot area exceeds its farm's cultivable area." });
+      }
+      allocated.set(p.farmRowId, (allocated.get(p.farmRowId) ?? 0) + Number(p.area || 0));
+    });
+    allocated.forEach((sum, farmRowId) => {
+      const cap = cultivable.get(farmRowId);
+      const fi = data.farms.findIndex((f, i) => (f.rowId ?? `index:${i}`) === farmRowId);
+      if (cap !== undefined && Number.isFinite(cap) && sum > cap && fi >= 0) {
+        ctx.addIssue({ code: "custom", path: ["farms", fi, "cultivableArea"], message: `Plots allocate ${sum.toFixed(2)} ac — exceeds cultivable ${cap.toFixed(2)} ac.` });
       }
     });
   });

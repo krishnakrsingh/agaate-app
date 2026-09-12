@@ -16,7 +16,9 @@ const schema = z.object({
   status: z.enum(["SETUP", "ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
   // Drawn boundary (GeoJSON string or legacy). Absent = keep existing;
   // null/empty = clear; value = validate + server-compute acres.
+  // `boundaryGeoJson` is accepted as an alias (farm PATCH canonical name).
   boundary: z.any().optional().nullable(),
+  boundaryGeoJson: z.any().optional().nullable(),
   irrigation: z
     .array(
       z.object({
@@ -100,8 +102,9 @@ export async function PATCH(
     let geoJson = existing.boundaryGeoJson;
     let measured: number | null = existing.measuredAcres === null ? null : Number(existing.measuredAcres);
     let area = input.area ?? Number(existing.area);
-    if (input.boundary !== undefined) {
-      const geo = validatePlotGeometry(input.boundary, existing.farm.boundaryGeoJson);
+    const rawBoundary = input.boundary !== undefined ? input.boundary : input.boundaryGeoJson;
+    if (rawBoundary !== undefined) {
+      const geo = validatePlotGeometry(rawBoundary, existing.farm.boundaryGeoJson);
       if (geo === null) {
         geoJson = null;
         measured = null;

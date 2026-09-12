@@ -10,6 +10,7 @@ import {
   plotSchema, submitSchema, teamSchema, type WizardData,
 } from "./onboarding-schema";
 import { clearLocal, hydrate, loadLocal, saveLocal, type StoredDraft } from "./onboarding-draft";
+import { ringWithinRing } from "@/lib/geo-core";
 import { OnboardingStepClient } from "./onboarding-step-client";
 import { OnboardingStepFarms } from "./onboarding-step-farms";
 import { OnboardingStepPlots } from "./onboarding-step-plots";
@@ -41,19 +42,34 @@ function plotCrossErrors(data: WizardData): Record<string, string> {
     else seen.set(key, i);
     const cap = Number(holder.farm.cultivableArea);
     if (Number.isFinite(cap) && cap > 0 && Number(p.area) > cap) out[`plots.${i}.area`] = "Exceeds farm cultivable area.";
+    // Re-check containment: the farm fence may have changed after this plot was queued.
+    const pr = (p.boundaryRing ?? null) as [number, number][] | null;
+    const fr = (holder.farm.boundaryRing ?? null) as [number, number][] | null;
+    if (pr && pr.length >= 4 && fr && fr.length >= 4) {
+      try {
+        if (!ringWithinRing(pr, fr)) out[`plots.${i}.boundaryRing`] = "Plot fence lies outside its farm fence — redraw.";
+      } catch { out[`plots.${i}.boundaryRing`] = "Plot fence is invalid — redraw."; }
+    }
+    if (pr && pr.length > 0 && pr.length < 4) out[`plots.${i}.boundaryRing`] = "Incomplete fence — finish the polygon or clear it.";
   });
   return out;
 }
 
 function validateStep(step: number, data: WizardData): Record<string, string> {
   if (step === 1) { const r = clientSchema.safeParse(data.client); return r.success ? {} : flattenIssues(r.error); }
-  if (step === 2) { const out: Record<string, string> = {}; data.farms.forEach((f, i) => { const r = farmSchema.safeParse(f); if (!r.success) for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`farms.${i}.${k}`] = v; }); return out; }
+  if (step === 2) { const out: Record<string, string> = {}; data.farms.forEach((f, i) => { const r = farmSchema.safeParse(f); if (!r.success) for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`farms.${i}.${k}`] = v; const br = (f.boundaryRing ?? null) as [number, number][] | null; if (br && br.length > 0 && br.length < 4) out[`farms.${i}.boundaryRing`] = "Incomplete fence — finish the polygon or clear it."; }); return out; }
   if (step === 3) { const out: Record<string, string> = {}; data.plots.forEach((p, i) => { const r = plotSchema.safeParse(p); if (!r.success) for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`plots.${i}.${k}`] = v; }); return { ...out, ...plotCrossErrors(data) }; }
   if (step === 4) { const r = teamSchema.safeParse(data.team); return r.success ? {} : flattenIssues(r.error); }
   const r = submitSchema.safeParse(data);
   if (r.success) return {};
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(flattenIssues(r.error))) out[k === "" ? "form" : k] = v;
+  for (const [k, v] of Object.entries(flattenIssues(r.error))) {
+    const key = k === "" ? "form" : k;
+    out[key] = v;
+    // Remap prefixed keys so step components show field-level errors.
+    if (key.startsWith("client.")) out[key.replace(/^client\./, "")] = v;
+    if (key.startsWith("team.")) out[key.replace(/^team\./, "")] = v;
+  }
   return out;
 }
 
@@ -211,7 +227,7 @@ export function OnboardingWizard({ serverDraft }: { serverDraft: ServerDraftProp
               </tbody>
             </table>
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => { const t = `Login: ${result.credential.loginEmail}\nPassword: ${data.team.password}\nPage: ${result.credential.loginUrl}`; navigator.clipboard?.writeText(t).then(() => toast.show("Copied.", "success"), () => toast.show("Copy failed.", "error")); }}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => { const t = `Login: ${result.credential.loginEmail}\nPassword: ${data.team.password}\nPage: ${result.credential.loginUrl}`; try { const p = navigator.clipboard?.writeText(t); if (p?.then) p.then(() => toast.show("Copied.", "success"), () => toast.show("Copy failed — select manually.", "error")); else toast.show("Copy unavailable — select manually.", "error"); } catch { toast.show("Copy failed — select manually.", "error"); } }}>
                 <Icons.Copy size={13} /><span>Copy</span>
               </button>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setData((d) => ({ ...d, team: { ...d.team, password: "", confirmPassword: "" } }))}>
@@ -235,11 +251,23 @@ export function OnboardingWizard({ serverDraft }: { serverDraft: ServerDraftProp
   return (
     <>
       <style>{`
-        .ob-wrap { display: grid; grid-template-columns: 200px 1fr; gap: 32px; align-items: start; }
+        .ob-wrap { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; align-items: start; }
         .ob-rail { position: sticky; top: 64px; }
+        /* Compact density inside the wizard: shorter inputs + tighter grids = less scroll */
+        .ob-wrap .input-field { height: 36px; font-size: 13px; padding: 6px 10px; }
+        .ob-wrap select.input-field { height: 36px; }
+        .ob-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; }
+        .ob-farm-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+        .ob-section { display: flex; flex-direction: column; gap: 12px; }
+        .ob-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 8px; }
+        .ob-nav { position: sticky; bottom: 0; background: var(--canvas); padding: 12px 0 4px; }
+        @media (max-width: 1100px) {
+          .ob-farm-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 700px) {
           .ob-wrap { grid-template-columns: 1fr; gap: 0; }
-          .ob-rail { position: static; display: flex; overflow-x: auto; border-bottom: 1px solid var(--hairline); padding-bottom: 0; margin-bottom: 20px; }
+          .ob-grid-3 { grid-template-columns: 1fr; }
+          .ob-rail { position: static; display: flex; overflow-x: auto; border-bottom: 1px solid var(--hairline); padding-bottom: 0; margin-bottom: 16px; }
           .ob-rail-item { min-width: 80px; flex-direction: column !important; padding: 10px 12px !important; border-left: none !important; border-bottom: 2px solid transparent; text-align: center; }
           .ob-rail-item[aria-current="step"] { border-bottom-color: var(--ink) !important; }
           .ob-rail-desc, .ob-rail-foot { display: none !important; }
@@ -310,12 +338,12 @@ export function OnboardingWizard({ serverDraft }: { serverDraft: ServerDraftProp
         </nav>
 
         {/* ── CONTENT ──────────────────────────────────────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, minWidth: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           {/* Step title */}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
               <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>Step {step} / {STEPS.length}</span>
-              <h2 style={{ margin: "4px 0 0", fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>{STEPS[step - 1].label}</h2>
+              <h2 style={{ margin: "2px 0 0", fontSize: 19, fontWeight: 700, color: "var(--ink)" }}>{STEPS[step - 1].label}</h2>
             </div>
             <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--muted)" }} onClick={discard} disabled={discarding}>
               <Icons.Trash size={12} /><span>Discard draft</span>
@@ -329,8 +357,8 @@ export function OnboardingWizard({ serverDraft }: { serverDraft: ServerDraftProp
           {step === 4 && <OnboardingStepTeam value={data.team} onChange={(team) => setData((d) => ({ ...d, team }))} errors={errors} clientName={data.client.name} clientEmail={data.client.email ?? ""} />}
           {step === 5 && <OnboardingStepReview data={data} submitting={submitting} submitError={submitError} onActivate={activate} />}
 
-          {/* Nav */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: "1px solid var(--hairline)" }}>
+          {/* Nav — sticky so Continue is always visible without scrolling */}
+          <div className="ob-nav" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hairline)" }}>
             <button type="button" className="btn btn-secondary" onClick={() => goStep(step - 1)} disabled={step === 1}>
               <Icons.ArrowLeft size={14} /><span>Back</span>
             </button>

@@ -4,10 +4,12 @@ import dynamic from "next/dynamic";
 import { Icons } from "@/components/icons";
 import { MAX_FARMS, type FarmInput } from "./onboarding-schema";
 import { emptyFarm } from "./onboarding-draft";
+import { ringAcres } from "@/lib/geo";
+import { representativePoint } from "@/lib/geo-core";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), { ssr: false });
 
-const inp: React.CSSProperties = { width: "100%", height: "34px", fontSize: 13 };
+/* inp retired: global .input-field */
 
 function F({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
@@ -36,6 +38,19 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
   }, [value]);
 
   const patch = (i: number, p: Partial<FarmInput>) => onChange(value.map((f, j) => (j === i ? { ...f, ...p } : f)));
+  const patchRing = (i: number, ring: [number, number][] | null) => {
+    const f = value[i];
+    if (!f) return;
+    // Autofill GPS from the drawn fence centroid when coords are empty.
+    let { latitude, longitude } = f;
+    if (ring && ring.length >= 4 && !Number.isFinite(Number(latitude))) {
+      try {
+        const c = representativePoint(ring as [number, number][]);
+        if (c) { longitude = c[0] as unknown as number; latitude = c[1] as unknown as number; }
+      } catch { /* keep manual coords */ }
+    }
+    onChange(value.map((x, j) => (j === i ? { ...x, boundaryRing: ring, latitude, longitude } : x)));
+  };
   const addRow = () => { if (value.length >= MAX_FARMS) return; onChange([...value, emptyFarm()]); setSel(value.length); };
   const removeRow = (i: number) => { onChange(value.filter((_, j) => j !== i)); setSel(0); };
 
@@ -53,13 +68,16 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
   const e = (i: number, f: string) => errors[`farms.${i}.${f}`];
   const lat = Number(cur?.latitude), lng = Number(cur?.longitude);
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  const ring = (cur?.boundaryRing ?? null) as [number, number][] | null;
+  const ringAcresLive = ring && ring.length >= 4 ? (() => { try { return ringAcres(ring); } catch { return 0; } })() : 0;
+  const mapCenter: [number, number] = hasCoords ? [lat, lng] : [20.59, 78.96];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="ob-section">
 
       {/* Farm tab strip */}
       <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>
             Farms <span style={{ fontWeight: 400 }}>{value.length}/{MAX_FARMS}</span>
           </span>
@@ -108,55 +126,55 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
 
       {/* Farm detail — split: fields left, map right */}
       {cur && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 24, alignItems: "start" }}>
+        <div className="ob-farm-grid">
 
           {/* Left: fields in 2 sections */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div className="ob-section">
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Basic info</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
+              <div className="ob-section-title">Basic info</div>
+              <div className="ob-grid-3">
                 <F label="Farm name *" error={e(idx, "name")}>
-                  <input style={inp} value={cur.name} maxLength={120} onChange={(ev) => patch(idx, { name: ev.target.value })} />
+                  <input className="input-field" value={cur.name} maxLength={120} onChange={(ev) => patch(idx, { name: ev.target.value })} />
                 </F>
                 <F label="Location *" error={e(idx, "location")}>
-                  <input style={inp} value={cur.location} maxLength={180} onChange={(ev) => patch(idx, { location: ev.target.value })} />
+                  <input className="input-field" value={cur.location} maxLength={180} onChange={(ev) => patch(idx, { location: ev.target.value })} />
                 </F>
                 <F label="Water source *" error={e(idx, "waterSource")}>
-                  <input style={inp} value={cur.waterSource} maxLength={300} placeholder="Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} />
+                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} />
                 </F>
                 <F label="Total area (ac) *" error={e(idx, "totalArea")}>
-                  <input style={inp} type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} />
                 </F>
                 <F label="Cultivable area (ac) *" error={e(idx, "cultivableArea")}>
-                  <input style={inp} type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} />
                 </F>
                 <F label="Soil type" error={e(idx, "soilType")}>
-                  <input style={inp} value={cur.soilType ?? ""} maxLength={100} placeholder="Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} />
+                  <input className="input-field" value={cur.soilType ?? ""} maxLength={100} placeholder="Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} />
                 </F>
               </div>
             </div>
 
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Land records</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px 20px" }}>
-                <F label="Survey no." error={e(idx, "surveyNumber")}><input style={inp} value={cur.surveyNumber ?? ""} maxLength={100} onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} /></F>
-                <F label="Village" error={e(idx, "village")}><input style={inp} value={cur.village ?? ""} maxLength={100} onChange={(ev) => patch(idx, { village: ev.target.value })} /></F>
-                <F label="Taluk" error={e(idx, "taluk")}><input style={inp} value={cur.taluk ?? ""} maxLength={100} onChange={(ev) => patch(idx, { taluk: ev.target.value })} /></F>
-                <F label="District" error={e(idx, "district")}><input style={inp} value={cur.district ?? ""} maxLength={100} onChange={(ev) => patch(idx, { district: ev.target.value })} /></F>
-                <F label="State" error={e(idx, "state")}><input style={inp} value={cur.state ?? ""} maxLength={100} onChange={(ev) => patch(idx, { state: ev.target.value })} /></F>
+            <details open={["surveyNumber","village","taluk","district","state"].some((f) => e(idx, f))} style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", padding: "8px 12px" }}>
+              <summary style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", cursor: "pointer" }}>Land records (optional)</summary>
+              <div className="ob-grid-3" style={{ marginTop: 10 }}>
+                <F label="Survey no." error={e(idx, "surveyNumber")}><input className="input-field" value={cur.surveyNumber ?? ""} maxLength={100} onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} /></F>
+                <F label="Village" error={e(idx, "village")}><input className="input-field" value={cur.village ?? ""} maxLength={100} onChange={(ev) => patch(idx, { village: ev.target.value })} /></F>
+                <F label="Taluk" error={e(idx, "taluk")}><input className="input-field" value={cur.taluk ?? ""} maxLength={100} onChange={(ev) => patch(idx, { taluk: ev.target.value })} /></F>
+                <F label="District" error={e(idx, "district")}><input className="input-field" value={cur.district ?? ""} maxLength={100} onChange={(ev) => patch(idx, { district: ev.target.value })} /></F>
+                <F label="State" error={e(idx, "state")}><input className="input-field" value={cur.state ?? ""} maxLength={100} onChange={(ev) => patch(idx, { state: ev.target.value })} /></F>
               </div>
-            </div>
+            </details>
 
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>GPS coordinates</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "12px 12px", alignItems: "end" }}>
+              <div className="ob-section-title">GPS coordinates</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "10px 10px", alignItems: "end" }}>
                 <F label="Latitude *" error={e(idx, "latitude")}>
-                  <input style={inp} type="number" step="any" value={cur.latitude as unknown as string} onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="any" value={cur.latitude as unknown as string} onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} />
                 </F>
                 <F label="Longitude *" error={e(idx, "longitude")}>
-                  <input style={inp} type="number" step="any" value={cur.longitude as unknown as string} onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="any" value={cur.longitude as unknown as string} onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} />
                 </F>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 34, alignSelf: "end", marginBottom: e(idx,"latitude") || e(idx,"longitude") ? 18 : 0 }}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 36, alignSelf: "end" }}>
                   <Icons.MapPin size={13} /><span>{gpsBusy ? "…" : "GPS"}</span>
                 </button>
               </div>
@@ -164,19 +182,26 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
             </div>
           </div>
 
-          {/* Right: map */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>Map pin</div>
-            {hasCoords ? (
-              <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--hairline)" }}>
-                <GeoMap center={[lat, lng]} polygon={null} onChange={() => undefined} interactive={false} height={300}
-                  pins={[{ key: cur.rowId ?? String(idx), lat, lng, color: "#16a34a", label: cur.name.trim() || `Farm ${idx + 1}` }]} />
+          {/* Right: demarcation map */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>
+                Demarcation{ringAcresLive > 0 ? ` · ${ringAcresLive.toFixed(2)} ac` : ""}
               </div>
-            ) : (
-              <div style={{ height: 140, border: "1.5px dashed var(--hairline-strong)", borderRadius: "var(--radius-md)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--muted)", textAlign: "center", padding: 16 }}>
-                Enter lat/lng to preview map pin
-              </div>
-            )}
+              {ring && (
+                <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11, color: "var(--muted)" }} onClick={() => patchRing(idx, null)}>
+                  Clear fence
+                </button>
+              )}
+            </div>
+            <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--hairline)" }}>
+              <GeoMap center={mapCenter} polygon={ring} onChange={(r) => patchRing(idx, r)} interactive height={220}
+                pins={!ring && hasCoords ? [{ key: cur.rowId ?? String(idx), lat, lng, color: "#16a34a", label: cur.name.trim() || `Farm ${idx + 1}` }] : null} />
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>
+              {ring ? "Fence drawn — verified area applies on activation." : hasCoords ? "Draw the fence, or keep the GPS pin for now." : "Enter lat/lng, use GPS, or draw the fence directly."}
+            </div>
+            {e(idx, "boundaryRing") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)" }}>{e(idx, "boundaryRing")}</div>}
           </div>
         </div>
       )}

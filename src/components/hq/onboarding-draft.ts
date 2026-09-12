@@ -51,6 +51,7 @@ export function emptyFarm() {
     district: "",
     state: "",
     soilType: "",
+    boundaryRing: null as null | [number, number][],
   };
 }
 

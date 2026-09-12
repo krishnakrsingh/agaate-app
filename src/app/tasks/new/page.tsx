@@ -19,7 +19,7 @@ export default async function NewTaskPage({
   const session = await requireSession();
   const params = searchParams ? await searchParams : undefined;
 
-  if (!["SUPER_ADMIN", "AGRONOMIST"].includes(session.role)) {
+  if (!["SUPER_ADMIN", "AGRONOMIST", "FARM_ADMIN"].includes(session.role)) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />

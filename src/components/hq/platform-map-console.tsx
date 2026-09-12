@@ -265,7 +265,7 @@ export function PlatformMapConsole() {
           </div>
 
           <button type="button" onClick={toggleQa}
-            style={{ border: "none", cursor: "pointer", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, background: qaMode ? "#f59e0b" : "rgba(15,23,42,0.85)", color: qaMode ? "#000" : "#94a3b8", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
+            style={{ cursor: "pointer", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, background: qaMode ? "#f59e0b" : "rgba(15,23,42,0.85)", color: qaMode ? "#000" : "#94a3b8", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
             {qaMode ? "Exit QA" : "Boundary QA"}
           </button>
 

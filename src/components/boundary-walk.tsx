@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { Icons } from "./icons";
 import {
   decideSample,
@@ -98,6 +99,7 @@ export function BoundaryWalk({
   center?: [number, number] | null;
   farmBoundary?: string | null;
 }) {
+  const router = useRouter();
   const [capturing, setCapturing] = useState(false);
   const [samples, setSamples] = useState<GpsSample[]>([]);
   const [dropped, setDropped] = useState(0);
@@ -239,7 +241,10 @@ export function BoundaryWalk({
 
   const payloadTarget = (): WalkTarget => {
     if (target.kind === "PLOT_NEW") return { kind: "PLOT_NEW", farmId: target.farmId, name: plotName.trim() };
-    if (target.kind === "PLOT_EXISTING") return { kind: "PLOT_EXISTING", farmId: target.farmId, plotId: target.plotId! };
+    if (target.kind === "PLOT_EXISTING") {
+      if (!target.plotId) return { kind: "FARM" as const, farmId: target.farmId };
+      return { kind: "PLOT_EXISTING", farmId: target.farmId, plotId: target.plotId };
+    }
     return { kind: "FARM", farmId: target.farmId };
   };
 
@@ -254,6 +259,7 @@ export function BoundaryWalk({
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
         setQueue(markWalk(w.captureId, "ACCEPTED"));
+        router.refresh();
       } else if (res.status === 401 || res.status === 403) {
         setQueue(markWalk(w.captureId, "FAILED_AUTH", body.error ?? "Access denied at sync time."));
       } else if (res.status === 422) {

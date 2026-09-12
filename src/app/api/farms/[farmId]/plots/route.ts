@@ -16,7 +16,9 @@ const schema = z.object({
   // Optional drawn boundary (GeoJSON Polygon string or legacy [{lat,lng}]).
   // Canonical server path validates containment + computes acres; when
   // present, the server-computed area wins over client `area`.
+  // `boundaryGeoJson` is accepted as an alias (farm PATCH canonical name).
   boundary: z.any().optional().nullable(),
+  boundaryGeoJson: z.any().optional().nullable(),
   irrigation: z
     .array(
       z.object({
@@ -55,7 +57,8 @@ export async function POST(
     });
 
     // Canonical geometry path: validate containment, server-compute acres.
-    const geo = validatePlotGeometry(input.boundary ?? null, farm.boundaryGeoJson);
+    const rawBoundary = input.boundary !== undefined ? input.boundary : input.boundaryGeoJson;
+    const geo = validatePlotGeometry(rawBoundary ?? null, farm.boundaryGeoJson);
     const finalArea = geo ? roundAcresForDb(geo.acres) : input.area;
     const boundary = geo ? { geoJson: geo.geoJson, acres: roundAcresForDb(geo.acres) } : null;
 

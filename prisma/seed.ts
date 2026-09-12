@@ -53,6 +53,9 @@ async function main() {
   await prisma.cropCycle.deleteMany({});
   await prisma.irrigationConfiguration.deleteMany({});
   await prisma.plot.deleteMany({});
+  await prisma.boundaryVersion.deleteMany({});
+  await prisma.walkTrack.deleteMany({});
+  await prisma.onboardingDraft.deleteMany({});
   await prisma.farmAccess.deleteMany({});
   await prisma.farm.deleteMany({});
   await prisma.user.deleteMany({});
@@ -223,6 +226,16 @@ async function main() {
   }
 
   // Estate 1: Greenfield Precision Estate (Hosur, Tamil Nadu) - ACTIVE High-Tech Polyhouse
+  // Ships with a surveyed fence (~14.4 ac around the Hosur centroid) so
+  // plot-with-fence, grid-split, and geofence demos work on first try.
+  const greenfieldRing: [number, number][] = [
+    [77.833, 12.5273],
+    [77.8352, 12.5273],
+    [77.8352, 12.5295],
+    [77.833, 12.5295],
+    [77.833, 12.5273],
+  ];
+  const greenfieldGeoJson = JSON.stringify({ type: "Polygon", coordinates: [greenfieldRing] });
   const greenfieldFarm = await prisma.farm.create({
     data: {
       id: "farm-greenfield-01",
@@ -238,6 +251,24 @@ async function main() {
       waterSource: "2x 20HP Borewells + 250kL Rainwater Harvesting Pond",
       geofenceRadiusMeters: 600,
       status: FarmStatus.ACTIVE,
+      boundaryGeoJson: greenfieldGeoJson,
+      measuredAcres: 14.42,
+    },
+  });
+  await prisma.boundaryVersion.create({
+    data: {
+      entityType: "FARM",
+      entityId: greenfieldFarm.id,
+      version: 1,
+      boundaryGeoJson: greenfieldGeoJson,
+      measuredAcres: 14.42,
+      perimeterM: 966,
+      centroidLat: 12.5284,
+      centroidLng: 77.8341,
+      prevAcres: null,
+      areaFlagged: false,
+      source: "MANUAL_DRAW",
+      actorName: "Seed",
     },
   });
 

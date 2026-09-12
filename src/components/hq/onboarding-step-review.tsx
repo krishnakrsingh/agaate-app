@@ -23,6 +23,8 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
   data: WizardData; submitting: boolean; submitError: string | null; onActivate: () => void;
 }) {
   const totalArea = data.farms.reduce((s, f) => s + (Number(f.totalArea) || 0), 0);
+  const fencedFarms = data.farms.filter((f) => (f.boundaryRing?.length ?? 0) >= 4).length;
+  const fencedPlots = data.plots.filter((p) => (p.boundaryRing?.length ?? 0) >= 4).length;
   const farmNameByRow = new Map(data.farms.map((f, i) => [f.rowId ?? `index:${i}`, f.name.trim() || `Farm ${i + 1}`]));
 
   return (
@@ -38,8 +40,8 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
             <Row label="Contact" value={[data.client.phone, data.client.email].filter(Boolean).join(" · ") || "—"} />
             <Row label="Tax" value={[data.client.panNumber, data.client.gstin].filter(Boolean).join(" · ") || "—"} />
             <Row label="Location" value={[data.client.district, data.client.state].filter(Boolean).join(", ") || "—"} />
-            <Row label="Farms" value={`${data.farms.length} farm${data.farms.length !== 1 ? "s" : ""}${data.farms.length > 0 ? ` — ${totalArea.toFixed(2)} ac total` : ""}`} warn={data.farms.length === 0} />
-            <Row label="Plots" value={`${data.plots.length} plot${data.plots.length !== 1 ? "s" : ""}`} />
+            <Row label="Farms" value={`${data.farms.length} farm${data.farms.length !== 1 ? "s" : ""}${data.farms.length > 0 ? ` — ${totalArea.toFixed(2)} ac total · ${fencedFarms} fenced` : ""}`} warn={data.farms.length === 0} />
+            <Row label="Plots" value={`${data.plots.length} plot${data.plots.length !== 1 ? "s" : ""}${data.plots.length > 0 ? ` · ${fencedPlots} fenced` : ""}`} />
             <Row label="Credentials" value={data.team.mode === "create" ? `Login for ${data.team.email || "—"}` : "Invite later"} />
           </tbody>
         </table>
@@ -52,7 +54,7 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--hairline)" }}>
-                {["Name", "Location", "Area", "Water source"].map((h) => (
+                {["Name", "Location", "Area", "Fence", "Water source"].map((h) => (
                   <th key={h} style={{ padding: "4px 8px 8px 0", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{h}</th>
                 ))}
               </tr>
@@ -63,6 +65,7 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
                   <td style={{ padding: "7px 8px 7px 0", fontWeight: 600 }}>{f.name}</td>
                   <td style={{ padding: "7px 8px 7px 0", color: "var(--muted)" }}>{f.location}</td>
                   <td style={{ padding: "7px 8px 7px 0", fontFamily: "var(--font-mono)" }}>{Number(f.cultivableArea)}/{Number(f.totalArea)} ac</td>
+                  <td style={{ padding: "7px 8px 7px 0", fontSize: 12, color: (f.boundaryRing?.length ?? 0) >= 4 ? "var(--green)" : "var(--muted-soft)" }}>{(f.boundaryRing?.length ?? 0) >= 4 ? "Fenced" : "Pin only"}</td>
                   <td style={{ padding: "7px 0", color: "var(--muted-soft)" }}>{f.waterSource}</td>
                 </tr>
               ))}
@@ -78,7 +81,7 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--hairline)" }}>
-                {["Name", "Farm", "Area"].map((h) => (
+                {["Name", "Farm", "Area", "Fence"].map((h) => (
                   <th key={h} style={{ padding: "4px 8px 8px 0", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{h}</th>
                 ))}
               </tr>
@@ -88,7 +91,8 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
                 <tr key={p.rowId ?? i} style={{ borderBottom: "1px solid var(--hairline)" }}>
                   <td style={{ padding: "7px 8px 7px 0", fontWeight: 600 }}>{p.name}</td>
                   <td style={{ padding: "7px 8px 7px 0", color: "var(--muted)" }}>{farmNameByRow.get(p.farmRowId) ?? "Missing farm"}</td>
-                  <td style={{ padding: "7px 0", fontFamily: "var(--font-mono)" }}>{Number(p.area)} ac</td>
+                  <td style={{ padding: "7px 8px 7px 0", fontFamily: "var(--font-mono)" }}>{Number(p.area)} ac</td>
+                  <td style={{ padding: "7px 0", fontSize: 12, color: (p.boundaryRing?.length ?? 0) >= 4 ? "var(--green)" : "var(--muted-soft)" }}>{(p.boundaryRing?.length ?? 0) >= 4 ? "Fenced" : "Pin only"}</td>
                 </tr>
               ))}
             </tbody>

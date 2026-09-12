@@ -194,10 +194,10 @@ _Generated via Agaate Precision Farm Intelligence_`;
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--ink)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
               <Icons.FileText size={20} style={{ color: "var(--green)" }} />
               Executive Estate Brief
-            </h1>
+            </h2>
             <span className="badge badge-green">Landowner Report</span>
           </div>
           <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>

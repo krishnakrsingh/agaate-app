@@ -66,9 +66,9 @@ export default async function PlotPage({
           plot={{
             ...plot,
             farmId: plot.farmId,
-            area: plot.area.toString(),
-            latitude: plot.latitude.toString(),
-            longitude: plot.longitude.toString(),
+            area: plot.area?.toString() ?? "0",
+            latitude: plot.latitude?.toString() ?? "0",
+            longitude: plot.longitude?.toString() ?? "0",
             measuredAcres: plot.measuredAcres ? plot.measuredAcres.toString() : null,
             irrigation: plot.irrigation.map((i) => ({
               type: i.type,
@@ -76,7 +76,7 @@ export default async function PlotPage({
             })),
           }}
           farmBoundary={plot.farm.boundaryGeoJson}
-          farmCenter={[Number(plot.farm.latitude), Number(plot.farm.longitude)]}
+          farmCenter={plot.farm.latitude != null && plot.farm.longitude != null ? [Number(plot.farm.latitude), Number(plot.farm.longitude)] : null}
         />
 
         <div style={{ marginTop: 20 }}>

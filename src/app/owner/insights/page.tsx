@@ -22,7 +22,7 @@ export default async function OwnerInsightsPage() {
     id: f.id,
     name: f.name,
     location: f.location,
-    cultivableArea: f.cultivableArea.toString(),
+    cultivableArea: f.cultivableArea?.toString() ?? "0",
   }));
 
   return (

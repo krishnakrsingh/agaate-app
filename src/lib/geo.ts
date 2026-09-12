@@ -46,6 +46,16 @@ export function parseBoundary(input: string | null): LngLat[] | null {
 }
 
 /**
+ * True when a STORED boundary exists but cannot be parsed (corrupt data).
+ * Distinct from "no fence" (null/empty → false). Use to show a
+ * "redraw" banner instead of a misleading empty map.
+ */
+export function isBoundaryCorrupt(stored: string | null | undefined): boolean {
+  if (typeof stored !== "string" || stored.trim() === "") return false;
+  return parseBoundary(stored) === null;
+}
+
+/**
  * Validation errors for a boundary JSON string (empty = valid).
  * NOTE: unlike parseBoundary (tolerant), malformed input is an error here.
  */

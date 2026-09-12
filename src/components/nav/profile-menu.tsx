@@ -77,6 +77,16 @@ export function ProfileMenu({
 
           {/* Quick Navigation Links based on role */}
           <div className="profile-dropdown-nav">
+            {(role === "FARM_ADMIN" || role === "FARM_OFFICER") && (
+              <Link
+                href={role === "FARM_ADMIN" ? "/owner/profile" : "/officer/profile"}
+                className="profile-menu-link"
+                onClick={() => setOpen(false)}
+              >
+                <Icons.Users size={14} />
+                <span>My Profile</span>
+              </Link>
+            )}
             {role === "SUPER_ADMIN" && (
               <Link
                 href="/admin/users"

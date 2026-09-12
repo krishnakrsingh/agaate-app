@@ -140,7 +140,7 @@ export function TaskBoard() {
         t.status === statusFilter ||
         (statusFilter === "QUEUED" && ["DRAFT", "ASSIGNED", "AVAILABLE"].includes(t.status));
       const matchDay = dayFilter === "ALL" || t.dueDate?.slice(0, 10) === dayFilter;
-      const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase()) || t.farm.name.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = !search || t.title?.toLowerCase().includes(search.toLowerCase()) || (t.farm?.name?.toLowerCase().includes(search.toLowerCase()) ?? false);
       return matchStatus && matchDay && matchSearch;
     });
   }, [tasks, statusFilter, dayFilter, search]);
@@ -445,7 +445,7 @@ export function TaskBoard() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {t.plot?.name ? t.plot.name.replace(/^Plot:\s*/i, "") : t.farm.name}
+                      {t.plot?.name ? t.plot.name.replace(/^Plot:\s*/i, "") : (t.farm?.name ?? "Removed estate")}
                       {t.cropCycle ? ` • ${t.cropCycle.cropName.split(" ")[0]}` : ""}
                     </span>
 

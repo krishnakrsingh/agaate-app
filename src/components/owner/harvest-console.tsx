@@ -110,8 +110,8 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
     return logs.filter((l) => {
       const matchesSearch =
         !q ||
-        l.plot.name.toLowerCase().includes(q) ||
-        l.cropCycle.cropName.toLowerCase().includes(q) ||
+        (l.plot?.name?.toLowerCase().includes(q) ?? false) ||
+        (l.cropCycle?.cropName?.toLowerCase().includes(q) ?? false) ||
         (l.farm?.name && l.farm.name.toLowerCase().includes(q)) ||
         (l.buyerOrMarket && l.buyerOrMarket.toLowerCase().includes(q)) ||
         (l.vehicleNumber && l.vehicleNumber.toLowerCase().includes(q));
@@ -164,8 +164,8 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
         return [
           l.harvestDate.slice(0, 10),
           l.farm?.name || "N/A",
-          l.plot.name,
-          l.cropCycle.cropName,
+          l.plot?.name || "Removed plot",
+          l.cropCycle?.cropName || "Unknown crop",
           l.quantity,
           l.unit,
           l.grade,
@@ -173,14 +173,14 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
           l.totalAmount || "",
           l.buyerOrMarket || "N/A",
           l.vehicleNumber || "N/A",
-          l.createdBy.name,
-          l.createdBy.role,
+          l.createdBy?.name || "Unknown",
+          l.createdBy?.role || "—",
         ];
       }
       return [
         l.harvestDate.slice(0, 10),
-        l.plot.name,
-        l.cropCycle.cropName,
+        l.plot?.name || "Removed plot",
+        l.cropCycle?.cropName || "Unknown crop",
         l.quantity,
         l.unit,
         l.grade,
@@ -188,8 +188,8 @@ export function HarvestConsole({ farms }: { farms: Farm[] }) {
         l.totalAmount || "",
         l.buyerOrMarket || "N/A",
         l.vehicleNumber || "N/A",
-        l.createdBy.name,
-        l.createdBy.role,
+        l.createdBy?.name || "Unknown",
+        l.createdBy?.role || "—",
       ];
     });
 

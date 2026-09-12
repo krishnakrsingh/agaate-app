@@ -7,6 +7,9 @@ import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { normalizeEmail, normalizePhone, submitSchema } from "@/components/hq/onboarding-schema";
+import { parseBoundary, validatePlotGeometry, roundAcresForDb } from "@/lib/geo-server";
+import { representativePoint } from "@/lib/geo-core";
+import { commitBoundary } from "@/lib/geo-versions";
 
 // Single transactional activation for the HQ onboarding wizard.
 // Idempotent on idempotencyKey: a retried double-click returns the stored
@@ -51,16 +54,27 @@ export async function POST(request: NextRequest) {
         if (existing) {
           throw new Error("Validation failed: this onboarding is already being submitted. Wait a moment, then check the resume list.");
         }
-        await tx.onboardingDraft.create({
-          data: {
-            idempotencyKey: input.idempotencyKey,
-            createdById: actor.id,
-            payload: body,
-            status: "SUBMITTING",
-            clientName: input.client.name,
-            farmCount: input.farms.length,
-          },
-        });
+        try {
+          await tx.onboardingDraft.create({
+            data: {
+              idempotencyKey: input.idempotencyKey,
+              createdById: actor.id,
+              payload: body,
+              status: "SUBMITTING",
+              clientName: input.client.name,
+              farmCount: input.farms.length,
+            },
+          });
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+            const raced = await tx.onboardingDraft.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
+            if (raced?.status === "SUBMITTED" && raced.resultJson) {
+              return { ...(raced.resultJson as ActivationSummary), deduped: true };
+            }
+            throw new Error("Validation failed: duplicate submit detected. Wait a moment, then check the resume list.");
+          }
+          throw e;
+        }
       }
 
       // Uniqueness pre-checks inside the tx so failures name the field.
@@ -129,9 +143,20 @@ export async function POST(request: NextRequest) {
       }
 
       // Farms: sequential so any failure names its row (single tx = all-or-nothing).
+      // Drawn fences are normalized server-side (same path as the plot API):
+      // invalid geometry names its row instead of silently landing unfenced.
       const farms: { id: string; name: string }[] = [];
+      const farmGeoJsonByRow = new Map<string, string | null>();
       for (let i = 0; i < input.farms.length; i += 1) {
         const f = input.farms[i];
+        const rowLabel = `farm row ${i + 1} ("${f.name.trim() || "unnamed"}")`;
+        let geo: { geoJson: string; acres: number } | null = null;
+        try {
+          const parsed = parseBoundary((f as { boundaryRing?: unknown }).boundaryRing ?? null);
+          if (parsed) geo = { geoJson: parsed.geoJson, acres: roundAcresForDb(parsed.acres) };
+        } catch (e) {
+          throw new Error(`Validation failed: ${rowLabel} fence is invalid — ${e instanceof Error ? e.message : "redraw the boundary."}`);
+        }
         try {
           const created = await tx.farm.create({
             data: {
@@ -157,48 +182,102 @@ export async function POST(request: NextRequest) {
             },
             select: { id: true, name: true },
           });
+          if (geo) {
+            // First fence becomes BoundaryVersion v1 (perimeter, centroid, flag).
+            await commitBoundary(
+              tx,
+              { type: "FARM", id: created.id },
+              { geoJson: geo.geoJson, acres: geo.acres },
+              { source: "MANUAL_DRAW", actorId: actor.id, actorName: actor.name },
+              async (t) =>
+                t.farm.update({
+                  where: { id: created.id },
+                  data: { boundaryGeoJson: geo.geoJson, measuredAcres: geo.acres },
+                  select: { id: true },
+                })
+            );
+          }
           farms.push(created);
+          farmGeoJsonByRow.set(f.rowId ?? `index:${i}`, geo?.geoJson ?? null);
         } catch (e) {
           if (e instanceof Error && e.message.startsWith("Validation failed")) throw e;
-          throw new Error(`Validation failed: farm row ${i + 1} ("${f.name.trim() || "unnamed"}") could not be saved. Fix it and retry.`);
+          throw new Error(`Validation failed: ${rowLabel} could not be saved. Fix it and retry.`);
         }
       }
 
       if (owner) {
         await tx.farmAccess.createMany({
-          data: farms.map((f) => ({ userId: owner!.id, farmId: f.id, canManage: true })),
+          data: farms.map((f) => ({ userId: owner.id, farmId: f.id, canManage: true })),
         });
       }
 
-      // Plots: map wizard rowIds to real farm ids.
+      // Plots: map wizard rowIds to real farm ids. Fenced plots are
+      // containment-checked against their farm fence (same rule as the plot
+      // API); server-computed acres win over the typed area, and the pin
+      // falls on the fence centroid instead of stacking on the farm point.
       const farmIdByRow = new Map<string, string>();
       input.farms.forEach((f, i) => farmIdByRow.set(f.rowId ?? `index:${i}`, farms[i].id));
       const plots: { id: string; name: string; farmId: string }[] = [];
+      const allocatedByFarm = new Map<string, number>();
       for (let i = 0; i < input.plots.length; i += 1) {
         const p = input.plots[i];
+        const rowLabel = `plot row ${i + 1} ("${p.name.trim() || "unnamed"}")`;
         const farmIndex = input.farms.findIndex((f, fi) => (f.rowId ?? `index:${fi}`) === p.farmRowId);
         const farmId = farmIdByRow.get(p.farmRowId);
-        if (!farmId || farmIndex === -1) throw new Error(`Validation failed: plot row ${i + 1} refers to a missing farm.`);
+        if (!farmId || farmIndex === -1) throw new Error(`Validation failed: ${rowLabel} refers to a missing farm.`);
         const farm = input.farms[farmIndex];
+        let geo: { geoJson: string; acres: number; ring: [number, number][] } | null = null;
         try {
-          const created = await tx.plot.create({
-            data: {
-              farmId,
-              name: p.name.trim(),
-              area: Number(p.area),
-              latitude: Number(farm.latitude),
-              longitude: Number(farm.longitude),
-              soilType: p.soilType || farm.soilType || null,
-              status: "SETUP",
-            },
-            select: { id: true, name: true, farmId: true },
-          });
-          plots.push(created);
+          const v = validatePlotGeometry((p as { boundaryRing?: unknown }).boundaryRing ?? null, farmGeoJsonByRow.get(p.farmRowId) ?? null);
+          if (v) geo = { geoJson: v.geoJson, acres: roundAcresForDb(v.acres), ring: v.ring as [number, number][] };
         } catch (e) {
+          throw new Error(`Validation failed: ${rowLabel} fence rejected — ${e instanceof Error ? e.message : "redraw inside the farm fence."}`);
+        }
+        const finalArea = geo ? geo.acres : Number(p.area);
+        const cap = Number(farm.cultivableArea);
+        const running = Math.round(((allocatedByFarm.get(farmId) ?? 0) + finalArea) * 100) / 100;
+        if (Number.isFinite(cap) && running > Math.round(cap * 100) / 100) {
+          throw new Error(`Validation failed: ${rowLabel} pushes farm "${farm.name}" past its cultivable area.`);
+        }
+        let pinLat = Number(farm.latitude);
+        let pinLng = Number(farm.longitude);
+        if (geo) {
+          try {
+            const c = representativePoint(geo.ring);
+            if (c) { pinLng = c[0]; pinLat = c[1]; }
+          } catch { /* keep farm centroid */ }
+        }
+        try {
+          const data = {
+            farmId,
+            name: p.name.trim(),
+            area: finalArea,
+            latitude: pinLat,
+            longitude: pinLng,
+            soilType: p.soilType || farm.soilType || null,
+            boundaryGeoJson: geo?.geoJson ?? null,
+            measuredAcres: geo ? geo.acres : null,
+            status: "SETUP" as const,
+          };
+          const created = geo
+            ? (
+                await commitBoundary(
+                  tx,
+                  { type: "PLOT" },
+                  { geoJson: geo.geoJson, acres: geo.acres },
+                  { source: "MANUAL_DRAW", actorId: actor.id, actorName: actor.name },
+                  async (t) => t.plot.create({ data, select: { id: true, name: true, farmId: true } })
+                )
+              ).result
+            : await tx.plot.create({ data, select: { id: true, name: true, farmId: true } });
+          plots.push(created);
+          allocatedByFarm.set(farmId, running);
+        } catch (e) {
+          if (e instanceof Error && e.message.startsWith("Validation failed")) throw e;
           if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-            throw new Error(`Validation failed: plot row ${i + 1} duplicates a plot name on farm "${farm.name}".`);
+            throw new Error(`Validation failed: ${rowLabel} duplicates a plot name on farm "${farm.name}".`);
           }
-          throw new Error(`Validation failed: plot row ${i + 1} ("${p.name.trim() || "unnamed"}") could not be saved.`);
+          throw new Error(`Validation failed: ${rowLabel} could not be saved.`);
         }
       }
 
@@ -218,7 +297,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.deduped) {
-      await audit(actor.id, "HQ_ONBOARD_CLIENT", "Client", result.client.id, { farms: result.farms.length, plots: result.plots.length });
+      try {
+        await audit(actor.id, "HQ_ONBOARD_CLIENT", "Client", result.client.id, { farms: result.farms.length, plots: result.plots.length });
+      } catch (e) {
+        console.error("audit(HQ_ONBOARD_CLIENT) failed", e);
+      }
     }
     return NextResponse.json({ success: true, ...result }, { status: result.deduped ? 200 : 201 });
   } catch (error) {

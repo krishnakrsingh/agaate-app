@@ -147,7 +147,7 @@ export default async function OfficerProfilePage() {
     }
     return {
       id: s.id,
-      farmName: s.farm.name,
+      farmName: s.farm?.name ?? "Removed estate",
       date: s.attendanceDate.toISOString().split("T")[0],
       startAt: s.startAt ? s.startAt.toISOString() : null,
       endAt: s.endAt ? s.endAt.toISOString() : null,
@@ -169,14 +169,15 @@ export default async function OfficerProfilePage() {
           primaryImageUrl = null;
         }
       }
+      if (!e.task) return null;
       return {
         id: e.id,
         taskId: e.task.id,
-        title: e.task.title,
-        priority: e.task.priority,
-        category: e.task.category,
+        title: e.task.title ?? "Deleted task",
+        priority: e.task.priority ?? "MEDIUM",
+        category: e.task.category ?? "General",
         status: e.status,
-        farmName: e.task.farm.name,
+        farmName: e.task.farm?.name ?? "Removed estate",
         plotName: e.task.plot?.name || "Farm Wide",
         cropName: e.task.cropCycle?.cropName || null,
         completedAt: e.completedAt ? e.completedAt.toISOString() : null,
@@ -209,7 +210,7 @@ export default async function OfficerProfilePage() {
         level: i.level,
         status: i.status,
         description: i.description,
-        farmName: i.farm.name,
+        farmName: i.farm?.name ?? "Removed estate",
         plotName: i.plot?.name || "Farm Wide",
         cropName: i.cropCycle?.cropName || null,
         photosCount: i.media.length,
@@ -241,7 +242,7 @@ export default async function OfficerProfilePage() {
           }}
           todayAttendance={serializedTodayAttendance}
           shiftsHistory={serializedShifts}
-          tasksHistory={serializedTasks}
+          tasksHistory={serializedTasks.filter((t): t is NonNullable<typeof t> => t !== null)}
           incidentsHistory={serializedIncidents}
         />
       </main>

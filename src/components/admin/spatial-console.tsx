@@ -153,6 +153,10 @@ export function SpatialConsole() {
 
   const handleSaveBoundary = async () => {
     if (!selectedFarm) return;
+    if (currentRing && currentRing.length < 4) {
+      toast.error("Incomplete shape — finish the polygon (3+ points) or clear it before saving.");
+      return;
+    }
     setSavingBoundary(true);
     try {
       const geoJsonString = currentRing && currentRing.length >= 4 ? toGeoJsonPolygon(currentRing) : null;
