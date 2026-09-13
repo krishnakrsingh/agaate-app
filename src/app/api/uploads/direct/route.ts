@@ -4,7 +4,7 @@ import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { isStorageConfigured, putObject } from "@/lib/storage";
 import fs from "fs/promises";
 import path from "path";
 
@@ -55,28 +55,9 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     let uploadedToS3 = false;
-    const s3Endpoint = process.env.S3_ENDPOINT;
-    const isDevPlaceholder = !s3Endpoint || process.env.S3_ACCESS_KEY_ID === "change-me" || s3Endpoint.includes("localhost:9000");
-    if (!isDevPlaceholder && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY) {
+    if (isStorageConfigured()) {
       try {
-        const s3 = new S3Client({
-          endpoint: s3Endpoint,
-          region: process.env.S3_REGION || "us-east-1",
-          forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
-          credentials: {
-            accessKeyId: process.env.S3_ACCESS_KEY_ID,
-            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-          },
-        });
-
-        const uploadPromise = s3.send(
-          new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET || "agaate-evidence",
-            Key: storageKey,
-            Body: buffer,
-            ContentType: mimeType,
-          })
-        );
+        const uploadPromise = putObject(storageKey, buffer, mimeType);
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error("S3 upload timeout")), 1500)
         );
