@@ -393,14 +393,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       {/* 3. Footer */}
       <div className="sidebar-footer">
         {!collapsed ? (
-          <>
-            <div className="sidebar-telemetry-row">
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                <span className="telemetry-live-dot" />
-                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.05em" }}>SYS LIVE</span>
-              </span>
-            </div>
-
             <div className="sidebar-user-card">
               <div className="sidebar-user-info">
                 <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
@@ -413,7 +405,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
               </div>
 
               <div className="sidebar-user-actions">
-                <ThemeToggle variant="switch" />
+                <ThemeToggle variant="button" />
                 <button
                   type="button"
                   className="sidebar-logout-btn"
@@ -424,7 +416,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
                 </button>
               </div>
             </div>
-          </>
         ) : (
           <div className="sidebar-rail-stack">
             {/* User Avatar with Tooltip */}

@@ -232,14 +232,19 @@ export default async function OperationsPage() {
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
-      <main className="shell">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+      <main className="shell" style={{ gap: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
           <div>
-            <div className="eyebrow" style={{ margin: 0 }}>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>
               <span className="eyebrow-dot" />
-              OPERATE • INBOX
+              <span>OPERATIONS &bull; TRIAGE CONSOLE</span>
             </div>
-            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Inbox</h1>
+            <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--ink)" }}>
+              Inbox & Operational Queue
+            </h1>
+            <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--muted)", maxWidth: 640 }}>
+              Central intelligence console for geofence breaches, location shifts, overdue execution tasks, and stalled estate setups.
+            </p>
           </div>
         </div>
 
