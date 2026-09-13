@@ -41,18 +41,8 @@ export default async function OwnerSettingsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Farm Settings" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • CONFIGURATION &amp; PERIMETER
-            </div>
-            <h1>Farm Settings</h1>
-            <p className="muted">
-              Configure estate metadata, geofence radius calibration, and soil/water infrastructural baseline.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Farm Settings</h1>
         </div>
 
         <FarmSettingsConsole farm={farm} />

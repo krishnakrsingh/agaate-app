@@ -17,19 +17,9 @@ export default async function BoundaryWalkPage({
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell narrow">
-        <Breadcrumbs items={[{ label: "Field Work" }, { label: "Boundary Walk" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              FIELD CAPTURE • GPS PERIMETER WALK
-            </div>
-            <h1>Walk the Boundary</h1>
-            <p className="muted">
-              Walk the fence line with GPS on. The server rebuilds and validates the polygon from your raw
-              track — nothing is authoritative until sync is accepted.
-            </p>
-          </div>
+        <Breadcrumbs items={[{ label: "Field Work", href: "/dashboard" }, { label: "Boundary Walk" }]} />
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Walk the Boundary</h1>
         </div>
         <BoundaryTargetPicker presetFarmId={sp.farmId} presetPlotId={sp.plotId} />
       </main>

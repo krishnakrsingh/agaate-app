@@ -40,16 +40,8 @@ export default async function OwnerProfilePage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell narrow">
-        <Breadcrumbs items={[{ label: "My Profile" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • ACCOUNT
-            </div>
-            <h1>My Profile</h1>
-            <p className="muted">Your login identity and assigned estates. To change contact details or reset passwords, contact HQ.</p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>My Profile</h1>
         </div>
 
         <div className="card" style={{ padding: 20 }}>

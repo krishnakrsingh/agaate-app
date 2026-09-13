@@ -57,18 +57,8 @@ export default async function OwnerFarmPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "My Farm" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • OPERATIONAL PROFILE
-            </div>
-            <h1>My Farm</h1>
-            <p className="muted">
-              Spatial geometry, cadastral records, soil baseline chemistry, and agricultural infrastructure specifications.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>My Farm</h1>
         </div>
 
         <MyFarmOverview farms={serializedFarms} />

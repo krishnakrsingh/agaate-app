@@ -240,14 +240,8 @@ export default async function HqOverviewPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <div className="eyebrow" style={{ margin: 0 }}>
-              <span className="eyebrow-dot" />
-              OPERATE • INBOX
-            </div>
-            <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: 700 }}>Inbox</h1>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Operations Inbox</h1>
         </div>
 
         <OperationsTriageConsole data={triageData} />

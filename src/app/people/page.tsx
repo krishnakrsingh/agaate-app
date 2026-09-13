@@ -12,6 +12,9 @@ export default async function PeoplePage() {
   if (session.role === "SUPER_ADMIN") {
     redirect("/hq/people");
   }
+  if (session.role === "FARM_ADMIN") {
+    redirect("/owner/people");
+  }
 
   return (
     <>

@@ -13,9 +13,9 @@ export default async function HqPeoplePage() {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
-          <Breadcrumbs items={[{ label: "HQ People" }]} />
+          <Breadcrumbs items={[{ label: "Internal Team" }]} />
           <h1>Access Restricted</h1>
-          <p className="error">Only Super Admins can access the HQ people directory.</p>
+          <p className="error">Only Super Admins can access the HQ internal team directory.</p>
         </main>
       </>
     );
@@ -25,18 +25,8 @@ export default async function HqPeoplePage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "People" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • PEOPLE DIRECTORY
-            </div>
-            <h1>People</h1>
-            <p className="muted">
-              Platform accounts, roles, and estate access. For daily muster, use Attendance.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Internal Team</h1>
         </div>
 
         <PeopleDirectory currentUserId={session.userId} />

@@ -14,16 +14,9 @@ export default async function HqOnboardingNewPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ" }, { label: "Client onboarding", href: "/hq/onboarding" }, { label: "New" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • CLIENT ONBOARDING
-            </div>
-            <h1>Onboard a client</h1>
-            <p className="muted">Five steps: client, farms, plots, team login, review. Safe to refresh — the draft is kept.</p>
-          </div>
+        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: "New" }]} />
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>New Client Onboarding</h1>
         </div>
         <OnboardingWizard serverDraft={null} />
       </main>

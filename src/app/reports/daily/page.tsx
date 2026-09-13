@@ -13,19 +13,8 @@ export default async function DailyReportPage() {
       <Navbar role={session.role} userName={session.name} />
 
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Daily Operations Report" }]} />
-
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot"></span>
-              AUTOMATED COMPREHENSIVE INTELLIGENCE
-            </div>
-            <h1>Daily Operations Report</h1>
-            <p className="muted">
-              Projected from verified field attendance, task completions, resource usage, crop monitoring, and incident logs (BRD §30).
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Daily Operations Report</h1>
         </div>
 
         <DailyReport />

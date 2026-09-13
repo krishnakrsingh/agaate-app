@@ -23,21 +23,27 @@ export default async function HqOnboardingListPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "Client onboarding" }]} />
         <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • CLIENT ONBOARDING
-            </div>
-            <h1>Onboarding drafts</h1>
-            <p className="muted">
-              Multi-step intake for employee-assisted calls. Drafts save on this device and on the server — resume any interrupted call.
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Onboarding</h1>
+            {drafts.length > 0 && (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--muted)",
+                  background: "var(--surface-strong)",
+                  padding: "2px 8px",
+                  borderRadius: 12,
+                }}
+              >
+                {drafts.length} draft{drafts.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
-          <Link className="btn btn-green" href="/hq/onboarding/new">
+          <Link className="btn btn-primary" href="/hq/onboarding/new">
             <Icons.Plus size={15} />
-            <span>Start new onboarding</span>
+            <span>New onboarding</span>
           </Link>
         </div>
 

@@ -23,18 +23,8 @@ export default async function OwnerRecordsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Logistics & Records" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • LOGISTICS &amp; OPERATIONAL RECORDS
-            </div>
-            <h1>Logistics &amp; Records</h1>
-            <p className="muted">
-              Unified registry of harvest weighbridge receipts, shed stock inventory transactions, and operating expenditures.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Logistics &amp; Records</h1>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>

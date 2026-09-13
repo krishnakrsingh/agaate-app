@@ -31,19 +31,8 @@ export default async function HqAnalyticsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ Analytics" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • FARMING HISTORY &amp; YIELD INTELLIGENCE
-            </div>
-            <h1>Farming History &amp; Yield Intelligence</h1>
-            <p className="muted">
-              Crop history per plot, harvest totals, officer productivity, land utilization, and incident rates.
-              Scoped to one client or farm at a time — pick a scope and date range to begin.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Yield Intelligence &amp; Analytics</h1>
         </div>
 
         <AnalyticsConsole clients={clients} farms={farms} />

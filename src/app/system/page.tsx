@@ -26,18 +26,8 @@ export default async function SystemPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "System Governance" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              CONFIGURE • POLICIES &amp; AUDIT
-            </div>
-            <h1>System</h1>
-            <p className="muted">
-              Platform policies (read-only) and the immutable audit trail. Pending approvals live in Operations → Inbox.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>System Governance</h1>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>

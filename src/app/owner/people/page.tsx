@@ -75,18 +75,8 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "People & Labor" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • WORKFORCE &amp; ACCESS
-            </div>
-            <h1>People &amp; On-Site Team</h1>
-            <p className="muted">
-              Farm managers, agronomists, and crew supervisors authorized for this estate. Provision mobile phone login credentials.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>People &amp; On-Site Team</h1>
         </div>
 
         {farms.length > 1 && (

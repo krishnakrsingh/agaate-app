@@ -328,25 +328,23 @@ export function OnboardingWizard({ serverDraft }: { serverDraft: ServerDraftProp
             );
           })}
 
-          {/* Save status & discard */}
-          <div className="ob-rail-foot" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--hairline)", display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Save status */}
+          <div className="ob-rail-foot" style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid var(--hairline)" }}>
             {saveLabel && <div style={{ fontSize: 11, color: "var(--muted-soft)" }}>{saveLabel}</div>}
-            <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--muted)", justifyContent: "flex-start" }} onClick={discard} disabled={discarding}>
-              <Icons.Trash size={12} /><span>{discarding ? "Discarding…" : "Discard draft"}</span>
-            </button>
           </div>
         </nav>
 
         {/* ── CONTENT ──────────────────────────────────────────────────── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           {/* Step title */}
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const }}>Step {step} / {STEPS.length}</span>
-              <h2 style={{ margin: "2px 0 0", fontSize: 19, fontWeight: 700, color: "var(--ink)" }}>{STEPS[step - 1].label}</h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>Step {step} of {STEPS.length}</span>
+              <span style={{ color: "var(--hairline-strong)" }}>—</span>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{STEPS[step - 1].label}</h2>
             </div>
-            <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--muted)" }} onClick={discard} disabled={discarding}>
-              <Icons.Trash size={12} /><span>Discard draft</span>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ color: "var(--muted)", fontSize: 12 }} onClick={discard} disabled={discarding}>
+              <Icons.Trash size={12} /><span>{discarding ? "Discarding…" : "Discard draft"}</span>
             </button>
           </div>
 

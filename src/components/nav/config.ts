@@ -165,10 +165,10 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/hq/people",
-    label: "People",
-    icon: "User",
+    label: "Internal Team",
+    icon: "Shield",
     roles: ["SUPER_ADMIN"],
-    isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
+    isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people"),
   },
 ];
 

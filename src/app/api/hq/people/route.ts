@@ -3,11 +3,11 @@ import { currentActor, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, paginatedJson, paginationParams, parseSort } from "@/lib/api";
 
-const ROLES = ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"] as const;
+const INTERNAL_ROLES = ["SUPER_ADMIN", "AGRONOMIST"] as const;
 
-// GET /api/hq/people — lakh-scale user directory.
-// Array body + X-Total-Count header (see paginatedJson). Never fetch-all:
-// every filter runs in the DB where-clause, one page (max 200) per request.
+// GET /api/hq/people — internal Agaate team & agronomists directory.
+// Farm officers (labours) are appointed strictly by farm admins and managed on-farm.
+// Farm admins are client accounts managed under Clients/Onboarding.
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
@@ -17,16 +17,14 @@ export async function GET(request: NextRequest) {
     const { limit, offset } = paginationParams(sp);
     const search = sp.get("search")?.trim();
     const roleParam = sp.get("role")?.trim();
-    const clientIdParam = sp.get("clientId")?.trim();
     const activeParam = sp.get("active")?.trim();
     const { sortBy, order } = parseSort(sp, ["name", "createdAt", "updatedAt"], "createdAt");
 
     const where: any = {};
-    if (roleParam && (ROLES as readonly string[]).includes(roleParam)) {
+    if (roleParam && (INTERNAL_ROLES as readonly string[]).includes(roleParam)) {
       where.role = roleParam;
-    }
-    if (clientIdParam) {
-      where.clientId = clientIdParam;
+    } else {
+      where.role = { in: INTERNAL_ROLES };
     }
     if (activeParam === "true") where.active = true;
     else if (activeParam === "false") where.active = false;
@@ -40,7 +38,6 @@ export async function GET(request: NextRequest) {
             { name: { contains: search } },
             { email: { contains: search } },
             { phone: { contains: search } },
-            { client: { name: { contains: search } } },
           ],
         },
       ];

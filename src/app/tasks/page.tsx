@@ -28,23 +28,12 @@ export default async function TasksPage() {
       <Navbar role={session.role} userName={session.name} />
 
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Activities" }]} />
-
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot"></span>
-              OPERATIONS &bull; WORK QUEUE
-            </div>
-            <h1>Tasks queue</h1>
-            <p className="muted">
-              Summary first, then drill into a server-paginated queue. Bulk dispatch is confirmed and permission-checked — never one-by-one for hundreds of rows.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Tasks Queue</h1>
 
           <Link href="/tasks/new" className="btn btn-primary">
-            <Icons.Plus size={18} />
-            <span>Plan New Activity</span>
+            <Icons.Plus size={15} />
+            <span>Plan activity</span>
           </Link>
         </div>
 

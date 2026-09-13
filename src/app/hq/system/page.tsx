@@ -76,18 +76,8 @@ export default async function HqSystemPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "System" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • POLICIES, DATA QUALITY &amp; AUDIT
-            </div>
-            <h1>System</h1>
-            <p className="muted">
-              Read-only platform policies, data-quality snapshot, and the immutable audit trail.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>System Governance</h1>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>

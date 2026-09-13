@@ -29,18 +29,8 @@ export default async function OwnerInsightsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Farm Insights" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • FARM-LEVEL ANALYTICS
-            </div>
-            <h1>Farm Insights &amp; Intelligence</h1>
-            <p className="muted">
-              Farm-level production telemetry, seasonal yield volumes, labour deployment efficiency, and executive brief generator.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Farm Insights &amp; Intelligence</h1>
         </div>
 
         {serializedFarms.length > 0 ? (

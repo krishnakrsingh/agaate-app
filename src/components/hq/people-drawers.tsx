@@ -31,7 +31,7 @@ export type DirectoryUser = {
   farmAccess: FarmAccessInfo[];
 };
 
-export const ROLES = ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"] as const;
+export const ROLES = ["AGRONOMIST", "SUPER_ADMIN"] as const;
 
 // Search-as-type farm lookup, capped at 6 rows. Never fetch-all.
 export function useFarmSearch(clientId?: string | null) {
@@ -49,14 +49,12 @@ export function useFarmSearch(clientId?: string | null) {
       if (clientId) params.set("clientId", clientId);
       fetch(`/api/farms?${params.toString()}`)
         .then((r) => (r.ok ? r.json() : []))
-        .then((data: any) => {
-          const arr = Array.isArray(data) ? data : (data.farms ?? []);
-          setResults(
-            arr.map((f: any) => ({ id: f.id, name: f.name, location: f.location ?? "" }))
-          );
+        .then((data) => {
+          const list = Array.isArray(data) ? data : (data.farms ?? []);
+          setResults(list.map((f: any) => ({ id: f.id, name: f.name, location: f.location || f.village || f.district || "Estate" })));
         })
         .catch(() => setResults([]));
-    }, 250);
+    }, 200);
     return () => clearTimeout(t);
   }, [query, clientId]);
 
@@ -98,44 +96,42 @@ function FarmPills({
   onToggleManage: (farmId: string) => void;
   onRemove: (farmId: string) => void;
 }) {
-  if (!assigned.length) {
-    return <span className="muted" style={{ fontSize: 12 }}>No estates assigned yet.</span>;
+  if (assigned.length === 0) {
+    return <div className="muted" style={{ fontSize: 12 }}>No estates assigned.</div>;
   }
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 8 }}>
-      {assigned.map((af) => (
-        <div
-          key={af.farmId}
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      {assigned.map((f) => (
+        <span
+          key={f.farmId}
           style={{
-            padding: "8px 12px",
-            background: "var(--stone)",
-            borderRadius: "var(--radius-xs)",
-            border: "1px solid var(--line)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            display: "inline-flex", alignItems: "center", gap: 6,
+            backgroundColor: "var(--surface)", border: "1px solid var(--line)",
+            borderRadius: 999, padding: "3px 8px 3px 10px", fontSize: 11,
           }}
         >
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>{af.farmName}</div>
-            <label className="check" style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
-              <input
-                type="checkbox"
-                checked={af.canManage}
-                onChange={() => onToggleManage(af.farmId)}
-              />
-              <span>Manager Access</span>
-            </label>
-          </div>
+          <span>{f.farmName}</span>
           <button
             type="button"
-            onClick={() => onRemove(af.farmId)}
-            aria-label={`Remove ${af.farmName}`}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}
+            onClick={() => onToggleManage(f.farmId)}
+            title={f.canManage ? "Lead Agronomist (click to demote)" : "Observer (click to make lead)"}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 10, fontWeight: 700, padding: 0,
+              color: f.canManage ? "var(--green)" : "var(--muted)",
+            }}
           >
-            <Icons.X size={13} />
+            {f.canManage ? "LEAD" : "ASSIGNED"}
           </button>
-        </div>
+          <button
+            type="button"
+            onClick={() => onRemove(f.farmId)}
+            aria-label={`Remove ${f.farmName}`}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
+          >
+            <Icons.X size={11} />
+          </button>
+        </span>
       ))}
     </div>
   );
@@ -147,15 +143,14 @@ function FarmAssigner({
   clientId,
 }: {
   assigned: AssignedFarm[];
-  setAssigned: (fn: (prev: AssignedFarm[]) => AssignedFarm[]) => void;
+  setAssigned: React.Dispatch<React.SetStateAction<AssignedFarm[]>>;
   clientId?: string | null;
 }) {
   const { query, setQuery, results, clear } = useFarmSearch(clientId);
 
-  function add(id: string, name: string) {
-    setAssigned((prev) =>
-      prev.some((p) => p.farmId === id) ? prev : [...prev, { farmId: id, farmName: name, canManage: false }]
-    );
+  function add(farmId: string, farmName: string) {
+    if (assigned.some((a) => a.farmId === farmId)) return;
+    setAssigned((prev) => [...prev, { farmId, farmName, canManage: false }]);
     clear();
   }
 
@@ -164,7 +159,7 @@ function FarmAssigner({
       <div style={{ position: "relative", marginBottom: 10 }}>
         <input
           type="text"
-          placeholder="Type to search and add estates..."
+          placeholder="Type to search and assign estates..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           style={{ width: "100%", padding: "8px 12px" }}
@@ -253,44 +248,8 @@ export function CreateAccountDrawer({
   onCreated: (message: string) => void;
 }) {
   const [assigned, setAssigned] = useState<AssignedFarm[]>([]);
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [clientName, setClientName] = useState("");
   const [pending, setPending] = useState(false);
-  const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState("");
-  const clientSearch = useClientSearch();
-
-  async function assignAllClientFarms() {
-    if (!clientId) return;
-    setBulkBusy(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({ clientId, limit: "200" });
-      const res = await fetch(`/api/farms?${params.toString()}`);
-      if (!res.ok) throw new Error("Could not load client estates.");
-      const data = await res.json();
-      const arr = Array.isArray(data) ? data : (data.farms ?? []);
-      const total = Number(res.headers.get("X-Total-Count") ?? arr.length);
-      setAssigned((prev) => {
-        const seen = new Set(prev.map((p) => p.farmId));
-        const next = [...prev];
-        for (const f of arr) {
-          if (!seen.has(f.id)) {
-            seen.add(f.id);
-            next.push({ farmId: f.id, farmName: f.name, canManage: false });
-          }
-        }
-        return next;
-      });
-      if (total > arr.length) {
-        setError(`Client has ${total} estates; first ${arr.length} were added. Add the rest via search.`);
-      }
-    } catch (err: any) {
-      setError(err.message ?? "Could not load client estates.");
-    } finally {
-      setBulkBusy(false);
-    }
-  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -313,7 +272,6 @@ export function CreateAccountDrawer({
           phone: (String(f.get("phone") ?? "").trim() || null),
           password,
           role: f.get("role"),
-          clientId,
           farmIds: assigned.map((a) => a.farmId),
           managesFarmIds: assigned.filter((a) => a.canManage).map((a) => a.farmId),
         }),
@@ -322,7 +280,7 @@ export function CreateAccountDrawer({
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Account creation failed.");
       }
-      onCreated("Account created.");
+      onCreated("Team member account created.");
       onClose();
     } catch (err: any) {
       setError(err.message ?? "Error creating account.");
@@ -332,25 +290,24 @@ export function CreateAccountDrawer({
   }
 
   return (
-    <DrawerShell title="Create Account" onClose={onClose}>
+    <DrawerShell title="Add Internal Team Member" onClose={onClose}>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {error && <div className="error" role="alert">{error}</div>}
         <div className="two-column">
           <div className="form-group" style={{ margin: 0 }}>
             <label>Full Name</label>
-            <input name="name" required minLength={2} maxLength={100} placeholder="Full Name" />
+            <input name="name" required minLength={2} maxLength={100} placeholder="e.g. Dr. Anand Sharma" />
           </div>
           <div className="form-group" style={{ margin: 0 }}>
-            <label>System Role</label>
-            <select name="role" defaultValue="FARM_OFFICER">
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r.replaceAll("_", " ")}</option>
-              ))}
+            <label>Internal Role</label>
+            <select name="role" defaultValue="AGRONOMIST">
+              <option value="AGRONOMIST">Agronomist (Technical Specialist)</option>
+              <option value="SUPER_ADMIN">Super Admin (Platform Operator)</option>
             </select>
           </div>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Email Address</label>
-            <input name="email" type="email" maxLength={254} placeholder="user@example.com (or phone)" />
+            <input name="email" type="email" maxLength={254} placeholder="anand@agaate.ag" />
           </div>
           <div className="form-group" style={{ margin: 0 }}>
             <label>Mobile Phone</label>
@@ -363,78 +320,14 @@ export function CreateAccountDrawer({
         </div>
 
         <div className="form-group" style={{ margin: 0 }}>
-          <label>Client Link</label>
-          {clientId ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span className="badge" style={{ fontSize: 11 }}>{clientName}</span>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={bulkBusy}
-                onClick={assignAllClientFarms}
-              >
-                {bulkBusy ? "Adding..." : "Assign all client estates"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => { setClientId(null); setClientName(""); }}
-              >
-                Clear
-              </button>
-            </div>
-          ) : (
-            <div style={{ position: "relative" }}>
-              <input
-                type="text"
-                placeholder="Type to link a client (optional)..."
-                value={clientSearch.query}
-                onChange={(e) => clientSearch.setQuery(e.target.value)}
-                style={{ width: "100%", padding: "8px 12px" }}
-              />
-              {clientSearch.results.length > 0 && (
-                <div
-                  style={{
-                    position: "absolute", top: "100%", left: 0, right: 0,
-                    backgroundColor: "var(--canvas)", border: "1px solid var(--line)",
-                    borderRadius: "var(--radius-xs)", zIndex: 20,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)", maxHeight: 180, overflowY: "auto",
-                  }}
-                >
-                  {clientSearch.results.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        setClientId(c.id);
-                        setClientName(c.code ? `${c.name} (${c.code})` : c.name);
-                        clientSearch.clear();
-                      }}
-                      style={{
-                        width: "100%", padding: "8px 12px", textAlign: "left", background: "none",
-                        border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer",
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                      }}
-                    >
-                      <span style={{ fontWeight: 600, fontSize: 12 }}>{c.name}</span>
-                      <span className="muted" style={{ fontSize: 11 }}>{c.code}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="form-group" style={{ margin: 0 }}>
-          <label>Assigned Estates ({assigned.length})</label>
-          <FarmAssigner assigned={assigned} setAssigned={setAssigned} clientId={clientId} />
+          <label>Assign Estates to Oversee ({assigned.length})</label>
+          <FarmAssigner assigned={assigned} setAssigned={setAssigned} />
         </div>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
           <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-green btn-sm" disabled={pending}>
-            {pending ? "Saving..." : "Create Account"}
+          <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+            {pending ? "Adding..." : "Add Team Member"}
           </button>
         </div>
       </form>

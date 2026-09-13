@@ -138,7 +138,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
 
       },
       {
-        title: "INTAKE & WORKFORCE",
+        title: "INTAKE & TEAM",
         items: [
           {
             href: "/hq/onboarding",
@@ -148,9 +148,9 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           },
           {
             href: "/hq/people",
-            label: "People",
-            icon: "User",
-            isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people") || p.startsWith("/attendance"),
+            label: "Internal Team",
+            icon: "Shield",
+            isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people"),
           },
         ],
       }

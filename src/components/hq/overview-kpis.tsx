@@ -15,7 +15,7 @@ export async function OverviewKpis() {
       activeFarms,
       setupFarms,
       activeCycles,
-      officersCount,
+      superAdminsCount,
       agronomistsCount,
       incidentsOpen,
       criticalIncidents,
@@ -25,7 +25,7 @@ export async function OverviewKpis() {
       prisma.farm.count({ where: { status: "ACTIVE" } }),
       prisma.farm.count({ where: { status: "SETUP" } }),
       prisma.cropCycle.count({ where: { status: "ACTIVE" } }),
-      prisma.user.count({ where: { role: "FARM_OFFICER", active: true } }),
+      prisma.user.count({ where: { role: "SUPER_ADMIN", active: true } }),
       prisma.user.count({ where: { role: "AGRONOMIST", active: true } }),
       prisma.incident.count({ where: { status: { in: ["OPEN", "ACKNOWLEDGED"] } } }),
       prisma.incident.count({ where: { status: { in: ["OPEN", "ACKNOWLEDGED"] }, severity: "CRITICAL" } }),
@@ -161,7 +161,7 @@ export async function OverviewKpis() {
           }}
         >
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ink, #0e0d0c)" }} />
-          <strong>{officersCount}</strong> Officers &middot; <strong>{agronomistsCount}</strong> Agronomists
+          <strong>{agronomistsCount}</strong> Agronomists &middot; <strong>{superAdminsCount}</strong> HQ Staff
         </Link>
 
         {/* Pill 6: Incidents Alert */}

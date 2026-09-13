@@ -25,18 +25,8 @@ export default async function HqTasksPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ" }, { label: "Tasks" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ &bull; PLATFORM TASK LEDGER
-            </div>
-            <h1>Tasks</h1>
-            <p className="muted">
-              Every task on the platform, server-paginated. Filter to a farm, client, or officer, act on one task in the drawer or on dozens via bulk dispatch.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Tasks Ledger</h1>
         </div>
 
         <HqTasksLedger />

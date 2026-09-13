@@ -64,9 +64,21 @@ export async function GET(request: NextRequest) {
         },
         take: per,
       }),
-      actor.role === "SUPER_ADMIN" || actor.role === "FARM_ADMIN"
+      actor.role === "SUPER_ADMIN"
         ? prisma.user.findMany({
-            where: { OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }] },
+            where: {
+              role: { in: ["SUPER_ADMIN", "AGRONOMIST"] },
+              OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }],
+            },
+            select: { id: true, name: true, email: true, role: true, active: true },
+            take: per,
+          })
+        : actor.role === "FARM_ADMIN"
+        ? prisma.user.findMany({
+            where: {
+              farmAccess: { some: { farm: farmScope } },
+              OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }],
+            },
             select: { id: true, name: true, email: true, role: true, active: true },
             take: per,
           })
@@ -109,7 +121,7 @@ export async function GET(request: NextRequest) {
         })),
         users: users.map((u) => ({
           ...u,
-          href: isHq ? `/hq/people` : `/people`,
+          href: isHq ? `/hq/people` : `/owner/people`,
         })),
         tasks: tasks.map((t) => ({
           ...t,

@@ -17,18 +17,8 @@ export default async function OnboardingPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Onboarding Workspace" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              OPERATE • ONBOARDING WORKSPACE
-            </div>
-            <h1>Onboarding Pipeline</h1>
-            <p className="muted">
-              Operational intake and setup engine. Track in-flight estates across the 5 setup stages, identify SLA bottlenecks, and provision estates at scale.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Onboarding Pipeline</h1>
         </div>
 
         <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading onboarding cases…</div>}>

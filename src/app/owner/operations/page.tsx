@@ -15,18 +15,8 @@ export default async function OwnerOperationsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Operations" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • WORK ORDERS &amp; TASKS
-            </div>
-            <h1>Farm Operations</h1>
-            <p className="muted">
-              Active field activities, scheduled fertigation, crop protection tasks, and execution progress across your plots.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Farm Operations</h1>
 
           <div style={{ display: "flex", gap: "10px" }}>
             <Link href="/owner/calendar" className="btn btn-secondary btn-sm">

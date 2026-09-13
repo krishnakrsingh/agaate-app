@@ -39,17 +39,8 @@ export default async function NewTaskPage({
       <main className="shell narrow">
         <Breadcrumbs items={[{ label: "Activities", href: "/tasks" }, { label: "Schedule Activity" }]} />
 
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot"></span>
-              AGRONOMY INTELLIGENCE &bull; 7-DAY ROLLING PLAN
-            </div>
-            <h1>Schedule Field Activity</h1>
-            <p className="muted">
-              Publish agronomy tasks for assigned Farm Officers with technical application guidance.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Schedule Field Activity</h1>
         </div>
 
         <TaskForm

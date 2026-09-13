@@ -13,19 +13,8 @@ export default async function HqIncidentsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ" }, { label: "Incidents" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ Command
-            </div>
-            <h1>Incidents</h1>
-            <p className="muted">
-              Severity mapping: P0 is Critical, P1 is High, P2 is Medium, Low or unset.
-              An open P0 older than 24 hours breaches SLA and is highlighted.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Incidents Command</h1>
         </div>
 
         <Suspense

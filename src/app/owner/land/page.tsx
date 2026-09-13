@@ -72,18 +72,8 @@ export default async function OwnerLandPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "Land & Plots" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              ESTATE • SPATIAL LAND &amp; PLOTS HIERARCHY
-            </div>
-            <h1>Land &amp; Plots</h1>
-            <p className="muted">
-              Spatial allocation of cultivable acreage. Demarcate parcels, configure irrigation valves, and launch planned crop cycles.
-            </p>
-          </div>
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Land &amp; Plots</h1>
         </div>
 
         <PlotsExplorer farms={serializedFarms} />

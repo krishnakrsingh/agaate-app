@@ -42,15 +42,15 @@ export default async function HqOnboardingDraftPage({ params }: { params: Promis
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ" }, { label: "Client onboarding", href: "/hq/onboarding" }, { label: draft.clientName || "Draft" }]} />
-        <div className="page-header">
-          <div className="page-header-content">
-            <div className="eyebrow">
-              <span className="eyebrow-dot" />
-              HQ • CLIENT ONBOARDING
-            </div>
-            <h1>Resume onboarding{draft.clientName ? ` — ${draft.clientName}` : ""}</h1>
-            <p className="muted">Draft from {new Date(draft.updatedAt).toLocaleString()}. Safe to refresh — the draft is kept.</p>
+        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: draft.clientName || "Draft" }]} />
+        <div className="page-header" style={{ paddingBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
+              {draft.clientName ? draft.clientName : "Client Onboarding Draft"}
+            </h1>
+            <span style={{ fontSize: 12, color: "var(--muted)" }}>
+              Saved {new Date(draft.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
           </div>
         </div>
         <OnboardingWizard

@@ -104,7 +104,7 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
         { id: "nav-clients", title: "Clients Directory", subtitle: "Client profiles, estates & acreage", category: "NAVIGATION", href: "/hq/clients", icon: "Users" },
         { id: "nav-farms", title: "Farms Portfolio", subtitle: "Cadastral registry, plots & history", category: "NAVIGATION", href: "/hq/farms", icon: "Farm" },
         { id: "nav-onboard", title: "Client Onboarding", subtitle: "Multi-farm setup wizard & drafts", category: "NAVIGATION", href: "/hq/onboarding", icon: "Zap", badge: "Pipeline" },
-        { id: "nav-people", title: "People & Workforce", subtitle: "User credentials & estate assignments", category: "NAVIGATION", href: "/hq/people", icon: "User" },
+        { id: "nav-people", title: "Internal Team", subtitle: "Agaate agronomists & platform operators", category: "NAVIGATION", href: "/hq/people", icon: "Shield" },
         { id: "act-new-onboard", title: "Onboard New Client", subtitle: "Intake client, 10-20 farms & plots", category: "ACTIONS", href: "/hq/onboarding/new", icon: "Plus", badge: "Action" },
       ];
     }
