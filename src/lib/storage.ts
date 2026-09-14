@@ -5,7 +5,12 @@ const env=(key:string)=>{const value=process.env[key];if(!value)throw new Error(
 let cached: S3Client | null = null;
 const client=()=>{
   if (cached) return cached;
-  cached = new S3Client({endpoint:env("S3_ENDPOINT"),region:env("S3_REGION"),forcePathStyle:process.env.S3_FORCE_PATH_STYLE==="true",credentials:{accessKeyId:env("S3_ACCESS_KEY_ID"),secretAccessKey:env("S3_SECRET_ACCESS_KEY")}});
+  const endpoint=env("S3_ENDPOINT");
+  // R2 requires region "auto" and virtual-hosted style (forcePathStyle=false).
+  // MinIO local dev uses us-east-1 + forcePathStyle=true (set explicitly in .env).
+  const region=process.env.S3_REGION || (endpoint.includes("r2.cloudflarestorage.com") ? "auto" : "us-east-1");
+  const forcePathStyle=process.env.S3_FORCE_PATH_STYLE==="true" ? true : process.env.S3_FORCE_PATH_STYLE==="false" ? false : endpoint.includes("localhost") || endpoint.includes("127.0.0.1");
+  cached = new S3Client({endpoint,region,forcePathStyle,credentials:{accessKeyId:env("S3_ACCESS_KEY_ID"),secretAccessKey:env("S3_SECRET_ACCESS_KEY")}});
   return cached;
 };
 const bucket=()=>env("S3_BUCKET");
@@ -20,6 +25,13 @@ export async function downloadUrl(key: string) {
   if (key.startsWith("/uploads/") || key.startsWith("/api/")) {
     return key;
   }
+  // R2 custom public domain (e.g. https://agaate.krishnakr.com): stable public
+  // URLs, no signing/expiry. Set S3_PUBLIC_BASE_URL to enable.
+  const publicBase = process.env.S3_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (publicBase) {
+    try { assertKey(key); } catch { return `/uploads/${key}`; }
+    return `${publicBase}/${key}`;
+  }
   const s3Endpoint = process.env.S3_ENDPOINT;
   const isDevPlaceholder = !s3Endpoint || process.env.S3_ACCESS_KEY_ID === "change-me" || s3Endpoint.includes("localhost:9000");
   if (isDevPlaceholder) {
@@ -33,3 +45,5 @@ export async function downloadUrl(key: string) {
   }
 }
 export async function headObject(key:string){assertKey(key);return client().send(new HeadObjectCommand({Bucket:bucket(),Key:key}));}
+export async function putObject(key:string,body:Buffer | Uint8Array,mimeType:string){assertKey(key);return client().send(new PutObjectCommand({Bucket:bucket(),Key:key,Body:body as any,ContentType:mimeType}));}
+export function isStorageConfigured(){const endpoint=process.env.S3_ENDPOINT;return !!endpoint && !!process.env.S3_ACCESS_KEY_ID && process.env.S3_ACCESS_KEY_ID!=="change-me" && !!process.env.S3_SECRET_ACCESS_KEY;}
