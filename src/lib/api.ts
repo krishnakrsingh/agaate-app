@@ -14,6 +14,13 @@ export function apiError(error: unknown) {
     return NextResponse.json({ error: message, details: flat }, { status: 422 });
   }
   if (error instanceof Error && (error.message === "Unauthenticated" || error.message === "Account is unavailable")) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  if (error instanceof Prisma.PrismaClientValidationError) {
+    console.error("[PrismaValidationError]", error.message);
+    return NextResponse.json(
+      { error: "Database schema is out of date. Run `npx prisma generate` and restart the dev server." },
+      { status: 500 }
+    );
+  }
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     console.error("[PrismaKnownRequestError]", error.code, error.message);
     if (error.code === "P2002") {

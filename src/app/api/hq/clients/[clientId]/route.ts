@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
 
@@ -15,7 +15,7 @@ export async function GET(
 ) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "clients:read");
     const { clientId } = await params;
 
     const sp = request.nextUrl.searchParams;

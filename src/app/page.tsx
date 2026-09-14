@@ -32,5 +32,9 @@ export default async function Home() {
     redirect("/agronomy/radar");
   }
 
+  if (user.role === "SUPER_ADMIN" || user.role === "OPERATIONS_MANAGER") {
+    redirect("/hq");
+  }
+
   redirect("/operations");
 }

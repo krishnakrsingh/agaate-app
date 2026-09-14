@@ -1,4 +1,5 @@
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { OperationsTriageConsole, type TriageData } from "@/components/admin/operations-triage-console";
@@ -9,13 +10,13 @@ export const dynamic = "force-dynamic";
 export default async function HqOverviewPage() {
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
           <h1>Access Restricted</h1>
-          <p className="error">Only Super Admins can view the HQ operations console.</p>
+          <p className="error">You do not have permission to view the HQ operations console.</p>
         </main>
       </>
     );

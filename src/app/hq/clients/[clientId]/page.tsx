@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Client360 } from "@/components/hq/client-360";
@@ -14,14 +15,14 @@ export default async function HqClientDetailPage({
   const { clientId } = await params;
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
           <Breadcrumbs items={[{ label: "Clients", href: "/hq/clients" }, { label: "Client 360" }]} />
           <h1>Access Restricted</h1>
-          <p className="error">Only Super Admins can access the HQ client view.</p>
+          <p className="error">You do not have permission to access the HQ client view.</p>
         </main>
       </>
     );

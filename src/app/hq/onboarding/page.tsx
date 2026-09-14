@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HqOnboardingListPage() {
   const session = await requireSession();
-  if (session.role !== "SUPER_ADMIN") redirect("/dashboard");
+  if (!hasPermission(session.role, "onboarding:manage")) redirect("/dashboard");
 
   const drafts = await prisma.onboardingDraft.findMany({
     where: { createdById: session.userId, status: "DRAFT" },

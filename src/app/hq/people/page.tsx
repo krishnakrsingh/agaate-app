@@ -1,4 +1,5 @@
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { PeopleDirectory } from "@/components/hq/people-directory";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function HqPeoplePage() {
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "internal_team:manage")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />

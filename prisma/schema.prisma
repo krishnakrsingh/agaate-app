@@ -9,6 +9,7 @@ datasource db {
 
 enum Role {
   SUPER_ADMIN
+  OPERATIONS_MANAGER
   FARM_ADMIN
   AGRONOMIST
   FARM_OFFICER

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
 import { MAX_FARMS } from "@/components/hq/onboarding-schema";
@@ -16,7 +16,7 @@ const saveSchema = z.object({
 export async function GET() {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "onboarding:manage");
     const drafts = await prisma.onboardingDraft.findMany({
       where: { createdById: actor.id, status: "DRAFT" },
       select: { id: true, clientName: true, farmCount: true, createdAt: true, updatedAt: true },
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const { assertSameOrigin } = await import("@/lib/security");
     assertSameOrigin(request);
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "onboarding:manage");
     const input = saveSchema.parse(await request.json());
 
     const serialized = JSON.stringify(input.payload);

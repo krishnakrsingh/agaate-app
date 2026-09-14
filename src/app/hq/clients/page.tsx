@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { Navbar } from "@/components/navbar";
 import { ClientDirectory } from "@/components/hq/client-directory";
 
@@ -8,13 +9,13 @@ export const dynamic = "force-dynamic";
 export default async function HqClientsPage() {
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
           <h1>Access Restricted</h1>
-          <p className="error">Only Super Admins can access the client directory.</p>
+          <p className="error">You do not have permission to access the client directory.</p>
         </main>
       </>
     );

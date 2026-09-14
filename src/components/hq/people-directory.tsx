@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Icons } from "../icons";
 import { RoleBadge } from "../ui/badge";
 import { EmptyState } from "../ui/empty-state";
+import { describeUserAccess, getRoleMeta } from "@/lib/rbac";
+import type { Role } from "@prisma/client";
 import {
   CreateAccountDrawer,
   DirectoryUser,
@@ -230,7 +232,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
             <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
               <option value="ALL">All internal roles</option>
               {ROLES.map((r) => (
-                <option key={r} value={r}>{r === "AGRONOMIST" ? "Agronomist" : "Super Admin"}</option>
+                <option key={r} value={r}>{getRoleMeta(r).label}</option>
               ))}
             </select>
           </div>
@@ -293,7 +295,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
                 <th>Name</th>
                 <th>Contact</th>
                 <th>Role</th>
-                <th>Assigned Estates</th>
+                <th>Access Scope</th>
                 <th>Status</th>
                 <th>Last Active</th>
                 <th style={{ textAlign: "right" }}>Actions</th>
@@ -352,13 +354,15 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
                       <RoleBadge role={u.role} />
                     </td>
                     <td style={{ fontSize: 12 }}>
-                      {u.role === "SUPER_ADMIN" ? (
-                        <span className="badge" style={{ fontSize: 11, whiteSpace: "nowrap" }}>All Estates (HQ)</span>
-                      ) : u.farmCount > 0 ? (
-                        <span style={{ fontWeight: 500 }}>{u.farmCount} estate{u.farmCount === 1 ? "" : "s"}</span>
-                      ) : (
-                        <span className="muted">No estates assigned</span>
-                      )}
+                      {(() => {
+                        const access = describeUserAccess(u.role as Role, u.farmAccess);
+                        return (
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{access.label}</div>
+                            <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{access.detail}</div>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       <span className={`status ${u.active ? "active" : "inactive"}`} style={{ whiteSpace: "nowrap" }}>
@@ -388,7 +392,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
         <EmptyState
           icon={<Icons.Users size={24} />}
           title="No internal team members found"
-          description="Use 'Add Team Member' to invite an agronomist or super admin."
+          description="Add agronomists, operations managers, or super admins to the internal team."
           action={
             <button
               type="button"

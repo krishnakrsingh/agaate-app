@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -16,7 +17,7 @@ type Props = {
 
 export default async function HqOnboardingNewPage({ searchParams }: Props) {
   const session = await requireSession();
-  if (session.role !== "SUPER_ADMIN") redirect("/dashboard");
+  if (!hasPermission(session.role, "onboarding:manage")) redirect("/dashboard");
 
   const resolvedParams = searchParams ? await searchParams : {};
   const clientId = resolvedParams.clientId?.trim();

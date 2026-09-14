@@ -17,10 +17,10 @@ export async function GET(request: NextRequest) {
     if (!q || q.length < 2) return NextResponse.json({ clients: [], farms: [], users: [], tasks: [], incidents: [] }, { headers: noStore });
     const per = Math.min(25, Math.max(1, Number(sp.get("limit") || 8) || 8));
     const farmScope = await accessibleFarmWhere();
-    const isPlatform = actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST";
+    const isPlatform = actor.role === "SUPER_ADMIN" || actor.role === "OPERATIONS_MANAGER" || actor.role === "AGRONOMIST";
 
     const [clients, farms, plots, users, tasks, incidents] = await Promise.all([
-      actor.role === "SUPER_ADMIN"
+      actor.role === "SUPER_ADMIN" || actor.role === "OPERATIONS_MANAGER"
         ? prisma.client.findMany({
             where: { OR: [{ name: { contains: q } }, { code: { contains: q } }, { phone: { contains: q } }, { companyName: { contains: q } }] },
             select: { id: true, name: true, code: true, phone: true, state: true, district: true },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       actor.role === "SUPER_ADMIN"
         ? prisma.user.findMany({
             where: {
-              role: { in: ["SUPER_ADMIN", "AGRONOMIST"] },
+              role: { in: ["SUPER_ADMIN", "OPERATIONS_MANAGER", "AGRONOMIST"] },
               OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }],
             },
             select: { id: true, name: true, email: true, role: true, active: true },

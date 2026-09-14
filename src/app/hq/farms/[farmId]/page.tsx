@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { downloadUrl } from "@/lib/storage";
 import { Navbar } from "@/components/navbar";
@@ -23,7 +24,7 @@ export default async function HqFarmDetailPage({
   const { farmId } = await params;
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "farms:read_all")) {
     return notFound();
   }
 

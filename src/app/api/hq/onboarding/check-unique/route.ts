@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
 import { normalizeEmail, normalizePhone } from "@/components/hq/onboarding-schema";
@@ -9,7 +9,7 @@ import { normalizeEmail, normalizePhone } from "@/components/hq/onboarding-schem
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "onboarding:manage");
     const sp = request.nextUrl.searchParams;
     const phone = normalizePhone(sp.get("phone"));
     const email = normalizeEmail(sp.get("email"));

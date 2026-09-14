@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, paginatedJson, paginationParams, parseSort } from "@/lib/api";
-
-const INTERNAL_ROLES = ["SUPER_ADMIN", "AGRONOMIST"] as const;
+import { INTERNAL_ROLES } from "@/lib/rbac";
 
 // GET /api/hq/people — internal Agaate team & agronomists directory.
 // Farm officers (labours) are appointed strictly by farm admins and managed on-farm.
@@ -11,7 +10,7 @@ const INTERNAL_ROLES = ["SUPER_ADMIN", "AGRONOMIST"] as const;
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "internal_team:manage");
 
     const sp = request.nextUrl.searchParams;
     const { limit, offset } = paginationParams(sp);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const { assertSameOrigin } = await import("@/lib/security");
     assertSameOrigin(request);
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "onboarding:manage");
 
     const body = await request.json();
     const input = submitSchema.parse(body);

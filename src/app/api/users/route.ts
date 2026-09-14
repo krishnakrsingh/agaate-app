@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { currentActor, requireRole, accessibleFarmWhere } from "@/lib/access";
+import { resolveManageFarmIds } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, paginationParams } from "@/lib/api";
@@ -11,7 +12,7 @@ const createUserSchema = z.object({
   email: z.string().email().max(254).optional().nullable(),
   phone: z.string().max(30).optional().nullable(),
   password: z.string().min(12).max(128),
-  role: z.enum(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
+  role: z.enum(["SUPER_ADMIN", "OPERATIONS_MANAGER", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
   isSupervisor: z.boolean().default(false),
   clientId: z.string().optional().nullable(),
   farmId: z.string().optional(),
@@ -199,7 +200,7 @@ export async function POST(request: NextRequest) {
           farmAccess: {
             create: farmIds.map((farmId) => ({
               farmId,
-              canManage: input.role === "FARM_ADMIN" && input.managesFarmIds.includes(farmId),
+              canManage: resolveManageFarmIds(input.role, input.managesFarmIds).includes(farmId),
             })),
           },
         },

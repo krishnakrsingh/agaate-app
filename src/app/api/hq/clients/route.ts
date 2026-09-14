@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireRole } from "@/lib/access";
+import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, noStore, paginationParams } from "@/lib/api";
@@ -98,7 +98,7 @@ async function enrichPage(ids: string[]): Promise<Map<string, ClientStats>> {
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "clients:read");
 
     const sp = request.nextUrl.searchParams;
     const { offset } = paginationParams(sp);
@@ -192,7 +192,7 @@ const bulkStatusSchema = z.object({
 export async function PATCH(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requirePermission(actor.role, "clients:write");
     const input = bulkStatusSchema.parse(await request.json());
 
     const result = await prisma.client.updateMany({

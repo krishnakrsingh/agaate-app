@@ -134,33 +134,33 @@ export const NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.startsWith("/reports"),
   },
 
-  // ── 4. SUPER ADMIN (AGAATE HQ ECOSYSTEM OPERATIONS) ──
+  // ── 4. HQ STAFF (SUPER ADMIN + OPERATIONS MANAGER) ──
   {
     href: "/hq",
     label: "Overview",
     icon: "Activity",
-    roles: ["SUPER_ADMIN"],
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
     isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
   },
   {
     href: "/hq/clients",
     label: "Clients",
     icon: "Users",
-    roles: ["SUPER_ADMIN"],
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
     isActive: (p) => p.startsWith("/hq/clients") || p.startsWith("/clients"),
   },
   {
     href: "/hq/farms",
     label: "Farms",
     icon: "Farm",
-    roles: ["SUPER_ADMIN"],
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
     isActive: (p) => p.startsWith("/hq/farms") || p.startsWith("/farms"),
   },
   {
     href: "/hq/onboarding",
     label: "Onboarding",
     icon: "Zap",
-    roles: ["SUPER_ADMIN"],
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
     isActive: (p) => p.startsWith("/hq/onboarding") || p.startsWith("/onboarding"),
   },
   {
@@ -182,6 +182,9 @@ export function getMobileNavForRole(role: Role): NavItem[] {
   if (role === "SUPER_ADMIN") {
     return all.filter((i) => ["/hq", "/hq/clients", "/hq/farms", "/hq/onboarding", "/hq/people"].includes(i.href));
   }
+  if (role === "OPERATIONS_MANAGER") {
+    return all.filter((i) => ["/hq", "/hq/clients", "/hq/farms", "/hq/onboarding"].includes(i.href));
+  }
   if (role === "FARM_ADMIN") {
     return all.filter((i) => ["/owner/dashboard", "/owner/land", "/owner/operations", "/owner/records", "/owner/insights"].includes(i.href));
   }
@@ -198,6 +201,7 @@ export function isActiveItem(pathname: string, item: NavItem): boolean {
 
 export const ROLE_LABELS: Record<string, string> = {
   SUPER_ADMIN: "SUPER ADMIN",
+  OPERATIONS_MANAGER: "OPS MANAGER",
   FARM_ADMIN: "FARM OWNER",
   AGRONOMIST: "AGRONOMIST",
   FARM_OFFICER: "FARM MANAGER",
@@ -205,6 +209,7 @@ export const ROLE_LABELS: Record<string, string> = {
 
 export const ROLE_HOME_URLS: Record<string, string> = {
   SUPER_ADMIN: "/hq",
+  OPERATIONS_MANAGER: "/hq",
   FARM_ADMIN: "/owner/dashboard",
   AGRONOMIST: "/agronomy/radar",
   FARM_OFFICER: "/officer/day",

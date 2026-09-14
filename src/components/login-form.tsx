@@ -36,7 +36,7 @@ export function LoginForm() {
 
       const userRole = body.user?.role;
       let targetUrl = "/dashboard";
-      if (userRole === "SUPER_ADMIN") {
+      if (userRole === "SUPER_ADMIN" || userRole === "OPERATIONS_MANAGER") {
         targetUrl = "/hq";
       } else if (userRole === "FARM_ADMIN") {
         targetUrl = "/owner/dashboard";

@@ -11,7 +11,7 @@ import { CommandPalette } from "./nav/command-palette";
 import { DesktopSidebar } from "./layout/desktop-sidebar";
 import { BrandLogo } from "./brand-logo";
 
-type Role = "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
+type Role = "SUPER_ADMIN" | "OPERATIONS_MANAGER" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
 
 export function Navbar({ role, userName }: { role: string; userName?: string }) {
   const pathname = usePathname();

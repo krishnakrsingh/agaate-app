@@ -1237,6 +1237,9 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .role-badge.role-agronomist {
   background-color: var(--blue-tint, rgba(37, 99, 235, 0.12)); border-color: var(--blue-tint, rgba(37, 99, 235, 0.12)); color: var(--blue, #1d4ed8);
 }
+.role-badge.role-operations-manager {
+  background-color: var(--teal-tint, rgba(13, 148, 136, 0.12)); border-color: var(--teal-tint, rgba(13, 148, 136, 0.12)); color: var(--teal-ink, #0f766e);
+}
 .role-badge.role-farm-admin {
   background-color: var(--amber-light, rgba(217, 119, 6, 0.12)); border-color: var(--amber-light, rgba(217, 119, 6, 0.12)); color: var(--amber, #b45309);
 }

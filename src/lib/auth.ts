@@ -11,9 +11,9 @@ const secret = new TextEncoder().encode(process.env.APP_SESSION_SECRET ?? "");
 
 export const testSessionContext = new AsyncLocalStorage<{ token?: string }>();
 
-export type Session = { userId: string; role: "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER"; name: string };
+export type Session = { userId: string; role: "SUPER_ADMIN" | "OPERATIONS_MANAGER" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER"; name: string };
 
-const VALID_ROLES = new Set(["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]);
+const VALID_ROLES = new Set(["SUPER_ADMIN", "OPERATIONS_MANAGER", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]);
 
 function requireSecret() { if (secret.length < 32) throw new Error("APP_SESSION_SECRET must be set to a random value of at least 32 characters."); }
 

@@ -6,7 +6,9 @@ export function RoleBadge({ role }: { role: string }) {
 
   let colorClass = "";
   if (normalized === "SUPER_ADMIN") colorClass = "role-super-admin";
+  else if (normalized === "OPERATIONS_MANAGER") colorClass = "role-operations-manager";
   else if (normalized === "AGRONOMIST") colorClass = "role-agronomist";
+  else if (normalized === "FARM_ADMIN") colorClass = "role-farm-admin";
   else if (normalized.includes("ADMIN")) colorClass = "role-farm-admin";
   else if (normalized.includes("OFFICER")) colorClass = "role-farm-officer";
 

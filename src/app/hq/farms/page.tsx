@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import { Navbar } from "@/components/navbar";
 import { HqFarmRegistry } from "@/components/hq/farm-registry";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function HqFarmsPage() {
   const session = await requireSession();
 
-  if (session.role !== "SUPER_ADMIN") {
+  if (!hasPermission(session.role, "farms:read_all")) {
     return notFound();
   }
 
