@@ -128,78 +128,136 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
       {cur && (
         <div className="ob-farm-grid">
 
-          {/* Left: fields in 2 sections */}
+          {/* Left: fields in cards */}
           <div className="ob-section">
-            <div>
-              <div className="ob-section-title">Basic info</div>
+            <div style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: "18px 20px",
+              boxShadow: "var(--shadow-card)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                    Basic Estate Information
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>Step 2 of 5</span>
+              </div>
               <div className="ob-grid-3">
                 <F label="Farm name *" error={e(idx, "name")}>
-                  <input className="input-field" value={cur.name} maxLength={120} onChange={(ev) => patch(idx, { name: ev.target.value })} />
+                  <input className="input-field" value={cur.name} maxLength={120} placeholder="e.g., North Valley Estate" onChange={(ev) => patch(idx, { name: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Location *" error={e(idx, "location")}>
-                  <input className="input-field" value={cur.location} maxLength={180} onChange={(ev) => patch(idx, { location: ev.target.value })} />
+                  <input className="input-field" value={cur.location} maxLength={180} placeholder="e.g., Near Hoskote Gate" onChange={(ev) => patch(idx, { location: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Water source *" error={e(idx, "waterSource")}>
-                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} />
+                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="e.g., Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Total area (ac) *" error={e(idx, "totalArea")}>
-                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} placeholder="12.5" onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Cultivable area (ac) *" error={e(idx, "cultivableArea")}>
-                  <input className="input-field" type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} placeholder="10.0" onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Soil type" error={e(idx, "soilType")}>
-                  <input className="input-field" value={cur.soilType ?? ""} maxLength={100} placeholder="Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} />
+                  <input className="input-field" value={cur.soilType ?? ""} maxLength={100} placeholder="e.g., Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
               </div>
             </div>
 
-            <details open={["surveyNumber","village","taluk","district","state"].some((f) => e(idx, f))} style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", padding: "8px 12px" }}>
-              <summary style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", cursor: "pointer" }}>Land records (optional)</summary>
-              <div className="ob-grid-3" style={{ marginTop: 10 }}>
-                <F label="Survey no." error={e(idx, "surveyNumber")}><input className="input-field" value={cur.surveyNumber ?? ""} maxLength={100} onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} /></F>
-                <F label="Village" error={e(idx, "village")}><input className="input-field" value={cur.village ?? ""} maxLength={100} onChange={(ev) => patch(idx, { village: ev.target.value })} /></F>
-                <F label="Taluk" error={e(idx, "taluk")}><input className="input-field" value={cur.taluk ?? ""} maxLength={100} onChange={(ev) => patch(idx, { taluk: ev.target.value })} /></F>
-                <F label="District" error={e(idx, "district")}><input className="input-field" value={cur.district ?? ""} maxLength={100} onChange={(ev) => patch(idx, { district: ev.target.value })} /></F>
-                <F label="State" error={e(idx, "state")}><input className="input-field" value={cur.state ?? ""} maxLength={100} onChange={(ev) => patch(idx, { state: ev.target.value })} /></F>
+            {/* Land records accordion card */}
+            <details open={["surveyNumber","village","taluk","district","state"].some((f) => e(idx, f))} style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: "14px 18px",
+              boxShadow: "var(--shadow-card)"
+            }}>
+              <summary style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icons.FileText size={13} style={{ color: "var(--ink)" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", letterSpacing: "0.05em" }}>Land Records & Cadastral (Optional)</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "none", letterSpacing: "normal", marginTop: 1 }}>Survey, Village, Taluk & District Details</div>
+                  </div>
+                </div>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icons.ChevronDown size={13} className="ob-chevron" style={{ color: "var(--ink)", transition: "transform 0.2s ease" }} />
+                </div>
+              </summary>
+              <div className="ob-grid-3" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
+                <F label="Survey no." error={e(idx, "surveyNumber")}><input className="input-field" value={cur.surveyNumber ?? ""} maxLength={100} placeholder="e.g., 42/1A" onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F label="Village" error={e(idx, "village")}><input className="input-field" value={cur.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(ev) => patch(idx, { village: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F label="Taluk" error={e(idx, "taluk")}><input className="input-field" value={cur.taluk ?? ""} maxLength={100} placeholder="e.g., Magadi" onChange={(ev) => patch(idx, { taluk: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F label="District" error={e(idx, "district")}><input className="input-field" value={cur.district ?? ""} maxLength={100} placeholder="e.g., Ramanagara" onChange={(ev) => patch(idx, { district: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F label="State" error={e(idx, "state")}><input className="input-field" value={cur.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(ev) => patch(idx, { state: ev.target.value })} style={{ borderRadius: 8 }} /></F>
               </div>
             </details>
 
-            <div>
-              <div className="ob-section-title">GPS coordinates</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "10px 10px", alignItems: "end" }}>
+            {/* GPS coordinates card */}
+            <div style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: "16px 20px",
+              boxShadow: "var(--shadow-card)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                  Geographic Coordinates
+                </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "10px 12px", alignItems: "end" }}>
                 <F label="Latitude *" error={e(idx, "latitude")}>
-                  <input className="input-field" type="number" step="any" value={cur.latitude as unknown as string} onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="any" value={cur.latitude as unknown as string} placeholder="13.1234" onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Longitude *" error={e(idx, "longitude")}>
-                  <input className="input-field" type="number" step="any" value={cur.longitude as unknown as string} onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} />
+                  <input className="input-field" type="number" step="any" value={cur.longitude as unknown as string} placeholder="77.5678" onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
                 </F>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 36, alignSelf: "end" }}>
-                  <Icons.MapPin size={13} /><span>{gpsBusy ? "…" : "GPS"}</span>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 38, padding: "0 14px", alignSelf: "end", gap: 6 }}>
+                  <Icons.MapPin size={13} /><span>{gpsBusy ? "Locating…" : "Current GPS"}</span>
                 </button>
               </div>
-              {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 4 }}>{gpsErr}</div>}
+              {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 6 }}>{gpsErr}</div>}
             </div>
           </div>
 
-          {/* Right: demarcation map */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* Right: demarcation map card */}
+          <div style={{
+            background: "var(--surface-card)",
+            border: "1px solid var(--hairline)",
+            borderRadius: "var(--radius-md)",
+            padding: "16px 18px",
+            boxShadow: "var(--shadow-card)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10
+          }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>
-                Demarcation{ringAcresLive > 0 ? ` · ${ringAcresLive.toFixed(2)} ac` : ""}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink)" }}>
+                  Demarcation Map{ringAcresLive > 0 ? ` · ${ringAcresLive.toFixed(2)} ac` : ""}
+                </span>
               </div>
               {ring && (
-                <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11, color: "var(--muted)" }} onClick={() => patchRing(idx, null)}>
+                <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11, color: "var(--muted)", padding: "2px 8px" }} onClick={() => patchRing(idx, null)}>
                   Clear fence
                 </button>
               )}
             </div>
             <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--hairline)" }}>
-              <GeoMap center={mapCenter} polygon={ring} onChange={(r) => patchRing(idx, r)} interactive height={220}
+              <GeoMap center={mapCenter} polygon={ring} onChange={(r) => patchRing(idx, r)} interactive height={240}
                 pins={!ring && hasCoords ? [{ key: cur.rowId ?? String(idx), lat, lng, color: "#16a34a", label: cur.name.trim() || `Farm ${idx + 1}` }] : null} />
             </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>
-              {ring ? "Fence drawn — verified area applies on activation." : hasCoords ? "Draw the fence, or keep the GPS pin for now." : "Enter lat/lng, use GPS, or draw the fence directly."}
+            <div style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.4 }}>
+              {ring ? "✓ Boundary fence drawn — verified acreage applies on activation." : hasCoords ? "Draw the estate fence, or keep the GPS pin for now." : "Enter lat/lng, use GPS button, or draw boundary directly."}
             </div>
             {e(idx, "boundaryRing") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)" }}>{e(idx, "boundaryRing")}</div>}
           </div>

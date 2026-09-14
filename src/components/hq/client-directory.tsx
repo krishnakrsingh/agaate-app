@@ -509,7 +509,7 @@ export function ClientDirectory() {
         <div style={{ fontSize: 12, color: "var(--muted)", paddingLeft: 4 }}>
           <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""} registered
           {filtersActive ? " matching filters" : ""}
-          {total > LIMIT ? ` &bull; Page ${page} of ${totalPages}` : ""}
+          {total > LIMIT ? ` • Page ${page} of ${totalPages}` : ""}
         </div>
       )}
 

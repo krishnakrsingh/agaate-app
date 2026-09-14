@@ -123,7 +123,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
             </div>
 
             {/* Quick 1-Click Theme Toggle */}
-            <ThemeToggle variant="switch" />
+            <ThemeToggle variant="button" />
 
             {/* Profile Dropdown (Only for roles without dedicated bottom Profile tab) */}
             {role !== "FARM_OFFICER" && (
@@ -142,6 +142,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
           {mobile.map((item) => {
             const active = isActiveItem(pathname, item);
             const Icon = iconMap[item.icon] ?? Icons.Layers;
+            const label = item.label === "Internal Team" ? "Team" : item.label === "Onboarding" ? "Onboard" : item.label;
             return (
               <Link
                 key={item.href}
@@ -149,8 +150,11 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
                 className={`app-mobile-item ${active ? "active" : ""}`}
                 aria-current={active ? "page" : undefined}
               >
-                <Icon size={18} />
-                <span>{item.label}</span>
+                <span className="app-mobile-icon-wrap">
+                  <Icon size={18} />
+                </span>
+                <span className="app-mobile-label">{label}</span>
+                {active && <span className="app-mobile-active-dot" aria-hidden />}
               </Link>
             );
           })}

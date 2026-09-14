@@ -31,6 +31,14 @@ export function assertSameOrigin(request: Request): void {
   const configured = process.env.WEBAUTHN_ORIGIN?.trim();
   if (configured) allowed.add(configured.replace(/\/$/, ""));
   const candidate = origin ?? (referer ? new URL(referer).origin : null);
+  if (process.env.NODE_ENV !== "production") {
+    const portMatch = host.match(/:(\d+)$/);
+    const portSuffix = portMatch ? `:${portMatch[1]}` : "";
+    allowed.add(`http://localhost${portSuffix}`);
+    allowed.add(`http://127.0.0.1${portSuffix}`);
+    allowed.add(`https://localhost${portSuffix}`);
+    allowed.add(`https://127.0.0.1${portSuffix}`);
+  }
   if (candidate && !allowed.has(candidate)) {
     const err = new Error("Cross-origin request rejected.");
     (err as unknown as Record<string, unknown>).status = 403;

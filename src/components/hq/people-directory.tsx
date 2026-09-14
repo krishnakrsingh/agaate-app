@@ -41,6 +41,23 @@ function formatDate(iso?: string) {
   return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function parseNameAndTitle(rawName: string) {
+  const match = rawName.match(/^(.*?)\s*\((.*?)\)$/);
+  if (match) {
+    return { name: match[1].trim(), title: match[2].trim() };
+  }
+  return { name: rawName.trim(), title: null };
+}
+
+function getInitials(name: string) {
+  const clean = name.replace(/^Dr\.\s+/i, "").trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return (parts[0]?.substring(0, 2) || "U").toUpperCase();
+}
+
 export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [total, setTotal] = useState(0);
@@ -283,50 +300,87 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} aria-label={`Select ${u.name}`} /></td>
-                  <td>
-                    <strong>{u.name}</strong>
-                    <div className="muted" style={{ fontSize: 11 }}>ID: {u.id.slice(0, 10)}</div>
-                  </td>
-                  <td style={{ fontSize: 12 }}>
-                    {u.email && <div>{u.email}</div>}
-                    {u.phone && <div className="muted">{u.phone}</div>}
-                    {!u.email && !u.phone && <span className="muted">No contact</span>}
-                  </td>
-                  <td>
-                    <RoleBadge role={u.role} />
-                  </td>
-                  <td style={{ fontSize: 12 }}>
-                    {u.role === "SUPER_ADMIN" ? (
-                      <span className="badge" style={{ fontSize: 11 }}>All Estates (HQ)</span>
-                    ) : u.farmCount > 0 ? (
-                      <span>{u.farmCount} estate{u.farmCount === 1 ? "" : "s"}</span>
-                    ) : (
-                      <span className="muted">No estates assigned</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`status ${u.active ? "active" : "inactive"}`}>
-                      {u.active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: 12 }} className="muted">
-                    {formatDate(u.lastActive)}
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => setEditing(u)}
-                    >
-                      <Icons.Edit size={12} />
-                      <span>Edit Access</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {users.map((u) => {
+                const { name: cleanName, title: titleDesignation } = parseNameAndTitle(u.name);
+                const initials = getInitials(cleanName);
+
+                return (
+                  <tr key={u.id}>
+                    <td><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} aria-label={`Select ${u.name}`} /></td>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 0" }}>
+                        <div
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: "50%",
+                            background: "linear-gradient(135deg, var(--surface-strong) 0%, var(--surface-card) 100%)",
+                            border: "1px solid var(--hairline)",
+                            color: "var(--primary)",
+                            fontWeight: 700,
+                            fontSize: 12,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            letterSpacing: "0.02em"
+                          }}
+                        >
+                          {initials}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 13, lineHeight: 1.3 }}>
+                            {cleanName}
+                          </div>
+                          {titleDesignation && (
+                            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500, lineHeight: 1.25, marginTop: 1 }}>
+                              {titleDesignation}
+                            </div>
+                          )}
+                          <div className="muted" style={{ fontSize: 10.5, fontFamily: "var(--font-mono)", opacity: 0.7, marginTop: 2 }}>
+                            ID: {u.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {u.email && <div style={{ color: "var(--ink)", fontWeight: 500 }}>{u.email}</div>}
+                      {u.phone && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{u.phone}</div>}
+                      {!u.email && !u.phone && <span className="muted">No contact</span>}
+                    </td>
+                    <td>
+                      <RoleBadge role={u.role} />
+                    </td>
+                    <td style={{ fontSize: 12 }}>
+                      {u.role === "SUPER_ADMIN" ? (
+                        <span className="badge" style={{ fontSize: 11, whiteSpace: "nowrap" }}>All Estates (HQ)</span>
+                      ) : u.farmCount > 0 ? (
+                        <span style={{ fontWeight: 500 }}>{u.farmCount} estate{u.farmCount === 1 ? "" : "s"}</span>
+                      ) : (
+                        <span className="muted">No estates assigned</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`status ${u.active ? "active" : "inactive"}`} style={{ whiteSpace: "nowrap" }}>
+                        {u.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: 12, whiteSpace: "nowrap" }} className="muted">
+                      {formatDate(u.lastActive)}
+                    </td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setEditing(u)}
+                      >
+                        <Icons.Edit size={12} />
+                        <span>Edit Access</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

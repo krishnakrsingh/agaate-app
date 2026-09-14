@@ -280,7 +280,7 @@ export function FarmSwitcher() {
                           <span className="farm-option-meta">
                             <Icons.MapPin size={10} />
                             <span>{f.location}</span>
-                            {f.client && <span>&bull; {f.client.name}</span>}
+                            {f.client && <span>• {f.client.name}</span>}
                           </span>
                         </div>
                         <span className={`switcher-pill ${f.status.toLowerCase()}`}>
@@ -332,7 +332,7 @@ export function FarmSwitcher() {
                           <span className="farm-option-meta">
                             <Icons.MapPin size={10} />
                             <span>{f.location}</span>
-                            {f.client && <span style={{ color: "var(--green-dark)" }}>&bull; {f.client.name}</span>}
+                            {f.client && <span style={{ color: "var(--green-dark)" }}>• {f.client.name}</span>}
                           </span>
                         </div>
                         <span className={`switcher-pill ${f.status.toLowerCase()}`}>

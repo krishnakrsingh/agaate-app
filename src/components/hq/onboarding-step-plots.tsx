@@ -40,48 +40,66 @@ export function OnboardingStepPlots({ plots, farms, onChange, errors }: {
   const e = (i: number, f: string) => errors[`plots.${i}.${f}`];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* Quick-add row */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 14 }}>Add plot</div>
+      {/* Quick-add row card */}
+      <div style={{
+        background: "var(--surface-card)",
+        border: "1px solid var(--hairline)",
+        borderRadius: "var(--radius-md)",
+        padding: "18px 20px",
+        boxShadow: "var(--shadow-card)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
+            <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+              Add Cultivable Plot
+            </span>
+          </div>
+          <span style={{ fontSize: 11, color: "var(--muted)" }}>Estate Demarcation (Optional)</span>
+        </div>
+
         {farms.length === 0 ? (
-          <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Add at least one farm first.</p>
+          <div style={{ padding: "20px 0", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+            Add at least one farm in the previous step to allocate plots.
+          </div>
         ) : (
           <>
-          <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 120px 160px auto", gap: "0 12px", alignItems: "end" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 120px 160px auto", gap: "10px 12px", alignItems: "end" }}>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Farm</label>
-              <select className="input-field" value={farmId} onChange={(e) => setFarmRowId(e.target.value)}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Target Farm</label>
+              <select className="input-field" value={farmId} onChange={(e) => setFarmRowId(e.target.value)} style={{ borderRadius: 8 }}>
                 {farms.map((f, i) => <option key={f.rowId ?? i} value={f.rowId}>{f.name.trim() || `Farm ${i + 1}`}</option>)}
               </select>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Plot name *</label>
-              <input className="input-field" value={name} maxLength={100} placeholder="Block A" onChange={(e) => setName(e.target.value)} onKeyDown={onKey} />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Plot Name *</label>
+              <input className="input-field" value={name} maxLength={100} placeholder="e.g., North Block A" onChange={(e) => setName(e.target.value)} onKeyDown={onKey} style={{ borderRadius: 8 }} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>
                 Area (ac){activeFarm && Number(activeFarm.cultivableArea) > 0 ? ` / ${Number(activeFarm.cultivableArea)}` : ""}
               </label>
-              <input className="input-field" type="number" step="0.01" min="0" value={area} onChange={(e) => setArea(e.target.value)} onKeyDown={onKey} />
+              <input className="input-field" type="number" step="0.01" min="0" value={area} onChange={(e) => setArea(e.target.value)} onKeyDown={onKey} style={{ borderRadius: 8 }} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Soil type</label>
-              <input className="input-field" value={soil} maxLength={100} placeholder="Black cotton" onChange={(e) => setSoil(e.target.value)} onKeyDown={onKey} />
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>Soil Type</label>
+              <input className="input-field" value={soil} maxLength={100} placeholder="e.g., Black cotton" onChange={(e) => setSoil(e.target.value)} onKeyDown={onKey} style={{ borderRadius: 8 }} />
             </div>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={add} disabled={!farmId || !name.trim() || !area || fenceOutside} style={{ height: 34, alignSelf: "end" }}>
-              <Icons.Plus size={13} /><span>Add</span>
+            <button type="button" className="btn btn-primary btn-sm" onClick={add} disabled={!farmId || !name.trim() || !area || fenceOutside} style={{ height: 38, padding: "0 18px", alignSelf: "end" }}>
+              <Icons.Plus size={14} /><span>Add</span>
             </button>
           </div>
           {farms.length > 0 && (
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 10 }}>
               {!showFence ? (
-                <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: "var(--muted)" }} onClick={() => setShowFence(true)}>
-                  + Draw fence (optional{farmRing ? ` — ${(() => { try { return ringAcres(farmRing).toFixed(1); } catch { return "?"; } })()} ac farm` : ", draw farm fence first for containment check"})
+                <button type="button" className="btn btn-secondary btn-sm" style={{ fontSize: 11.5, gap: 6 }} onClick={() => setShowFence(true)}>
+                  <Icons.MapPin size={13} />
+                  <span>Demarcate boundary fence (optional{farmRing ? ` — ${(() => { try { return ringAcres(farmRing).toFixed(1); } catch { return "?"; } })()} ac farm` : ", draw farm fence first for containment check"})</span>
                 </button>
               ) : (
-                <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", overflow: "hidden", marginTop: 4 }}>
+                <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", overflow: "hidden", marginTop: 8 }}>
                   <GeoMap
                     center={farmCenter}
                     polygon={fence}
@@ -90,15 +108,15 @@ export function OnboardingStepPlots({ plots, farms, onChange, errors }: {
                     interactive
                     height={240}
                   />
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", fontSize: 12, color: "var(--muted)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "var(--surface-strong)", fontSize: 12, color: "var(--muted)" }}>
                     <span>
                       {fence && fence.length >= 4
                         ? `${fenceAcres.toFixed(2)} ac${fenceOutside ? " — outside farm fence, redraw inside" : " — verified area applies on activation"}`
                         : "Trace the plot inside the dashed farm fence."}
                     </span>
                     <span style={{ display: "flex", gap: 8 }}>
-                      {fence && <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => setFence(null)}>Clear</button>}
-                      <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => { setShowFence(false); setFence(null); }}>Hide</button>
+                      {fence && <button type="button" className="btn btn-secondary btn-sm" style={{ fontSize: 11 }} onClick={() => setFence(null)}>Clear</button>}
+                      <button type="button" className="btn btn-secondary btn-sm" style={{ fontSize: 11 }} onClick={() => { setShowFence(false); setFence(null); }}>Hide</button>
                     </span>
                   </div>
                 </div>
@@ -110,17 +128,31 @@ export function OnboardingStepPlots({ plots, farms, onChange, errors }: {
         )}
       </div>
 
-      {/* Plot list */}
+      {/* Plot list card */}
       {plots.length > 0 && (
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 10 }}>
-            Queued plots <span style={{ fontWeight: 400 }}>({plots.length})</span>
+        <div style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-md)",
+          padding: "18px 20px",
+          boxShadow: "var(--shadow-card)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+              <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                Allocated Plots
+              </span>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", background: "var(--surface-strong)", border: "1px solid var(--hairline)", padding: "2px 8px", borderRadius: 12 }}>
+              {plots.length} {plots.length === 1 ? "Plot" : "Plots"}
+            </span>
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--hairline)" }}>
-                {["Plot", "Farm", "Area", "Fence", "Soil", ""].map((h) => (
-                  <th key={h} style={{ padding: "5px 8px 8px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{h}</th>
+                {["Plot Name", "Assigned Farm", "Cultivable Area", "Demarcation", "Soil", ""].map((h) => (
+                  <th key={h} style={{ padding: "6px 10px 10px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -131,20 +163,26 @@ export function OnboardingStepPlots({ plots, farms, onChange, errors }: {
                 const rowErr = e(i, "name") || e(i, "area") || e(i, "farmRowId");
                 return (
                   <tr key={p.rowId ?? i} style={{ borderBottom: "1px solid var(--hairline)" }}>
-                    <td style={{ padding: "8px", fontWeight: 600 }}>
+                    <td style={{ padding: "10px", fontWeight: 600 }}>
                       {p.name}
                       {rowErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 2 }}>{rowErr}</div>}
                     </td>
-                    <td style={{ padding: "8px", color: "var(--muted)" }}>{fn}</td>
-                    <td style={{ padding: "8px", fontFamily: "var(--font-mono)" }}>{Number(p.area)} ac</td>
-                    <td style={{ padding: "8px", fontSize: 12, color: (p.boundaryRing?.length ?? 0) >= 4 ? "var(--green)" : "var(--muted-soft)" }}>
-                      {(p.boundaryRing?.length ?? 0) >= 4 ? `Fenced · ${(() => { try { return ringAcres(p.boundaryRing as [number, number][]).toFixed(2); } catch { return "?"; } })()} ac` : "Pin only"}
+                    <td style={{ padding: "10px", color: "var(--muted)" }}>{fn}</td>
+                    <td style={{ padding: "10px", fontFamily: "var(--font-mono)", fontWeight: 600 }}>{Number(p.area)} ac</td>
+                    <td style={{ padding: "10px", fontSize: 12 }}>
+                      {(p.boundaryRing?.length ?? 0) >= 4 ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#15803d", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 600 }}>
+                          ✓ Fenced · {(() => { try { return ringAcres(p.boundaryRing as [number, number][]).toFixed(2); } catch { return "?"; } })()} ac
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--muted)", fontSize: 11 }}>Pin only</span>
+                      )}
                       {(e(i, "boundaryRing")) && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 2 }}>{e(i, "boundaryRing")}</div>}
                     </td>
-                    <td style={{ padding: "8px", color: "var(--muted-soft)" }}>{p.soilType || "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right" }}>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(plots.filter((_, j) => j !== i))} aria-label={`Remove ${p.name}`} style={{ color: "var(--muted)" }}>
-                        <Icons.Trash size={12} />
+                    <td style={{ padding: "10px", color: "var(--muted)" }}>{p.soilType || "—"}</td>
+                    <td style={{ padding: "10px", textAlign: "right" }}>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(plots.filter((_, j) => j !== i))} aria-label={`Remove ${p.name}`} style={{ color: "var(--muted)", padding: "4px 8px" }}>
+                        <Icons.Trash size={13} />
                       </button>
                     </td>
                   </tr>
@@ -156,9 +194,9 @@ export function OnboardingStepPlots({ plots, farms, onChange, errors }: {
       )}
 
       {plots.length === 0 && farms.length > 0 && (
-        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
-          No plots yet — this step is optional. Demarcation can happen in the field.
-        </p>
+        <div style={{ fontSize: 12, color: "var(--muted)", background: "var(--surface-strong)", padding: "10px 14px", borderRadius: 8, border: "1px solid var(--hairline)" }}>
+          💡 <strong>Tip:</strong> Plot demarcation is optional during initial onboarding and can be mapped on mobile later by field officers.
+        </div>
       )}
     </div>
   );

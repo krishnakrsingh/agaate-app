@@ -47,7 +47,7 @@ export function newIdempotencyKey(): string {
 /** Stable per-draft preview shown in Step 1 until the server assigns the real code. */
 export function previewClientCode(idempotencyKey: string): string {
   const alnum = idempotencyKey.replace(/[^a-z0-9]/gi, "").toUpperCase();
-  return `CLI-${(alnum + "XXXXXX").slice(0, 6)} (preview)`;
+  return `CLI-${(alnum + "XXXXXX").slice(0, 6)}`;
 }
 
 const optionalText = (max: number) =>

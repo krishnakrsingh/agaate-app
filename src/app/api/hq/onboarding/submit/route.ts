@@ -77,52 +77,77 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Uniqueness pre-checks inside the tx so failures name the field.
+      // Check if this onboarding belongs to an existing client (by phone or email)
+      let client: { id: string; code: string | null; name: string } | null = null;
+
       if (phone) {
-        const holder = (await tx.client.findUnique({ where: { phone }, select: { name: true } })) ?? (await tx.user.findUnique({ where: { phone }, select: { name: true } }));
-        if (holder) throw new Error(`Validation failed: phone number already belongs to ${holder.name}.`);
+        client = await tx.client.findUnique({ where: { phone }, select: { id: true, code: true, name: true } });
       }
-      if (email) {
-        const holder = (await tx.client.findUnique({ where: { email }, select: { name: true } })) ?? (await tx.user.findUnique({ where: { email }, select: { name: true } }));
-        if (holder) throw new Error(`Validation failed: email address already belongs to ${holder.name}.`);
-      }
-      if (teamEmail && teamEmail !== email) {
-        const holder = await tx.user.findUnique({ where: { email: teamEmail }, select: { name: true } });
-        if (holder) throw new Error(`Validation failed: admin email already belongs to ${holder.name}.`);
-      }
-      if (teamPhone && teamPhone !== phone) {
-        const holder = await tx.user.findUnique({ where: { phone: teamPhone }, select: { name: true } });
-        if (holder) throw new Error(`Validation failed: admin phone already belongs to ${holder.name}.`);
+      if (!client && email) {
+        client = await tx.client.findUnique({ where: { email }, select: { id: true, code: true, name: true } });
       }
 
-      // Client code: unique backstop with bounded retries.
-      let clientCode = "";
-      let client: { id: string; code: string | null; name: string } | null = null;
-      for (let attempt = 0; attempt < 3 && !client; attempt += 1) {
-        clientCode = `CLI-${randomBytes(3).toString("hex").toUpperCase().slice(0, 6)}`;
-        try {
-          client = await tx.client.create({
-            data: {
-              name: input.client.name.trim(),
-              code: clientCode,
-              companyName: input.client.companyName || null,
-              email,
-              phone,
-              panNumber: input.client.panNumber ? input.client.panNumber.toUpperCase() : null,
-              gstin: input.client.gstin ? input.client.gstin.toUpperCase() : null,
-              billingAddress: input.client.billingAddress || null,
-              state: input.client.state || null,
-              district: input.client.district || null,
-              status: "ACTIVE",
-            },
-            select: { id: true, code: true, name: true },
-          });
-        } catch (e) {
-          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002" && attempt < 2) continue;
-          throw e;
+      if (client) {
+        // Update existing client record
+        await tx.client.update({
+          where: { id: client.id },
+          data: {
+            name: input.client.name.trim(),
+            companyName: input.client.companyName || undefined,
+            panNumber: input.client.panNumber ? input.client.panNumber.toUpperCase() : undefined,
+            gstin: input.client.gstin ? input.client.gstin.toUpperCase() : undefined,
+            billingAddress: input.client.billingAddress || undefined,
+            state: input.client.state || undefined,
+            district: input.client.district || undefined,
+          },
+        });
+      } else {
+        // Brand new client: run uniqueness pre-checks against existing clients and users
+        if (phone) {
+          const holder = (await tx.client.findUnique({ where: { phone }, select: { name: true } })) ?? (await tx.user.findUnique({ where: { phone }, select: { name: true } }));
+          if (holder) throw new Error(`Validation failed: phone number already belongs to ${holder.name}.`);
         }
+        if (email) {
+          const holder = (await tx.client.findUnique({ where: { email }, select: { name: true } })) ?? (await tx.user.findUnique({ where: { email }, select: { name: true } }));
+          if (holder) throw new Error(`Validation failed: email address already belongs to ${holder.name}.`);
+        }
+        if (teamEmail && teamEmail !== email) {
+          const holder = await tx.user.findUnique({ where: { email: teamEmail }, select: { name: true } });
+          if (holder) throw new Error(`Validation failed: admin email already belongs to ${holder.name}.`);
+        }
+        if (teamPhone && teamPhone !== phone) {
+          const holder = await tx.user.findUnique({ where: { phone: teamPhone }, select: { name: true } });
+          if (holder) throw new Error(`Validation failed: admin phone already belongs to ${holder.name}.`);
+        }
+
+        // Client code: unique backstop with bounded retries.
+        let clientCode = "";
+        for (let attempt = 0; attempt < 3 && !client; attempt += 1) {
+          clientCode = `CLI-${randomBytes(3).toString("hex").toUpperCase().slice(0, 6)}`;
+          try {
+            client = await tx.client.create({
+              data: {
+                name: input.client.name.trim(),
+                code: clientCode,
+                companyName: input.client.companyName || null,
+                email,
+                phone,
+                panNumber: input.client.panNumber ? input.client.panNumber.toUpperCase() : null,
+                gstin: input.client.gstin ? input.client.gstin.toUpperCase() : null,
+                billingAddress: input.client.billingAddress || null,
+                state: input.client.state || null,
+                district: input.client.district || null,
+                status: "ACTIVE",
+              },
+              select: { id: true, code: true, name: true },
+            });
+          } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002" && attempt < 2) continue;
+            throw e;
+          }
+        }
+        if (!client) throw new Error("Validation failed: could not assign a client ID. Please retry.");
       }
-      if (!client) throw new Error("Validation failed: could not assign a client ID. Please retry.");
 
       // Optional FARM_ADMIN login.
       let owner: { id: string; email: string; name: string } | null = null;
@@ -282,7 +307,7 @@ export async function POST(request: NextRequest) {
       }
 
       const summary: ActivationSummary = {
-        client: { id: client.id, code: client.code ?? clientCode, name: client.name },
+        client: { id: client.id, code: client.code ?? client.id, name: client.name },
         farms,
         plots,
         credential: owner

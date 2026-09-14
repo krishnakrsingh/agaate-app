@@ -73,72 +73,125 @@ interface Bundle {
   filesCapped: boolean;
   history: {
     harvests: Array<{
-      id: string; date: string; quantity: number; unit: string; grade: string;
-      crop: string; farmId: string; farmName: string; plotName: string;
+      id: string;
+      date: string;
+      quantity: number;
+      unit: string;
+      grade: string;
+      crop: string;
+      farmId: string;
+      farmName: string;
+      plotName: string;
     }>;
     incidents: Array<{
-      id: string; type: string; severity: string | null; status: string;
-      createdAt: string; farmId: string; farmName: string; plotName: string | null;
+      id: string;
+      type: string;
+      severity: string | null;
+      status: string;
+      createdAt: string;
+      farmId: string;
+      farmName: string;
+      plotName: string | null;
     }>;
     tasks: Array<{
-      id: string; title: string; category: string; status: string;
-      dueDate: string; farmId: string; farmName: string;
+      id: string;
+      title: string;
+      category: string;
+      status: string;
+      dueDate: string;
+      farmId: string;
+      farmName: string;
     }>;
     cycles: Array<{
-      id: string; cropName: string; status: string; startDate: string;
-      plotId: string; plotName: string; farmId: string; farmName: string;
+      id: string;
+      cropName: string;
+      status: string;
+      startDate: string;
+      plotId: string;
+      plotName: string;
+      farmId: string;
+      farmName: string;
     }>;
   };
   files: Array<{
-    id: string; storageKey: string; kind: string; mimeType: string;
-    sizeBytes: number; farmId: string | null; createdAt: string;
+    id: string;
+    storageKey: string;
+    kind: string;
+    mimeType: string;
+    sizeBytes: number;
+    farmId: string | null;
+    createdAt: string;
   }>;
   notes: Array<{
-    id: string; action: string; remarks: string | null; authorName: string;
-    incidentId: string; incidentType: string; farmId: string; farmName: string; createdAt: string;
+    id: string;
+    action: string;
+    remarks: string | null;
+    authorName: string;
+    incidentId: string;
+    incidentType: string;
+    farmId: string;
+    farmName: string;
+    createdAt: string;
   }>;
 }
 
 type Tab = "farms" | "plots" | "team" | "history" | "files";
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "farms", label: "Farms" },
-  { id: "plots", label: "Plots" },
-  { id: "team", label: "Team & Labour" },
-  { id: "history", label: "History" },
-  { id: "files", label: "Files / Notes" },
+  { id: "farms", label: "Farms Portfolio" },
+  { id: "plots", label: "Land Parcels & Plots" },
+  { id: "team", label: "Team & Field Workforce" },
+  { id: "history", label: "Operational History" },
+  { id: "files", label: "Documents & Evidence" },
 ];
 
-const card: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--line)",
-  borderRadius: "var(--radius-lg)",
-  padding: 16,
-};
-
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function Field({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div>
-      <div className="muted" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>
-        {label}
+    <div
+      style={{
+        padding: "10px 14px",
+        background: "var(--canvas-floor)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--hairline)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          color: "var(--muted)",
+          textTransform: "uppercase",
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        {icon}
+        <span>{label}</span>
       </div>
-      <div style={{ fontSize: 13, color: "var(--ink)", marginTop: 2 }}>{value || "—"}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", wordBreak: "break-word" }}>
+        {value || <span style={{ color: "var(--muted)" }}>—</span>}
+      </div>
     </div>
   );
 }
 
 function Empty({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div style={{ textAlign: "center", padding: 32 }}>
-      <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 13 }}>{title}</div>
-      {hint && <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>{hint}</p>}
+    <div style={{ textAlign: "center", padding: "40px 20px" }}>
+      <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>{title}</div>
+      {hint && <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>{hint}</p>}
     </div>
   );
 }
 
 function MiniMap({ pins, hasMore }: { pins: Pin[]; hasMore: boolean }) {
   if (pins.length === 0) {
-    return <Empty title="No farm locations yet" hint="Pins appear here once farms are onboarded." />;
+    return <Empty title="No farm locations mapped yet" hint="Farm pins appear here once boundary coordinates are registered." />;
   }
   const lats = pins.map((p) => p.latitude);
   const lngs = pins.map((p) => p.longitude);
@@ -147,39 +200,74 @@ function MiniMap({ pins, hasMore }: { pins: Pin[]; hasMore: boolean }) {
   const minLng = Math.min(...lngs);
   const maxLng = Math.max(...lngs);
   const W = 100;
-  const H = 56;
-  const PAD = 8;
+  const H = 50;
+  const PAD = 10;
   const x = (lng: number) =>
     maxLng === minLng ? W / 2 : PAD + ((lng - minLng) / (maxLng - minLng)) * (W - PAD * 2);
   const y = (lat: number) =>
     maxLat === minLat ? H / 2 : PAD + ((maxLat - lat) / (maxLat - minLat)) * (H - PAD * 2);
 
   return (
-    <div>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        style={{ width: "100%", height: 220, background: "var(--surface-strong)", borderRadius: 8 }}
-        role="img"
-        aria-label="Map of client farms"
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: 220,
+          background: "var(--canvas-floor)",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid var(--hairline)",
+          overflow: "hidden",
+        }}
       >
-        {pins.map((p) => (
-          <Link key={p.id} href={`/hq/farms/${p.id}`} title={`${p.name} — open farm`}>
-            <circle
-              cx={x(p.longitude)}
-              cy={y(p.latitude)}
-              r={2.6}
-              fill={p.status === "ACTIVE" ? "var(--green-ink)" : "var(--amber)"}
-              stroke="var(--surface)"
-              strokeWidth={0.8}
-              style={{ cursor: "pointer" }}
-            >
-              <title>{p.name} — open farm</title>
-            </circle>
-          </Link>
-        ))}
-      </svg>
-      <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>
-        {pins.length} farm pin(s) plotted{hasMore ? " — showing most recent 200" : ""}. Select a pin to open the farm.
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          style={{ width: "100%", height: "100%", display: "block" }}
+          role="img"
+          aria-label="Map of client farms"
+        >
+          {/* Subtle grid lines */}
+          <line x1="0" y1="25" x2="100" y2="25" stroke="var(--hairline)" strokeDasharray="2 2" strokeWidth="0.5" />
+          <line x1="50" y1="0" x2="50" y2="50" stroke="var(--hairline)" strokeDasharray="2 2" strokeWidth="0.5" />
+
+          {pins.map((p) => {
+            const cx = x(p.longitude);
+            const cy = y(p.latitude);
+            const isActive = p.status === "ACTIVE";
+            return (
+              <g key={p.id} style={{ cursor: "pointer" }}>
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={4}
+                  fill={isActive ? "rgba(34, 197, 94, 0.2)" : "rgba(245, 158, 11, 0.2)"}
+                />
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={2.2}
+                  fill={isActive ? "#15803d" : "#d97706"}
+                  stroke="#ffffff"
+                  strokeWidth={0.6}
+                >
+                  <title>{p.name} — Click to inspect farm</title>
+                </circle>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Icons.MapPin size={13} />
+          <span>
+            {pins.length} farm location{pins.length !== 1 ? "s" : ""} plotted
+            {hasMore ? " (showing first 200)" : ""}
+          </span>
+        </span>
+        <Link href="/spatial" style={{ color: "var(--ink)", fontWeight: 500, fontSize: 12 }}>
+          Open Spatial Console &rarr;
+        </Link>
       </div>
     </div>
   );
@@ -257,24 +345,36 @@ export function Client360({ clientId }: { clientId: string }) {
   };
 
   if (loading && !data) {
-    return <div style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>Loading client 360…</div>;
+    return (
+      <div style={{ padding: 64, textAlign: "center", color: "var(--muted)", fontSize: 14 }}>
+        Loading Client 360 profile...
+      </div>
+    );
   }
 
   if (error || !data) {
     return (
-      <div style={{ ...card, textAlign: "center", padding: 48 }}>
-        <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-          {error || "Client not found."}
+      <div
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-lg)",
+          padding: 48,
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 16, marginBottom: 4 }}>
+          {error || "Client profile not found."}
         </div>
-        <p className="muted" style={{ fontSize: 12, margin: "0 0 12px" }}>
-          The client may have been removed, or you may lack access.
+        <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 16px" }}>
+          The client account may have been removed or you lack permissions to view it.
         </p>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
             <span>Retry</span>
           </button>
           <Link href="/hq/clients" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-            <span>Back to directory</span>
+            <span>&larr; Back to Client Directory</span>
           </Link>
         </div>
       </div>
@@ -286,118 +386,231 @@ export function Client360({ clientId }: { clientId: string }) {
   const officers = data.team.filter((m) => m.role !== "FARM_ADMIN");
   const farmPages = Math.ceil(data.farms.total / data.farms.limit) || 1;
   const plotPages = Math.ceil(data.plots.total / data.plots.limit) || 1;
+  const initials = client.name.trim().charAt(0).toUpperCase();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header */}
-      <div style={{ ...card, display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <div className="muted" style={{ fontSize: 11, fontFamily: "var(--font-mono)" }}>
-              CLIENT ID: {client.id}
+      {/* ── 1. Client Profile Hero Header Card ── */}
+      <div
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-lg)",
+          padding: 24,
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
+        {/* Top Header Row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "var(--surface-strong)",
+                border: "1px solid var(--hairline)",
+                color: "var(--ink)",
+                fontSize: 20,
+                fontWeight: 700,
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+              }}
+            >
+              {initials}
             </div>
-            <h2 style={{ fontSize: 20, margin: "2px 0", color: "var(--ink)" }}>{client.name}</h2>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <span className="badge badge-stone" style={{ fontSize: 11 }}>{client.code}</span>
-              <StatusBadge status={client.status} />
-              {client.companyName && <span className="muted" style={{ fontSize: 12 }}>{client.companyName}</span>}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--ink)", letterSpacing: "-0.01em" }}>
+                  {client.name}
+                </h1>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    fontFamily: "var(--font-mono)",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: "var(--surface-strong)",
+                    border: "1px solid var(--hairline)",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {client.code}
+                </span>
+                <StatusBadge status={client.status} />
+              </div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+                {client.companyName ? `${client.companyName} &bull; ` : ""}Client ID:{" "}
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{client.id}</span>
+              </div>
             </div>
           </div>
+
           <Link
             href={`/hq/onboarding/new?clientId=${client.id}`}
             className="btn btn-primary btn-sm"
-            style={{ textDecoration: "none" }}
-            title="Open the onboarding wizard with this client prefilled"
+            style={{ textDecoration: "none", borderRadius: "var(--radius-md)" }}
+            title="Open onboarding wizard prefilled with this client"
           >
             <Icons.Plus size={14} />
-            <span>Add farm</span>
+            <span>Add Farm Estate</span>
           </Link>
         </div>
 
+        {/* 4-Card Portfolio Metrics Summary */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-          <Field label="Phone" value={client.phone} />
-          <Field label="Email" value={client.email} />
-          <Field label="Secondary contact" value={client.secondaryContact} />
-          <Field label="Address" value={[client.address, client.district, client.state].filter(Boolean).join(", ")} />
-          <Field label="Billing address" value={client.billingAddress} />
-          <Field label="PAN" value={client.panNumber} />
-          <Field label="GSTIN" value={client.gstin} />
-          <Field label="Entity type" value={client.entityType} />
+          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farms</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.farmCount}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Registered estates</div>
+          </div>
+
+          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Land Plots</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.plotCount}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Demarcated parcels</div>
+          </div>
+
+          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Workforce</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.officerCount}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Assigned field officers</div>
+          </div>
+
+          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Area</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2, fontFamily: "var(--font-mono)" }}>
+              {metrics.totalAcreage.toFixed(2)} ac
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Total acreage</div>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13 }}>
-          <span><strong>{metrics.farmCount}</strong> <span className="muted">farms</span></span>
-          <span><strong>{metrics.plotCount}</strong> <span className="muted">plots</span></span>
-          <span><strong>{metrics.officerCount}</strong> <span className="muted">officers</span></span>
-          <span><strong>{metrics.totalAcreage.toFixed(2)} ac</strong> <span className="muted">total</span></span>
+        {/* Detailed Account Attributes Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
+          <Field label="Phone" value={client.phone} icon={<Icons.User size={11} />} />
+          <Field label="Email" value={client.email} icon={<Icons.User size={11} />} />
+          <Field label="Secondary Contact" value={client.secondaryContact} icon={<Icons.User size={11} />} />
+          <Field label="Primary Location" value={[client.address, client.district, client.state].filter(Boolean).join(", ")} icon={<Icons.MapPin size={11} />} />
+          <Field label="Billing Address" value={client.billingAddress} icon={<Icons.MapPin size={11} />} />
+          <Field label="PAN" value={client.panNumber} icon={<Icons.Shield size={11} />} />
+          <Field label="GSTIN" value={client.gstin} icon={<Icons.Shield size={11} />} />
+          <Field label="Entity Type" value={client.entityType} icon={<Icons.Users size={11} />} />
         </div>
       </div>
 
-      {/* Mini-map */}
-      <div style={card}>
-        <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>
-          Farm locations
+      {/* ── 2. Farm Locations Spatial Map Box ── */}
+      <div
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-lg)",
+          padding: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
+        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+          <Icons.MapPin size={16} style={{ color: "var(--muted)" }} />
+          <span>Authoritative Estate Locations</span>
         </div>
         <MiniMap pins={data.pins.items} hasMore={data.pins.hasMore} />
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {/* ── 3. Segmented Navigation Tabs ── */}
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             className={`btn btn-sm ${tab === t.id ? "btn-primary" : "btn-secondary"}`}
             onClick={() => setTab(t.id)}
+            style={{ borderRadius: "var(--radius-pill)", padding: "6px 14px", fontWeight: 600, fontSize: 12 }}
           >
             <span>{t.label}</span>
           </button>
         ))}
       </div>
 
+      {/* ── Tab 1: Farms Portfolio ── */}
       {tab === "farms" && (
-        <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+        <div
+          style={{
+            background: "var(--surface-card)",
+            border: "1px solid var(--hairline)",
+            borderRadius: "var(--radius-lg)",
+            overflow: "hidden",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
           <div style={{ overflowX: "auto" }}>
-            <table className="table" style={{ width: "100%", fontSize: 13 }}>
+            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
               <thead>
-                <tr>
-                  <th>Farm ID</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>Stage</th>
-                  <th>Acreage</th>
-                  <th>Plots</th>
-                  <th>Boundary</th>
+                <tr style={{ background: "var(--canvas-floor)", borderBottom: "1px solid var(--hairline)" }}>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Farm ID</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Estate Name</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Status</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Stage</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Acreage</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plots</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Boundary</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {data.farms.items.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
-                      <Empty title="No farms yet" hint="Use Add farm to onboard the first estate for this client." />
+                    <td colSpan={8}>
+                      <Empty title="No farms onboarded yet" hint="Use Add farm above to register the first estate for this client." />
                     </td>
                   </tr>
                 ) : (
                   data.farms.items.map((f) => (
-                    <tr key={f.id}>
-                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 11 }} title={f.id}>
+                    <tr key={f.id} style={{ borderBottom: "1px solid var(--hairline)" }}>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)" }} title={f.id}>
                         {f.id.slice(-8).toUpperCase()}
                       </td>
-                      <td>
+                      <td style={{ padding: "12px 14px" }}>
                         <Link href={`/hq/farms/${f.id}`} style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
                           {f.name}
                         </Link>
                       </td>
-                      <td><StatusBadge status={f.status} /></td>
-                      <td><span className="muted" style={{ fontSize: 12 }}>{f.setupStage.replaceAll("_", " ")}</span></td>
-                      <td style={{ fontFamily: "var(--font-mono)" }}>{f.totalArea.toFixed(2)} ac</td>
-                      <td>{f.plotCount}</td>
-                      <td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <StatusBadge status={f.status} />
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--surface-strong)", fontWeight: 600 }}>
+                          {f.setupStage.replaceAll("_", " ")}
+                        </span>
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                        {f.totalArea.toFixed(2)} ac
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: 600 }}>
+                        {f.plotCount}
+                      </td>
+                      <td style={{ padding: "12px 14px" }}>
                         {f.hasBoundary ? (
-                          <span className="badge badge-green" style={{ fontSize: 11 }}>Demarcated</span>
+                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(34,197,94,0.12)", color: "#15803d", border: "1px solid rgba(34,197,94,0.25)", fontWeight: 600 }}>
+                            &bull; Demarcated
+                          </span>
                         ) : (
-                          <span className="badge badge-amber" style={{ fontSize: 11 }}>Missing boundary</span>
+                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(245,158,11,0.12)", color: "#d97706", border: "1px solid rgba(245,158,11,0.25)", fontWeight: 600 }}>
+                            &bull; Missing boundary
+                          </span>
                         )}
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                        <Link href={`/hq/farms/${f.id}`} className="btn btn-secondary btn-sm" style={{ padding: "3px 10px", fontSize: 12, borderRadius: "var(--radius-md)" }}>
+                          Inspect &rarr;
+                        </Link>
                       </td>
                     </tr>
                   ))
@@ -405,165 +618,173 @@ export function Client360({ clientId }: { clientId: string }) {
               </tbody>
             </table>
           </div>
+
           {data.farms.total > data.farms.limit && (
-            <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", fontSize: 12, color: "var(--muted)" }}>
+            <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hairline)", fontSize: 12, color: "var(--muted)", background: "var(--canvas-floor)" }}>
               <span>Showing {(farmPage - 1) * data.farms.limit + 1} to {Math.min(farmPage * data.farms.limit, data.farms.total)} of {data.farms.total} farms</span>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage <= 1} onClick={() => setFarmPage((p) => p - 1)}>Previous</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage >= farmPages} onClick={() => setFarmPage((p) => p + 1)}>Next</button>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage <= 1} onClick={() => setFarmPage((p) => p - 1)}>← Prev</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage >= farmPages} onClick={() => setFarmPage((p) => p + 1)}>Next →</button>
               </div>
             </div>
           )}
         </div>
       )}
 
+      {/* ── Tab 2: Land Plots ── */}
       {tab === "plots" && (
-        <div style={{ ...card, padding: 0, overflow: "hidden" }}>
+        <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
           <div style={{ overflowX: "auto" }}>
-            <table className="table" style={{ width: "100%", fontSize: 13 }}>
+            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
               <thead>
-                <tr>
-                  <th>Plot ID</th>
-                  <th>Name</th>
-                  <th>Farm</th>
-                  <th>Area</th>
-                  <th>Status</th>
+                <tr style={{ background: "var(--canvas-floor)", borderBottom: "1px solid var(--hairline)" }}>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plot ID</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plot Name</th>
+                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Estate</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Area</th>
+                  <th style={{ padding: "10px 14px", textAlign: "center", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Status</th>
+                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {data.plots.items.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>
-                      <Empty title="No plots yet" hint="Plots appear here once farm demarcation creates them." />
+                    <td colSpan={6}>
+                      <Empty title="No land plots registered yet" hint="Plots are created during farm plot demarcation." />
                     </td>
                   </tr>
                 ) : (
                   data.plots.items.map((p) => (
-                    <tr key={p.id}>
-                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 11 }} title={p.id}>
+                    <tr key={p.id} style={{ borderBottom: "1px solid var(--hairline)" }}>
+                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)" }} title={p.id}>
                         {p.id.slice(-8).toUpperCase()}
                       </td>
-                      <td>
+                      <td style={{ padding: "12px 14px" }}>
                         <Link href={`/plots/${p.id}`} style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
                           {p.name}
                         </Link>
                       </td>
-                      <td>
-                        <Link href={`/hq/farms/${p.farmId}?tab=map`} style={{ color: "var(--ink)", textDecoration: "none" }}>
+                      <td style={{ padding: "12px 14px" }}>
+                        <Link href={`/hq/farms/${p.farmId}`} style={{ color: "var(--ink)", textDecoration: "none" }}>
                           {p.farmName}
                         </Link>
                       </td>
-                      <td style={{ fontFamily: "var(--font-mono)" }}>{p.area.toFixed(2)} ac</td>
-                      <td><StatusBadge status={p.status} /></td>
+                      <td style={{ padding: "12px 14px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                        {p.area.toFixed(2)} ac
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                        <StatusBadge status={p.status} />
+                      </td>
+                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                        <Link href={`/plots/${p.id}`} className="btn btn-secondary btn-sm" style={{ padding: "3px 10px", fontSize: 12, borderRadius: "var(--radius-md)" }}>
+                          Inspect &rarr;
+                        </Link>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
           {data.plots.total > data.plots.limit && (
-            <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--line)", fontSize: 12, color: "var(--muted)" }}>
+            <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hairline)", fontSize: 12, color: "var(--muted)", background: "var(--canvas-floor)" }}>
               <span>Showing {(plotPage - 1) * data.plots.limit + 1} to {Math.min(plotPage * data.plots.limit, data.plots.total)} of {data.plots.total} plots</span>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage <= 1} onClick={() => setPlotPage((p) => p - 1)}>Previous</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage >= plotPages} onClick={() => setPlotPage((p) => p + 1)}>Next</button>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage <= 1} onClick={() => setPlotPage((p) => p - 1)}>← Prev</button>
+                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage >= plotPages} onClick={() => setPlotPage((p) => p + 1)}>Next →</button>
               </div>
             </div>
           )}
         </div>
       )}
 
+      {/* ── Tab 3: Team & Labour ── */}
       {tab === "team" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {teamMsg && (
-            <div style={{ ...card, fontSize: 13, color: "var(--ink)" }}>{teamMsg}</div>
+            <div style={{ padding: "10px 16px", background: "var(--surface-strong)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", fontSize: 13, color: "var(--ink)" }}>
+              {teamMsg}
+            </div>
           )}
-          <div style={card}>
-            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>
-              Farm admin account
+
+          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
+              Farm Admin Accounts ({admins.length})
             </div>
             {admins.length === 0 ? (
-              <Empty title="No farm admin provisioned" hint="Onboard the client owner through the admin onboarding flow." />
+              <Empty title="No farm admin provisioned" hint="Admin accounts are created during estate onboarding." />
             ) : (
               admins.map((m) => (
                 <TeamRow key={m.id} member={m} busy={teamBusy === m.id} onToggle={() => toggleActive(m)} onReset={() => resetPassword(m)} />
               ))
             )}
           </div>
-          <div style={card}>
-            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>
-              Officers hired per farm
+
+          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
+              Field Officers Hired per Estate ({officers.length})
             </div>
             {officers.length === 0 ? (
-              <Empty title="No officers hired" hint="Officers appear here once assigned to this client's farms." />
+              <Empty title="No officers assigned" hint="Field officers appear here once assigned to this client's estates." />
             ) : (
               officers.map((m) => (
                 <TeamRow key={m.id} member={m} busy={teamBusy === m.id} onToggle={() => toggleActive(m)} onReset={() => resetPassword(m)} />
               ))
             )}
-            {data.teamCapped && (
-              <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>
-                Showing the 50 most recent accounts.
-              </div>
-            )}
           </div>
         </div>
       )}
 
+      {/* ── Tab 4: Operational History ── */}
       {tab === "history" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <HistorySection title="Crop cycles">
+          <HistorySection title="Crop Cycles">
             {data.history.cycles.length === 0 ? (
-              <Empty title="No crop cycles" hint="Cycles appear once planting starts on any plot." />
+              <Empty title="No active crop cycles" hint="Cycles appear once planting commences on any plot." />
             ) : (
               data.history.cycles.map((c) => (
-                <div key={c.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <strong>{c.cropName}</strong> <StatusBadge status={c.status} />
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    Started {c.startDate} — <Link href={`/plots/${c.plotId}`} style={{ color: "inherit" }}>{c.plotName}</Link> · <Link href={`/farms/${c.farmId}`} style={{ color: "inherit" }}>{c.farmName}</Link>
+                <div key={c.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>{c.cropName}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                      Started {c.startDate} &bull; <Link href={`/plots/${c.plotId}`} style={{ color: "var(--ink)" }}>{c.plotName}</Link> &bull; {c.farmName}
+                    </div>
                   </div>
+                  <StatusBadge status={c.status} />
                 </div>
               ))
             )}
           </HistorySection>
-          <HistorySection title="Harvests">
+
+          <HistorySection title="Harvest Ledger">
             {data.history.harvests.length === 0 ? (
-              <Empty title="No harvests recorded" />
+              <Empty title="No harvest records logged" />
             ) : (
               data.history.harvests.map((h) => (
-                <div key={h.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <strong>{h.quantity} {h.unit}</strong> {h.crop} ({h.grade})
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    {h.date} — {h.plotName} · <Link href={`/farms/${h.farmId}`} style={{ color: "inherit" }}>{h.farmName}</Link>
+                <div key={h.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13 }}>
+                  <strong style={{ color: "var(--ink)" }}>{h.quantity} {h.unit}</strong> — {h.crop} ({h.grade})
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                    Harvested {h.date} &bull; {h.plotName} &bull; {h.farmName}
                   </div>
                 </div>
               ))
             )}
           </HistorySection>
-          <HistorySection title="Incidents">
+
+          <HistorySection title="Incidents & Signals">
             {data.history.incidents.length === 0 ? (
-              <Empty title="No incidents reported" />
+              <Empty title="No field incidents reported" />
             ) : (
               data.history.incidents.map((i) => (
-                <div key={i.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <strong>{i.type}</strong> <StatusBadge status={i.status} />
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    {new Date(i.createdAt).toLocaleDateString()}{i.severity ? ` — severity ${i.severity}` : ""}{i.plotName ? ` — ${i.plotName}` : ""} · <Link href={`/farms/${i.farmId}`} style={{ color: "inherit" }}>{i.farmName}</Link>
+                <div key={i.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>{i.type}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                      {new Date(i.createdAt).toLocaleDateString()}{i.severity ? ` &bull; Severity ${i.severity}` : ""} &bull; {i.farmName}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </HistorySection>
-          <HistorySection title="Tasks">
-            {data.history.tasks.length === 0 ? (
-              <Empty title="No tasks yet" />
-            ) : (
-              data.history.tasks.map((t) => (
-                <div key={t.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <strong>{t.title}</strong> <StatusBadge status={t.status} />
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    {t.category} — due {t.dueDate} · <Link href={`/farms/${t.farmId}`} style={{ color: "inherit" }}>{t.farmName}</Link>
-                  </div>
+                  <StatusBadge status={i.status} />
                 </div>
               ))
             )}
@@ -571,40 +792,25 @@ export function Client360({ clientId }: { clientId: string }) {
         </div>
       )}
 
+      {/* ── Tab 5: Documents & Evidence ── */}
       {tab === "files" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={card}>
-            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>Files</div>
+          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
+              Document Files & Photo Evidence ({data.files.length})
+            </div>
             {data.files.length === 0 ? (
-              <Empty title="No files uploaded" hint="Task evidence, crop photos, and selfies appear here." />
+              <Empty title="No documents or photo evidence uploaded" hint="Task evidence, crop photos, and officer selfies appear here." />
             ) : (
               data.files.map((f) => (
-                <div key={f.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <span className="badge badge-stone" style={{ fontSize: 10, marginRight: 8 }}>{f.kind.replaceAll("_", " ")}</span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{f.storageKey}</span>
-                  <div className="muted" style={{ fontSize: 12 }}>
-                    {f.mimeType} — {(f.sizeBytes / 1024).toFixed(1)} KB — {new Date(f.createdAt).toLocaleDateString()}
+                <div key={f.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "var(--surface-strong)", marginRight: 8 }}>
+                    {f.kind.replaceAll("_", " ")}
+                  </span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>{f.storageKey}</span>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                    {f.mimeType} &bull; {(f.sizeBytes / 1024).toFixed(1)} KB &bull; Uploaded {new Date(f.createdAt).toLocaleDateString()}
                   </div>
-                </div>
-              ))
-            )}
-            {data.filesCapped && (
-              <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>
-                Farm list exceeds 500 — files cover the first 500 farms.
-              </div>
-            )}
-          </div>
-          <div style={card}>
-            <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 8 }}>Notes</div>
-            {data.notes.length === 0 ? (
-              <Empty title="No notes yet" hint="Incident follow-up remarks appear here." />
-            ) : (
-              data.notes.map((n) => (
-                <div key={n.id} style={{ padding: "8px 0", borderBottom: "1px solid var(--stone)", fontSize: 13 }}>
-                  <strong>{n.action}</strong>
-                  <span className="muted" style={{ fontSize: 12 }}> — {n.authorName} on {n.incidentType} · <Link href={`/farms/${n.farmId}`} style={{ color: "inherit" }}>{n.farmName}</Link></span>
-                  {n.remarks && <div style={{ fontSize: 13, marginTop: 2 }}>{n.remarks}</div>}
-                  <div className="muted" style={{ fontSize: 11 }}>{new Date(n.createdAt).toLocaleString()}</div>
                 </div>
               ))
             )}
@@ -634,32 +840,36 @@ function TeamRow({
         alignItems: "center",
         gap: 12,
         flexWrap: "wrap",
-        padding: "10px 0",
-        borderBottom: "1px solid var(--stone)",
+        padding: "12px 0",
+        borderBottom: "1px solid var(--hairline)",
         fontSize: 13,
       }}
     >
       <div>
-        <div style={{ fontWeight: 600, color: member.active ? "var(--ink)" : "var(--muted)" }}>
-          {member.name}
-          {!member.active && <span className="badge badge-stone" style={{ fontSize: 10, marginLeft: 8 }}>Inactive</span>}
+        <div style={{ fontWeight: 600, color: member.active ? "var(--ink)" : "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
+          <span>{member.name}</span>
+          {!member.active && (
+            <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: "rgba(239, 68, 68, 0.12)", color: "#dc2626", fontWeight: 700 }}>
+              Inactive
+            </span>
+          )}
         </div>
-        <div className="muted" style={{ fontSize: 12 }}>
-          {member.role.replaceAll("_", " ")} · {member.email}
-          {member.phone ? ` · ${member.phone}` : ""}
+        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+          {member.role.replaceAll("_", " ")} &bull; {member.email}
+          {member.phone ? ` &bull; ${member.phone}` : ""}
         </div>
         {member.farms.length > 0 && (
-          <div className="muted" style={{ fontSize: 12 }}>
-            {member.farms.map((f) => f.name).join(", ")}
+          <div style={{ fontSize: 12, color: "var(--body)", marginTop: 2 }}>
+            Assigned: {member.farms.map((f) => f.name).join(", ")}
           </div>
         )}
       </div>
       <div style={{ display: "flex", gap: 8 }}>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onToggle}>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onToggle} style={{ borderRadius: "var(--radius-md)" }}>
           <span>{member.active ? "Deactivate" : "Reactivate"}</span>
         </button>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onReset}>
-          <span>Reset credentials</span>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onReset} style={{ borderRadius: "var(--radius-md)" }}>
+          <span>Reset Credentials</span>
         </button>
       </div>
     </div>
@@ -668,8 +878,8 @@ function TeamRow({
 
 function HistorySection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={card}>
-      <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)", marginBottom: 4 }}>{title}</div>
+    <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>{title}</div>
       {children}
     </div>
   );

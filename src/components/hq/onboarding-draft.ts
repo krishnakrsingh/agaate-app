@@ -11,7 +11,8 @@ export type StoredDraft = {
   data: WizardData;
 };
 
-export function storageKey(draftId: string | null): string {
+export function storageKey(draftId: string | null, existingClientId?: string | null): string {
+  if (existingClientId) return `hq-onboarding:client:${existingClientId}`;
   return `hq-onboarding:${draftId ?? "new"}`;
 }
 
@@ -55,10 +56,10 @@ export function emptyFarm() {
   };
 }
 
-export function loadLocal(draftId: string | null): StoredDraft | null {
+export function loadLocal(draftId: string | null, existingClientId?: string | null): StoredDraft | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(storageKey(draftId));
+    const raw = window.localStorage.getItem(storageKey(draftId, existingClientId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredDraft;
     if (!parsed || typeof parsed !== "object" || !parsed.data) return null;
@@ -68,17 +69,17 @@ export function loadLocal(draftId: string | null): StoredDraft | null {
   }
 }
 
-export function saveLocal(draftId: string | null, stored: StoredDraft): void {
+export function saveLocal(draftId: string | null, stored: StoredDraft, existingClientId?: string | null): void {
   try {
-    window.localStorage.setItem(storageKey(draftId), JSON.stringify(stored));
+    window.localStorage.setItem(storageKey(draftId, existingClientId), JSON.stringify(stored));
   } catch {
     // Quota or private mode: server drafts still cover the online path.
   }
 }
 
-export function clearLocal(draftId: string | null): void {
+export function clearLocal(draftId: string | null, existingClientId?: string | null): void {
   try {
-    window.localStorage.removeItem(storageKey(draftId));
+    window.localStorage.removeItem(storageKey(draftId, existingClientId));
   } catch {
     // ignore
   }

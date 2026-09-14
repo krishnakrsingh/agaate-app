@@ -13,12 +13,16 @@ export async function GET(request: NextRequest) {
     const sp = request.nextUrl.searchParams;
     const phone = normalizePhone(sp.get("phone"));
     const email = normalizeEmail(sp.get("email"));
+    const clientId = sp.get("clientId")?.trim();
+
+    const clientFilter = clientId ? { NOT: { OR: [{ id: clientId }, { code: clientId }] } } : {};
+    const userFilter = clientId ? { NOT: { OR: [{ clientId }, { client: { code: clientId } }] } } : {};
 
     const [clientByPhone, clientByEmail, userByPhone, userByEmail] = await Promise.all([
-      phone ? prisma.client.findUnique({ where: { phone }, select: { name: true } }) : null,
-      email ? prisma.client.findUnique({ where: { email }, select: { name: true } }) : null,
-      phone ? prisma.user.findUnique({ where: { phone }, select: { name: true } }) : null,
-      email ? prisma.user.findUnique({ where: { email }, select: { name: true } }) : null,
+      phone ? prisma.client.findFirst({ where: { phone, ...clientFilter }, select: { name: true } }) : null,
+      email ? prisma.client.findFirst({ where: { email, ...clientFilter }, select: { name: true } }) : null,
+      phone ? prisma.user.findFirst({ where: { phone, ...userFilter }, select: { name: true } }) : null,
+      email ? prisma.user.findFirst({ where: { email, ...userFilter }, select: { name: true } }) : null,
     ]);
 
     const phoneHolder = clientByPhone?.name ?? userByPhone?.name ?? null;

@@ -465,243 +465,218 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
                 return (
                   <article
                     key={farm.id}
-                    className="hover-glow"
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      padding: 4, // STRICT 4px padding between map and bar boundary
-                      borderRadius: "var(--radius-md)",
-                      background: "var(--surface-card)",
-                      border: "1px solid var(--hairline)",
-                      boxShadow: "var(--shadow-card)",
-                      gap: 14,
-                      minHeight: 120,
-                      transition: "border-color 0.15s ease, box-shadow 0.15s ease",
-                    }}
+                    className="farm-registry-card hover-glow"
                   >
-                    {/* Left: Square Satellite Map (112px x 112px, 4px from top/left/bottom) */}
-                    <div
-                      style={{
-                        width: 112,
-                        height: 112,
-                        minWidth: 112,
-                        maxWidth: 112,
-                        borderRadius: "var(--radius-sm)",
-                        overflow: "hidden",
-                        position: "relative",
-                        border: "1px solid var(--hairline)",
-                        background: "var(--surface-strong)",
-                        flexShrink: 0,
-                        cursor: "pointer",
-                      }}
-                      onClick={() => setExpandedFarm(farm)}
-                      title="Click to inspect satellite map"
-                    >
-                      <GeoMap
-                        center={center}
-                        polygon={ring}
-                        compact
-                        height={112}
-                        interactive={false}
-                      />
-
-                      {/* Demarcation status overlay badge */}
+                    <div className="farm-registry-card-main">
+                      {/* Left: Square Satellite Map (112px x 112px on desktop, 80px on mobile) */}
                       <div
-                        style={{
-                          position: "absolute",
-                          bottom: 4,
-                          left: 4,
-                          right: 4,
-                          zIndex: 1000,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          pointerEvents: "none",
-                        }}
+                        className="farm-registry-map-wrap"
+                        onClick={() => setExpandedFarm(farm)}
+                        title="Click to inspect satellite map"
                       >
-                        {hasBoundary ? (
-                          <span
-                            className="badge badge-green"
-                            style={{
-                              fontSize: 9,
-                              padding: "2px 5px",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
-                              backdropFilter: "blur(4px)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            ✓ {farm.measuredAcres ? `${farm.measuredAcres} ac` : "Mapped"}
-                          </span>
-                        ) : (
-                          <span
-                            className="badge badge-amber"
-                            style={{
-                              fontSize: 9,
-                              padding: "2px 5px",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
-                              backdropFilter: "blur(4px)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            ⚠️ Unmapped
-                          </span>
-                        )}
+                        <GeoMap
+                          center={center}
+                          polygon={ring}
+                          compact
+                          height={112}
+                          interactive={false}
+                        />
 
-                        <span
+                        {/* Demarcation status overlay badge */}
+                        <div
                           style={{
-                            background: "rgba(0,0,0,0.7)",
-                            color: "#fff",
-                            borderRadius: 3,
-                            padding: "2px 4px",
-                            fontSize: 8,
-                            display: "inline-flex",
+                            position: "absolute",
+                            bottom: 4,
+                            left: 4,
+                            right: 4,
+                            zIndex: 1000,
+                            display: "flex",
+                            justifyContent: "space-between",
                             alignItems: "center",
+                            pointerEvents: "none",
                           }}
                         >
-                          <Icons.Maximize2 size={8} />
-                        </span>
+                          {hasBoundary ? (
+                            <span
+                              className="badge badge-green"
+                              style={{
+                                fontSize: 9,
+                                padding: "2px 5px",
+                                boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+                                backdropFilter: "blur(4px)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              ✓ {farm.measuredAcres ? `${farm.measuredAcres} ac` : "Mapped"}
+                            </span>
+                          ) : (
+                            <span
+                              className="badge badge-amber"
+                              style={{
+                                fontSize: 9,
+                                padding: "2px 5px",
+                                boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+                                backdropFilter: "blur(4px)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              ⚠️ Unmapped
+                            </span>
+                          )}
+
+                          <span
+                            style={{
+                              background: "rgba(0,0,0,0.7)",
+                              color: "#fff",
+                              borderRadius: 3,
+                              padding: "2px 4px",
+                              fontSize: 8,
+                              display: "inline-flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Icons.Maximize2 size={8} />
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Spacious Farm Information Hierarchy */}
+                      <div className="farm-registry-info">
+                        {/* Row 1: Checkbox, Farm Name, Survey #, Client, Location & Status */}
+                        <div className="farm-registry-header">
+                          <div className="farm-registry-title-area">
+                            <input
+                              type="checkbox"
+                              checked={selected.has(farm.id)}
+                              onChange={(e) => toggleSelect(farm.id, e.target.checked)}
+                              aria-label={`Select ${farm.name}`}
+                              style={{ cursor: "pointer", accentColor: "var(--ink)", width: 15, height: 15, flexShrink: 0 }}
+                            />
+                            <Link
+                              href={`${basePath}/${farm.id}`}
+                              className="farm-registry-name"
+                              title={farm.name}
+                            >
+                              {farm.name}
+                            </Link>
+                            <span className="farm-registry-survey-tag">
+                              {farm.surveyNumber ? `Survey #${farm.surveyNumber}` : `ID: ${farm.id.slice(0, 8)}`}
+                            </span>
+                            <span className="farm-registry-client-meta">
+                              {farm.client?.name || farm.ownerName || "Private Estate"}
+                              {farm.client?.code ? ` (${farm.client.code})` : ""}
+                            </span>
+                            <span className="farm-registry-loc-meta">
+                              • {farm.location || "Location pending"}
+                            </span>
+                          </div>
+
+                          <div className="farm-registry-badges">
+                            {risks.includes("Stalled >30d") && (
+                              <span className="badge badge-amber" style={{ fontSize: 10, padding: "2px 6px" }}>
+                                Stalled &gt;30d
+                              </span>
+                            )}
+                            <StatusBadge status={farm.status} />
+                          </div>
+                        </div>
+
+                        {/* Row 2: Telemetry Metrics Strip (Desktop) */}
+                        <div className="farm-registry-metrics-desktop">
+                          <span>Claimed: <strong style={{ color: "var(--ink)" }}>{farm.totalArea} ac</strong></span>
+                          <span>•</span>
+                          <span>Cultivable: <strong style={{ color: "var(--ink)" }}>{farm.cultivableArea} ac</strong></span>
+                          {farm.measuredAcres && (
+                            <>
+                              <span>•</span>
+                              <span>Measured: <strong style={{ color: "var(--primary)" }}>{farm.measuredAcres} ac</strong></span>
+                            </>
+                          )}
+                          <span>•</span>
+                          <span>Plots: <strong style={{ color: "var(--ink)" }}>{plotCount}</strong></span>
+                          {farm.setupStage && (
+                            <>
+                              <span>•</span>
+                              <span>Stage: <strong style={{ color: "var(--ink)" }}>{STAGE_LABELS[farm.setupStage] ?? farm.setupStage}</strong></span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Row 3: Meta IDs & Action Buttons (Desktop) */}
+                        <div className="farm-registry-footer-desktop">
+                          <div className="farm-registry-meta-id">
+                            <span className="mono-label" style={{ fontSize: 10 }}>ID: {farm.id}</span>
+                            <span>•</span>
+                            <span>Updated {new Date(farm.updatedAt).toLocaleDateString()}</span>
+                          </div>
+
+                          <div className="farm-registry-actions">
+                            {!hasBoundary && (
+                              <Link
+                                href={`${basePath}/${farm.id}?tab=map`}
+                                className="btn btn-secondary btn-sm"
+                                style={{ fontSize: 11, padding: "3px 10px", height: 26, lineHeight: "20px" }}
+                              >
+                                <Icons.MapPin size={11} />
+                                <span>Demarcate</span>
+                              </Link>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setExpandedFarm(farm)}
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: 11, padding: "3px 10px", height: 26, lineHeight: "20px" }}
+                              title="Inspect satellite map"
+                            >
+                              <Icons.Maximize2 size={11} />
+                              <span>Inspect Map</span>
+                            </button>
+                            <Link
+                              href={`${basePath}/${farm.id}`}
+                              className="btn btn-primary btn-sm"
+                              style={{ fontSize: 11, padding: "3px 12px", height: 26, lineHeight: "20px" }}
+                            >
+                              <span>Open 360</span>
+                              <Icons.ArrowRight size={10} />
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right: Spacious Farm Information Hierarchy */}
-                    <div
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        paddingLeft: 4,
-                        paddingRight: 14,
-                        height: "100%",
-                        minHeight: 112,
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        paddingTop: 4,
-                        paddingBottom: 4,
-                        gap: 8,
-                      }}
-                    >
-                      {/* Row 1: Checkbox, Farm Name, Survey #, Client, Location & Status */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, overflow: "hidden" }}>
-                          <input
-                            type="checkbox"
-                            checked={selected.has(farm.id)}
-                            onChange={(e) => toggleSelect(farm.id, e.target.checked)}
-                            aria-label={`Select ${farm.name}`}
-                            style={{ cursor: "pointer", accentColor: "var(--ink)", width: 15, height: 15, flexShrink: 0 }}
-                          />
-                          <Link
-                            href={`${basePath}/${farm.id}`}
-                            style={{
-                              fontSize: 15,
-                              fontWeight: 700,
-                              color: "var(--ink)",
-                              textDecoration: "none",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              letterSpacing: "-0.015em",
-                            }}
-                            title={farm.name}
-                          >
-                            {farm.name}
-                          </Link>
-                          <span
-                            className="mono-label"
-                            style={{
-                              fontSize: 11,
-                              padding: "2px 6px",
-                              background: "var(--surface-strong)",
-                              borderRadius: 4,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {farm.surveyNumber ? `Survey #${farm.surveyNumber}` : `ID: ${farm.id.slice(0, 8)}`}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--body-strong)",
-                              fontWeight: 500,
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {farm.client?.name || farm.ownerName || "Private Estate"}
-                            {farm.client?.code ? ` (${farm.client.code})` : ""}
-                          </span>
-                          <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            &bull; {farm.location || "Location pending"}
-                          </span>
-                        </div>
-
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                          {risks.includes("Stalled >30d") && (
-                            <span className="badge badge-amber" style={{ fontSize: 10, padding: "2px 6px" }}>
-                              Stalled &gt;30d
-                            </span>
-                          )}
-                          <StatusBadge status={farm.status} />
-                        </div>
-                      </div>
-
-                      {/* Row 2: Telemetry Metrics Strip */}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          fontSize: 12,
-                          color: "var(--muted)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
+                    {/* Mobile-Only Full-Width Telemetry & Action Strip */}
+                    <div className="farm-registry-mobile-body">
+                      <div className="farm-registry-metrics-mobile">
                         <span>Claimed: <strong style={{ color: "var(--ink)" }}>{farm.totalArea} ac</strong></span>
-                        <span>&bull;</span>
-                        <span>Cultivable: <strong style={{ color: "var(--ink)" }}>{farm.cultivableArea} ac</strong></span>
+                        <span>•</span>
+                        <span>Cult: <strong style={{ color: "var(--ink)" }}>{farm.cultivableArea} ac</strong></span>
                         {farm.measuredAcres && (
                           <>
-                            <span>&bull;</span>
-                            <span>Measured: <strong style={{ color: "var(--primary)" }}>{farm.measuredAcres} ac</strong></span>
+                            <span>•</span>
+                            <span>Meas: <strong style={{ color: "var(--primary)" }}>{farm.measuredAcres} ac</strong></span>
                           </>
                         )}
-                        <span>&bull;</span>
+                        <span>•</span>
                         <span>Plots: <strong style={{ color: "var(--ink)" }}>{plotCount}</strong></span>
                         {farm.setupStage && (
                           <>
-                            <span>&bull;</span>
+                            <span>•</span>
                             <span>Stage: <strong style={{ color: "var(--ink)" }}>{STAGE_LABELS[farm.setupStage] ?? farm.setupStage}</strong></span>
                           </>
                         )}
                       </div>
 
-                      {/* Row 3: Meta IDs & Action Buttons */}
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          fontSize: 11,
-                          color: "var(--muted)",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div className="farm-registry-footer-mobile">
+                        <div className="farm-registry-meta-id">
                           <span className="mono-label" style={{ fontSize: 10 }}>ID: {farm.id}</span>
-                          <span>&bull;</span>
                           <span>Updated {new Date(farm.updatedAt).toLocaleDateString()}</span>
                         </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div className="farm-registry-actions">
                           {!hasBoundary && (
                             <Link
                               href={`${basePath}/${farm.id}?tab=map`}
                               className="btn btn-secondary btn-sm"
-                              style={{ fontSize: 11, padding: "3px 10px", height: 26, lineHeight: "20px" }}
                             >
                               <Icons.MapPin size={11} />
                               <span>Demarcate</span>
@@ -711,16 +686,14 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
                             type="button"
                             onClick={() => setExpandedFarm(farm)}
                             className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: "3px 10px", height: 26, lineHeight: "20px" }}
                             title="Inspect satellite map"
                           >
                             <Icons.Maximize2 size={11} />
-                            <span>Inspect Map</span>
+                            <span>Inspect</span>
                           </button>
                           <Link
                             href={`${basePath}/${farm.id}`}
                             className="btn btn-primary btn-sm"
-                            style={{ fontSize: 11, padding: "3px 12px", height: 26, lineHeight: "20px" }}
                           >
                             <span>Open 360</span>
                             <Icons.ArrowRight size={10} />
@@ -884,7 +857,7 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
                               {farm.name}
                             </Link>
                             <div style={{ fontSize: 11, color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {farm.client?.name || farm.ownerName || "Private Estate"} &bull; {farm.location || "Location pending"}
+                              {farm.client?.name || farm.ownerName || "Private Estate"} • {farm.location || "Location pending"}
                             </div>
                           </div>
                         </div>
@@ -919,7 +892,7 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
                         <div>
                           <span className="muted" style={{ display: "block", fontSize: 10 }}>Plots / Stage</span>
                           <strong style={{ color: "var(--ink)" }}>{plotCount} plots</strong>
-                          <span className="muted"> &bull; {farm.setupStage ? (STAGE_LABELS[farm.setupStage] ?? farm.setupStage) : "Active"}</span>
+                          <span className="muted"> • {farm.setupStage ? (STAGE_LABELS[farm.setupStage] ?? farm.setupStage) : "Active"}</span>
                         </div>
                       </div>
 
