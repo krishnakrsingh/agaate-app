@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HqOnboardingListPage() {
   const session = await requireSession();
-  if (!hasPermission(session.role, "onboarding:manage")) redirect("/dashboard");
+  if (!hasPermission(session.permissions, "onboarding:manage")) redirect("/dashboard");
 
   const drafts = await prisma.onboardingDraft.findMany({
     where: { createdById: session.userId, status: "DRAFT" },

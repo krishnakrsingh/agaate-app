@@ -10,7 +10,7 @@ import { INTERNAL_ROLES } from "@/lib/rbac";
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "internal_team:manage");
+    requirePermission(actor, "internal_team:manage");
 
     const sp = request.nextUrl.searchParams;
     const { limit, offset } = paginationParams(sp);

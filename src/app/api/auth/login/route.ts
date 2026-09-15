@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
+import { actorSelect, buildActor } from "@/lib/actor";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { acquireRateLimitSlot, resetRateLimit } from "@/lib/rate-limit";
@@ -68,12 +69,8 @@ export async function POST(request: NextRequest) {
     }
 
     const baselineUserSelect = {
-      id: true,
-      name: true,
-      email: true,
+      ...actorSelect,
       passwordHash: true,
-      role: true,
-      active: true,
     } as const;
 
     let user: {
@@ -129,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     resetRateLimit(rateKey);
     resetRateLimit(ipKey);
-    await createSession({ userId: user.id, name: user.name, role: user.role });
+    await createSession(buildActor(user));
     try {
       await audit(user.id, "LOGIN", "User", user.id);
     } catch {

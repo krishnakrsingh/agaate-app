@@ -15,7 +15,7 @@ export default async function HqClientDetailPage({
   const { clientId } = await params;
   const session = await requireSession();
 
-  if (!hasPermission(session.role, "clients:read")) {
+  if (!hasPermission(session.permissions, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />

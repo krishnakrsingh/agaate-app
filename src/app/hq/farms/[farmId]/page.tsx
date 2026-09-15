@@ -24,7 +24,7 @@ export default async function HqFarmDetailPage({
   const { farmId } = await params;
   const session = await requireSession();
 
-  if (!hasPermission(session.role, "farms:read_all")) {
+  if (!hasPermission(session.permissions, "farms:read_all")) {
     return notFound();
   }
 

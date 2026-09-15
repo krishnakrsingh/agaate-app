@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function HqClientsPage() {
   const session = await requireSession();
 
-  if (!hasPermission(session.role, "clients:read")) {
+  if (!hasPermission(session.permissions, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />

@@ -98,7 +98,7 @@ async function enrichPage(ids: string[]): Promise<Map<string, ClientStats>> {
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "clients:read");
+    requirePermission(actor, "clients:read");
 
     const sp = request.nextUrl.searchParams;
     const { offset } = paginationParams(sp);
@@ -192,7 +192,7 @@ const bulkStatusSchema = z.object({
 export async function PATCH(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "clients:write");
+    requirePermission(actor, "clients:write");
     const input = bulkStatusSchema.parse(await request.json());
 
     const result = await prisma.client.updateMany({

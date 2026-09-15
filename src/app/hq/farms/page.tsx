@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function HqFarmsPage() {
   const session = await requireSession();
 
-  if (!hasPermission(session.role, "farms:read_all")) {
+  if (!hasPermission(session.permissions, "farms:read_all")) {
     return notFound();
   }
 

@@ -15,7 +15,7 @@ export async function GET(
 ) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "clients:read");
+    requirePermission(actor, "clients:read");
     const { clientId } = await params;
 
     const sp = request.nextUrl.searchParams;

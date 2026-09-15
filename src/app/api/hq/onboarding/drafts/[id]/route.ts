@@ -6,7 +6,7 @@ import { apiError, noStore } from "@/lib/api";
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
     const { id } = await params;
     const draft = await prisma.onboardingDraft.findFirst({ where: { id, createdById: actor.id } });
     if (!draft) {
@@ -36,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { assertSameOrigin } = await import("@/lib/security");
     assertSameOrigin(request);
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
     const { id } = await params;
     const deleted = await prisma.onboardingDraft.deleteMany({ where: { id, createdById: actor.id, status: "DRAFT" } });
     if (deleted.count === 0) {

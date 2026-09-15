@@ -9,7 +9,7 @@ import { normalizeEmail, normalizePhone } from "@/components/hq/onboarding-schem
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
     const sp = request.nextUrl.searchParams;
     const phone = normalizePhone(sp.get("phone"));
     const email = normalizeEmail(sp.get("email"));

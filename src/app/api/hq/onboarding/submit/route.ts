@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const { assertSameOrigin } = await import("@/lib/security");
     assertSameOrigin(request);
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
 
     const body = await request.json();
     const input = submitSchema.parse(body);

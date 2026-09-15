@@ -17,7 +17,7 @@ type Props = {
 
 export default async function HqOnboardingNewPage({ searchParams }: Props) {
   const session = await requireSession();
-  if (!hasPermission(session.role, "onboarding:manage")) redirect("/dashboard");
+  if (!hasPermission(session.permissions, "onboarding:manage")) redirect("/dashboard");
 
   const resolvedParams = searchParams ? await searchParams : {};
   const clientId = resolvedParams.clientId?.trim();

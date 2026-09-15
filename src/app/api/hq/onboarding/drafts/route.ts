@@ -16,7 +16,7 @@ const saveSchema = z.object({
 export async function GET() {
   try {
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
     const drafts = await prisma.onboardingDraft.findMany({
       where: { createdById: actor.id, status: "DRAFT" },
       select: { id: true, clientName: true, farmCount: true, createdAt: true, updatedAt: true },
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const { assertSameOrigin } = await import("@/lib/security");
     assertSameOrigin(request);
     const actor = await currentActor();
-    requirePermission(actor.role, "onboarding:manage");
+    requirePermission(actor, "onboarding:manage");
     const input = saveSchema.parse(await request.json());
 
     const serialized = JSON.stringify(input.payload);
