@@ -156,6 +156,23 @@ model Client {
   @@index([status, createdAt])
 }
 
+model RoleDefinition {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  label       String
+  description String   @default("")
+  tier        String   // hq | client | field
+  scope       String   // platform | assigned | client | self
+  permissions Json
+  isSystem    Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@index([tier, active])
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String
@@ -165,6 +182,8 @@ model User {
   isSupervisor          Boolean                @default(false)
   passwordHash          String
   role                  Role
+  roleDefinitionId      String?
+  roleDefinition        RoleDefinition?        @relation(fields: [roleDefinitionId], references: [id])
   active                Boolean                @default(true)
   clientId              String?
   client                Client?                @relation(fields: [clientId], references: [id])
@@ -187,6 +206,7 @@ model User {
 
   @@index([role, active])
   @@index([clientId])
+  @@index([roleDefinitionId])
 }
 
 model Farm {

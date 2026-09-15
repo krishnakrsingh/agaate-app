@@ -17,6 +17,7 @@ import {
   MediaKind,
 } from "@prisma/client";
 import { seedScalablePortfolio } from "./seed-scale";
+import { backfillUserRoleDefinitions, seedRoleDefinitions } from "./seed-roles";
 
 const prisma = new PrismaClient();
 
@@ -59,6 +60,7 @@ async function main() {
   await prisma.farmAccess.deleteMany({});
   await prisma.farm.deleteMany({});
   await prisma.user.deleteMany({});
+  await prisma.roleDefinition.deleteMany({});
   await prisma.client.deleteMany({});
   console.log("✓ Database cleanly wiped.");
 
@@ -82,7 +84,8 @@ async function main() {
   // -------------------------------------------------------------------------
   // STEP 2: CORE HIERARCHY USERS (All 4 Distinct User Roles)
   // -------------------------------------------------------------------------
-  console.log("\n[2/7] Seeding core users across all 4 operational tiers...");
+  console.log("\n[2/7] Seeding role definitions and core users across all operational tiers...");
+  const roleIds = await seedRoleDefinitions(prisma);
 
   const superAdmin = await prisma.user.create({
     data: {
@@ -91,6 +94,7 @@ async function main() {
       email: "admin@agaate.local",
       passwordHash,
       role: Role.SUPER_ADMIN,
+      roleDefinitionId: roleIds.get("SUPER_ADMIN"),
       active: true,
     },
   });
@@ -102,6 +106,7 @@ async function main() {
       email: "farmadmin@agaate.local",
       passwordHash,
       role: Role.FARM_ADMIN,
+      roleDefinitionId: roleIds.get("FARM_ADMIN"),
       active: true,
     },
   });
@@ -113,6 +118,7 @@ async function main() {
       email: "agronomist@agaate.local",
       passwordHash,
       role: Role.AGRONOMIST,
+      roleDefinitionId: roleIds.get("AGRONOMIST"),
       active: true,
     },
   });
@@ -124,6 +130,7 @@ async function main() {
       email: "officer@agaate.local",
       passwordHash,
       role: Role.FARM_OFFICER,
+      roleDefinitionId: roleIds.get("FARM_OFFICER"),
       active: true,
     },
   });
@@ -135,6 +142,7 @@ async function main() {
       email: "officer2@agaate.local",
       passwordHash,
       role: Role.FARM_OFFICER,
+      roleDefinitionId: roleIds.get("FARM_OFFICER"),
       active: true,
     },
   });
@@ -146,6 +154,7 @@ async function main() {
       email: "officer3@agaate.local",
       passwordHash,
       role: Role.FARM_OFFICER,
+      roleDefinitionId: roleIds.get("FARM_OFFICER"),
       active: true,
     },
   });

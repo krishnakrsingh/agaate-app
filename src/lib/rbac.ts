@@ -47,7 +47,49 @@ export const INTERNAL_ROLES: Role[] = ["SUPER_ADMIN", "OPERATIONS_MANAGER", "AGR
 /** Client-side roles — provisioned via onboarding or farm owner consoles. */
 export const CLIENT_ROLES: Role[] = ["FARM_ADMIN", "FARM_OFFICER"];
 
-const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
+export const ALL_PERMISSIONS: Permission[] = [
+  "platform:admin",
+  "internal_team:manage",
+  "clients:read",
+  "clients:write",
+  "onboarding:manage",
+  "farms:read_all",
+  "farms:write",
+  "analytics:read",
+  "tasks:create",
+  "tasks:read",
+  "incidents:read",
+  "incidents:write",
+  "attendance:manage",
+  "farm_team:manage",
+  "farm_settings:manage",
+  "field_ops:execute",
+];
+
+export const PERMISSION_GROUPS: { label: string; permissions: Permission[] }[] = [
+  {
+    label: "Platform",
+    permissions: ["platform:admin", "internal_team:manage"],
+  },
+  {
+    label: "Clients & Onboarding",
+    permissions: ["clients:read", "clients:write", "onboarding:manage"],
+  },
+  {
+    label: "Estates",
+    permissions: ["farms:read_all", "farms:write", "farm_settings:manage"],
+  },
+  {
+    label: "Operations",
+    permissions: ["tasks:create", "tasks:read", "analytics:read", "attendance:manage", "farm_team:manage"],
+  },
+  {
+    label: "Field",
+    permissions: ["incidents:read", "incidents:write", "field_ops:execute"],
+  },
+];
+
+export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   SUPER_ADMIN: [
     "platform:admin",
     "internal_team:manage",
@@ -196,9 +238,24 @@ export function getRoleMeta(role: Role | string): RoleMeta {
   };
 }
 
-export function hasPermission(role: Role, permission: Permission): boolean {
-  if (role === "SUPER_ADMIN") return true;
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
+export function isValidPermission(value: string): value is Permission {
+  return (ALL_PERMISSIONS as readonly string[]).includes(value);
+}
+
+export function normalizePermissions(values: string[]): Permission[] {
+  return values.filter(isValidPermission);
+}
+
+export function hasPermission(
+  roleOrPermissions: Role | Permission[] | readonly Permission[],
+  permission: Permission
+): boolean {
+  if (Array.isArray(roleOrPermissions)) {
+    if (roleOrPermissions.includes("platform:admin")) return true;
+    return roleOrPermissions.includes(permission);
+  }
+  if (roleOrPermissions === "SUPER_ADMIN") return true;
+  return ROLE_PERMISSIONS[roleOrPermissions]?.includes(permission) ?? false;
 }
 
 export function permissionsForRole(role: Role): Permission[] {
@@ -206,15 +263,19 @@ export function permissionsForRole(role: Role): Permission[] {
 }
 
 /** Whether this role uses FarmAccess rows with canManage for lead/admin semantics. */
-export function roleUsesFarmAccess(role: Role): boolean {
+export function roleUsesFarmAccess(role: Role | string, scope?: AccessScope): boolean {
+  if (scope === "assigned" || scope === "client") return true;
   return role === "FARM_ADMIN" || role === "AGRONOMIST" || role === "FARM_OFFICER";
 }
 
 /** Resolve which farm IDs get canManage=true when saving user access. */
-export function resolveManageFarmIds(role: Role, managesFarmIds: string[]): string[] {
-  if (role === "FARM_ADMIN" || role === "AGRONOMIST") {
-    return managesFarmIds;
-  }
+export function resolveManageFarmIds(
+  role: Role | string,
+  managesFarmIds: string[],
+  scope?: AccessScope
+): string[] {
+  if (scope === "assigned" || scope === "client") return managesFarmIds;
+  if (role === "FARM_ADMIN" || role === "AGRONOMIST") return managesFarmIds;
   return [];
 }
 
@@ -226,10 +287,11 @@ export type AccessLevelLabel = {
 
 /** Human-readable access summary for directory tables. */
 export function describeUserAccess(
-  role: Role,
-  farmAccess: { canManage: boolean }[]
+  role: Role | string,
+  farmAccess: { canManage: boolean }[],
+  scope?: AccessScope
 ): AccessLevelLabel {
-  if (role === "SUPER_ADMIN" || role === "OPERATIONS_MANAGER") {
+  if (scope === "platform" || role === "SUPER_ADMIN" || role === "OPERATIONS_MANAGER") {
     return {
       label: "All Estates (HQ)",
       detail: role === "SUPER_ADMIN" ? "Unrestricted platform access" : "Platform operations scope",
