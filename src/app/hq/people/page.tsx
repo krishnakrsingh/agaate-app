@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/rbac";
-import { PeopleDirectory } from "@/components/hq/people-directory";
+import { InternalTeamConsole } from "@/components/hq/internal-team-console";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
@@ -30,7 +30,7 @@ export default async function HqPeoplePage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Internal Team</h1>
         </div>
 
-        <PeopleDirectory currentUserId={session.userId} />
+        <InternalTeamConsole currentUserId={session.userId} />
       </main>
     </>
   );

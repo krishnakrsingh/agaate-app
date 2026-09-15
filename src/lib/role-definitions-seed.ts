@@ -39,6 +39,8 @@ export function slugifyRoleName(name: string): string {
     .slice(0, 60);
 }
 
+import type { PrismaClient } from "@prisma/client";
+
 /** Map custom HQ role to a legacy enum for nav compat. */
 export function legacyRoleForDefinition(slug: string, tier: RoleTier): Role {
   const system = SYSTEM_ROLE_DEFINITIONS.find((r) => r.slug === slug);
@@ -46,4 +48,16 @@ export function legacyRoleForDefinition(slug: string, tier: RoleTier): Role {
   if (tier === "hq") return "AGRONOMIST";
   if (tier === "client") return "FARM_ADMIN";
   return "FARM_OFFICER";
+}
+
+export async function loadRoleDefinitionForAssignment(prisma: PrismaClient, roleDefinitionId: string) {
+  const def = await prisma.roleDefinition.findUniqueOrThrow({ where: { id: roleDefinitionId } });
+  if (!def.active) throw new Error("Selected role is inactive.");
+  return {
+    roleDefinitionId: def.id,
+    role: legacyRoleForDefinition(def.slug, def.tier as RoleTier),
+    scope: def.scope as AccessScope,
+    tier: def.tier as RoleTier,
+    slug: def.slug,
+  };
 }

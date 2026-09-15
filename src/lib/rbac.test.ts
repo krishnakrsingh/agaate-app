@@ -3,8 +3,10 @@ import {
   ASSIGNABLE_INTERNAL_ROLES,
   describeUserAccess,
   hasPermission,
+  normalizePermissions,
   resolveManageFarmIds,
   INTERNAL_ROLES,
+  PERMISSION_GROUPS,
 } from "./rbac";
 
 describe("rbac", () => {
@@ -51,5 +53,30 @@ describe("rbac", () => {
   it("lists internal roles for HQ directory", () => {
     expect(INTERNAL_ROLES).toContain("OPERATIONS_MANAGER");
     expect(ASSIGNABLE_INTERNAL_ROLES).toEqual(["AGRONOMIST", "OPERATIONS_MANAGER", "SUPER_ADMIN"]);
+  });
+
+  it("checks permissions from a dynamic permission list", () => {
+    const perms = ["clients:read", "farms:read_all"] as const;
+    expect(hasPermission([...perms], "clients:read")).toBe(true);
+    expect(hasPermission([...perms], "internal_team:manage")).toBe(false);
+    expect(hasPermission([...perms, "platform:admin"], "internal_team:manage")).toBe(true);
+  });
+
+  it("normalizes permission input and drops unknown keys", () => {
+    expect(normalizePermissions(["clients:read", "not-a-perm", "farms:read_all"])).toEqual([
+      "clients:read",
+      "farms:read_all",
+    ]);
+  });
+
+  it("exposes grouped permission checklist metadata", () => {
+    const allGrouped = PERMISSION_GROUPS.flatMap((g) => g.permissions);
+    expect(allGrouped.length).toBeGreaterThan(0);
+    expect(new Set(allGrouped).size).toBe(allGrouped.length);
+  });
+
+  it("describes access using role definition scope", () => {
+    expect(describeUserAccess("custom-role", [], "platform").label).toBe("All Estates (HQ)");
+    expect(describeUserAccess("AGRONOMIST", [{ canManage: true }], "assigned").detail).toContain("lead agronomist");
   });
 });

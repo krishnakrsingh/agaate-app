@@ -2,11 +2,8 @@ import { NextRequest } from "next/server";
 import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, paginatedJson, paginationParams, parseSort } from "@/lib/api";
-import { INTERNAL_ROLES } from "@/lib/rbac";
 
-// GET /api/hq/people — internal Agaate team & agronomists directory.
-// Farm officers (labours) are appointed strictly by farm admins and managed on-farm.
-// Farm admins are client accounts managed under Clients/Onboarding.
+// GET /api/hq/people — internal Agaate team directory (HQ-tier role definitions).
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
@@ -15,16 +12,15 @@ export async function GET(request: NextRequest) {
     const sp = request.nextUrl.searchParams;
     const { limit, offset } = paginationParams(sp);
     const search = sp.get("search")?.trim();
-    const roleParam = sp.get("role")?.trim();
+    const roleDefId = sp.get("roleDefinitionId")?.trim();
     const activeParam = sp.get("active")?.trim();
     const { sortBy, order } = parseSort(sp, ["name", "createdAt", "updatedAt"], "createdAt");
 
-    const where: any = {};
-    if (roleParam && (INTERNAL_ROLES as readonly string[]).includes(roleParam)) {
-      where.role = roleParam;
-    } else {
-      where.role = { in: INTERNAL_ROLES };
-    }
+    const where: any = {
+      roleDefinition: { tier: "hq" },
+    };
+
+    if (roleDefId) where.roleDefinitionId = roleDefId;
     if (activeParam === "true") where.active = true;
     else if (activeParam === "false") where.active = false;
 
@@ -54,6 +50,17 @@ export async function GET(request: NextRequest) {
           role: true,
           active: true,
           clientId: true,
+          roleDefinitionId: true,
+          roleDefinition: {
+            select: {
+              id: true,
+              slug: true,
+              label: true,
+              tier: true,
+              scope: true,
+              isSystem: true,
+            },
+          },
           client: { select: { id: true, name: true, code: true } },
           createdAt: true,
           updatedAt: true,
@@ -77,8 +84,6 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // Last-active signals, batched (2 indexed group-bys for the whole page,
-    // never N+1). Console activity via audit log, field activity via muster.
     const ids = users.map((u) => u.id);
     const [consoleActivity, fieldActivity] = ids.length
       ? await Promise.all([

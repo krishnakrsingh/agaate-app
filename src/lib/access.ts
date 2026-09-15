@@ -1,7 +1,8 @@
 import "server-only";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { actorHasPermission, requireActiveUser, type Actor } from "@/lib/actor";
+import { actorHasPermission, type Actor } from "@/lib/actor";
+import { requireActiveUser } from "@/lib/auth";
 import type { Permission } from "@/lib/rbac";
 
 export class HttpError extends Error { constructor(public status: number, message: string) { super(message); } }

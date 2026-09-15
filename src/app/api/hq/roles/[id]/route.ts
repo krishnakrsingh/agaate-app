@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requirePermission } from "@/lib/access";
+import { currentActor, HttpError, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
@@ -90,9 +90,9 @@ export async function DELETE(
       where: { id },
       include: { _count: { select: { users: true } } },
     });
-    if (row.isSystem) throw new Error("System roles cannot be deleted.");
+    if (row.isSystem) throw new HttpError(400, "System roles cannot be deleted.");
     if (row._count.users > 0) {
-      throw new Error("Reassign users before deleting this role.");
+      throw new HttpError(400, "Reassign users before deleting this role.");
     }
 
     await prisma.roleDefinition.delete({ where: { id } });

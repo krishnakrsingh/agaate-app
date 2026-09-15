@@ -4,14 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Icons } from "../icons";
 import { RoleBadge } from "../ui/badge";
 import { EmptyState } from "../ui/empty-state";
-import { describeUserAccess, getRoleMeta } from "@/lib/rbac";
-import type { Role } from "@prisma/client";
+import { describeUserAccess } from "@/lib/rbac";
+import type { AccessScope } from "@/lib/rbac";
 import {
   CreateAccountDrawer,
   DirectoryUser,
   EditAccessDrawer,
-  ROLES,
 } from "./people-drawers";
+import type { RoleRow } from "./roles-admin";
 
 const PAGE_SIZE = 25;
 
@@ -60,13 +60,22 @@ function getInitials(name: string) {
   return (parts[0]?.substring(0, 2) || "U").toUpperCase();
 }
 
+function RoleCell({ user }: { user: DirectoryUser }) {
+  const label = user.roleDefinition?.label;
+  if (label && !user.roleDefinition?.isSystem) {
+    return <span className="role-badge role-agronomist">{label}</span>;
+  }
+  return <RoleBadge role={user.roleDefinition?.slug ?? user.role} />;
+}
+
 export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
   const [users, setUsers] = useState<DirectoryUser[]>([]);
+  const [hqRoles, setHqRoles] = useState<RoleRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [role, setRole] = useState("ALL");
+  const [roleDefinitionId, setRoleDefinitionId] = useState("ALL");
   const [active, setActive] = useState("ALL");
   const [sort, setSort] = useState<SortOption>("recent");
   const [loading, setLoading] = useState(false);
@@ -79,6 +88,13 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
 
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<DirectoryUser | null>(null);
+
+  useEffect(() => {
+    fetch("/api/hq/roles?tier=hq")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setHqRoles(Array.isArray(data) ? data : []))
+      .catch(() => setHqRoles([]));
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -99,7 +115,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
       sortOrder,
     });
     if (debouncedSearch) params.set("search", debouncedSearch);
-    if (role !== "ALL") params.set("role", role);
+    if (roleDefinitionId !== "ALL") params.set("roleDefinitionId", roleDefinitionId);
     if (active !== "ALL") params.set("active", active);
 
     fetch(`/api/hq/people?${params.toString()}`)
@@ -119,7 +135,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
         setUsers([]);
       })
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, role, active, sort]);
+  }, [page, debouncedSearch, roleDefinitionId, active, sort]);
 
   useEffect(() => {
     loadUsers();
@@ -229,10 +245,10 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
 
           <div className="form-group" style={{ margin: 0, minWidth: 150 }}>
             <label>Role</label>
-            <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
+            <select value={roleDefinitionId} onChange={(e) => { setRoleDefinitionId(e.target.value); setPage(1); }}>
               <option value="ALL">All internal roles</option>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{getRoleMeta(r).label}</option>
+              {hqRoles.map((r) => (
+                <option key={r.id} value={r.id}>{r.label}</option>
               ))}
             </select>
           </div>
@@ -305,6 +321,8 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
               {users.map((u) => {
                 const { name: cleanName, title: titleDesignation } = parseNameAndTitle(u.name);
                 const initials = getInitials(cleanName);
+                const scope = (u.roleDefinition?.scope ?? "platform") as AccessScope;
+                const access = describeUserAccess(u.roleDefinition?.slug ?? u.role, u.farmAccess, scope);
 
                 return (
                   <tr key={u.id}>
@@ -351,18 +369,13 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
                       {!u.email && !u.phone && <span className="muted">No contact</span>}
                     </td>
                     <td>
-                      <RoleBadge role={u.role} />
+                      <RoleCell user={u} />
                     </td>
                     <td style={{ fontSize: 12 }}>
-                      {(() => {
-                        const access = describeUserAccess(u.role as Role, u.farmAccess);
-                        return (
-                          <div>
-                            <div style={{ fontWeight: 500 }}>{access.label}</div>
-                            <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{access.detail}</div>
-                          </div>
-                        );
-                      })()}
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{access.label}</div>
+                        <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{access.detail}</div>
+                      </div>
                     </td>
                     <td>
                       <span className={`status ${u.active ? "active" : "inactive"}`} style={{ whiteSpace: "nowrap" }}>

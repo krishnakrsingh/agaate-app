@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { currentActor, requireRole, accessibleFarmWhere } from "@/lib/access";
 import { resolveManageFarmIds } from "@/lib/rbac";
+import { loadRoleDefinitionForAssignment } from "@/lib/role-definitions-seed";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, paginationParams } from "@/lib/api";
@@ -12,7 +14,8 @@ const createUserSchema = z.object({
   email: z.string().email().max(254).optional().nullable(),
   phone: z.string().max(30).optional().nullable(),
   password: z.string().min(12).max(128),
-  role: z.enum(["SUPER_ADMIN", "OPERATIONS_MANAGER", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).default("FARM_OFFICER"),
+  role: z.enum(["SUPER_ADMIN", "OPERATIONS_MANAGER", "FARM_ADMIN", "AGRONOMIST", "FARM_OFFICER"]).optional(),
+  roleDefinitionId: z.string().min(1).optional(),
   isSupervisor: z.boolean().default(false),
   clientId: z.string().optional().nullable(),
   farmId: z.string().optional(),
@@ -187,6 +190,23 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(input.password, 12);
 
+    let assignedRole: Role = input.role ?? "FARM_OFFICER";
+    let roleDefinitionId: string | undefined;
+    let accessScope: "platform" | "assigned" | "client" | "self" = "self";
+
+    if (input.roleDefinitionId) {
+      const def = await loadRoleDefinitionForAssignment(prisma, input.roleDefinitionId);
+      if (actor.role !== "SUPER_ADMIN" && !actor.permissions.includes("internal_team:manage")) {
+        throw new Error("You do not have permission to assign this role.");
+      }
+      if (def.tier !== "hq") throw new Error("Only HQ roles can be assigned from internal team.");
+      assignedRole = def.role;
+      roleDefinitionId = def.roleDefinitionId;
+      accessScope = def.scope;
+    } else if (!input.role) {
+      throw new Error("Role or roleDefinitionId is required.");
+    }
+
     const user = await prisma.$transaction(async (tx) =>
       tx.user.create({
         data: {
@@ -196,15 +216,16 @@ export async function POST(request: NextRequest) {
           isSupervisor: input.isSupervisor,
           clientId: input.clientId || (actor.role === "FARM_ADMIN" ? actor.clientId : null),
           passwordHash,
-          role: input.role,
+          role: assignedRole,
+          roleDefinitionId,
           farmAccess: {
             create: farmIds.map((farmId) => ({
               farmId,
-              canManage: resolveManageFarmIds(input.role, input.managesFarmIds).includes(farmId),
+              canManage: resolveManageFarmIds(assignedRole, input.managesFarmIds, accessScope).includes(farmId),
             })),
           },
         },
-        include: { farmAccess: true },
+        include: { farmAccess: true, roleDefinition: true },
       })
     );
 

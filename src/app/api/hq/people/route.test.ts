@@ -47,5 +47,13 @@ describe("GET /api/hq/people", () => {
     expect(Array.isArray(body)).toBe(true);
     expect(body.length).toBeGreaterThan(0);
     expect(res.headers.get("X-Total-Count")).toBeTruthy();
+    expect(body[0]).toMatchObject({
+      roleDefinition: {
+        id: expect.any(String),
+        slug: expect.any(String),
+        label: expect.any(String),
+        tier: "hq",
+      },
+    });
   });
 });

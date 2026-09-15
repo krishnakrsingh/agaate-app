@@ -3,12 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Icons } from "../icons";
 import {
-  ASSIGNABLE_INTERNAL_ROLES,
   describeUserAccess,
-  getRoleMeta,
   roleUsesFarmAccess,
+  type AccessScope,
 } from "@/lib/rbac";
-import type { Role } from "@prisma/client";
+import type { RoleRow } from "./roles-admin";
 
 export type AssignedFarm = {
   farmId: string;
@@ -22,6 +21,15 @@ export type FarmAccessInfo = {
   farm?: { id: string; name: string; client?: { id: string; name: string } | null } | null;
 };
 
+export type RoleDefinitionInfo = {
+  id: string;
+  slug: string;
+  label: string;
+  tier: string;
+  scope: string;
+  isSystem?: boolean;
+};
+
 export type DirectoryUser = {
   id: string;
   name: string;
@@ -31,6 +39,8 @@ export type DirectoryUser = {
   active: boolean;
   clientId?: string | null;
   client?: { id: string; name: string; code: string | null } | null;
+  roleDefinitionId?: string | null;
+  roleDefinition?: RoleDefinitionInfo | null;
   createdAt?: string;
   lastActive?: string;
   lastActiveSource?: string;
@@ -38,33 +48,21 @@ export type DirectoryUser = {
   farmAccess: FarmAccessInfo[];
 };
 
-export const ROLES = ASSIGNABLE_INTERNAL_ROLES;
+function useHqRoles() {
+  const [roles, setRoles] = useState<RoleRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-function RoleInfoPanel({ role }: { role: Role }) {
-  const meta = getRoleMeta(role);
-  return (
-    <div
-      style={{
-        padding: "10px 12px",
-        background: "var(--surface)",
-        border: "1px solid var(--line)",
-        borderRadius: "var(--radius-xs)",
-        fontSize: 12,
-        lineHeight: 1.45,
-      }}
-    >
-      <div style={{ fontWeight: 600, marginBottom: 4 }}>{meta.label}</div>
-      <p className="muted" style={{ margin: "0 0 8px" }}>{meta.description}</p>
-      <ul style={{ margin: 0, paddingLeft: 18, color: "var(--ink)" }}>
-        {meta.capabilities.map((cap) => (
-          <li key={cap}>{cap}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  useEffect(() => {
+    fetch("/api/hq/roles?tier=hq")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setRoles(Array.isArray(data) ? data : []))
+      .catch(() => setRoles([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return { roles, loading };
 }
 
-// Search-as-type farm lookup, capped at 6 rows. Never fetch-all.
 export function useFarmSearch(clientId?: string | null) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ id: string; name: string; location: string }[]>([]);
@@ -132,12 +130,7 @@ function FarmPills({
           >
             {f.canManage ? manageLabel : observeLabel}
           </button>
-          <button
-            type="button"
-            onClick={() => onRemove(f.farmId)}
-            aria-label={`Remove ${f.farmName}`}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
-          >
+          <button type="button" onClick={() => onRemove(f.farmId)} aria-label={`Remove ${f.farmName}`} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}>
             <Icons.X size={11} />
           </button>
         </span>
@@ -150,32 +143,21 @@ function FarmAssigner({
   assigned,
   setAssigned,
   clientId,
-  role,
+  scope,
 }: {
   assigned: AssignedFarm[];
   setAssigned: React.Dispatch<React.SetStateAction<AssignedFarm[]>>;
   clientId?: string | null;
-  role: Role;
+  scope: AccessScope;
 }) {
   const { query, setQuery, results, clear } = useFarmSearch(clientId);
-  const showAccessToggles = roleUsesFarmAccess(role) && role !== "FARM_OFFICER";
-  const manageLabel = role === "AGRONOMIST" ? "LEAD" : "ADMIN";
-  const observeLabel = role === "AGRONOMIST" ? "ASSIGNED" : "VIEW";
+  const manageLabel = scope === "assigned" ? "LEAD" : "ADMIN";
+  const observeLabel = scope === "assigned" ? "ASSIGNED" : "VIEW";
 
   function add(farmId: string, farmName: string) {
     if (assigned.some((a) => a.farmId === farmId)) return;
     setAssigned((prev) => [...prev, { farmId, farmName, canManage: false }]);
     clear();
-  }
-
-  if (!showAccessToggles && role !== "AGRONOMIST") {
-    return (
-      <div className="muted" style={{ fontSize: 12 }}>
-        {role === "SUPER_ADMIN" || role === "OPERATIONS_MANAGER"
-          ? "HQ roles have platform-wide estate visibility — no per-estate assignment needed."
-          : "Estate assignment is not required for this role."}
-      </div>
-    );
   }
 
   return (
@@ -189,25 +171,9 @@ function FarmAssigner({
           style={{ width: "100%", padding: "8px 12px" }}
         />
         {results.length > 0 && (
-          <div
-            style={{
-              position: "absolute", top: "100%", left: 0, right: 0,
-              backgroundColor: "var(--canvas)", border: "1px solid var(--line)",
-              borderRadius: "var(--radius-xs)", zIndex: 20,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)", maxHeight: 180, overflowY: "auto",
-            }}
-          >
+          <div style={{ position: "absolute", top: "100%", left: 0, right: 0, backgroundColor: "var(--canvas)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", zIndex: 20, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", maxHeight: 180, overflowY: "auto" }}>
             {results.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => add(f.id, f.name)}
-                style={{
-                  width: "100%", padding: "8px 12px", textAlign: "left", background: "none",
-                  border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer",
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                }}
-              >
+              <button key={f.id} type="button" onClick={() => add(f.id, f.name)} style={{ width: "100%", padding: "8px 12px", textAlign: "left", background: "none", border: "none", borderBottom: "1px solid var(--stone)", cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontWeight: 600, fontSize: 12 }}>{f.name}</span>
                 <span className="muted" style={{ fontSize: 11 }}>{f.location}</span>
               </button>
@@ -215,16 +181,9 @@ function FarmAssigner({
           </div>
         )}
       </div>
-      {role === "AGRONOMIST" && (
-        <p className="muted" style={{ fontSize: 11, margin: "0 0 8px" }}>
-          Agronomists can view all estates. Assignments restrict focus; LEAD grants manage actions on that estate.
-        </p>
-      )}
       <FarmPills
         assigned={assigned}
-        onToggleManage={(farmId) =>
-          setAssigned((prev) => prev.map((f) => (f.farmId === farmId ? { ...f, canManage: !f.canManage } : f)))
-        }
+        onToggleManage={(farmId) => setAssigned((prev) => prev.map((f) => (f.farmId === farmId ? { ...f, canManage: !f.canManage } : f)))}
         onRemove={(farmId) => setAssigned((prev) => prev.filter((f) => f.farmId !== farmId))}
         manageLabel={manageLabel}
         observeLabel={observeLabel}
@@ -233,19 +192,9 @@ function FarmAssigner({
   );
 }
 
-function DrawerShell({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
+function DrawerShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -255,12 +204,7 @@ function DrawerShell({
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <strong style={{ fontSize: 16 }}>{title}</strong>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}
-          >
+          <button type="button" onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 4 }}>
             <Icons.X size={16} />
           </button>
         </div>
@@ -270,45 +214,57 @@ function DrawerShell({
   );
 }
 
-function RoleSelect({
+function RoleDefinitionSelect({
+  roles,
   value,
   onChange,
-  name = "role",
+  loading,
 }: {
-  value: Role;
-  onChange: (role: Role) => void;
-  name?: string;
+  roles: RoleRow[];
+  value: string;
+  onChange: (id: string) => void;
+  loading: boolean;
 }) {
-  const meta = getRoleMeta(value);
+  const selected = roles.find((r) => r.id === value);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="form-group" style={{ margin: 0 }}>
-        <label>Internal Role</label>
-        <select name={name} value={value} onChange={(e) => onChange(e.target.value as Role)}>
-          {ROLES.map((r) => {
-            const m = getRoleMeta(r);
-            return (
-              <option key={r} value={r}>{m.label}</option>
-            );
-          })}
+        <label>Role</label>
+        <select value={value} onChange={(e) => onChange(e.target.value)} disabled={loading || !roles.length}>
+          {roles.map((r) => (
+            <option key={r.id} value={r.id}>{r.label}{r.isSystem ? "" : " (Custom)"}</option>
+          ))}
         </select>
       </div>
-      <RoleInfoPanel role={value} />
+      {selected && (
+        <div style={{ padding: "10px 12px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", fontSize: 12 }}>
+          <div style={{ fontWeight: 600 }}>{selected.label}</div>
+          <p className="muted" style={{ margin: "4px 0 8px" }}>{selected.description || "No description."}</p>
+          <div className="muted">{selected.permissions.length} permissions · {selected.scope} scope</div>
+        </div>
+      )}
     </div>
   );
 }
 
-export function CreateAccountDrawer({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: (message: string) => void;
-}) {
-  const [role, setRole] = useState<Role>("AGRONOMIST");
+export function CreateAccountDrawer({ onClose, onCreated }: { onClose: () => void; onCreated: (message: string) => void }) {
+  const { roles, loading } = useHqRoles();
+  const [roleDefinitionId, setRoleDefinitionId] = useState("");
   const [assigned, setAssigned] = useState<AssignedFarm[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!roleDefinitionId && roles.length) {
+      const defaultRole = roles.find((r) => r.slug === "AGRONOMIST") ?? roles[0];
+      setRoleDefinitionId(defaultRole.id);
+    }
+  }, [roles, roleDefinitionId]);
+
+  const selected = roles.find((r) => r.id === roleDefinitionId);
+  const scope = (selected?.scope ?? "platform") as AccessScope;
+  const showEstates = selected && roleUsesFarmAccess(selected.slug, scope);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -330,15 +286,12 @@ export function CreateAccountDrawer({
           email: (String(f.get("email") ?? "").trim() || null),
           phone: (String(f.get("phone") ?? "").trim() || null),
           password,
-          role,
+          roleDefinitionId,
           farmIds: assigned.map((a) => a.farmId),
           managesFarmIds: assigned.filter((a) => a.canManage).map((a) => a.farmId),
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Account creation failed.");
-      }
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Account creation failed.");
       onCreated("Team member account created.");
       onClose();
     } catch (err: any) {
@@ -371,18 +324,18 @@ export function CreateAccountDrawer({
           </div>
         </div>
 
-        <RoleSelect value={role} onChange={setRole} />
+        <RoleDefinitionSelect roles={roles} value={roleDefinitionId} onChange={setRoleDefinitionId} loading={loading} />
 
-        {role === "AGRONOMIST" && (
+        {showEstates && (
           <div className="form-group" style={{ margin: 0 }}>
-            <label>Assign Estates to Oversee ({assigned.length})</label>
-            <FarmAssigner assigned={assigned} setAssigned={setAssigned} role={role} />
+            <label>Assign Estates ({assigned.length})</label>
+            <FarmAssigner assigned={assigned} setAssigned={setAssigned} scope={scope} />
           </div>
         )}
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
           <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+          <button type="submit" className="btn btn-primary btn-sm" disabled={pending || !roleDefinitionId}>
             {pending ? "Adding..." : "Add Team Member"}
           </button>
         </div>
@@ -402,7 +355,8 @@ export function EditAccessDrawer({
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
-  const [role, setRole] = useState<Role>(user.role as Role);
+  const { roles, loading } = useHqRoles();
+  const [roleDefinitionId, setRoleDefinitionId] = useState(user.roleDefinitionId ?? user.roleDefinition?.id ?? "");
   const [assigned, setAssigned] = useState<AssignedFarm[]>(
     user.farmAccess.map((fa) => ({
       farmId: fa.farmId,
@@ -412,7 +366,11 @@ export function EditAccessDrawer({
   );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const accessSummary = describeUserAccess(role, assigned);
+
+  const selected = roles.find((r) => r.id === roleDefinitionId);
+  const scope = (selected?.scope ?? user.roleDefinition?.scope ?? "platform") as AccessScope;
+  const accessSummary = describeUserAccess(user.role, assigned, scope);
+  const showEstates = selected && roleUsesFarmAccess(selected.slug, scope);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -421,8 +379,9 @@ export function EditAccessDrawer({
     const f = new FormData(e.currentTarget);
     const nextActive = f.get("active") === "on";
     const newPassword = String(f.get("newPassword") ?? "").trim();
+    const nextRole = roles.find((r) => r.id === roleDefinitionId);
 
-    if (user.id === currentUserId && (!nextActive || role !== "SUPER_ADMIN")) {
+    if (user.id === currentUserId && (!nextActive || nextRole?.slug !== "SUPER_ADMIN")) {
       setPending(false);
       setError("You cannot remove your own Super Admin access.");
       return;
@@ -439,17 +398,14 @@ export function EditAccessDrawer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: f.get("name"),
-          role,
+          roleDefinitionId,
           active: nextActive,
           farmIds: assigned.map((a) => a.farmId),
           managesFarmIds: assigned.filter((a) => a.canManage).map((a) => a.farmId),
           ...(newPassword ? { password: newPassword } : {}),
         }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Account update failed.");
-      }
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Account update failed.");
       onSaved(`Access updated for ${user.name}.`);
       onClose();
     } catch (err: any) {
@@ -463,20 +419,10 @@ export function EditAccessDrawer({
     <DrawerShell title={`Edit Access: ${user.name}`} onClose={onClose}>
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {error && <div className="error" role="alert">{error}</div>}
-
-        <div
-          style={{
-            padding: "8px 12px",
-            background: "var(--surface)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--radius-xs)",
-            fontSize: 12,
-          }}
-        >
+        <div style={{ padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", fontSize: 12 }}>
           <strong>Effective access:</strong> {accessSummary.label}
           <span className="muted"> — {accessSummary.detail}</span>
         </div>
-
         <div className="two-column">
           <div className="form-group" style={{ margin: 0 }}>
             <label>Full Name</label>
@@ -493,19 +439,16 @@ export function EditAccessDrawer({
             </label>
           </div>
         </div>
-
-        <RoleSelect value={role} onChange={setRole} />
-
-        {role === "AGRONOMIST" && (
+        <RoleDefinitionSelect roles={roles} value={roleDefinitionId} onChange={setRoleDefinitionId} loading={loading} />
+        {showEstates && (
           <div className="form-group" style={{ margin: 0 }}>
             <label>Assigned Estates ({assigned.length})</label>
-            <FarmAssigner assigned={assigned} setAssigned={setAssigned} clientId={user.clientId} role={role} />
+            <FarmAssigner assigned={assigned} setAssigned={setAssigned} clientId={user.clientId} scope={scope} />
           </div>
         )}
-
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
           <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+          <button type="submit" className="btn btn-primary btn-sm" disabled={pending || !roleDefinitionId}>
             {pending ? "Saving..." : "Save Changes"}
           </button>
         </div>
