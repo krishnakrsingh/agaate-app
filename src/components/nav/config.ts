@@ -136,13 +136,6 @@ export const NAV_ITEMS: NavItem[] = [
 
   // ── 4. HQ STAFF (SUPER ADMIN + OPERATIONS MANAGER) ──
   {
-    href: "/hq",
-    label: "Overview",
-    icon: "Activity",
-    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
-    isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
-  },
-  {
     href: "/hq/clients",
     label: "Clients",
     icon: "Users",
@@ -180,10 +173,10 @@ export function getNavForRole(role: Role): NavItem[] {
 export function getMobileNavForRole(role: Role): NavItem[] {
   const all = getNavForRole(role);
   if (role === "SUPER_ADMIN") {
-    return all.filter((i) => ["/hq", "/hq/clients", "/hq/farms", "/hq/onboarding", "/hq/people"].includes(i.href));
+    return all.filter((i) => ["/hq/clients", "/hq/farms", "/hq/onboarding", "/hq/people"].includes(i.href));
   }
   if (role === "OPERATIONS_MANAGER") {
-    return all.filter((i) => ["/hq", "/hq/clients", "/hq/farms", "/hq/onboarding"].includes(i.href));
+    return all.filter((i) => ["/hq/clients", "/hq/farms", "/hq/onboarding"].includes(i.href));
   }
   if (role === "FARM_ADMIN") {
     return all.filter((i) => ["/owner/dashboard", "/owner/land", "/owner/operations", "/owner/records", "/owner/insights"].includes(i.href));
@@ -208,8 +201,8 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 export const ROLE_HOME_URLS: Record<string, string> = {
-  SUPER_ADMIN: "/hq",
-  OPERATIONS_MANAGER: "/hq",
+  SUPER_ADMIN: "/hq/clients",
+  OPERATIONS_MANAGER: "/hq/clients",
   FARM_ADMIN: "/owner/dashboard",
   AGRONOMIST: "/agronomy/radar",
   FARM_OFFICER: "/officer/day",

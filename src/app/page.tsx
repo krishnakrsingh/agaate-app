@@ -33,7 +33,7 @@ export default async function Home() {
   }
 
   if (user.role === "SUPER_ADMIN" || user.role === "OPERATIONS_MANAGER") {
-    redirect("/hq");
+    redirect("/hq/clients");
   }
 
   redirect("/operations");

@@ -73,14 +73,8 @@ export async function POST(request: NextRequest) {
       passwordHash: true,
     } as const;
 
-    let user: {
-      id: string;
-      name: string;
-      email: string;
-      passwordHash: string;
-      role: "SUPER_ADMIN" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
-      active: boolean;
-    } | null = null;
+    type LoginUser = NonNullable<Awaited<ReturnType<typeof prisma.user.findFirst<{ select: typeof baselineUserSelect }>>>>;
+    let user: LoginUser | null = null;
 
     try {
       if (isEmail) {

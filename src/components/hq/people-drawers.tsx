@@ -90,6 +90,32 @@ export function useFarmSearch(clientId?: string | null) {
   return { query, setQuery, results, clear: () => { setQuery(""); setResults([]); } };
 }
 
+export function useClientSearch() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<{ id: string; name: string; location: string }[]>([]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      const params = new URLSearchParams({ search: q, limit: "6" });
+      fetch(`/api/hq/clients?${params.toString()}`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => {
+          const list = Array.isArray(data) ? data : (data.clients ?? []);
+          setResults(list.map((c: any) => ({ id: c.id, name: c.name, location: c.companyName || c.code || "Client" })));
+        })
+        .catch(() => setResults([]));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  return { query, setQuery, results, clear: () => { setQuery(""); setResults([]); } };
+}
+
 function FarmPills({
   assigned,
   onToggleManage,

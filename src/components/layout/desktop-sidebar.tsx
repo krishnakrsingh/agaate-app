@@ -117,12 +117,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
         title: "PORTFOLIO",
         items: [
           {
-            href: "/hq",
-            label: "Overview",
-            icon: "Activity",
-            isActive: (p) => p === "/hq" || p === "/dashboard" || p === "/operations",
-          },
-          {
             href: "/hq/clients",
             label: "Clients",
             icon: "Users",

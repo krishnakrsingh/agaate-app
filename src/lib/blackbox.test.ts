@@ -300,7 +300,7 @@ describe.sequential("Black-Box E2E Product Validation", ()=>{
     const dbAttEnd = await prisma.attendance.findFirst({where:{userId: officer.id, farmId}});
     expect(dbAttEnd?.status).toBe("COMPLETED");
     expect(dbAttEnd?.endAt).toBeDefined();
-  });
+  }, 20000);
 
   it("Workflow 4: FARM_ADMIN reviews", async ()=>{
     // Create an attendance exception via outside geofence

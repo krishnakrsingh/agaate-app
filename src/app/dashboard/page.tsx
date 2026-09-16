@@ -17,5 +17,5 @@ export default async function DashboardPage() {
   }
 
   // Super Admin lands directly on HQ
-  redirect("/hq");
+  redirect("/hq/clients");
 }

@@ -250,12 +250,12 @@ export function hasPermission(
   roleOrPermissions: Role | Permission[] | readonly Permission[],
   permission: Permission
 ): boolean {
-  if (Array.isArray(roleOrPermissions)) {
-    if (roleOrPermissions.includes("platform:admin")) return true;
-    return roleOrPermissions.includes(permission);
+  if (typeof roleOrPermissions === "string") {
+    if (roleOrPermissions === "SUPER_ADMIN") return true;
+    return ROLE_PERMISSIONS[roleOrPermissions]?.includes(permission) ?? false;
   }
-  if (roleOrPermissions === "SUPER_ADMIN") return true;
-  return ROLE_PERMISSIONS[roleOrPermissions]?.includes(permission) ?? false;
+  if (roleOrPermissions.includes("platform:admin")) return true;
+  return roleOrPermissions.includes(permission);
 }
 
 export function permissionsForRole(role: Role): Permission[] {

@@ -100,7 +100,6 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
   const baseItems: SearchableItem[] = useMemo(() => {
     if (role === "SUPER_ADMIN") {
       return [
-        { id: "nav-overview", title: "HQ Overview", subtitle: "Platform metrics & alert inbox", category: "NAVIGATION", href: "/hq", icon: "Activity" },
         { id: "nav-clients", title: "Clients Directory", subtitle: "Client profiles, estates & acreage", category: "NAVIGATION", href: "/hq/clients", icon: "Users" },
         { id: "nav-farms", title: "Farms Portfolio", subtitle: "Cadastral registry, plots & history", category: "NAVIGATION", href: "/hq/farms", icon: "Farm" },
         { id: "nav-onboard", title: "Client Onboarding", subtitle: "Multi-farm setup wizard & drafts", category: "NAVIGATION", href: "/hq/onboarding", icon: "Zap", badge: "Pipeline" },
