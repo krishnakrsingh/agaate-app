@@ -2284,6 +2284,10 @@ input.dir-select {
   flex-direction: column;
   gap: 1px;
 }
+.dir-popover-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
 .dir-menu {
   min-width: 188px;
 }
@@ -2410,6 +2414,7 @@ input.dir-select {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-subtle);
   overflow: hidden;
+  min-height: 220px;
 }
 .dir-table-scroll {
   overflow-x: auto;

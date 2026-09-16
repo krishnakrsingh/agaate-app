@@ -541,8 +541,9 @@ export function ClientDirectory({
                   </td>
                 </tr>
               ) : (
-                rows.map((c) => {
+                rows.map((c, index) => {
                   const menuOpen = openMenuId === c.id;
+                  const isUp = rows.length > 2 && index >= rows.length - 2;
                   return (
                     <tr
                       key={c.id}
@@ -563,7 +564,15 @@ export function ClientDirectory({
                         />
                       </td>
                       <td>
-                        <ClientIdentity c={c} />
+                        <div className="dir-client-cell">
+                          <Link href={`/hq/clients/${c.id}`} className="dir-name">
+                            {c.companyName?.trim() || c.name}
+                          </Link>
+                          {c.companyName?.trim() && (
+                            <div className="dir-sub">{c.name}</div>
+                          )}
+                          <div className="dir-code">{c.code}</div>
+                        </div>
                       </td>
                       <td className="dir-contact-col">
                         {c.companyName && c.name && (
@@ -633,7 +642,7 @@ export function ClientDirectory({
                               />
                               <div
                                 role="menu"
-                                className="dir-popover dir-menu"
+                                className={`dir-popover dir-menu ${isUp ? "dir-popover-up" : ""}`}
                                 onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
                               >
                                 <Link
@@ -730,8 +739,9 @@ export function ClientDirectory({
             )}
           </div>
         ) : (
-          rows.map((c) => {
+          rows.map((c, index) => {
             const menuOpen = openMenuId === c.id;
+            const isUp = rows.length > 2 && index >= rows.length - 2;
             return (
               <article key={c.id} className="dir-card">
                 <div className="dir-card-head">
@@ -800,7 +810,7 @@ export function ClientDirectory({
                         />
                         <div
                           role="menu"
-                          className="dir-popover dir-menu"
+                          className={`dir-popover dir-menu ${isUp ? "dir-popover-up" : ""}`}
                           onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
                         >
                           <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
