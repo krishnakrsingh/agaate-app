@@ -26,11 +26,16 @@ export default async function HqPeoplePage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <div className="page-header" style={{ paddingBottom: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Internal Team</h1>
-        </div>
+        <div className="dir-root">
+          <header className="dir-header">
+            <div className="dir-header-text">
+              <h1 className="dir-title">Internal Team</h1>
+              <p className="dir-subtitle">Manage Agaate staff, roles and estate access.</p>
+            </div>
+          </header>
 
-        <InternalTeamConsole currentUserId={session.userId} />
+          <InternalTeamConsole currentUserId={session.userId} />
+        </div>
       </main>
     </>
   );

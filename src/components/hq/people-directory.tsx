@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Icons } from "../icons";
 import { RoleBadge } from "../ui/badge";
-import { EmptyState } from "../ui/empty-state";
 import { describeUserAccess } from "@/lib/rbac";
 import type { AccessScope } from "@/lib/rbac";
 import {
@@ -66,6 +65,15 @@ function RoleCell({ user }: { user: DirectoryUser }) {
     return <span className="role-badge role-agronomist">{label}</span>;
   }
   return <RoleBadge role={user.roleDefinition?.slug ?? user.role} />;
+}
+
+function ActiveDot({ active }: { active: boolean }) {
+  return (
+    <span className="dir-status" style={{ color: active ? "var(--green-ink)" : "var(--muted)" }}>
+      <span className="dir-status-dot" style={{ background: active ? "var(--green-ink)" : "var(--muted)" }} />
+      {active ? "Active" : "Inactive"}
+    </span>
+  );
 }
 
 export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
@@ -138,7 +146,8 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
   }, [page, debouncedSearch, roleDefinitionId, active, sort]);
 
   useEffect(() => {
-    loadUsers();
+    const t = setTimeout(loadUsers, 0);
+    return () => clearTimeout(t);
   }, [loadUsers]);
 
   function toggleSelect(id: string) {
@@ -213,101 +222,186 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const offset = (page - 1) * PAGE_SIZE;
   const allPageSelected = users.length > 0 && users.every((u) => selected.has(u.id));
+  const filtersActive = !!search || roleDefinitionId !== "ALL" || active !== "ALL";
+
+  const clearFilters = () => {
+    setSearch("");
+    setRoleDefinitionId("ALL");
+    setActive("ALL");
+    setPage(1);
+  };
+
+  const activeRoleLabel = roleDefinitionId === "ALL" ? "" : hqRoles.find((r) => r.id === roleDefinitionId)?.label ?? "Role";
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {error && <div className="error" role="alert"><Icons.AlertCircle size={15} /><span>{error}</span></div>}
-      {message && <div className="success-banner" role="status"><Icons.CheckCircle size={15} /><span>{message}</span></div>}
+    <section className="dir-root">
+      {error && (
+        <div className="error" role="alert">
+          <Icons.AlertCircle size={15} />
+          <span>{error}</span>
+        </div>
+      )}
+      {message && (
+        <div className="success-banner" role="status">
+          <Icons.CheckCircle size={15} />
+          <span>{message}</span>
+        </div>
+      )}
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", flex: "1 1 auto" }}>
-          <div className="form-group" style={{ margin: 0, minWidth: 200, flex: "1 1 200px" }}>
-            <label>Search</label>
-            <div style={{ position: "relative" }}>
-              <input
-                type="text"
-                placeholder="Search name, email, phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  aria-label="Clear search"
-                  style={{ position: "absolute", right: 10, top: 10, background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: 0 }}
-                >
-                  <Icons.X size={13} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group" style={{ margin: 0, minWidth: 150 }}>
-            <label>Role</label>
-            <select value={roleDefinitionId} onChange={(e) => { setRoleDefinitionId(e.target.value); setPage(1); }}>
-              <option value="ALL">All internal roles</option>
-              {hqRoles.map((r) => (
-                <option key={r.id} value={r.id}>{r.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group" style={{ margin: 0, minWidth: 130 }}>
-            <label>Status</label>
-            <select value={active} onChange={(e) => { setActive(e.target.value); setPage(1); }}>
-              <option value="ALL">Active + Inactive</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-          </div>
-
-          <div className="form-group" style={{ margin: 0, minWidth: 140 }}>
-            <label>Sort</label>
-            <select value={sort} onChange={(e) => { setSort(e.target.value as SortOption); setPage(1); }}>
-              {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
-                <option key={s} value={s}>{SORT_LABELS[s]}</option>
-              ))}
-            </select>
-          </div>
+      {/* Toolbar */}
+      <div className="dir-toolbar">
+        <div className="dir-search">
+          <Icons.Search size={14} className="dir-search-icon" />
+          <input
+            className="input-field dir-search-input"
+            type="text"
+            placeholder="Search team members…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search team members by name, email or phone"
+          />
+          {search && (
+            <button type="button" className="dir-search-clear" onClick={() => setSearch("")} aria-label="Clear search">
+              <Icons.X size={13} />
+            </button>
+          )}
         </div>
 
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)} style={{ alignSelf: "flex-end" }}>
+        <div className="dir-controls">
+          <select
+            className="input-field dir-select"
+            value={roleDefinitionId}
+            onChange={(e) => {
+              setRoleDefinitionId(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by role"
+          >
+            <option value="ALL">All roles</option>
+            {hqRoles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="input-field dir-select"
+            value={active}
+            onChange={(e) => {
+              setActive(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by status"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <div className="dir-sort">
+          <span className="dir-sort-label">Sort:</span>
+          <select
+            className="input-field dir-select"
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as SortOption);
+              setPage(1);
+            }}
+            aria-label="Sort team members"
+          >
+            {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
+              <option key={s} value={s}>
+                {SORT_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-primary btn-sm dir-add-btn"
+          onClick={() => setShowCreate(true)}
+        >
           <Icons.Plus size={14} />
           <span>Add Team Member</span>
         </button>
       </div>
 
+      {/* Active filter chips */}
+      {(activeRoleLabel || active !== "ALL") && (
+        <div className="dir-chips">
+          {activeRoleLabel && (
+            <span className="dir-chip">
+              Role: {activeRoleLabel}
+              <button
+                type="button"
+                onClick={() => setRoleDefinitionId("ALL")}
+                aria-label={`Remove role filter`}
+              >
+                <Icons.X size={11} />
+              </button>
+            </span>
+          )}
+          {active !== "ALL" && (
+            <span className="dir-chip">
+              Status: {active === "true" ? "Active" : "Inactive"}
+              <button type="button" onClick={() => setActive("ALL")} aria-label={`Remove status filter`}>
+                <Icons.X size={11} />
+              </button>
+            </span>
+          )}
+          <button type="button" className="dir-chip-clear" onClick={clearFilters}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Bulk bar */}
       {selected.size > 0 && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--radius-xs)", fontSize: 13, flexWrap: "wrap" }}>
+        <div className="dir-bulkbar">
           <strong>{selected.size} selected</strong>
-          <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>
+          <button type="button" className="btn btn-primary btn-sm" disabled={bulkBusy} onClick={() => bulkSetActive(true)}>
             Activate
           </button>
           <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={() => bulkSetActive(false)}>
             Deactivate
           </button>
-          {bulkBusy && bulk && <span className="muted">Working {bulk.done}/{bulk.total}...</span>}
-          <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
-            Clear
+          {bulkBusy && bulk && (
+            <span className="dir-muted">
+              Working {bulk.done}/{bulk.total}…
+            </span>
+          )}
+          <button type="button" className="dir-chip-clear" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
+            Clear selection
           </button>
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)", padding: "2px 0" }}>
-        <span>
-          Showing {total > 0 ? offset + 1 : 0}-{Math.min(offset + PAGE_SIZE, total)} of{" "}
-          <strong style={{ color: "var(--ink)" }}>{total}</strong> internal team members
-        </span>
-        {loading && <span>Refreshing...</span>}
-      </div>
+      {/* Count */}
+      {!error && (
+        <div className="dir-count">
+          <strong>{total.toLocaleString()}</strong> team member{total === 1 ? "" : "s"}
+          {filtersActive ? " matching filters" : ""}
+          {total > PAGE_SIZE ? ` · Page ${page} of ${totalPages}` : ""}
+        </div>
+      )}
 
-      {users.length ? (
-        <div style={{ overflowX: "auto" }}>
-          <table className="data-table">
+      {/* Table */}
+      <div className="dir-table-card">
+        <div className="dir-table-scroll">
+          <table className="dir-table">
             <thead>
               <tr>
-                <th style={{ width: 36 }}><input type="checkbox" checked={allPageSelected} onChange={toggleSelectPage} aria-label="Select page" /></th>
+                <th className="dir-check-col">
+                  <input
+                    type="checkbox"
+                    checked={allPageSelected}
+                    onChange={toggleSelectPage}
+                    aria-label="Select all on page"
+                  />
+                </th>
                 <th>Name</th>
                 <th>Contact</th>
                 <th>Role</th>
@@ -318,117 +412,148 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => {
-                const { name: cleanName, title: titleDesignation } = parseNameAndTitle(u.name);
-                const initials = getInitials(cleanName);
-                const scope = (u.roleDefinition?.scope ?? "platform") as AccessScope;
-                const access = describeUserAccess(u.roleDefinition?.slug ?? u.role, u.farmAccess, scope);
-
-                return (
-                  <tr key={u.id}>
-                    <td><input type="checkbox" checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} aria-label={`Select ${u.name}`} /></td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 0" }}>
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: "50%",
-                            background: "linear-gradient(135deg, var(--surface-strong) 0%, var(--surface-card) 100%)",
-                            border: "1px solid var(--hairline)",
-                            color: "var(--primary)",
-                            fontWeight: 700,
-                            fontSize: 12,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                            letterSpacing: "0.02em"
-                          }}
-                        >
-                          {initials}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 13, lineHeight: 1.3 }}>
-                            {cleanName}
-                          </div>
-                          {titleDesignation && (
-                            <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 500, lineHeight: 1.25, marginTop: 1 }}>
-                              {titleDesignation}
-                            </div>
-                          )}
-                          <div className="muted" style={{ fontSize: 10.5, fontFamily: "var(--font-mono)", opacity: 0.7, marginTop: 2 }}>
-                            ID: {u.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ fontSize: 12 }}>
-                      {u.email && <div style={{ color: "var(--ink)", fontWeight: 500 }}>{u.email}</div>}
-                      {u.phone && <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{u.phone}</div>}
-                      {!u.email && !u.phone && <span className="muted">No contact</span>}
-                    </td>
-                    <td>
-                      <RoleCell user={u} />
-                    </td>
-                    <td style={{ fontSize: 12 }}>
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{access.label}</div>
-                        <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{access.detail}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status ${u.active ? "active" : "inactive"}`} style={{ whiteSpace: "nowrap" }}>
-                        {u.active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: 12, whiteSpace: "nowrap" }} className="muted">
-                      {formatDate(u.lastActive)}
-                    </td>
-                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setEditing(u)}
-                      >
-                        <Icons.Edit size={12} />
-                        <span>Edit Access</span>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="dir-state-cell">
+                    <Icons.Spinner size={16} className="spin" /> Loading team members…
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={8} className="dir-state-cell">
+                    <div className="dir-state-title">Couldn’t load team members</div>
+                    <p className="dir-state-hint">{error}</p>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={loadUsers}>
+                      Retry
+                    </button>
+                  </td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="dir-state-cell">
+                    <div className="dir-state-title">No team members found</div>
+                    <p className="dir-state-hint">
+                      {filtersActive
+                        ? "Try changing your search or filters."
+                        : "Add agronomists, operations managers, or super admins to the internal team."}
+                    </p>
+                    {filtersActive && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={clearFilters}>
+                        Clear all
                       </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                users.map((u) => {
+                  const { name: cleanName, title: titleDesignation } = parseNameAndTitle(u.name);
+                  const initials = getInitials(cleanName);
+                  const scope = (u.roleDefinition?.scope ?? "platform") as AccessScope;
+                  const access = describeUserAccess(u.roleDefinition?.slug ?? u.role, u.farmAccess, scope);
+
+                  return (
+                    <tr key={u.id} className="dir-row">
+                      <td className="dir-check-col">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(u.id)}
+                          onChange={() => toggleSelect(u.id)}
+                          aria-label={`Select ${u.name}`}
+                        />
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <div
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: "50%",
+                              background: "var(--surface-strong)",
+                              border: "1px solid var(--hairline)",
+                              color: "var(--ink)",
+                              fontWeight: 700,
+                              fontSize: 12,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                              letterSpacing: "0.02em",
+                            }}
+                          >
+                            {initials}
+                          </div>
+                          <div className="dir-identity">
+                            <span className="dir-name">{cleanName}</span>
+                            {titleDesignation && <span className="dir-sub">{titleDesignation}</span>}
+                            <span className="dir-code">ID: {u.id}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          {u.email && <span className="dir-name">{u.email}</span>}
+                          {u.phone ? (
+                            <a href={`tel:${u.phone}`} className="dir-phone">
+                              {u.phone}
+                            </a>
+                          ) : (
+                            !u.email && <span className="dir-muted">No contact</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <RoleCell user={u} />
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          <span className="dir-sub" style={{ color: "var(--ink)", fontWeight: 500 }}>
+                            {access.label}
+                          </span>
+                          <span className="dir-muted-soft" style={{ fontSize: 11 }}>
+                            {access.detail}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <ActiveDot active={u.active} />
+                      </td>
+                      <td className="dir-muted" style={{ whiteSpace: "nowrap" }}>
+                        {formatDate(u.lastActive)}
+                      </td>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setEditing(u)}
+                          style={{ gap: 5 }}
+                        >
+                          <Icons.Edit size={12} />
+                          <span>Edit access</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
-      ) : !loading ? (
-        <EmptyState
-          icon={<Icons.Users size={24} />}
-          title="No internal team members found"
-          description="Add agronomists, operations managers, or super admins to the internal team."
-          action={
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => setShowCreate(true)}
-            >
-              Add Team Member
-            </button>
-          }
-        />
-      ) : null}
+      </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10 }}>
-          <span className="muted" style={{ fontSize: 12 }}>Page {page} of {totalPages}</span>
-          <div style={{ display: "flex", gap: 6 }}>
+        <div className="dir-pagination">
+          <span>
+            Showing {total > 0 ? offset + 1 : 0}–{Math.min(offset + PAGE_SIZE, total)} of {total.toLocaleString()}
+          </span>
+          <div className="dir-pagination-actions">
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               disabled={page <= 1 || loading}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
-              Previous
+              <Icons.ChevronLeft size={13} /> Prev
             </button>
             <button
               type="button"
@@ -436,7 +561,7 @@ export function PeopleDirectory({ currentUserId }: { currentUserId: string }) {
               disabled={page >= totalPages || loading}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next
+              Next <Icons.ChevronRight size={13} />
             </button>
           </div>
         </div>

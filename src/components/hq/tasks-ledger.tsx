@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useServerList } from "@/components/data/use-server-list";
-import { ServerTable } from "@/components/data/server-table";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { Icons } from "@/components/icons";
@@ -53,8 +52,8 @@ function LookupInput({
   onPick: (id: string, name: string) => void;
 }) {
   return (
-    <div style={{ position: "relative", minWidth: 200, flex: "1 1 200px" }}>
-      <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 4 }}>{label}</label>
+    <div style={{ position: "relative" }}>
+      <label className="dir-popover-field-label">{label}</label>
       <input
         type="search"
         className="input-field"
@@ -62,10 +61,10 @@ function LookupInput({
         placeholder={placeholder}
         value={lookup.query}
         onChange={(e) => lookup.setQuery(e.target.value)}
-        style={{ height: 34, fontSize: 12 }}
+        style={{ height: 34, minHeight: 34, fontSize: 13 }}
       />
       {lookup.query.trim().length >= 1 && lookup.results.length > 0 && (
-        <ul style={{ listStyle: "none", margin: "4px 0 0", padding: 0, border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", position: "absolute", zIndex: 20, width: "100%", background: "var(--surface-card)", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
+        <ul className="dir-lookup-list">
           {lookup.results.map((o) => (
             <li key={o.id}>
               <button
@@ -74,10 +73,10 @@ function LookupInput({
                   onPick(o.id, o.name);
                   lookup.clear();
                 }}
-                style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", padding: "8px 12px", cursor: "pointer", fontSize: 12 }}
+                className="dir-lookup-item"
               >
                 <strong>{o.name}</strong>
-                <span style={{ color: "var(--muted)", fontFamily: "var(--font-mono)" }}> • {shortId(o.id)}</span>
+                <span className="dir-code"> • {shortId(o.id)}</span>
               </button>
             </li>
           ))}
@@ -89,13 +88,15 @@ function LookupInput({
 
 function PickedChip({ name, id, onClear }: { name: string; id: string; onClear: () => void }) {
   return (
-    <div style={{ minWidth: 200, flex: "1 1 200px" }}>
-      <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 4 }}>&nbsp;</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, border: "1px solid var(--primary)", background: "var(--green-light)", borderRadius: 8, padding: "0 8px", height: 34 }}>
-        <span style={{ fontSize: 12, fontWeight: 650, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-        <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>{shortId(id)}</span>
-        <button type="button" onClick={onClear} aria-label={`Clear ${name}`} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
-          <Icons.X size={14} />
+    <div style={{ position: "relative" }}>
+      <label className="dir-popover-field-label">&nbsp;</label>
+      <div className="dir-picked">
+        <span className="dir-name" style={{ fontSize: 12 }}>
+          {name}
+        </span>
+        <span className="dir-code">{shortId(id)}</span>
+        <button type="button" onClick={onClear} aria-label={`Clear ${name}`} className="dir-picked-clear">
+          <Icons.X size={13} />
         </button>
       </div>
     </div>
@@ -119,6 +120,7 @@ export function HqTasksLedger() {
   const [bulkOfficer, setBulkOfficer] = useState<{ id: string; name: string } | null>(null);
   const [bulkStatus, setBulkStatus] = useState("IN_PROGRESS");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const farmSearch = useFarmSearch(client?.id ?? null);
   const clientSearch = useClientSearch();
@@ -179,8 +181,41 @@ export function HqTasksLedger() {
     }
   }
 
+  function resetFilters() {
+    setStatus("ALL");
+    setPriority("ALL");
+    setFarm(null);
+    setClient(null);
+    setOfficer(null);
+    setUnassignedOnly(false);
+    setOverdueOnly(false);
+    setDateFrom("");
+    setDateTo("");
+  }
+
+  const chips: { key: string; label: string; clear: () => void }[] = [];
+  if (status !== "ALL") chips.push({ key: "status", label: `Status: ${status}`, clear: () => setStatus("ALL") });
+  if (priority !== "ALL") chips.push({ key: "priority", label: `Priority: ${priority}`, clear: () => setPriority("ALL") });
+  if (farm) chips.push({ key: "farm", label: `Farm: ${farm.name}`, clear: () => { setFarm(null); setOfficer(null); } });
+  if (client) chips.push({ key: "client", label: `Client: ${client.name}`, clear: () => setClient(null) });
+  if (officer && !unassignedOnly) chips.push({ key: "officer", label: `Officer: ${officer.name}`, clear: () => setOfficer(null) });
+  if (unassignedOnly) chips.push({ key: "unassigned", label: "Unassigned only", clear: () => setUnassignedOnly(false) });
+  if (overdueOnly) chips.push({ key: "overdue", label: "Overdue only", clear: () => setOverdueOnly(false) });
+  if (dateFrom || dateTo)
+    chips.push({
+      key: "dates",
+      label: `Due: ${dateFrom || "…"} → ${dateTo || "…"}`,
+      clear: () => { setDateFrom(""); setDateTo(""); },
+    });
+
+  const total = list.total ?? 0;
+  const totalPages = list.total != null ? Math.max(1, Math.ceil(list.total / list.limit)) : 1;
+  const from = list.rows.length ? (list.page - 1) * list.limit + 1 : 0;
+  const to = (list.page - 1) * list.limit + list.rows.length;
+  const allOnPage = list.rows.length > 0 && list.rows.every((r) => selected.has(r.id));
+
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <section className="dir-root">
       <TasksWorkload
         farmId={farm?.id ?? null}
         clientId={client?.id ?? null}
@@ -191,149 +226,383 @@ export function HqTasksLedger() {
         }}
       />
 
-      <div className="compact-card" style={{ padding: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {farm ? (
-          <PickedChip name={farm.name} id={farm.id} onClear={() => { setFarm(null); setOfficer(null); }} />
-        ) : (
-          <LookupInput label="Farm (search-as-type)" placeholder="Type farm name, village, owner…" lookup={farmSearch} onPick={(id, name) => { setFarm({ id, name }); setOfficer(null); }} />
-        )}
-        {client ? (
-          <PickedChip name={client.name} id={client.id} onClear={() => setClient(null)} />
-        ) : (
-          <LookupInput label="Client (search-as-type)" placeholder="Type client name, code…" lookup={clientSearch} onPick={(id, name) => setClient({ id, name })} />
-        )}
-        {officer && !unassignedOnly ? (
-          <PickedChip name={officer.name} id={officer.id} onClear={() => setOfficer(null)} />
-        ) : (
-          <LookupInput label="Officer (search-as-type)" placeholder="Type officer name, email…" lookup={officerSearch} onPick={(id, name) => { setUnassignedOnly(false); setOfficer({ id, name }); }} />
-        )}
-        <div style={{ minWidth: 140, flex: "0 1 auto" }}>
-          <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 4 }}>Status</label>
-          <select aria-label="Status filter" value={status} onChange={(e) => setStatus(e.target.value)} style={{ height: 34, fontSize: 12, width: "100%" }}>
+      {/* Toolbar */}
+      <div className="dir-toolbar">
+        <div className="dir-search">
+          <Icons.Search size={14} className="dir-search-icon" />
+          <input
+            className="input-field dir-search-input"
+            value={list.search}
+            onChange={(e) => list.setSearch(e.target.value)}
+            placeholder="Search tasks…"
+            aria-label="Search tasks by title or description"
+          />
+          {list.search && (
+            <button type="button" className="dir-search-clear" onClick={() => list.setSearch("")} aria-label="Clear search">
+              <Icons.X size={13} />
+            </button>
+          )}
+        </div>
+
+        <div className="dir-controls">
+          <select
+            className="input-field dir-select"
+            aria-label="Status filter"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-        </div>
-        <div style={{ minWidth: 120, flex: "0 1 auto" }}>
-          <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 4 }}>Priority</label>
-          <select aria-label="Priority filter" value={priority} onChange={(e) => setPriority(e.target.value)} style={{ height: 34, fontSize: 12, width: "100%" }}>
+
+          <select
+            className="input-field dir-select"
+            aria-label="Priority filter"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          >
             {PRIORITY_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
+
+          <div className="dir-popover-wrap">
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm dir-more-btn ${moreOpen ? "active" : ""}`}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+            >
+              <Icons.SlidersHorizontal size={13} />
+              <span>More filters</span>
+              <Icons.ChevronDown size={12} />
+            </button>
+            {moreOpen && (
+              <>
+                <button
+                  type="button"
+                  className="dir-popover-backdrop"
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setMoreOpen(false)}
+                />
+                <div role="menu" className="dir-popover dir-popover-wide" onKeyDown={(e) => e.key === "Escape" && setMoreOpen(false)}>
+                  <div className="dir-popover-body">
+                    {farm ? (
+                      <PickedChip name={farm.name} id={farm.id} onClear={() => { setFarm(null); setOfficer(null); }} />
+                    ) : (
+                      <LookupInput
+                        label="Farm"
+                        placeholder="Type farm name, village, owner…"
+                        lookup={farmSearch}
+                        onPick={(id, name) => { setFarm({ id, name }); setOfficer(null); }}
+                      />
+                    )}
+                    {client ? (
+                      <PickedChip name={client.name} id={client.id} onClear={() => setClient(null)} />
+                    ) : (
+                      <LookupInput
+                        label="Client"
+                        placeholder="Type client name, code…"
+                        lookup={clientSearch}
+                        onPick={(id, name) => setClient({ id, name })}
+                      />
+                    )}
+                    {officer && !unassignedOnly ? (
+                      <PickedChip name={officer.name} id={officer.id} onClear={() => setOfficer(null)} />
+                    ) : (
+                      <LookupInput
+                        label="Officer"
+                        placeholder="Type officer name, email…"
+                        lookup={officerSearch}
+                        onPick={(id, name) => { setUnassignedOnly(false); setOfficer({ id, name }); }}
+                      />
+                    )}
+
+                    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", paddingTop: 2 }}>
+                      <label className="dir-check">
+                        <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />
+                        Overdue only
+                      </label>
+                      <label className="dir-check">
+                        <input
+                          type="checkbox"
+                          checked={unassignedOnly}
+                          onChange={(e) => { setUnassignedOnly(e.target.checked); if (e.target.checked) setOfficer(null); }}
+                        />
+                        Unassigned only
+                      </label>
+                    </div>
+
+                    <div className="dir-popover-field">
+                      <span>Due date range</span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          type="date"
+                          className="input-field"
+                          aria-label="Due from"
+                          value={dateFrom}
+                          max={dateTo || undefined}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                        />
+                        <input
+                          type="date"
+                          className="input-field"
+                          aria-label="Due to"
+                          value={dateTo}
+                          min={dateFrom || undefined}
+                          onChange={(e) => setDateTo(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {chips.length > 0 && (
+                    <>
+                      <div className="dir-popover-divider" />
+                      <button type="button" role="menuitem" className="dir-popover-item danger" onClick={resetFilters}>
+                        <Icons.X size={13} /> Reset all filters
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <div style={{ minWidth: 150, flex: "0 1 auto" }}>
-          <label style={{ fontSize: 11, color: "var(--muted)", display: "block", marginBottom: 4 }}>Sort</label>
-          <select aria-label="Sort tasks" value={sort} onChange={(e) => setSort(e.target.value)} style={{ height: 34, fontSize: 12, width: "100%" }}>
+
+        <div className="dir-sort">
+          <span className="dir-sort-label">Sort:</span>
+          <select
+            className="input-field dir-select"
+            aria-label="Sort tasks"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center", height: 34 }}>
-            <input type="checkbox" checked={overdueOnly} onChange={(e) => setOverdueOnly(e.target.checked)} />
-            Overdue only
-          </label>
-          <label style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center", height: 34 }}>
-            <input type="checkbox" checked={unassignedOnly} onChange={(e) => { setUnassignedOnly(e.target.checked); if (e.target.checked) setOfficer(null); }} />
-            Unassigned only
-          </label>
-          <label style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center", height: 34 }}>
-            Due from <input type="date" aria-label="Due from" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} style={{ height: 30, fontSize: 12 }} />
-          </label>
-          <label style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center", height: 34 }}>
-            Due to <input type="date" aria-label="Due to" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} style={{ height: 30, fontSize: 12 }} />
-          </label>
+      </div>
+
+      {/* Active filter chips */}
+      {chips.length > 0 && (
+        <div className="dir-chips">
+          {chips.map((chip) => (
+            <span key={chip.key} className="dir-chip">
+              {chip.label}
+              <button type="button" onClick={chip.clear} aria-label={`Remove ${chip.label} filter`}>
+                <Icons.X size={11} />
+              </button>
+            </span>
+          ))}
+          <button type="button" className="dir-chip-clear" onClick={resetFilters}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Bulk bar */}
+      {selected.size > 0 && (
+        <div className="dir-bulkbar">
+          <strong>{selected.size} selected</strong>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => { setBulkOfficer(null); bulkOfficerSearch.clear(); setBulkMode("assign"); }}
+          >
+            Assign officer
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBulkMode("status")}>
+            Change status
+          </button>
+          <button type="button" className="dir-chip-clear" onClick={clearSelection}>
+            Clear selection
+          </button>
+        </div>
+      )}
+
+      {/* Count */}
+      {!list.error && (
+        <div className="dir-count">
+          <strong>{total.toLocaleString()}</strong> task{total === 1 ? "" : "s"}
+          {chips.length > 0 ? " matching filters" : ""}
+          {totalPages > 1 ? ` · Page ${list.page} of ${totalPages}` : ""}
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="dir-table-card">
+        <div className="dir-table-scroll">
+          <table className="dir-table">
+            <thead>
+              <tr>
+                <th className="dir-check-col">
+                  <input
+                    type="checkbox"
+                    aria-label="Select page"
+                    checked={allOnPage}
+                    onChange={() => list.toggleSelectPage(list.rows.map((r) => r.id))}
+                  />
+                </th>
+                <th>Task</th>
+                <th>Farm</th>
+                <th>Plot</th>
+                <th>Officer</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Due</th>
+                <th>Origin</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.loading && list.rows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <Icons.Spinner size={16} className="spin" /> Loading tasks…
+                  </td>
+                </tr>
+              ) : list.error ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <div className="dir-state-title">Couldn’t load tasks</div>
+                    <p className="dir-state-hint">{list.error}</p>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={list.reload}>
+                      Retry
+                    </button>
+                  </td>
+                </tr>
+              ) : list.rows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <div className="dir-state-title">No tasks found</div>
+                    <p className="dir-state-hint">Try changing your search or filters.</p>
+                    {chips.length > 0 && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={resetFilters}>
+                        Clear all
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ) : (
+                list.rows.map((t) => {
+                  const d = overdueDays(t.dueDate);
+                  const overdue = d != null && d > 0 && isOpenStatus(t.status);
+                  return (
+                    <tr key={t.id} className="dir-row">
+                      <td className="dir-check-col">
+                        <input
+                          type="checkbox"
+                          aria-label="Select row"
+                          checked={selected.has(t.id)}
+                          onChange={() => list.toggleSelect(t.id)}
+                        />
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          <button
+                            type="button"
+                            className="dir-name"
+                            title="Open task detail"
+                            onClick={() => setDrawerTaskId(t.id)}
+                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
+                          >
+                            {t.title}
+                          </button>
+                          <span className="dir-code" title={t.id}>
+                            {shortId(t.id)}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          <Link href={`/farms/${t.farmId}?tab=tasks`} className="dir-name">
+                            {t.farmName ?? "Unknown farm"}
+                          </Link>
+                          <span className="dir-muted-soft" style={{ fontSize: 11 }}>
+                            {t.clientName ?? shortId(t.farmId)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="dir-muted" style={{ fontSize: 12 }}>
+                        {t.plotName ?? (t.plotId ? shortId(t.plotId) : "—")}
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          <span className="dir-sub" style={{ color: "var(--ink)" }}>
+                            {t.officerName ?? "Unassigned"}
+                          </span>
+                          {t.workedBy.length > 0 && t.workedBy[0] !== t.officerName && (
+                            <span className="dir-muted-soft" style={{ fontSize: 11 }}>
+                              worked: {t.workedBy.join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <StatusBadge status={t.status} />
+                      </td>
+                      <td>
+                        <PriorityBadge priority={t.priority} />
+                      </td>
+                      <td>
+                        <div className="dir-identity">
+                          <span className="dir-code" style={{ fontSize: 12, color: "var(--ink)" }}>
+                            {dueLabel(t.dueDate)}
+                          </span>
+                          {overdue ? (
+                            <span style={{ fontSize: 11, color: "var(--red)", fontWeight: 700 }}>{d}d overdue</span>
+                          ) : (
+                            <span className="dir-muted-soft" style={{ fontSize: 11 }}>
+                              {d === 0 ? "due today" : ""}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="dir-muted-soft" style={{ fontSize: 11 }}>
+                        {t.origin}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <ServerTable<HqTask>
-        columns={[
-          {
-            key: "task", header: "Task", render: (t) => (
-              <div style={{ minWidth: 220 }}>
-                <button
-                  type="button"
-                  onClick={() => setDrawerTaskId(t.id)}
-                  title="Open task detail"
-                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontWeight: 650, fontSize: 13, textAlign: "left", color: "var(--text-main)" }}
-                >
-                  {t.title}
-                </button>
-                <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--font-mono)" }} title={t.id}>{shortId(t.id)}</div>
-              </div>
-            ),
-          },
-          {
-            key: "farm", header: "Farm", render: (t) => (
-              <div style={{ minWidth: 150 }}>
-                <Link href={`/farms/${t.farmId}?tab=tasks`} style={{ fontSize: 12, fontWeight: 600 }}>{t.farmName ?? "Unknown farm"}</Link>
-                <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--font-mono)" }} title={t.farmId}>{shortId(t.farmId)}</div>
-                {t.clientName && <div style={{ fontSize: 11, color: "var(--muted)" }}>{t.clientName}</div>}
-              </div>
-            ),
-          },
-          {
-            key: "plot", header: "Plot", render: (t) => (
-              <span style={{ fontSize: 12 }} title={t.plotId ?? ""}>{t.plotName ?? (t.plotId ? shortId(t.plotId) : "—")}</span>
-            ),
-          },
-          {
-            key: "officer", header: "Officer", render: (t) => (
-              <div style={{ minWidth: 130 }}>
-                <div style={{ fontSize: 12 }}>{t.officerName ?? "Unassigned"}</div>
-                {t.workedBy.length > 0 && t.workedBy[0] !== t.officerName && (
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>worked: {t.workedBy.join(", ")}</div>
-                )}
-              </div>
-            ),
-          },
-          { key: "status", header: "Status", render: (t) => <StatusBadge status={t.status} /> },
-          { key: "priority", header: "Priority", render: (t) => <PriorityBadge priority={t.priority} /> },
-          {
-            key: "due", header: "Due", render: (t) => {
-              const d = overdueDays(t.dueDate);
-              const overdue = d != null && d > 0 && isOpenStatus(t.status);
-              return (
-                <div style={{ minWidth: 110 }}>
-                  <div style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}>{dueLabel(t.dueDate)}</div>
-                  {overdue ? (
-                    <div style={{ fontSize: 11, color: "var(--red)", fontWeight: 700 }}>{d}d overdue</div>
-                  ) : (
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{d === 0 ? "due today" : " "}</div>
-                  )}
-                </div>
-              );
-            },
-          },
-          { key: "origin", header: "Origin", render: (t) => <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--muted)" }}>{t.origin}</span> },
-        ]}
-        rows={list.rows}
-        total={list.total}
-        page={list.page}
-        limit={list.limit}
-        loading={list.loading}
-        error={list.error}
-        search={list.search}
-        onSearch={list.setSearch}
-        onPage={list.setPage}
-        onLimit={list.setLimit}
-        onRetry={list.reload}
-        searchPlaceholder="Search title, description… (server-side)"
-        emptyTitle="No tasks match"
-        emptyHint="Adjust filters or search. The ledger loads one server page at a time — never the whole backlog."
-        bulkBar={
-          selected.size > 0 ? (
-            <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 16px", background: "var(--amber-light)", borderBottom: "1px solid var(--amber-light)", flexWrap: "wrap" }}>
-              <strong style={{ fontSize: 12 }}>{selected.size} selected</strong>
-              <span style={{ fontSize: 11, color: "var(--muted)" }}>Bulk moves confirm the exact selection count and are permission-checked per farm.</span>
-              <button type="button" className="btn btn-secondary" onClick={() => { setBulkOfficer(null); bulkOfficerSearch.clear(); setBulkMode("assign"); }} style={{ height: 30, fontSize: 12 }}>Assign officer</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setBulkMode("status")} style={{ height: 30, fontSize: 12 }}>Change status</button>
-              <button type="button" className="btn btn-secondary" onClick={clearSelection} style={{ height: 30, fontSize: 12 }}>Clear</button>
-            </div>
-          ) : undefined
-        }
-        selected={selected}
-        onToggleSelect={list.toggleSelect}
-        onTogglePage={list.toggleSelectPage}
-      />
+      {/* Pagination */}
+      {!list.error && totalPages > 1 && (
+        <div className="dir-pagination">
+          <span>
+            Showing {from}–{to} of {total.toLocaleString()}
+          </span>
+          <div className="dir-pagination-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={list.page <= 1}
+              onClick={() => list.setPage(list.page - 1)}
+            >
+              <Icons.ChevronLeft size={13} /> Prev
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={list.total != null && list.page >= totalPages}
+              onClick={() => list.setPage(list.page + 1)}
+            >
+              Next <Icons.ChevronRight size={13} />
+            </button>
+            <select
+              className="input-field dir-select"
+              aria-label="Rows per page"
+              value={list.limit}
+              onChange={(e) => list.setLimit(Number(e.target.value))}
+            >
+              {[10, 25, 50, 100].map((n) => <option key={n} value={n}>{n} / page</option>)}
+            </select>
+          </div>
+        </div>
+      )}
 
+      {/* Bulk modal */}
       {bulkMode && (
         <div className="modal-overlay" onClick={() => setBulkMode(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, padding: 20 }}>
@@ -359,7 +628,7 @@ export function HqTasksLedger() {
                       style={{ height: 36, fontSize: 13 }}
                     />
                     {bulkOfficerSearch.query.trim().length >= 2 && bulkOfficerSearch.results.length > 0 && (
-                      <ul style={{ listStyle: "none", margin: "4px 0 0", padding: 0, border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden" }}>
+                      <ul className="dir-lookup-list">
                         {bulkOfficerSearch.results.map((o) => (
                           <li key={o.id}>
                             <button
@@ -368,10 +637,10 @@ export function HqTasksLedger() {
                                 setBulkOfficer({ id: o.id, name: o.name });
                                 bulkOfficerSearch.clear();
                               }}
-                              style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", padding: "8px 12px", cursor: "pointer", fontSize: 13 }}
+                              className="dir-lookup-item"
                             >
                               <strong>{o.name}</strong>
-                              {o.email && <span style={{ color: "var(--muted)" }}> • {o.email}</span>}
+                              {o.email && <span className="dir-muted"> • {o.email}</span>}
                             </button>
                           </li>
                         ))}

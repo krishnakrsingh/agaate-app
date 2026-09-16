@@ -204,7 +204,7 @@ View access still requires `clients:read`; the server check is unchanged.
 - `src/app/hq/clients/page.tsx` — passes permission flags; header moved into the
   component.
 - `src/components/icons.tsx` — added `MoreVertical` and `SlidersHorizontal`.
-- `src/app/globals.css` — scoped `.client-*` styles.
+- `src/app/globals.css` — scoped `.dir-*` styles (shared directory/list class set).
 
 ## Not changed
 

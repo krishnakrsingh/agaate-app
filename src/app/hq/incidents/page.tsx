@@ -13,19 +13,24 @@ export default async function HqIncidentsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <div className="page-header" style={{ paddingBottom: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Incidents Command</h1>
-        </div>
-
-        <Suspense
-          fallback={
-            <div style={{ padding: 32, textAlign: "center", color: "var(--muted)" }}>
-              Loading incident command…
+        <div className="dir-root">
+          <header className="dir-header">
+            <div className="dir-header-text">
+              <h1 className="dir-title">Incidents</h1>
+              <p className="dir-subtitle">Triage field incidents across every estate and client.</p>
             </div>
-          }
-        >
-          <IncidentsCommand />
-        </Suspense>
+          </header>
+
+          <Suspense
+            fallback={
+              <div style={{ padding: 32, textAlign: "center", color: "var(--muted)" }}>
+                Loading incident command…
+              </div>
+            }
+          >
+            <IncidentsCommand />
+          </Suspense>
+        </div>
       </main>
     </>
   );

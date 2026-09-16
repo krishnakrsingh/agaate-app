@@ -333,7 +333,7 @@ export function ClientDirectory({
           <span>Filters{activeChips.length ? ` (${activeChips.length})` : ""}</span>
         </button>
 
-        <div className={`dir-controls ${mobileFiltersOpen ? "open" : ""}`}>
+        <div className={`dir-controls collapsible ${mobileFiltersOpen ? "open" : ""}`}>
           <input
             className="input-field dir-select"
             list="hq-dir-states"

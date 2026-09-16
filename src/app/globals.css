@@ -590,6 +590,7 @@ a:hover { color: var(--ink); }
 }
 
 .app-desktop-sidebar.collapsed .sidebar-nav-container {
+  overflow: visible;
   padding: 14px 0;
   gap: 8px;
   align-items: center;
@@ -749,7 +750,9 @@ a:hover { color: var(--ink); }
 }
 
 .app-desktop-sidebar.collapsed .sidebar-nav-link:hover .sidebar-tooltip,
-.app-desktop-sidebar.collapsed .sidebar-rail-btn:hover .sidebar-tooltip {
+.app-desktop-sidebar.collapsed .sidebar-nav-link:focus-visible .sidebar-tooltip,
+.app-desktop-sidebar.collapsed .sidebar-rail-btn:hover .sidebar-tooltip,
+.app-desktop-sidebar.collapsed .sidebar-rail-btn:focus-visible .sidebar-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateY(-50%) translateX(0);
@@ -2722,10 +2725,12 @@ input.dir-select {
     display: inline-flex;
   }
   .dir-controls {
-    display: none;
     width: 100%;
   }
-  .dir-controls.open {
+  .dir-controls.collapsible {
+    display: none;
+  }
+  .dir-controls.collapsible.open {
     display: flex;
   }
   .dir-select {
@@ -2738,4 +2743,109 @@ input.dir-select {
   .dir-sort .dir-select {
     flex: 1;
   }
+}
+
+/* --- HQ directory shared helpers (extended for People / Tasks / Incidents / Farms) --- */
+.dir-popover-wide {
+  min-width: 300px;
+  max-width: calc(100vw - 32px);
+}
+.dir-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 8px 4px;
+}
+.dir-popover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 8px;
+}
+.dir-popover-body .dir-popover-field {
+  padding: 0;
+}
+.dir-popover-field .input-field {
+  height: 34px;
+  min-height: 34px;
+  font-size: 13px;
+}
+.dir-popover-field-label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.dir-lookup-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: absolute;
+  z-index: 70;
+  width: 100%;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-elevated);
+}
+.dir-lookup-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+.dir-lookup-item:hover {
+  background: var(--surface-strong);
+}
+.dir-picked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ink);
+  background: var(--surface-strong);
+  border-radius: var(--radius-md);
+  padding: 0 8px;
+  height: 34px;
+}
+.dir-picked-clear {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+.dir-picked-clear:hover {
+  color: var(--ink);
+}
+.dir-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+.dir-check input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  min-height: 15px;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+.dir-popover-item.active {
+  background: var(--surface-strong);
+  font-weight: 600;
 }

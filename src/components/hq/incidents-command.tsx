@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Icons } from "@/components/icons";
 import { IncidentDrawer, type DrawerChanged } from "./incident-drawer";
 
 export type HqIncident = {
@@ -61,6 +62,13 @@ function statusBadge(s: string): string {
   return "badge";
 }
 
+const SEVERITY_LABELS: Record<string, string> = {
+  ALL: "All severities",
+  P0: "P0 — Critical",
+  P1: "P1 — High",
+  P2: "P2 — Medium / Low",
+};
+
 export function IncidentsCommand() {
   const [filters, setFilters] = useState<Filters>(DEFAULTS);
   const [applied, setApplied] = useState<Filters>(DEFAULTS);
@@ -73,6 +81,7 @@ export function IncidentsCommand() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState("");
   const [drawerId, setDrawerId] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Debounce text + select filters into one applied query; reset to page 1.
   useEffect(() => {
@@ -192,209 +201,378 @@ export function IncidentsCommand() {
 
   const set = (k: keyof Filters) => (v: string) => setFilters((f) => ({ ...f, [k]: v }));
 
+  const chips: { key: string; label: string; clear: () => void }[] = [];
+  if (filters.severity !== "ALL")
+    chips.push({ key: "severity", label: `Severity: ${filters.severity}`, clear: () => set("severity")("ALL") });
+  if (filters.status !== "ALL")
+    chips.push({
+      key: "status",
+      label: `Status: ${filters.status.replaceAll("_", " ")}`,
+      clear: () => set("status")("ALL"),
+    });
+  if (filters.type.trim()) chips.push({ key: "type", label: `Type: ${filters.type.trim()}`, clear: () => set("type")("") });
+  if (filters.farmQuery.trim())
+    chips.push({ key: "farm", label: `Farm / client: ${filters.farmQuery.trim()}`, clear: () => set("farmQuery")("") });
+  if (filters.from || filters.to)
+    chips.push({
+      key: "dates",
+      label: `Dates: ${filters.from || "…"} → ${filters.to || "…"}`,
+      clear: () => setFilters((f) => ({ ...f, from: "", to: "" })),
+    });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div className="card" style={{ gap: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Severity</label>
-            <select value={filters.severity} onChange={(e) => set("severity")(e.target.value)}>
-              <option value="ALL">All severities</option>
-              <option value="P0">P0 — Critical</option>
-              <option value="P1">P1 — High</option>
-              <option value="P2">P2 — Medium / Low</option>
-            </select>
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Status</label>
-            <select value={filters.status} onChange={(e) => set("status")(e.target.value)}>
-              <option value="ALL">All statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="ACKNOWLEDGED">Acknowledged</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
-            </select>
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Type</label>
-            <input value={filters.type} onChange={(e) => set("type")(e.target.value)} placeholder="e.g. Pest Damage" />
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Farm / Client</label>
-            <input value={filters.farmQuery} onChange={(e) => set("farmQuery")(e.target.value)} placeholder="Farm or client name" />
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>From</label>
-            <input type="date" value={filters.from} onChange={(e) => set("from")(e.target.value)} />
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>To</label>
-            <input type="date" value={filters.to} onChange={(e) => set("to")(e.target.value)} min={filters.from || undefined} />
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Search</label>
-            <input value={filters.search} onChange={(e) => set("search")(e.target.value)} placeholder="ID, type, reporter…" />
-          </div>
-          <div className="form-group" style={{ margin: 0 }}>
-            <label>Sort</label>
-            <select value={filters.sort} onChange={(e) => set("sort")(e.target.value)}>
-              <option value="severity">Severity, then newest</option>
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-            </select>
+    <div className="dir-root">
+      {/* Toolbar */}
+      <div className="dir-toolbar">
+        <div className="dir-search">
+          <Icons.Search size={14} className="dir-search-icon" />
+          <input
+            className="input-field dir-search-input"
+            value={filters.search}
+            onChange={(e) => set("search")(e.target.value)}
+            placeholder="Search incidents…"
+            aria-label="Search incidents by ID, type or reporter"
+          />
+          {filters.search && (
+            <button type="button" className="dir-search-clear" onClick={() => set("search")("")} aria-label="Clear search">
+              <Icons.X size={13} />
+            </button>
+          )}
+        </div>
+
+        <div className="dir-controls">
+          <select
+            className="input-field dir-select"
+            value={filters.severity}
+            onChange={(e) => set("severity")(e.target.value)}
+            aria-label="Filter by severity"
+          >
+            {Object.keys(SEVERITY_LABELS).map((s) => (
+              <option key={s} value={s}>
+                {SEVERITY_LABELS[s]}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="input-field dir-select"
+            value={filters.status}
+            onChange={(e) => set("status")(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="ACKNOWLEDGED">Acknowledged</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+
+          <div className="dir-popover-wrap">
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm dir-more-btn ${moreOpen ? "active" : ""}`}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+            >
+              <Icons.SlidersHorizontal size={13} />
+              <span>More filters</span>
+              <Icons.ChevronDown size={12} />
+            </button>
+            {moreOpen && (
+              <>
+                <button
+                  type="button"
+                  className="dir-popover-backdrop"
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setMoreOpen(false)}
+                />
+                <div role="menu" className="dir-popover dir-popover-wide" onKeyDown={(e) => e.key === "Escape" && setMoreOpen(false)}>
+                  <label className="dir-popover-field">
+                    Incident type
+                    <input
+                      className="input-field"
+                      value={filters.type}
+                      onChange={(e) => set("type")(e.target.value)}
+                      placeholder="e.g. Pest Damage"
+                    />
+                  </label>
+                  <label className="dir-popover-field">
+                    Farm / client
+                    <input
+                      className="input-field"
+                      value={filters.farmQuery}
+                      onChange={(e) => set("farmQuery")(e.target.value)}
+                      placeholder="Farm or client name"
+                    />
+                  </label>
+                  <div className="dir-popover-field">
+                    <span>Date range</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        type="date"
+                        className="input-field"
+                        aria-label="From date"
+                        value={filters.from}
+                        onChange={(e) => set("from")(e.target.value)}
+                      />
+                      <input
+                        type="date"
+                        className="input-field"
+                        aria-label="To date"
+                        value={filters.to}
+                        min={filters.from || undefined}
+                        onChange={(e) => set("to")(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {chips.length > 0 && (
+                    <>
+                      <div className="dir-popover-divider" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="dir-popover-item danger"
+                        onClick={() => {
+                          setFilters(DEFAULTS);
+                          setMoreOpen(false);
+                        }}
+                      >
+                        <Icons.X size={13} /> Reset all filters
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={() => setFilters(DEFAULTS)}>
-            Reset filters
-          </button>
-          <span className="muted" style={{ fontSize: "0.8rem" }}>
-            Showing {from}–{to} of {total}
-          </span>
+
+        <div className="dir-sort">
+          <span className="dir-sort-label">Sort:</span>
+          <select
+            className="input-field dir-select"
+            value={filters.sort}
+            onChange={(e) => set("sort")(e.target.value)}
+            aria-label="Sort incidents"
+          >
+            <option value="severity">Severity, then newest</option>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
         </div>
       </div>
 
+      {/* Active filter chips */}
+      {chips.length > 0 && (
+        <div className="dir-chips">
+          {chips.map((chip) => (
+            <span key={chip.key} className="dir-chip">
+              {chip.label}
+              <button type="button" onClick={chip.clear} aria-label={`Remove ${chip.label} filter`}>
+                <Icons.X size={11} />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            className="dir-chip-clear"
+            onClick={() => {
+              setFilters(DEFAULTS);
+            }}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Bulk bar */}
       {selected.size > 0 && (
-        <div className="callout" style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div className="dir-bulkbar">
           <strong>{selected.size} selected</strong>
-          <button type="button" className="btn btn-sm btn-secondary" disabled={bulkBusy} onClick={() => void bulk("ACKNOWLEDGED")}>
+          <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={() => void bulk("ACKNOWLEDGED")}>
             Acknowledge
           </button>
-          <button type="button" className="btn btn-sm btn-primary" disabled={bulkBusy} onClick={() => void bulk("RESOLVED")}>
+          <button type="button" className="btn btn-primary btn-sm" disabled={bulkBusy} onClick={() => void bulk("RESOLVED")}>
             Resolve
           </button>
-          <button type="button" className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
-            Clear
+          <button type="button" className="dir-chip-clear" disabled={bulkBusy} onClick={() => setSelected(new Set())}>
+            Clear selection
           </button>
-          {bulkBusy && <span className="muted">Saving…</span>}
+          {bulkBusy && <span className="dir-muted">Saving…</span>}
         </div>
       )}
       {bulkMsg && (
-        <div className="hint">
-          <span>{bulkMsg}</span>
+        <div className="dir-count" role="status">
+          {bulkMsg}
         </div>
       )}
 
-      {error && (
-        <div className="error">
-          <span>{error}</span>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={() => setApplied({ ...applied })}>
-            Retry
-          </button>
+      {/* Count */}
+      {!error && (
+        <div className="dir-count">
+          <strong>{total.toLocaleString()}</strong> incident{total === 1 ? "" : "s"}
+          {chips.length > 0 ? " matching filters" : ""}
+          {pages > 1 ? ` · Page ${page + 1} of ${pages}` : ""}
         </div>
       )}
 
-      {!error && loading && rows.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state-title">Loading incidents…</div>
-        </div>
-      )}
-
-      {!error && !loading && rows.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state-title">No incidents match these filters</div>
-          <p className="empty-state-desc">Try widening the date range or clearing the search.</p>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={() => setFilters(DEFAULTS)}>
-            Reset filters
-          </button>
-        </div>
-      )}
-
-      {rows.length > 0 && (
-        <div className="table-container">
-          <table className="data-table">
+      {/* Table */}
+      <div className="dir-table-card">
+        <div className="dir-table-scroll">
+          <table className="dir-table">
             <thead>
               <tr>
-                <th>
+                <th className="dir-check-col">
                   <input type="checkbox" checked={allOnPage} onChange={togglePage} aria-label="Select all on page" />
                 </th>
-                <th>Incident ID</th>
+                <th>Incident</th>
                 <th>Type</th>
                 <th>Severity</th>
                 <th>Farm</th>
                 <th>Reporter</th>
                 <th>Status</th>
                 <th>Age / SLA</th>
-                <th>Follow-ups</th>
+                <th className="dir-num">Follow-ups</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} style={r.slaBreached ? { background: "var(--red-light)" } : undefined}>
-                  <td>
-                    <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)} aria-label={`Select ${r.id}`} />
+              {loading && rows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <Icons.Spinner size={16} className="spin" /> Loading incidents…
                   </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      title={r.id}
-                      onClick={() => setDrawerId(r.id)}
-                      style={{ fontSize: "0.85rem" }}
-                    >
-                      {r.id.slice(-6).toUpperCase()}
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <div className="dir-state-title">Couldn’t load incidents</div>
+                    <p className="dir-state-hint">{error}</p>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setApplied({ ...applied })}>
+                      Retry
                     </button>
-                    <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                      {new Date(r.createdAt).toLocaleDateString()}
-                      {r.plotName ? ` · ${r.plotName}` : ""}
-                    </div>
                   </td>
-                  <td style={{ maxWidth: 220 }}>{r.type}</td>
-                  <td>
-                    <span className={sevBadge(r.pClass)}>{r.pClass}</span>
-                    <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{r.severity}</div>
-                  </td>
-                  <td>
-                    <Link href={`/farms/${r.farmId}`}>{r.farmName}</Link>
-                    {r.clientName && <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{r.clientName}</div>}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn-link"
-                      title="Filter by this reporter"
-                      onClick={() => setFilters((f) => ({ ...f, search: r.reporterName }))}
-                      style={{ fontSize: "0.85rem" }}
-                    >
-                      {r.reporterName}
-                    </button>
-                    <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{r.reporterRole.replaceAll("_", " ")}</div>
-                  </td>
-                  <td>
-                    <span className={statusBadge(r.status)}>{r.status.replaceAll("_", " ")}</span>
-                  </td>
-                  <td>
-                    {r.ageLabel}
-                    {r.slaBreached && (
-                      <div>
-                        <span className="badge badge-danger">SLA breached</span>
-                      </div>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="dir-state-cell">
+                    <div className="dir-state-title">No incidents found</div>
+                    <p className="dir-state-hint">Try widening the date range or clearing the filters.</p>
+                    {chips.length > 0 && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setFilters(DEFAULTS)}>
+                        Clear all
+                      </button>
                     )}
                   </td>
-                  <td>{r.followUpCount}</td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="dir-row"
+                    style={r.slaBreached ? { background: "var(--red-light)" } : undefined}
+                  >
+                    <td className="dir-check-col">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(r.id)}
+                        onChange={() => toggle(r.id)}
+                        aria-label={`Select ${r.id}`}
+                      />
+                    </td>
+                    <td>
+                      <div className="dir-identity">
+                        <button
+                          type="button"
+                          className="dir-name"
+                          title={r.id}
+                          onClick={() => setDrawerId(r.id)}
+                          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
+                        >
+                          {r.id.slice(-6).toUpperCase()}
+                        </button>
+                        <span className="dir-muted" style={{ fontSize: 11 }}>
+                          {new Date(r.createdAt).toLocaleDateString()}
+                          {r.plotName ? ` · ${r.plotName}` : ""}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: 220 }}>{r.type}</td>
+                    <td>
+                      <span className={sevBadge(r.pClass)}>{r.pClass}</span>
+                      <div className="dir-muted" style={{ fontSize: 11 }}>
+                        {r.severity}
+                      </div>
+                    </td>
+                    <td>
+                      <Link href={`/farms/${r.farmId}`} className="dir-name" style={{ display: "inline" }}>
+                        {r.farmName}
+                      </Link>
+                      {r.clientName && (
+                        <div className="dir-muted" style={{ fontSize: 11 }}>
+                          {r.clientName}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="dir-name"
+                        title="Filter by this reporter"
+                        onClick={() => set("search")(r.reporterName)}
+                        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
+                      >
+                        {r.reporterName}
+                      </button>
+                      <div className="dir-muted" style={{ fontSize: 11 }}>
+                        {r.reporterRole.replaceAll("_", " ")}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={statusBadge(r.status)}>{r.status.replaceAll("_", " ")}</span>
+                    </td>
+                    <td>
+                      {r.ageLabel}
+                      {r.slaBreached && (
+                        <div>
+                          <span className="badge badge-danger">SLA breached</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="dir-num">{r.followUpCount}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
 
-      {pages > 1 && (
-        <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "flex-end" }}>
-          <span className="muted" style={{ fontSize: "0.82rem" }}>
-            Page {page + 1} of {pages}
+      {/* Pagination */}
+      {!error && pages > 1 && (
+        <div className="dir-pagination">
+          <span>
+            Showing {from}–{to} of {total.toLocaleString()}
           </span>
-          <button type="button" className="btn btn-sm btn-secondary" disabled={page === 0 || loading} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-            Previous
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm btn-secondary"
-            disabled={page + 1 >= pages || loading}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </button>
+          <div className="dir-pagination-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={page === 0 || loading}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              <Icons.ChevronLeft size={13} /> Prev
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={page + 1 >= pages || loading}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next <Icons.ChevronRight size={13} />
+            </button>
+          </div>
         </div>
       )}
 

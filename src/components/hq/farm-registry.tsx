@@ -107,6 +107,7 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
   const [clientId, setClientId] = useState("");
   const [clientQuery, setClientQuery] = useState("");
   const [clientOptions, setClientOptions] = useState<Array<{ id: string; name: string; code: string | null }>>([]);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -128,7 +129,10 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
   useEffect(() => {
     const q = clientQuery.trim();
     if (!q || clientId) {
-      if (!q) setClientOptions([]);
+      if (!q) {
+        const clear = setTimeout(() => setClientOptions([]), 0);
+        return () => clearTimeout(clear);
+      }
       return;
     }
     const t = setTimeout(() => {
@@ -177,18 +181,22 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
   }, [debouncedSearch, statusFilter, stageFilter, boundaryFilter, stalledOnly, clientId, sortBy, page, limit]);
 
   useEffect(() => {
-    loadFarms();
+    const t = setTimeout(loadFarms, 0);
+    return () => clearTimeout(t);
   }, [loadFarms]);
 
   // Keep selectedFarmId in sync with loaded farms
   useEffect(() => {
-    if (farms.length > 0) {
-      if (!selectedFarmId || !farms.some((f) => f.id === selectedFarmId)) {
-        setSelectedFarmId(farms[0].id);
+    const t = setTimeout(() => {
+      if (farms.length > 0) {
+        if (!selectedFarmId || !farms.some((f) => f.id === selectedFarmId)) {
+          setSelectedFarmId(farms[0].id);
+        }
+      } else {
+        setSelectedFarmId(null);
       }
-    } else {
-      setSelectedFarmId(null);
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, [farms, selectedFarmId]);
 
   const selectedFarm = useMemo(() => {
@@ -285,120 +293,185 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
   const totalPages = Math.ceil(total / limit) || 1;
   const allOnPageSelected = farms.length > 0 && farms.every((f) => selected.has(f.id));
 
+  const chips: { key: string; label: string; clear: () => void }[] = [];
+  if (statusFilter !== "ALL")
+    chips.push({ key: "status", label: `Status: ${statusFilter}`, clear: () => { setStatusFilter("ALL"); setPage(1); } });
+  if (boundaryFilter === "HAS_BOUNDARY")
+    chips.push({ key: "boundary", label: "Boundary: Demarcated", clear: () => { setBoundaryFilter("ALL"); setPage(1); } });
+  else if (boundaryFilter === "NO_BOUNDARY")
+    chips.push({ key: "boundary", label: "Boundary: Needs boundary", clear: () => { setBoundaryFilter("ALL"); setPage(1); } });
+  if (stalledOnly)
+    chips.push({ key: "stalled", label: "Stalled >30d", clear: () => { setStalledOnly(false); setPage(1); } });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="dir-root">
       {/* ── Toolbar ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        {/* Search */}
-        <div style={{ position: "relative", flexGrow: 1, flexShrink: 1, flexBasis: 200, maxWidth: 320 }}>
-          <Icons.Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", pointerEvents: "none" }} />
+      <div className="dir-toolbar">
+        <div className="dir-search">
+          <Icons.Search size={14} className="dir-search-icon" />
           <input
-            className="input-field"
+            className="input-field dir-search-input"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search farm, ID, survey #, client…"
-            style={{ paddingLeft: 30, paddingRight: search ? 28 : 10, width: "100%", fontSize: 13 }}
+            placeholder="Search farms, IDs, survey #, client…"
+            aria-label="Search farms"
           />
           {search && (
-            <button type="button" onClick={() => setSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", cursor: "pointer", color: "var(--muted)", display: "flex", padding: 0 }}>
-              <Icons.X size={12} />
+            <button type="button" className="dir-search-clear" onClick={() => setSearch("")} aria-label="Clear search">
+              <Icons.X size={13} />
             </button>
           )}
         </div>
 
-        {/* Quick filter pills */}
-        {[
-          { label: `All (${total.toLocaleString()})`, active: boundaryFilter === "ALL" && !stalledOnly && statusFilter === "ALL", onClick: () => applyPreset({}) },
-          { dot: "var(--green-ink)", label: "Demarcated", active: boundaryFilter === "HAS_BOUNDARY", onClick: () => applyPreset({ boundary: "HAS_BOUNDARY" }) },
-          { dot: "var(--amber)", label: "Needs boundary", active: boundaryFilter === "NO_BOUNDARY", onClick: () => applyPreset({ boundary: "NO_BOUNDARY" }) },
-          { label: "Stalled >30d", active: stalledOnly, onClick: () => applyPreset({ stalled: true }) },
-        ].map(({ label, active, onClick, dot }) => (
-          <button key={label} type="button" onClick={onClick}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 5,
-              padding: "5px 12px", fontSize: 12, fontWeight: active ? 600 : 500,
-              borderRadius: 99, border: active ? "1.5px solid var(--ink)" : "1px solid var(--hairline)",
-              background: active ? "var(--ink)" : "var(--surface-card)",
-              color: active ? "var(--canvas)" : "var(--muted)",
-              cursor: "pointer", whiteSpace: "nowrap",
-            }}
+        <div className="dir-controls">
+          <select
+            className="input-field dir-select"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            aria-label="Filter by status"
           >
-            {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "var(--canvas)" : dot, display: "inline-block", flexShrink: 0 }} />}
-            {label}
-          </button>
-        ))}
-
-        {/* Right: status + sort + view toggle + reset */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
-          <select className="input-field" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={{ width: "auto", fontSize: 12 }}>
             <option value="ALL">All statuses</option>
             {STATUS_OPTIONS.map((s) => (<option key={s} value={s}>{s}</option>))}
           </select>
 
-          <select className="input-field" value={sortBy} onChange={(e) => { setSortBy(e.target.value); setPage(1); }} style={{ width: "auto", fontSize: 12 }}>
+          <div className="dir-popover-wrap">
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm dir-more-btn ${moreOpen ? "active" : ""}`}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              aria-haspopup="menu"
+            >
+              <Icons.SlidersHorizontal size={13} />
+              <span>More filters</span>
+              <Icons.ChevronDown size={12} />
+            </button>
+            {moreOpen && (
+              <>
+                <button
+                  type="button"
+                  className="dir-popover-backdrop"
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setMoreOpen(false)}
+                />
+                <div role="menu" className="dir-popover" onKeyDown={(e) => e.key === "Escape" && setMoreOpen(false)}>
+                  <div className="dir-popover-label">Boundary</div>
+                  {[
+                    { value: "ALL", label: "All boundaries" },
+                    { value: "HAS_BOUNDARY", label: "Demarcated" },
+                    { value: "NO_BOUNDARY", label: "Needs boundary" },
+                  ].map((b) => (
+                    <button
+                      key={b.value}
+                      type="button"
+                      role="menuitem"
+                      className={`dir-popover-item ${boundaryFilter === b.value ? "active" : ""}`}
+                      onClick={() => { setBoundaryFilter(b.value); setPage(1); setMoreOpen(false); }}
+                    >
+                      {boundaryFilter === b.value ? <Icons.Check size={13} /> : <span style={{ width: 13 }} />}
+                      {b.label}
+                    </button>
+                  ))}
+                  <div className="dir-popover-divider" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={`dir-popover-item ${stalledOnly ? "active" : ""}`}
+                    onClick={() => { setStalledOnly((v) => !v); setPage(1); }}
+                  >
+                    {stalledOnly ? <Icons.Check size={13} /> : <span style={{ width: 13 }} />}
+                    Stalled &gt;30d
+                  </button>
+                  {chips.length > 0 && (
+                    <>
+                      <div className="dir-popover-divider" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="dir-popover-item danger"
+                        onClick={() => { applyPreset({}); setMoreOpen(false); }}
+                      >
+                        <Icons.X size={13} /> Reset all filters
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="dir-sort">
+          <span className="dir-sort-label">Sort:</span>
+          <select
+            className="input-field dir-select"
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+            aria-label="Sort farms"
+          >
             <option value="updatedAt">Recent</option>
             <option value="createdAt">Newest</option>
             <option value="totalArea">Acreage</option>
             <option value="name">A–Z</option>
           </select>
+        </div>
 
-          {/* List/Grid toggle */}
-          <div style={{ display: "inline-flex", background: "var(--surface-strong)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)", overflow: "hidden" }}>
-            {(["list", "grid"] as const).map((mode) => (
-              <button key={mode} type="button" onClick={() => setViewMode(mode)} title={`${mode} view`}
-                style={{
-                  display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", fontSize: 12,
-                  border: "none", cursor: "pointer",
-                  background: viewMode === mode ? "var(--surface-card)" : "transparent",
-                  color: viewMode === mode ? "var(--ink)" : "var(--muted)",
-                  fontWeight: viewMode === mode ? 600 : 400,
-                }}
-              >
-                {mode === "list" ? <Icons.List size={13} /> : <Icons.Grid size={13} />}
-                {mode === "list" ? "List" : "Grid"}
-              </button>
-            ))}
-          </div>
-
-          {(search || statusFilter !== "ALL" || stageFilter !== "ALL" || boundaryFilter !== "ALL" || stalledOnly || clientId) && (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => applyPreset({})} title="Reset all filters" style={{ fontSize: 12 }}>
-              <Icons.X size={12} /> Reset
+        {/* List/Grid toggle */}
+        <div style={{ display: "inline-flex", background: "var(--surface-strong)", borderRadius: "var(--radius-sm)", border: "1px solid var(--hairline)", overflow: "hidden" }}>
+          {(["list", "grid"] as const).map((mode) => (
+            <button key={mode} type="button" onClick={() => setViewMode(mode)} title={`${mode} view`}
+              style={{
+                display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", fontSize: 12,
+                border: "none", cursor: "pointer",
+                background: viewMode === mode ? "var(--surface-card)" : "transparent",
+                color: viewMode === mode ? "var(--ink)" : "var(--muted)",
+                fontWeight: viewMode === mode ? 600 : 400,
+              }}
+            >
+              {mode === "list" ? <Icons.List size={13} /> : <Icons.Grid size={13} />}
+              {mode === "list" ? "List" : "Grid"}
             </button>
-          )}
+          ))}
         </div>
       </div>
 
+      {chips.length > 0 && (
+        <div className="dir-chips">
+          {chips.map((chip) => (
+            <span key={chip.key} className="dir-chip">
+              {chip.label}
+              <button type="button" onClick={chip.clear} aria-label={`Remove ${chip.label} filter`}>
+                <Icons.X size={11} />
+              </button>
+            </span>
+          ))}
+          <button type="button" className="dir-chip-clear" onClick={() => applyPreset({})}>
+            Clear all
+          </button>
+        </div>
+      )}
+
+
       {/* Bulk Action Toolbar */}
       {selected.size > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
-            padding: "12px 16px",
-            background: "var(--canvas-soft)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            fontSize: 13,
-          }}
-        >
-          <strong style={{ color: "var(--ink)" }}>{selected.size} selected</strong>
+        <div className="dir-bulkbar">
+          <strong>{selected.size} selected</strong>
           <select
-            className="input-field"
+            className="input-field dir-select"
             value={bulkAction}
             onChange={(e) => setBulkAction(e.target.value as "STATUS" | "STAGE")}
-            style={{ width: "auto", fontSize: 13, height: 34 }}
+            aria-label="Bulk action"
           >
             <option value="STAGE">Set stage</option>
             <option value="STATUS">Set status</option>
           </select>
           {bulkAction === "STATUS" ? (
             <select
-              className="input-field"
+              className="input-field dir-select"
               value={bulkStatus}
               onChange={(e) => setBulkStatus(e.target.value)}
-              style={{ width: "auto", fontSize: 13, height: 34 }}
+              aria-label="Bulk status"
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
@@ -408,10 +481,10 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
             </select>
           ) : (
             <select
-              className="input-field"
+              className="input-field dir-select"
               value={bulkStage}
               onChange={(e) => setBulkStage(e.target.value)}
-              style={{ width: "auto", fontSize: 13, height: 34 }}
+              aria-label="Bulk stage"
             >
               {STAGE_OPTIONS.map((s) => (
                 <option key={s} value={s}>
@@ -423,28 +496,49 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
           <button type="button" className="btn btn-primary btn-sm" disabled={bulkPending} onClick={applyBulk}>
             <span>{bulkPending ? "Applying…" : "Apply bulk change"}</span>
           </button>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setSelected(new Set())}>
-            <span>Clear selection</span>
+          <button type="button" className="dir-chip-clear" onClick={() => setSelected(new Set())}>
+            Clear selection
           </button>
+        </div>
+      )}
+
+      {/* Count */}
+      {!loading && !loadError && (
+        <div className="dir-count">
+          <strong>{total.toLocaleString()}</strong> estate{total === 1 ? "" : "s"}
+          {chips.length > 0 ? " matching filters" : ""}
+          {total > limit ? ` · Page ${page} of ${totalPages}` : ""}
         </div>
       )}
 
       {/* Loading and Error States */}
       {loading ? (
-        <div className="compact-card" style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>
-          Loading farm portfolio and geospatial layers…
+        <div className="dir-table-card">
+          <div className="dir-state-cell">
+            <Icons.Spinner size={16} className="spin" /> Loading farm portfolio…
+          </div>
         </div>
       ) : loadError ? (
-        <div className="compact-card" style={{ padding: 48, textAlign: "center" }}>
-          <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>{loadError}</div>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={loadFarms}>
-            <span>Retry</span>
-          </button>
+        <div className="dir-table-card">
+          <div className="dir-state-cell">
+            <div className="dir-state-title">Couldn’t load farms</div>
+            <p className="dir-state-hint">{loadError}</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={loadFarms}>
+              <span>Retry</span>
+            </button>
+          </div>
         </div>
       ) : farms.length === 0 ? (
-        <div className="compact-card" style={{ padding: 48, textAlign: "center" }}>
-          <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>No farms match the selected filters</div>
-          <p className="muted" style={{ fontSize: 13, margin: 0 }}>Try clearing filters or changing search keywords.</p>
+        <div className="dir-table-card">
+          <div className="dir-state-cell">
+            <div className="dir-state-title">No farms found</div>
+            <p className="dir-state-hint">Try changing your search or filters.</p>
+            {chips.length > 0 && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => applyPreset({})}>
+                Clear all
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         /* =========================================================================
@@ -951,38 +1045,26 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
 
           {/* Pagination Controls */}
           {total > limit && (
-            <div
-              style={{
-                padding: "12px 16px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: 12,
-                color: "var(--muted)",
-              }}
-            >
+            <div className="dir-pagination">
               <span>
-                Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total.toLocaleString()} estates
+                Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total.toLocaleString()} estates
               </span>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="dir-pagination-actions">
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  Previous
+                  <Icons.ChevronLeft size={13} /> Prev
                 </button>
-                <span style={{ alignSelf: "center" }}>
-                  {page} / {totalPages}
-                </span>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  Next
+                  Next <Icons.ChevronRight size={13} />
                 </button>
               </div>
             </div>

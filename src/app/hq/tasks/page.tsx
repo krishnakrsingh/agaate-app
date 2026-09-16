@@ -25,11 +25,16 @@ export default async function HqTasksPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <div className="page-header" style={{ paddingBottom: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Tasks Ledger</h1>
-        </div>
+        <div className="dir-root">
+          <header className="dir-header">
+            <div className="dir-header-text">
+              <h1 className="dir-title">Tasks</h1>
+              <p className="dir-subtitle">One ledger for every task across farms, plots and officers.</p>
+            </div>
+          </header>
 
-        <HqTasksLedger />
+          <HqTasksLedger />
+        </div>
       </main>
     </>
   );

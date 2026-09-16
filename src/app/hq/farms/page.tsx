@@ -18,10 +18,17 @@ export default async function HqFarmsPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Farms</h1>
-        <Suspense fallback={<div style={{ padding: "24px", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading…</div>}>
-          <HqFarmRegistry />
-        </Suspense>
+        <div className="dir-root">
+          <header className="dir-header">
+            <div className="dir-header-text">
+              <h1 className="dir-title">Farms</h1>
+              <p className="dir-subtitle">Every registered estate across all clients.</p>
+            </div>
+          </header>
+          <Suspense fallback={<div style={{ padding: "24px", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading…</div>}>
+            <HqFarmRegistry />
+          </Suspense>
+        </div>
       </main>
     </>
   );
