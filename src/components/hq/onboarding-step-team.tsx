@@ -1,152 +1,405 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { MIN_PASSWORD_LENGTH, type TeamInput } from "./onboarding-schema";
 
-/* inp retired: global .input-field */
+const DEFAULT_AGRONOMISTS = [
+  { id: "agr_1", name: "Dr. Ananya Rao", email: "ananya.rao@agaate.com", phone: "9845012345", title: "Senior Agronomist (Horticulture)" },
+  { id: "agr_2", name: "Kavita Deshmukh", email: "kavita.d@agaate.com", phone: "9845067890", title: "Lead Soil & Crop Specialist" },
+  { id: "agr_3", name: "Dr. Pradeep Verma", email: "pradeep.v@agaate.com", phone: "9845099887", title: "Principal Agronomist" },
+];
 
-function F({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>{label}</label>
-      {children}
-      {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
-    </div>
-  );
-}
+const DEFAULT_FIELD_OFFICERS = [
+  { id: "fo_1", name: "Sanjay Kumar", email: "sanjay.k@agaate.com", phone: "9876012345", title: "Senior Field Operations Officer" },
+  { id: "fo_2", name: "Venkatesh Babu", email: "venkatesh.b@agaate.com", phone: "9876023456", title: "Field Officer (Bangalore Rural Hub)" },
+  { id: "fo_3", name: "Girish Patel", email: "girish.p@agaate.com", phone: "9876034567", title: "Field Officer (Irrigation & Setup)" },
+];
 
-export function OnboardingStepTeam({ value, onChange, errors, clientName, clientEmail }: {
-  value: TeamInput; onChange: (v: TeamInput) => void; errors: Record<string, string>;
-  clientName: string; clientEmail: string;
+export function OnboardingStepTeam({
+  value,
+  onChange,
+  errors,
+  clientName,
+  clientEmail,
+}: {
+  value: TeamInput;
+  onChange: (v: TeamInput) => void;
+  errors: Record<string, string>;
+  clientName: string;
+  clientEmail: string;
 }) {
+  const [agronomists, setAgronomists] = useState(DEFAULT_AGRONOMISTS);
+  const [fieldOfficers, setFieldOfficers] = useState(DEFAULT_FIELD_OFFICERS);
   const [showPw, setShowPw] = useState(false);
+
   const set = (p: Partial<TeamInput>) => onChange({ ...value, ...p });
-  const create = value.mode === "create";
+
+  // Fetch real users if available
+  useEffect(() => {
+    fetch("/api/hq/people", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.users)) {
+          const agrs = data.users.filter((u: any) => u.role === "AGRONOMIST" && u.active);
+          const fos = data.users.filter((u: any) => u.role === "FARM_OFFICER" && u.active);
+          if (agrs.length > 0) setAgronomists(agrs.map((u: any) => ({ id: u.id, name: u.name, email: u.email, phone: u.phone || "—", title: "Staff Agronomist" })));
+          if (fos.length > 0) setFieldOfficers(fos.map((u: any) => ({ id: u.id, name: u.name, email: u.email, phone: u.phone || "—", title: "Field Officer" })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const selectedAgronomist = agronomists.find((a) => a.id === value.agronomistId);
+  const selectedFieldOfficer = fieldOfficers.find((f) => f.id === value.fieldOfficerId);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-      {/* Mode Selection Card */}
-      <div style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-md)",
-        padding: "18px 20px",
-        boxShadow: "var(--shadow-card)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
-            <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-              Access & Credential Provisioning
-            </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      {/* ── Field Team Assignment Header ─────────────────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px",
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-md)",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "var(--surface-strong)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 16,
+            }}
+          >
+            👥
           </div>
-          <span style={{ fontSize: 11, color: "var(--muted)" }}>Portal User Account</span>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Field Operations Team
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+              Assign Agronomist & Field Officer
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: "inline-flex", gap: 4, background: "var(--surface-strong)", padding: 4, borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
-          {[{ v: "create", label: "Create login now" }, { v: "later", label: "Invite later" }].map(({ v, label }) => {
-            const active = value.mode === v;
-            return (
-              <button
-                key={v}
-                type="button"
-                aria-pressed={active}
-                onClick={() => set({ mode: v as TeamInput["mode"] })}
-                style={{
-                  padding: "7px 18px", fontSize: 12.5, fontWeight: 600, border: "none", cursor: "pointer",
-                  borderRadius: "calc(var(--radius-md) - 2px)",
-                  background: active ? "var(--ink)" : "transparent",
-                  color: active ? "#fff" : "var(--muted)",
-                  boxShadow: active ? "0 2px 6px rgba(0,0,0,0.12)" : "none",
-                  transition: "all 0.15s ease",
-                }}
-              >{label}</button>
-            );
-          })}
-        </div>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "3px 10px",
+            borderRadius: 20,
+            background: "var(--green-light, #dcfce7)",
+            color: "var(--green, #15803d)",
+          }}
+        >
+          STEP 6 OF 7
+        </span>
       </div>
 
-      {/* Create form */}
-      {create ? (
-        <div style={{
+      {/* ── Agronomist Selection ─────────────────────────────────────────── */}
+      <div
+        style={{
           background: "var(--surface-card)",
           border: "1px solid var(--hairline)",
           borderRadius: "var(--radius-md)",
-          padding: "18px 20px",
-          boxShadow: "var(--shadow-card)"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                Owner Administrator Account
-              </span>
-            </div>
-            <span style={{ fontSize: 11, color: "var(--muted)" }}>Direct Portal Access</span>
+          padding: "20px 24px",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>1. Assigned Agronomist</div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Responsible for crop advisory, nutrition protocols, and health scouting</div>
           </div>
 
-          <div className="ob-grid-2">
-            <F label="Full name" error={errors["name"]}>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input className="input-field" style={{ flex: 1, borderRadius: 8 }} value={value.name ?? ""} maxLength={100} placeholder="Ramesh Patel" onChange={(e) => set({ name: e.target.value })} />
-                {clientName.trim() && (
-                  <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0, fontSize: 11, height: 38 }} onClick={() => set({ name: clientName.trim() })}>
-                    Use Client
-                  </button>
-                )}
-              </div>
-            </F>
-            <F label="Login email" error={errors["email"]}>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input className="input-field" style={{ flex: 1, borderRadius: 8 }} value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="owner@example.com" onChange={(e) => set({ email: e.target.value })} />
-                {clientEmail.trim() && (
-                  <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0, fontSize: 11, height: 38 }} onClick={() => set({ email: clientEmail.trim() })}>
-                    Use Client
-                  </button>
-                )}
-              </div>
-            </F>
-            <F label="Mobile Phone (Optional)" error={errors["phone"]}>
-              <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="9876543210" onChange={(e) => set({ phone: e.target.value })} style={{ borderRadius: 8 }} />
-            </F>
-            <div style={{ display: "flex", alignItems: "center", color: "var(--muted)", fontSize: 11.5, lineHeight: 1.4, padding: "8px 0" }}>
-              Password will be shown once upon client activation for immediate handover.
-            </div>
-            <F label={`Password (min ${MIN_PASSWORD_LENGTH} chars)`} error={errors["password"]}>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input className="input-field" style={{ flex: 1, fontFamily: "monospace", borderRadius: 8 }} type={showPw ? "text" : "password"} value={value.password ?? ""} maxLength={128} autoComplete="new-password" placeholder="••••••••" onChange={(e) => set({ password: e.target.value })} />
-                <button type="button" className="btn btn-secondary btn-sm" style={{ flexShrink: 0, height: 38, width: 38, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowPw((s) => !s)} aria-label={showPw ? "Hide" : "Show"}>
-                  <Icons.Eye size={14} />
-                </button>
-              </div>
-            </F>
-            <F label="Confirm password" error={errors["confirmPassword"]}>
-              <input className="input-field" style={{ fontFamily: "monospace", borderRadius: 8 }} type={showPw ? "text" : "password"} value={value.confirmPassword ?? ""} maxLength={128} autoComplete="new-password" placeholder="••••••••" onChange={(e) => set({ confirmPassword: e.target.value })} />
-            </F>
-          </div>
-          <div style={{ marginTop: 14, paddingTop: 10, borderTop: "1px solid var(--hairline)", fontSize: 11.5, color: "var(--muted)" }}>
-            Credentials are shown once on activation and never stored in plain text.
-          </div>
+          {selectedAgronomist && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => set({ agronomistId: null, agronomistName: null })}
+              style={{ fontSize: 11, color: "var(--muted)" }}
+            >
+              Change
+            </button>
+          )}
         </div>
-      ) : (
-        <div style={{
+
+        {selectedAgronomist ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "14px 18px",
+              background: "var(--surface-strong)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  background: "var(--green, #15803d)",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                {selectedAgronomist.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{selectedAgronomist.name}</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                      background: "var(--green-light, #dcfce7)",
+                      color: "var(--green, #15803d)",
+                    }}
+                  >
+                    AGRONOMIST
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                  {selectedAgronomist.title} · 📞 {selectedAgronomist.phone} · ✉️ {selectedAgronomist.email}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+            {agronomists.map((a) => (
+              <div
+                key={a.id}
+                onClick={() => set({ agronomistId: a.id, agronomistName: a.name })}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 10,
+                  border: `1px solid ${value.agronomistId === a.id ? "var(--green, #15803d)" : "var(--hairline)"}`,
+                  background: value.agronomistId === a.id ? "var(--green-light, #dcfce7)" : "var(--surface-card)",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: "var(--surface-strong)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    {a.name.slice(0, 2)}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{a.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{a.title}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Field Officer Selection ──────────────────────────────────────── */}
+      <div
+        style={{
           background: "var(--surface-card)",
           border: "1px solid var(--hairline)",
           borderRadius: "var(--radius-md)",
-          padding: "28px 20px",
-          textAlign: "center",
-          boxShadow: "var(--shadow-card)"
-        }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-            <Icons.Mail size={20} style={{ color: "var(--primary)" }} />
+          padding: "20px 24px",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>2. Assigned Field Officer</div>
+            <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Responsible for daily task execution, biometric attendance, and plot log updates</div>
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>Invite link will be generated</div>
-          <div style={{ fontSize: 12, color: "var(--muted)", maxWidth: 420, margin: "6px auto 0", lineHeight: 1.5 }}>
-            No password required now. An email invitation can be dispatched directly from the Client Directory after estate activation.
-          </div>
+
+          {selectedFieldOfficer && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => set({ fieldOfficerId: null, fieldOfficerName: null })}
+              style={{ fontSize: 11, color: "var(--muted)" }}
+            >
+              Change
+            </button>
+          )}
         </div>
-      )}
+
+        {selectedFieldOfficer ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "14px 18px",
+              background: "var(--surface-strong)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  background: "var(--ink)",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                {selectedFieldOfficer.name.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{selectedFieldOfficer.name}</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                      background: "var(--surface-strong)",
+                      border: "1px solid var(--hairline)",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    FIELD OFFICER
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                  {selectedFieldOfficer.title} · 📞 {selectedFieldOfficer.phone} · ✉️ {selectedFieldOfficer.email}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+            {fieldOfficers.map((fo) => (
+              <div
+                key={fo.id}
+                onClick={() => set({ fieldOfficerId: fo.id, fieldOfficerName: fo.name })}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 10,
+                  border: `1px solid ${value.fieldOfficerId === fo.id ? "var(--ink)" : "var(--hairline)"}`,
+                  background: value.fieldOfficerId === fo.id ? "var(--surface-strong)" : "var(--surface-card)",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
+                      background: "var(--surface-strong)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    {fo.name.slice(0, 2)}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>{fo.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)" }}>{fo.title}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Automatic First Task Provisioning ─────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderLeft: "4px solid var(--green, #15803d)",
+          borderRadius: "var(--radius-md)",
+          padding: "18px 22px",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>📋</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
+                Automatic First Task Creation
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--muted)" }}>
+                Provisions the first operational setup task for the assigned field officer immediately upon activation
+              </div>
+            </div>
+          </div>
+
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={value.createFirstTask ?? true}
+              onChange={(e) => set({ createFirstTask: e.target.checked })}
+            />
+            <span>Create First Task</span>
+          </label>
+        </div>
+
+        {value.createFirstTask && (
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 4 }}>
+              Initial Task Title
+            </label>
+            <input
+              className="input-field"
+              value={value.firstTaskTitle ?? "Initial Demarcation & Soil Testing"}
+              onChange={(e) => set({ firstTaskTitle: e.target.value })}
+              style={{ borderRadius: 8 }}
+            />
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>
+              Assigned to: <strong>{selectedFieldOfficer?.name || "Field Officer"}</strong> · Linked to: <strong>Client → Farm → First Plot</strong>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

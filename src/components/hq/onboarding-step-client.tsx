@@ -156,13 +156,13 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
         background: "var(--surface-card)",
         border: "1px solid var(--hairline)",
         borderRadius: "var(--radius-md)",
-        padding: "18px 20px",
+        padding: "20px 24px",
         boxShadow: "var(--shadow-card)"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-          <Icons.MapPin size={13} style={{ color: "var(--primary)" }} />
-          <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-            Location & Billing Address
+          <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+            Client Address & Billing Location
           </span>
         </div>
 
@@ -176,39 +176,11 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           <F label="State" error={errors["state"]}>
             <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(e) => set({ state: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Pin Code" error={errors["pincode"]}>
+          <F label="PIN Code" error={errors["pincode"]}>
             <input className="input-field" value={value.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(e) => set({ pincode: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label="Billing Location" error={errors["billingAddress"]} span>
             <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door / Survey no, street name, layout" onChange={(e) => set({ billingAddress: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-        </div>
-      </div>
-
-      {/* Connects & Stakeholders Card */}
-      <div style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-md)",
-        padding: "18px 20px",
-        boxShadow: "var(--shadow-card)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-          <Icons.Shield size={13} style={{ color: "var(--primary)" }} />
-          <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-            Commercial & Connect Contacts
-          </span>
-        </div>
-
-        <div className="ob-grid-2">
-          <F label="Finance Connect" error={errors["financeConnect"]}>
-            <input className="input-field" value={value.financeConnect ?? ""} maxLength={150} placeholder="e.g., Priya Sharma (Accounts Head) - 9876501234" onChange={(e) => set({ financeConnect: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="Purchaser Connect" error={errors["purchaserConnect"]}>
-            <input className="input-field" value={value.purchaserConnect ?? ""} maxLength={150} placeholder="e.g., Arun Verma (Procurement Lead) - 9876504321" onChange={(e) => set({ purchaserConnect: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="PAN Number (Optional)" error={errors["panNumber"]}>
-            <input className="input-field" value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
           </F>
         </div>
       </div>

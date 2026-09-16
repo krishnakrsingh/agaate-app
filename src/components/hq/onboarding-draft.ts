@@ -36,9 +36,28 @@ export function emptyWizard(idempotencyKey?: string): WizardData {
       financeConnect: "",
       purchaserConnect: "",
     },
-    farms: [],
+    contacts: {
+      financeContact: null,
+      purchaserContact: null,
+      additionalContacts: [],
+    },
+    farms: [emptyFarm()],
     plots: [],
-    team: { mode: "create", name: "", email: "", phone: "", password: "", confirmPassword: "" },
+    crops: [],
+    team: {
+      mode: "later",
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      agronomistId: null,
+      agronomistName: null,
+      fieldOfficerId: null,
+      fieldOfficerName: null,
+      createFirstTask: true,
+      firstTaskTitle: "Initial Demarcation & Soil Testing",
+    },
   };
 }
 
@@ -46,12 +65,18 @@ export function emptyFarm() {
   return {
     rowId: newRowId(),
     name: "",
+    area: "" as unknown as number,
+    areaUnit: "Acre" as const,
+    totalArea: "" as unknown as number,
+    cultivableArea: "" as unknown as number,
     localConnect: "",
+    localContactId: null,
+    localContactName: null,
+    localContactPhone: null,
+    localConnectSameAsClient: false,
     location: "",
     latitude: "" as unknown as number,
     longitude: "" as unknown as number,
-    totalArea: "" as unknown as number,
-    cultivableArea: "" as unknown as number,
     waterSource: "",
     surveyNumber: "",
     village: "",
@@ -60,8 +85,39 @@ export function emptyFarm() {
     district: "",
     state: "",
     pincode: "",
+    sameAsClientAddress: false,
     soilType: "",
     boundaryRing: null as null | [number, number][],
+  };
+}
+
+export function emptyPlot(farmRowId: string) {
+  return {
+    rowId: newRowId(),
+    farmRowId,
+    name: "",
+    area: "" as unknown as number,
+    soilType: "",
+    irrigationSetup: "Drip Irrigation",
+    valves: "",
+    bedDetails: "",
+    landPrepStatus: "Ready for Planting",
+    boundaryRing: null as null | [number, number][],
+  };
+}
+
+export function emptyCrop(plotRowId: string) {
+  return {
+    rowId: newRowId(),
+    plotRowId,
+    cropName: "",
+    plantingMethod: "Nursery Transplantation",
+    spacing: "",
+    basalDose: "",
+    mulching: "Silver-Black 25 micron",
+    plantingDate: new Date().toISOString().slice(0, 10),
+    expectedHarvestDate: "",
+    keyDates: "",
   };
 }
 
@@ -101,11 +157,15 @@ export function hydrate(payload: Partial<WizardData> | null | undefined, idempot
   return {
     idempotencyKey: typeof payload.idempotencyKey === "string" ? payload.idempotencyKey : idempotencyKey,
     client: { ...base.client, ...(payload.client ?? {}) },
-    farms: Array.isArray(payload.farms)
+    contacts: { ...base.contacts, ...(payload.contacts ?? {}) },
+    farms: Array.isArray(payload.farms) && payload.farms.length > 0
       ? payload.farms.map((f) => ({ ...emptyFarm(), ...(f as object), rowId: (f as { rowId?: string }).rowId || newRowId() }))
-      : [],
+      : [emptyFarm()],
     plots: Array.isArray(payload.plots)
-      ? payload.plots.map((p) => ({ farmRowId: "", name: "", area: "" as unknown as number, soilType: "", ...(p as object) }))
+      ? payload.plots.map((p) => ({ ...emptyPlot(""), ...(p as object), rowId: (p as { rowId?: string }).rowId || newRowId() }))
+      : [],
+    crops: Array.isArray(payload.crops)
+      ? payload.crops.map((c) => ({ ...emptyCrop(""), ...(c as object), rowId: (c as { rowId?: string }).rowId || newRowId() }))
       : [],
     team: { ...base.team, ...(payload.team ?? {}) },
   };

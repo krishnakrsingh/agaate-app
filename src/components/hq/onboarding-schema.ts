@@ -106,6 +106,20 @@ export const clientSchema = z
     }
   });
 
+export const contactItemSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().trim().min(2, "Contact name is required.").max(120),
+  phone: z.string().trim().min(10, "Phone must hold at least 10 digits.").max(20),
+  email: optionalText(254),
+  role: z.enum(["FINANCE", "PURCHASER", "LOCAL", "OTHER"]),
+});
+
+export const contactsSchema = z.object({
+  financeContact: contactItemSchema.optional().nullable(),
+  purchaserContact: contactItemSchema.optional().nullable(),
+  additionalContacts: z.array(contactItemSchema).default([]),
+});
+
 /** Drawn boundary ring in [lng,lat] order (GeoMap shape). Null = pin only. */
 const boundaryRingField = z
   .array(z.tuple([z.number().finite(), z.number().finite()]))
@@ -117,12 +131,18 @@ export const farmSchema = z
   .object({
     rowId: z.string().optional(),
     name: z.string().trim().min(2, "Farm name is required.").max(120),
+    area: numField("Area", 0.01, 100000),
+    areaUnit: z.enum(["Acre", "Hectare", "Gunta"]).default("Acre"),
+    totalArea: numField("Total area", 0.01, 100000),
+    cultivableArea: numField("Cultivable area", 0.01, 100000),
     localConnect: optionalText(150),
+    localContactId: optionalText(100),
+    localContactName: optionalText(120),
+    localContactPhone: optionalText(20),
+    localConnectSameAsClient: z.boolean().default(false),
     location: z.string().trim().min(2, "Location is required.").max(180),
     latitude: numField("Latitude", -90, 90),
     longitude: numField("Longitude", -180, 180),
-    totalArea: numField("Total area", 0.01, 100000),
-    cultivableArea: numField("Cultivable area", 0.01, 100000),
     waterSource: z.string().trim().min(2, "Water source is required.").max(300),
     surveyNumber: optionalText(100),
     village: optionalText(100),
@@ -131,6 +151,7 @@ export const farmSchema = z
     district: optionalText(100),
     state: optionalText(100),
     pincode: optionalText(20),
+    sameAsClientAddress: z.boolean().default(false),
     soilType: optionalText(100),
     boundaryRing: boundaryRingField,
   })
@@ -146,17 +167,40 @@ export const plotSchema = z.object({
   name: z.string().trim().min(2, "Plot name is required.").max(100),
   area: numField("Plot area", 0.01, 100000),
   soilType: optionalText(100),
+  irrigationSetup: optionalText(100),
+  valves: optionalText(100),
+  bedDetails: optionalText(150),
+  landPrepStatus: optionalText(100),
   boundaryRing: boundaryRingField,
+});
+
+export const cropSchema = z.object({
+  rowId: z.string().optional(),
+  plotRowId: z.string().min(1, "Crop must belong to a plot."),
+  cropName: z.string().trim().min(2, "Crop name is required.").max(120),
+  plantingMethod: optionalText(100),
+  spacing: optionalText(100),
+  basalDose: optionalText(200),
+  mulching: optionalText(100),
+  plantingDate: optionalText(30),
+  expectedHarvestDate: optionalText(30),
+  keyDates: optionalText(300),
 });
 
 export const teamSchema = z
   .object({
-    mode: z.enum(["create", "later"]),
+    mode: z.enum(["create", "later"]).default("later"),
     name: z.string().trim().max(100).optional().nullable(),
     email: z.string().trim().max(254).optional().nullable(),
     phone: z.string().trim().max(20).optional().nullable(),
     password: z.string().max(128).optional().nullable(),
     confirmPassword: z.string().max(128).optional().nullable(),
+    agronomistId: optionalText(100),
+    agronomistName: optionalText(120),
+    fieldOfficerId: optionalText(100),
+    fieldOfficerName: optionalText(120),
+    createFirstTask: z.boolean().default(true),
+    firstTaskTitle: z.string().trim().min(2).default("Initial Demarcation & Soil Testing"),
   })
   .superRefine((data, ctx) => {
     if (data.mode === "later") return;
@@ -181,8 +225,10 @@ export const submitSchema = z
   .object({
     idempotencyKey: z.string().min(8).max(64),
     client: clientSchema,
-    farms: z.array(farmSchema).max(MAX_FARMS, `Farm cap is ${MAX_FARMS} per onboarding.`),
+    contacts: contactsSchema.default({ additionalContacts: [] }),
+    farms: z.array(farmSchema).min(1, "Please add at least one farm.").max(MAX_FARMS, `Farm cap is ${MAX_FARMS} per onboarding.`),
     plots: z.array(plotSchema).max(MAX_PLOTS),
+    crops: z.array(cropSchema).default([]),
     team: teamSchema,
   })
   .superRefine((data, ctx) => {
@@ -223,8 +269,11 @@ export const submitSchema = z
   });
 
 export type ClientInput = z.infer<typeof clientSchema>;
+export type ContactItem = z.infer<typeof contactItemSchema>;
+export type ContactsInput = z.infer<typeof contactsSchema>;
 export type FarmInput = z.infer<typeof farmSchema>;
 export type PlotInput = z.infer<typeof plotSchema>;
+export type CropInput = z.infer<typeof cropSchema>;
 export type TeamInput = z.infer<typeof teamSchema>;
 export type WizardData = z.infer<typeof submitSchema>;
 

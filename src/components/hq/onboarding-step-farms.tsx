@@ -2,46 +2,19 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Icons } from "@/components/icons";
-import { MAX_FARMS, type FarmInput, type ClientInput } from "./onboarding-schema";
+import { MAX_FARMS, type FarmInput, type ClientInput, type ContactsInput, type ContactItem } from "./onboarding-schema";
 import { emptyFarm } from "./onboarding-draft";
 import { ringAcres } from "@/lib/geo";
 import { representativePoint } from "@/lib/geo-core";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), { ssr: false });
 
-/* inp retired: global .input-field */
-
-function F({ label, error, sameAsClient, onSameAsClient, children }: {
-  label: string;
-  error?: string;
-  sameAsClient?: boolean;
-  onSameAsClient?: () => void;
-  children: React.ReactNode;
-}) {
+function F({ label, error, helper, children }: { label: string; error?: string; helper?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
         <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{label}</label>
-        {onSameAsClient && (
-          <button
-            type="button"
-            onClick={onSameAsClient}
-            style={{
-              background: sameAsClient ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
-              color: sameAsClient ? "var(--green, #15803d)" : "var(--ink)",
-              border: `1px solid ${sameAsClient ? "var(--green, #86efac)" : "var(--hairline)"}`,
-              borderRadius: 4,
-              fontSize: 10,
-              fontWeight: 600,
-              padding: "1px 5px",
-              cursor: "pointer",
-              lineHeight: "1.2",
-            }}
-            title="Option to add same as client"
-          >
-            {sameAsClient ? "✓ Same as client" : "Option to add same as client"}
-          </button>
-        )}
+        {helper}
       </div>
       {children}
       {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
@@ -49,46 +22,86 @@ function F({ label, error, sameAsClient, onSameAsClient, children }: {
   );
 }
 
-export function OnboardingStepFarms({ value, onChange, errors, client }: {
-  value: FarmInput[]; onChange: (v: FarmInput[]) => void; errors: Record<string, string>; client?: ClientInput;
+export function OnboardingStepFarms({
+  value,
+  onChange,
+  errors,
+  client,
+  contacts,
+}: {
+  value: FarmInput[];
+  onChange: (v: FarmInput[]) => void;
+  errors: Record<string, string>;
+  client?: ClientInput;
+  contacts?: ContactsInput;
 }) {
   const [sel, setSel] = useState(0);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [gpsErr, setGpsErr] = useState("");
+  const [addingLocalContact, setAddingLocalContact] = useState(false);
+  const [newLocalName, setNewLocalName] = useState("");
+  const [newLocalPhone, setNewLocalPhone] = useState("");
 
   const idx = Math.min(sel, Math.max(0, value.length - 1));
   const cur = value[idx];
 
   const dupNames = useMemo(() => {
     const c = new Map<string, number>();
-    for (const f of value) { const k = f.name.trim().toLowerCase(); if (k) c.set(k, (c.get(k) ?? 0) + 1); }
+    for (const f of value) {
+      const k = f.name.trim().toLowerCase();
+      if (k) c.set(k, (c.get(k) ?? 0) + 1);
+    }
     return c;
   }, [value]);
 
   const patch = (i: number, p: Partial<FarmInput>) => onChange(value.map((f, j) => (j === i ? { ...f, ...p } : f)));
+
   const patchRing = (i: number, ring: [number, number][] | null) => {
     const f = value[i];
     if (!f) return;
-    // Autofill GPS from the drawn fence centroid when coords are empty.
     let { latitude, longitude } = f;
     if (ring && ring.length >= 4 && !Number.isFinite(Number(latitude))) {
       try {
         const c = representativePoint(ring as [number, number][]);
-        if (c) { longitude = c[0] as unknown as number; latitude = c[1] as unknown as number; }
-      } catch { /* keep manual coords */ }
+        if (c) {
+          longitude = c[0] as unknown as number;
+          latitude = c[1] as unknown as number;
+        }
+      } catch {
+        /* keep manual coords */
+      }
     }
     onChange(value.map((x, j) => (j === i ? { ...x, boundaryRing: ring, latitude, longitude } : x)));
   };
-  const addRow = () => { if (value.length >= MAX_FARMS) return; onChange([...value, emptyFarm()]); setSel(value.length); };
-  const removeRow = (i: number) => { onChange(value.filter((_, j) => j !== i)); setSel(0); };
+
+  const addRow = () => {
+    if (value.length >= MAX_FARMS) return;
+    onChange([...value, emptyFarm()]);
+    setSel(value.length);
+  };
+
+  const removeRow = (i: number) => {
+    if (value.length <= 1) return;
+    onChange(value.filter((_, j) => j !== i));
+    setSel(0);
+  };
 
   const gps = () => {
     setGpsErr("");
-    if (!navigator.geolocation) { setGpsErr("Location not supported."); return; }
+    if (!navigator.geolocation) {
+      setGpsErr("Location not supported.");
+      return;
+    }
     setGpsBusy(true);
     navigator.geolocation.getCurrentPosition(
-      (p) => { patch(idx, { latitude: p.coords.latitude as unknown as number, longitude: p.coords.longitude as unknown as number }); setGpsBusy(false); },
-      (e) => { setGpsBusy(false); setGpsErr(e.code === 1 ? "Permission denied." : "Location unavailable."); },
+      (p) => {
+        patch(idx, { latitude: p.coords.latitude as unknown as number, longitude: p.coords.longitude as unknown as number });
+        setGpsBusy(false);
+      },
+      (e) => {
+        setGpsBusy(false);
+        setGpsErr(e.code === 1 ? "Permission denied." : "Location unavailable.");
+      },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
@@ -98,321 +111,569 @@ export function OnboardingStepFarms({ value, onChange, errors, client }: {
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
   const ring = (cur?.boundaryRing ?? null) as [number, number][] | null;
   const ringAcresLive = ring && ring.length >= 4 ? (() => { try { return ringAcres(ring); } catch { return 0; } })() : 0;
-  const mapCenter: [number, number] = hasCoords ? [lat, lng] : [20.59, 78.96];
+  const mapCenter: [number, number] = hasCoords ? [lat, lng] : [13.0827, 77.5877];
 
-  // Helper values to copy from Client
-  const clientConnect = client ? (client.name ? `${client.name}${client.phone ? ` (${client.phone})` : ""}` : (client.phone ?? "")) : "";
-  const clientFarmName = client ? (client.companyName ? `${client.companyName} Estate` : (client.name ? `${client.name}'s Farm` : "")) : "";
-  const clientLoc = client ? (client.billingAddress || [client.city, client.state].filter(Boolean).join(", ")) : "";
-  const clientVillage = client?.village ?? "";
-  const clientCity = client?.city ?? "";
-  const clientState = client?.state ?? "";
-  const clientPincode = client?.pincode ?? "";
+  // Unit conversion helper
+  const handleAreaChange = (rawArea: number, unit: "Acre" | "Hectare" | "Gunta") => {
+    let normalizedAcres = rawArea;
+    if (unit === "Hectare") normalizedAcres = Number((rawArea * 2.47105).toFixed(2));
+    if (unit === "Gunta") normalizedAcres = Number((rawArea * 0.025).toFixed(2));
 
-  const copyAllFromClient = () => {
-    if (!client) return;
     patch(idx, {
-      localConnect: clientConnect || cur?.localConnect || "",
-      name: cur?.name ? cur.name : clientFarmName,
-      location: clientLoc || cur?.location || "",
-      village: clientVillage || cur?.village || "",
-      city: clientCity || cur?.city || "",
-      state: clientState || cur?.state || "",
-      pincode: clientPincode || cur?.pincode || "",
+      area: rawArea,
+      areaUnit: unit,
+      totalArea: normalizedAcres,
+      cultivableArea: normalizedAcres,
     });
   };
 
-  return (
-    <div className="ob-section">
+  // Same as Client Address toggle
+  const toggleSameAsClientAddress = (checked: boolean) => {
+    if (checked && client) {
+      patch(idx, {
+        sameAsClientAddress: true,
+        village: client.village ?? cur?.village ?? "",
+        city: client.city ?? cur?.city ?? "",
+        state: client.state ?? cur?.state ?? "",
+        pincode: client.pincode ?? cur?.pincode ?? "",
+        location: cur?.location || client.billingAddress || [client.city, client.state].filter(Boolean).join(", "),
+      });
+    } else {
+      patch(idx, { sameAsClientAddress: false });
+    }
+  };
 
-      {/* Farm tab strip */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.07em", color: "var(--muted)" }}>
-            Farms <span style={{ fontWeight: 400 }}>{value.length}/{MAX_FARMS}</span>
-          </span>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={addRow} disabled={value.length >= MAX_FARMS}>
-            <Icons.Plus size={13} /><span>Add farm</span>
-          </button>
+  // Same as Client for Local Connect
+  const setLocalConnectSameAsClient = () => {
+    if (!client) return;
+    const clientStr = `${client.name}${client.phone ? ` (${client.phone})` : ""}`;
+    patch(idx, {
+      localConnect: clientStr,
+      localContactName: client.name,
+      localContactPhone: client.phone ?? "",
+      localConnectSameAsClient: true,
+    });
+  };
+
+  // Client name default
+  const defaultFarmName = client?.companyName ? `${client.companyName} Estate` : client?.name ? `${client.name}'s Farm` : "Greenfield Estate";
+
+  // Available contact options for Local Connect
+  const contactOptions: ContactItem[] = [];
+  if (client?.name && client?.phone) {
+    contactOptions.push({
+      id: "client_owner",
+      name: `${client.name} (Client Primary)`,
+      phone: client.phone,
+      role: "LOCAL",
+    });
+  }
+  if (contacts?.financeContact) {
+    contactOptions.push(contacts.financeContact);
+  }
+  if (contacts?.purchaserContact) {
+    contactOptions.push(contacts.purchaserContact);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* ── Client Context Header ────────────────────────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px",
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius-md)",
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              background: "var(--surface-strong)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 16,
+            }}
+          >
+            🏡
+          </div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Client Context
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+              {client?.companyName ? `${client.companyName} · ` : ""}{client?.name || "Client"}
+            </div>
+          </div>
         </div>
 
-        {value.length === 0 ? (
-          <div style={{ padding: "24px 0", textAlign: "center", borderTop: "1px solid var(--hairline)", borderBottom: "1px solid var(--hairline)", color: "var(--muted)", fontSize: 13 }}>
-            No farms yet — add the first one above.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {value.map((f, i) => {
-              const hasErr = Object.keys(errors).some((k) => k.startsWith(`farms.${i}.`));
-              const dup = f.name.trim() && (dupNames.get(f.name.trim().toLowerCase()) ?? 0) > 1;
-              const active = i === idx;
-              return (
-                <button
-                  key={f.rowId ?? i}
-                  type="button"
-                  onClick={() => setSel(i)}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 12px",
-                    border: `1px solid ${active ? "var(--ink)" : hasErr ? "var(--semantic-error)" : "var(--hairline)"}`,
-                    borderRadius: "var(--radius-pill)", background: active ? "var(--ink)" : "transparent",
-                    color: active ? "#fff" : hasErr ? "var(--semantic-error)" : "var(--ink)",
-                    fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.1s",
-                  }}
-                >
-                  <span>{f.name.trim() || `Farm ${i + 1}`}</span>
-                  {(dup || hasErr) && <span style={{ opacity: 0.7 }}>⚠</span>}
-                  <span
-                    role="button"
-                    aria-label={`Remove ${f.name || `Farm ${i + 1}`}`}
-                    onClick={(ev) => { ev.stopPropagation(); removeRow(i); }}
-                    style={{ cursor: "pointer", opacity: 0.6, fontSize: 11, marginLeft: 2 }}
-                  >×</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "3px 10px",
+            borderRadius: 20,
+            background: "var(--surface-strong)",
+            color: "var(--muted)",
+          }}
+        >
+          {value.length} Farm{value.length > 1 ? "s" : ""} Added
+        </span>
       </div>
 
-      {/* Farm detail — split: fields left, map right */}
-      {cur && (
-        <div className="ob-farm-grid">
+      {/* ── Farm Selector Strip ──────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {value.map((f, i) => {
+            const active = i === idx;
+            const hasErr = Object.keys(errors).some((k) => k.startsWith(`farms.${i}.`));
+            const dup = f.name.trim() && (dupNames.get(f.name.trim().toLowerCase()) ?? 0) > 1;
 
-          {/* Left: fields in cards */}
-          <div className="ob-section">
-            {/* Quick copy all banner */}
-            {client && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                background: "var(--surface-card)",
-                border: "1px solid var(--hairline)",
-                borderLeft: "3.5px solid var(--green, #15803d)",
-                borderRadius: "var(--radius-md)",
-                padding: "10px 14px",
-                boxShadow: "var(--shadow-card)",
-              }}>
-                <div style={{ fontSize: 12, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icons.CheckCircle size={15} style={{ color: "var(--green, #15803d)", flexShrink: 0 }} />
-                  <span>
-                    Auto-fill from client: <strong>{client.name || "Client Details"}</strong>
+            return (
+              <button
+                key={f.rowId ?? i}
+                type="button"
+                onClick={() => setSel(i)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  height: 34,
+                  padding: "0 14px",
+                  borderRadius: 20,
+                  border: `1px solid ${active ? "var(--ink)" : hasErr ? "var(--semantic-error)" : "var(--hairline)"}`,
+                  background: active ? "var(--ink)" : "var(--surface-card)",
+                  color: active ? "#fff" : hasErr ? "var(--semantic-error)" : "var(--ink)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <span>{f.name.trim() || `Farm ${i + 1}`}</span>
+                {(dup || hasErr) && <span>⚠</span>}
+                {value.length > 1 && (
+                  <span
+                    role="button"
+                    aria-label={`Remove farm ${i + 1}`}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      removeRow(i);
+                    }}
+                    style={{ opacity: 0.6, fontSize: 13, cursor: "pointer", marginLeft: 2 }}
+                  >
+                    ×
                   </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={copyAllFromClient}
-                  style={{ fontSize: 11, height: 26, padding: "0 10px", gap: 4 }}
-                >
-                  <Icons.Copy size={12} />
-                  <span>Copy details from Client</span>
-                </button>
-              </div>
-            )}
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-            <div style={{
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={addRow}
+          disabled={value.length >= MAX_FARMS}
+          style={{ height: 32, padding: "0 12px", gap: 4 }}
+        >
+          <Icons.Plus size={13} />
+          <span>Add Another Farm</span>
+        </button>
+      </div>
+
+      {/* ── Selected Farm Details ────────────────────────────────────────── */}
+      {cur && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Card 1: Farm Basic Information */}
+          <div
+            style={{
               background: "var(--surface-card)",
               border: "1px solid var(--hairline)",
               borderRadius: "var(--radius-md)",
-              padding: "18px 20px",
-              boxShadow: "var(--shadow-card)"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
-                  <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                    Basic Estate Information
-                  </span>
-                </div>
-                <span style={{ fontSize: 11, color: "var(--muted)" }}>Step 2 of 5</span>
-              </div>
-              <div className="ob-grid-3">
-                <F
-                  label="Farm name *"
-                  error={e(idx, "name")}
-                  sameAsClient={!!(cur.name && clientFarmName && cur.name === clientFarmName)}
-                  onSameAsClient={clientFarmName ? () => patch(idx, { name: clientFarmName }) : undefined}
-                >
-                  <input className="input-field" value={cur.name} maxLength={120} placeholder="e.g., North Valley Estate" onChange={(ev) => patch(idx, { name: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F
-                  label="Local Connect"
-                  error={e(idx, "localConnect")}
-                  sameAsClient={!!(cur.localConnect && clientConnect && cur.localConnect === clientConnect)}
-                  onSameAsClient={clientConnect ? () => patch(idx, { localConnect: clientConnect }) : undefined}
-                >
-                  <input className="input-field" value={cur.localConnect ?? ""} maxLength={150} placeholder="e.g., Suresh Gowda (9876543210)" onChange={(ev) => patch(idx, { localConnect: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F
-                  label="Farm Location *"
-                  error={e(idx, "location")}
-                  sameAsClient={!!(cur.location && clientLoc && cur.location === clientLoc)}
-                  onSameAsClient={clientLoc ? () => patch(idx, { location: clientLoc }) : undefined}
-                >
-                  <input className="input-field" value={cur.location} maxLength={180} placeholder="e.g., Near Hoskote Gate" onChange={(ev) => patch(idx, { location: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F
-                  label="Area (ac) *"
-                  error={e(idx, "totalArea")}
-                  sameAsClient={Number(cur.totalArea) === 10}
-                  onSameAsClient={() => patch(idx, { totalArea: 10, cultivableArea: 10 })}
-                >
-                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} placeholder="10.0" onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Cultivable area (ac) *" error={e(idx, "cultivableArea")}>
-                  <input className="input-field" type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} placeholder="10.0" onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Water source *" error={e(idx, "waterSource")}>
-                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="e.g., Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Soil type" error={e(idx, "soilType")}>
-                  <input className="input-field" value={cur.soilType ?? ""} maxLength={100} placeholder="e.g., Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-              </div>
+              padding: "20px 24px",
+              boxShadow: "var(--shadow-card)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                Estate Identity & Area
+              </span>
             </div>
 
-            {/* Land records accordion card */}
-            <details open={["surveyNumber","village","city","taluk","district","state","pincode"].some((f) => e(idx, f))} style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: "14px 18px",
-              boxShadow: "var(--shadow-card)"
-            }}>
-              <summary style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Icons.FileText size={13} style={{ color: "var(--ink)" }} />
+            <div className="ob-grid-3">
+              <F
+                label="Farm Name *"
+                error={e(idx, "name")}
+                helper={
+                  <button
+                    type="button"
+                    onClick={() => patch(idx, { name: defaultFarmName })}
+                    style={{
+                      background: cur.name === defaultFarmName ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
+                      color: cur.name === defaultFarmName ? "var(--green, #15803d)" : "var(--muted)",
+                      border: "none",
+                      borderRadius: 4,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "1px 6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Use Client Name
+                  </button>
+                }
+              >
+                <input
+                  className="input-field"
+                  value={cur.name}
+                  maxLength={120}
+                  placeholder="e.g., North Valley Estate"
+                  onChange={(ev) => patch(idx, { name: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+
+              {/* Area + Unit Selector */}
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>
+                  Total Area & Unit *
+                </label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input
+                    className="input-field"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={cur.area as unknown as string}
+                    placeholder="12.5"
+                    onChange={(ev) => handleAreaChange(Number(ev.target.value), cur.areaUnit ?? "Acre")}
+                    style={{ borderRadius: 8, flex: 1 }}
+                  />
+                  <select
+                    className="input-field"
+                    value={cur.areaUnit ?? "Acre"}
+                    onChange={(ev) => handleAreaChange(Number(cur.area || 0), ev.target.value as "Acre" | "Hectare" | "Gunta")}
+                    style={{ width: 95, borderRadius: 8, padding: "0 8px" }}
+                  >
+                    <option value="Acre">Acre</option>
+                    <option value="Hectare">Hectare</option>
+                    <option value="Gunta">Gunta</option>
+                  </select>
+                </div>
+                {e(idx, "totalArea") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{e(idx, "totalArea")}</div>}
+              </div>
+
+              <F label="Water Source *" error={e(idx, "waterSource")}>
+                <input
+                  className="input-field"
+                  value={cur.waterSource}
+                  maxLength={300}
+                  placeholder="e.g., 2x Borewells + Storage Pond"
+                  onChange={(ev) => patch(idx, { waterSource: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+            </div>
+
+            {/* Local Connect Relationship */}
+            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>Local Connect (Farm In-charge)</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)" }}>Manager or primary contact residing at the farm location</div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={setLocalConnectSameAsClient}
+                    style={{
+                      fontSize: 11,
+                      height: 28,
+                      background: cur.localConnectSameAsClient ? "var(--green-light, #dcfce7)" : undefined,
+                      color: cur.localConnectSameAsClient ? "var(--green, #15803d)" : undefined,
+                    }}
+                  >
+                    Same as Client
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setAddingLocalContact(!addingLocalContact)}
+                    style={{ fontSize: 11, height: 28 }}
+                  >
+                    {addingLocalContact ? "Cancel New" : "+ Add New Local Contact"}
+                  </button>
+                </div>
+              </div>
+
+              {!addingLocalContact ? (
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <select
+                    className="input-field"
+                    value={cur.localContactId ?? (cur.localConnect ? "custom" : "")}
+                    onChange={(ev) => {
+                      const selectedId = ev.target.value;
+                      if (selectedId === "custom") return;
+                      const matched = contactOptions.find((c) => c.id === selectedId);
+                      if (matched) {
+                        patch(idx, {
+                          localContactId: matched.id,
+                          localContactName: matched.name,
+                          localContactPhone: matched.phone,
+                          localConnect: `${matched.name} (${matched.phone})`,
+                          localConnectSameAsClient: matched.id === "client_owner",
+                        });
+                      }
+                    }}
+                    style={{ borderRadius: 8, flex: 1 }}
+                  >
+                    <option value="">-- Select Contact for Local Connect --</option>
+                    {contactOptions.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.phone})
+                      </option>
+                    ))}
+                    {cur.localConnect && !contactOptions.some((c) => c.id === cur.localContactId) && (
+                      <option value="custom">{cur.localConnect}</option>
+                    )}
+                  </select>
+                </div>
+              ) : (
+                <div className="ob-grid-2" style={{ background: "var(--surface-strong)", padding: 12, borderRadius: 8 }}>
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" }}>Name</label>
+                    <input
+                      className="input-field"
+                      value={newLocalName}
+                      placeholder="e.g., Suresh Gowda"
+                      onChange={(e) => setNewLocalName(e.target.value)}
+                      style={{ borderRadius: 6, marginTop: 4 }}
+                    />
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", letterSpacing: "0.05em" }}>Land Records & Cadastral (Optional)</div>
-                    <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "none", letterSpacing: "normal", marginTop: 1 }}>Survey, Village, City, State & Pin Code</div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" }}>Phone</label>
+                    <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                      <input
+                        className="input-field"
+                        value={newLocalPhone}
+                        placeholder="e.g., 9876543210"
+                        onChange={(e) => setNewLocalPhone(e.target.value)}
+                        style={{ borderRadius: 6, flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => {
+                          if (!newLocalName.trim() || !newLocalPhone.trim()) return;
+                          patch(idx, {
+                            localConnect: `${newLocalName.trim()} (${newLocalPhone.trim()})`,
+                            localContactName: newLocalName.trim(),
+                            localContactPhone: newLocalPhone.trim(),
+                            localConnectSameAsClient: false,
+                          });
+                          setAddingLocalContact(false);
+                          setNewLocalName("");
+                          setNewLocalPhone("");
+                        }}
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icons.ChevronDown size={13} className="ob-chevron" style={{ color: "var(--ink)", transition: "transform 0.2s ease" }} />
-                </div>
-              </summary>
-              <div className="ob-grid-3" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
-                <F label="Survey no." error={e(idx, "surveyNumber")}><input className="input-field" value={cur.surveyNumber ?? ""} maxLength={100} placeholder="e.g., 42/1A" onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} style={{ borderRadius: 8 }} /></F>
-                <F
-                  label="Village"
-                  error={e(idx, "village")}
-                  sameAsClient={!!(cur.village && clientVillage && cur.village === clientVillage)}
-                  onSameAsClient={clientVillage ? () => patch(idx, { village: clientVillage }) : undefined}
-                >
-                  <input className="input-field" value={cur.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(ev) => patch(idx, { village: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F
-                  label="City"
-                  error={e(idx, "city")}
-                  sameAsClient={!!(cur.city && clientCity && cur.city === clientCity)}
-                  onSameAsClient={clientCity ? () => patch(idx, { city: clientCity }) : undefined}
-                >
-                  <input className="input-field" value={cur.city ?? ""} maxLength={100} placeholder="e.g., Bengaluru" onChange={(ev) => patch(idx, { city: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Taluk" error={e(idx, "taluk")}><input className="input-field" value={cur.taluk ?? ""} maxLength={100} placeholder="e.g., Magadi" onChange={(ev) => patch(idx, { taluk: ev.target.value })} style={{ borderRadius: 8 }} /></F>
-                <F label="District" error={e(idx, "district")}><input className="input-field" value={cur.district ?? ""} maxLength={100} placeholder="e.g., Ramanagara" onChange={(ev) => patch(idx, { district: ev.target.value })} style={{ borderRadius: 8 }} /></F>
-                <F
-                  label="State"
-                  error={e(idx, "state")}
-                  sameAsClient={!!(cur.state && clientState && cur.state === clientState)}
-                  onSameAsClient={clientState ? () => patch(idx, { state: clientState }) : undefined}
-                >
-                  <input className="input-field" value={cur.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(ev) => patch(idx, { state: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F
-                  label="Pin Code"
-                  error={e(idx, "pincode")}
-                  sameAsClient={!!(cur.pincode && clientPincode && cur.pincode === clientPincode)}
-                  onSameAsClient={clientPincode ? () => patch(idx, { pincode: clientPincode }) : undefined}
-                >
-                  <input className="input-field" value={cur.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(ev) => patch(idx, { pincode: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-              </div>
-            </details>
-
-            {/* GPS coordinates card */}
-            <div style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: "16px 20px",
-              boxShadow: "var(--shadow-card)"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
-                  <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                    Geographic Coordinates (Lat long)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => patch(idx, { latitude: 13.0827, longitude: 77.5877 })}
-                  style={{
-                    background: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
-                    color: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green, #15803d)" : "var(--ink)",
-                    border: `1px solid ${cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green, #86efac)" : "var(--hairline)"}`,
-                    borderRadius: 4,
-                    fontSize: 10,
-                    fontWeight: 600,
-                    padding: "2px 6px",
-                    cursor: "pointer",
-                  }}
-                  title="Option to set default coordinates for regional hub"
-                >
-                  {cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "✓ Region Lat/Long" : "Option to add same as client"}
-                </button>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "10px 12px", alignItems: "end" }}>
-                <F label="Latitude *" error={e(idx, "latitude")}>
-                  <input className="input-field" type="number" step="any" value={cur.latitude as unknown as string} placeholder="13.1234" onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Longitude *" error={e(idx, "longitude")}>
-                  <input className="input-field" type="number" step="any" value={cur.longitude as unknown as string} placeholder="77.5678" onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
-                </F>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={gps} disabled={gpsBusy} style={{ height: 38, padding: "0 14px", alignSelf: "end", gap: 6 }}>
-                  <Icons.MapPin size={13} /><span>{gpsBusy ? "Locating…" : "Current GPS"}</span>
-                </button>
-              </div>
-              {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 6 }}>{gpsErr}</div>}
+              )}
             </div>
           </div>
 
-          {/* Right: demarcation map card */}
-          <div style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            padding: "16px 18px",
-            boxShadow: "var(--shadow-card)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 10
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Card 2: Farm Location & Interactive Map */}
+          <div
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: "20px 24px",
+              boxShadow: "var(--shadow-card)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink)" }}>
-                  Demarcation Map{ringAcresLive > 0 ? ` · ${ringAcresLive.toFixed(2)} ac` : ""}
+                <Icons.MapPin size={15} style={{ color: "var(--primary)" }} />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                  Farm Location & Map
                 </span>
               </div>
-              {ring && (
-                <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11, color: "var(--muted)", padding: "2px 8px" }} onClick={() => patchRing(idx, null)}>
-                  Clear fence
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={gps}
+                disabled={gpsBusy}
+                style={{ height: 28, padding: "0 10px", fontSize: 11, gap: 4 }}
+              >
+                <Icons.MapPin size={12} />
+                <span>{gpsBusy ? "Locating…" : "Detect Current GPS"}</span>
+              </button>
             </div>
-            <div style={{ borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--hairline)" }}>
-              <GeoMap center={mapCenter} polygon={ring} onChange={(r) => patchRing(idx, r)} interactive height={240}
-                pins={!ring && hasCoords ? [{ key: cur.rowId ?? String(idx), lat, lng, color: "#16a34a", label: cur.name.trim() || `Farm ${idx + 1}` }] : null} />
+
+            {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginBottom: 8 }}>{gpsErr}</div>}
+
+            {/* Map Canvas */}
+            <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--hairline)", marginBottom: 14 }}>
+              <GeoMap
+                center={mapCenter}
+                polygon={ring}
+                onChange={(r) => patchRing(idx, r)}
+                interactive
+                height={260}
+                pins={!ring && hasCoords ? [{ key: cur.rowId ?? String(idx), lat, lng, color: "var(--green, #15803d)", label: cur.name.trim() || `Farm ${idx + 1}` }] : null}
+              />
             </div>
-            <div style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.4 }}>
-              {ring ? "✓ Boundary fence drawn — verified acreage applies on activation." : hasCoords ? "Draw the estate fence, or keep the GPS pin for now." : "Enter lat/lng, use GPS button, or draw boundary directly."}
+
+            {/* Lat/Long and Location Name inputs */}
+            <div className="ob-grid-3">
+              <F label="Farm Location Name *" error={e(idx, "location")}>
+                <input
+                  className="input-field"
+                  value={cur.location}
+                  maxLength={180}
+                  placeholder="e.g., Near Hoskote Gate"
+                  onChange={(ev) => patch(idx, { location: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="Latitude *" error={e(idx, "latitude")}>
+                <input
+                  className="input-field"
+                  type="number"
+                  step="any"
+                  value={cur.latitude as unknown as string}
+                  placeholder="13.1234"
+                  onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="Longitude *" error={e(idx, "longitude")}>
+                <input
+                  className="input-field"
+                  type="number"
+                  step="any"
+                  value={cur.longitude as unknown as string}
+                  placeholder="77.5678"
+                  onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
             </div>
-            {e(idx, "boundaryRing") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)" }}>{e(idx, "boundaryRing")}</div>}
+          </div>
+
+          {/* Card 3: Farm Address with 'Same as Client Address' */}
+          <div
+            style={{
+              background: "var(--surface-card)",
+              border: "1px solid var(--hairline)",
+              borderRadius: "var(--radius-md)",
+              padding: "20px 24px",
+              boxShadow: "var(--shadow-card)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Icons.FileText size={15} style={{ color: "var(--primary)" }} />
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                  Farm Address & Land Records
+                </span>
+              </div>
+
+              {/* Prominent 'Same as Client Address' toggle */}
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  cursor: "pointer",
+                  background: cur.sameAsClientAddress ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
+                  padding: "4px 10px",
+                  borderRadius: 6,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!cur.sameAsClientAddress}
+                  onChange={(e) => toggleSameAsClientAddress(e.target.checked)}
+                />
+                <span>Same as Client Address</span>
+              </label>
+            </div>
+
+            <div className="ob-grid-3">
+              <F label="Survey No." error={e(idx, "surveyNumber")}>
+                <input
+                  className="input-field"
+                  value={cur.surveyNumber ?? ""}
+                  placeholder="e.g., 42/1A"
+                  onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="Village" error={e(idx, "village")}>
+                <input
+                  className="input-field"
+                  value={cur.village ?? ""}
+                  placeholder="e.g., Solur"
+                  onChange={(ev) => patch(idx, { village: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="City" error={e(idx, "city")}>
+                <input
+                  className="input-field"
+                  value={cur.city ?? ""}
+                  placeholder="e.g., Bengaluru"
+                  onChange={(ev) => patch(idx, { city: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="Taluk" error={e(idx, "taluk")}>
+                <input
+                  className="input-field"
+                  value={cur.taluk ?? ""}
+                  placeholder="e.g., Magadi"
+                  onChange={(ev) => patch(idx, { taluk: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="State" error={e(idx, "state")}>
+                <input
+                  className="input-field"
+                  value={cur.state ?? ""}
+                  placeholder="e.g., Karnataka"
+                  onChange={(ev) => patch(idx, { state: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="PIN Code" error={e(idx, "pincode")}>
+                <input
+                  className="input-field"
+                  value={cur.pincode ?? ""}
+                  placeholder="e.g., 562127"
+                  onChange={(ev) => patch(idx, { pincode: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+            </div>
           </div>
         </div>
       )}

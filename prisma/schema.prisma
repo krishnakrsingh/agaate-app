@@ -155,11 +155,27 @@ model Client {
   updatedAt        DateTime @updatedAt
   farms            Farm[]
   users            User[]
+  contacts         ClientContact[]
 
   @@index([status])
   @@index([state, district])
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+model ClientContact {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  phone     String
+  email     String?
+  role      String   // FINANCE, PURCHASER, LOCAL, OTHER
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, role])
 }
 
 model RoleDefinition {
@@ -306,6 +322,10 @@ model Plot {
   latitude      Decimal                   @db.Decimal(10, 7)
   longitude     Decimal                   @db.Decimal(10, 7)
   soilType      String?
+  irrigationSetup String?
+  valvesCount   Int?
+  bedDetails    String?
+  landPrepStatus String?
   boundaryGeoJson String?                 @db.Text // canonical GeoJSON Polygon; server-validated within farm
   measuredAcres Decimal?                  @db.Decimal(12, 2) // server-computed from boundary
   captureId     String?                   @unique // perimeter-walk idempotency key (one walk → one plot, ever)
@@ -345,6 +365,11 @@ model CropCycle {
   expectedFirstHarvestDate DateTime?              @db.Date
   establishmentType        EstablishmentType
   status                   CropCycleStatus        @default(PLANNED)
+  plantingMethod           String?
+  spacing                  String?
+  basalDose                String?
+  mulching                 String?
+  keyDates                 String?
   bedPreparationEnabled    Boolean                @default(false)
   bedWidthCm               Decimal?               @db.Decimal(8, 2)
   bedCenterDistanceCm      Decimal?               @db.Decimal(8, 2)
