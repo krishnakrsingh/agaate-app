@@ -103,17 +103,6 @@ export function LoginForm() {
           >
             Sign in to account
           </h1>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "13.5px",
-              lineHeight: 1.45,
-              color: "var(--muted, #71717a)",
-              fontWeight: 400,
-            }}
-          >
-            Enter your credentials to access farm telemetry and field operations.
-          </p>
         </div>
 
         {/* Error Alert */}
