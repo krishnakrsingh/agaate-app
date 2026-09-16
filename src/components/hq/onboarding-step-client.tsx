@@ -121,9 +121,9 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
                 onClick={() => set({ whatsappNo: value.phone ?? "" })}
                 disabled={!value.phone}
                 style={{
-                  background: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
-                  color: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "#059669" : "var(--ink)",
-                  border: `1px solid ${value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+                  background: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
+                  color: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green, #15803d)" : "var(--ink)",
+                  border: `1px solid ${value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green, #86efac)" : "var(--hairline)"}`,
                   borderRadius: 4,
                   fontSize: 10.5,
                   fontWeight: 600,
