@@ -86,6 +86,7 @@ function slaRisks(f: FarmRow): string[] {
   return risks;
 }
 
+export { HqFarmRegistry as FarmRegistry, HqFarmRegistry as EstateRegistry };
 export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string } = {}) {
   const toast = useToast();
   const [farms, setFarms] = useState<FarmRow[]>([]);

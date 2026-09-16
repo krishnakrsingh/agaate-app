@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { Navbar } from "@/components/navigation/navbar";
-import { FarmRegistry } from "@modules/estates/ui/admin-farm-registry";
+import { FarmRegistry } from "@modules/estates/ui/farm-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export default async function FarmsPage() {
         </div>
 
         <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading farm portfolio…</div>}>
-          <FarmRegistry />
+          <FarmRegistry basePath="/farms" />
         </Suspense>
       </main>
     </>

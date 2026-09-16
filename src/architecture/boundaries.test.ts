@@ -55,6 +55,8 @@ const PURE_FILES = [
   "src/modules/spatial/ui/geo.ts",
   "src/modules/operations/domain/completion.ts",
   "src/modules/operations/schemas/completion.ts",
+  "src/modules/estates/domain/estatePolicy.ts",
+  "src/modules/plots/domain/plotPolicy.ts",
 ];
 
 // Physical locations killed by checkpoint 3 (git mv). If any reappears,
@@ -101,10 +103,10 @@ const BANNED_APP_DIRS = [
   "src/app/officer",
 ];
 
-// Server pages with direct Prisma reads (checkpoint-4 audit: 35). May only
+// Server pages with direct Prisma reads (checkpoint-4 audit: 35; checkpoint-8 estates/plots: 32). May only
 // shrink as reporting/estates/operations slices introduce query modules.
 // Exact-count pin: fails loudly on growth AND on unrecorded shrinkage.
-const PAGE_PRISMA_COUNT = 35;
+const PAGE_PRISMA_COUNT = 32;
 
 // UI components with direct Prisma access (checkpoint-3 audit, paths updated
 // checkpoint 4). NOT allowed to grow: offenders must stay a subset of this
@@ -277,6 +279,9 @@ describe("architecture boundaries", () => {
     expect(existsSync(join(SRC, "modules", "spatial", "index.ts"))).toBe(true);
     expect(existsSync(join(SRC, "modules", "auth", "index.ts"))).toBe(true);
     expect(existsSync(join(SRC, "modules", "operations", "index.ts"))).toBe(true);
+    expect(existsSync(join(SRC, "modules", "attendance", "index.ts"))).toBe(true);
+    expect(existsSync(join(SRC, "modules", "estates", "index.ts"))).toBe(true);
+    expect(existsSync(join(SRC, "modules", "plots", "index.ts"))).toBe(true);
     const violations: string[] = [];
     const modRe = /@\/(?:modules)\/([^/"']+)\/([^"']*)/;
     const aliasRe = /@(?:modules)\/([^/"']+)\/([^"']*)/;
@@ -358,6 +363,14 @@ describe("architecture boundaries", () => {
     const operations = (await import("@/modules/operations")) as Record<string, unknown>;
     for (const key of ["completeTask", "completionSchema", "CompletionFault", "planTask", "listTasks", "presentTaskMedia", "parseTaskListParams", "updateTask", "canTransitionTask", "TASK_TRANSITIONS"]) {
       expect(operations[key], `modules/operations missing ${key}`).toBeDefined();
+    }
+    const estates = (await import("@/modules/estates")) as Record<string, unknown>;
+    for (const key of ["listEstates", "getEstateDetail", "getEstateCommandCenter", "canTransitionEstate", "assertCultivableWithinTotal"]) {
+      expect(estates[key], `modules/estates missing ${key}`).toBeDefined();
+    }
+    const plots = (await import("@/modules/plots")) as Record<string, unknown>;
+    for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "getOwnerLandData", "assertPlotAreaWithinRemaining"]) {
+      expect(plots[key], `modules/plots missing ${key}`).toBeDefined();
     }
   });
 });

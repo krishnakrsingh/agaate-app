@@ -7,6 +7,7 @@ import { apiError } from "@/lib/api";
 import { parseBoundary, roundAcresForDb } from "@modules/spatial";
 import { commitBoundary, plotsOutsideRing } from "@modules/spatial";
 import { parseBoundaryToRing } from "@modules/spatial";
+import { getEstateDetail } from "@modules/estates";
 
 const patchSchema = z.object({
   name: z.string().min(2).max(120).optional(),
@@ -40,24 +41,7 @@ export async function GET(
 ) {
   try {
     const { farmId } = await params;
-    await requireFarmAccess(farmId);
-    const farm = await prisma.farm.findUniqueOrThrow({
-      where: { id: farmId },
-      include: {
-        access: {
-          include: {
-            user: { select: { id: true, name: true, role: true } },
-          },
-        },
-        plots: {
-          where: { deletedAt: null },
-          include: {
-            irrigation: true,
-            cropCycles: { include: { varieties: true, milestones: true } },
-          },
-        },
-      },
-    });
+    const farm = await getEstateDetail({ estateId: farmId });
     return NextResponse.json(farm);
   } catch (error) {
     return apiError(error);

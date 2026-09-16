@@ -4,7 +4,8 @@ import { accessibleFarmWhere, currentActor, requireRole } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
-import { apiError, noStore, paginatedJson, paginationParams, parseSort } from "@/lib/api";
+import { apiError, paginatedJson } from "@/lib/api";
+import { listEstates, parseEstateListParams } from "@modules/estates";
 
 const farmSchema = z
   .object({
@@ -30,104 +31,17 @@ export async function GET(request: NextRequest) {
   try {
     const accessibleWhere = await accessibleFarmWhere();
     const sp = request.nextUrl.searchParams;
-    const { limit, offset } = paginationParams(sp);
-    const search = sp.get("search")?.trim();
-    const clientId = sp.get("clientId")?.trim();
-    const status = sp.get("status")?.trim();
-    const state = sp.get("state")?.trim();
-    const district = sp.get("district")?.trim();
-    const setupStage = sp.get("setupStage")?.trim();
-    const hasBoundary = sp.get("hasBoundary")?.trim();
-    const stalledOnly = sp.get("stalledOnly")?.trim() === "true";
-    const { sortBy, order } = parseSort(sp, ["createdAt", "updatedAt", "name", "totalArea"], "createdAt");
+    const { filters, limit, offset, sortBy, order } = parseEstateListParams(sp);
+    const { estates, total } = await listEstates({
+      accessibleWhere,
+      filters,
+      limit,
+      offset,
+      sortBy,
+      order,
+    });
 
-    const where: any = {
-      ...accessibleWhere,
-    };
-
-    if (clientId) {
-      where.clientId = clientId;
-    }
-
-    if (status && status !== "ALL") {
-      where.status = status;
-    }
-    if (setupStage && setupStage !== "ALL") {
-      where.setupStage = setupStage;
-    }
-    if (state && state !== "ALL") {
-      where.state = state;
-    }
-    if (district) {
-      where.district = { contains: district };
-    }
-    if (hasBoundary === "YES") {
-      where.boundaryGeoJson = { not: null };
-    } else if (hasBoundary === "NO") {
-      where.boundaryGeoJson = null;
-    }
-    if (stalledOnly) {
-      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      where.status = "SETUP";
-      where.updatedAt = { lte: cutoff };
-    }
-
-    if (search) {
-      where.AND = [
-        ...(where.AND || []),
-        {
-          OR: [
-            { id: { contains: search } },
-            { name: { contains: search } },
-            { location: { contains: search } },
-            { village: { contains: search } },
-            { taluk: { contains: search } },
-            { district: { contains: search } },
-            { state: { contains: search } },
-            { pincode: { contains: search } },
-            { ownerName: { contains: search } },
-            { surveyNumber: { contains: search } },
-            { client: { name: { contains: search } } },
-            { client: { code: { contains: search } } },
-          ],
-        },
-      ];
-    }
-
-    const [farms, total] = await Promise.all([
-      prisma.farm.findMany({
-      where,
-      include: {
-        client: {
-          select: { id: true, name: true, code: true },
-        },
-        _count: {
-          select: { plots: true, access: true },
-        },
-        plots: {
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            name: true,
-            area: true,
-            measuredAcres: true,
-            boundaryGeoJson: true,
-            status: true,
-            cropCycles: {
-              where: { status: { in: ["PLANNED", "ACTIVE"] } },
-              select: { id: true },
-            },
-          },
-        },
-      },
-      orderBy: { [sortBy]: order },
-      take: limit,
-      skip: offset,
-      }),
-      prisma.farm.count({ where }),
-    ]);
-
-    return paginatedJson(farms, total);
+    return paginatedJson(estates, total);
   } catch (error) {
     return apiError(error);
   }

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icons } from "@/components/icons";
-import { PlotForm } from "@modules/estates/ui/plot-form";
+import { PlotForm } from "@modules/plots/ui/plot-form";
 import { GridSplitForm } from "@modules/spatial/ui/grid-split-form";
 import { BoundaryHistory } from "@modules/spatial/ui/boundary-history";
 import { PlotCoverageCard } from "@modules/spatial/ui/plot-coverage-card";

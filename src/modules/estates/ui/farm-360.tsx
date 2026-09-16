@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
-import { PlotForm } from "@modules/estates/ui/plot-form";
+import { PlotForm } from "@modules/plots/ui/plot-form";
 import { GridSplitForm } from "@modules/spatial/ui/grid-split-form";
 import { BoundaryHistory } from "@modules/spatial/ui/boundary-history";
 import { FarmAccessManager } from "@modules/estates/ui/farm-access-manager";

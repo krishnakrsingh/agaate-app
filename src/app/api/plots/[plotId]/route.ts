@@ -6,6 +6,7 @@ import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
 import { commitBoundary } from "@modules/spatial";
+import { getPlotDetail, PlotFault } from "@modules/plots";
 
 const schema = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -55,24 +56,12 @@ export async function GET(
 ) {
   try {
     const { plotId } = await params;
-    // Fetch farm scope first so existence isn't oracle-able: no access => 404.
-    const scope = await prisma.plot.findUnique({ where: { id: plotId }, select: { farmId: true } });
-    if (!scope) return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
-    try {
-      await requireFarmAccess(scope.farmId);
-    } catch {
-      return NextResponse.json({ error: "The requested record was not found." }, { status: 404 });
-    }
-    const plot = await prisma.plot.findUniqueOrThrow({
-      where: { id: plotId },
-      include: {
-        irrigation: true,
-        cropCycles: { include: { varieties: true, milestones: true } },
-        farm: { select: { id: true, name: true } },
-      },
-    });
+    const plot = await getPlotDetail({ plotId });
     return NextResponse.json(plot);
   } catch (error) {
+    if (error instanceof PlotFault) {
+      return NextResponse.json(error.body, { status: error.status });
+    }
     return apiError(error);
   }
 }

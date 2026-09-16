@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
-import { requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { PlotEditForm } from "@modules/estates/ui/plot-edit-form";
+import { getPlotPageData } from "@modules/plots";
+import { PlotEditForm } from "@modules/plots/ui/plot-edit-form";
 import { BoundaryHistory } from "@modules/spatial/ui/boundary-history";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
@@ -20,14 +19,7 @@ export default async function PlotPage({
 
   let plot;
   try {
-    plot = await prisma.plot.findUniqueOrThrow({
-      where: { id: plotId },
-      include: {
-        irrigation: true,
-        farm: { select: { id: true, name: true, boundaryGeoJson: true, latitude: true, longitude: true } },
-      },
-    });
-    await requireFarmAccess(plot.farmId, true);
+    plot = await getPlotPageData({ plotId, manageOnly: true });
   } catch {
     return notFound();
   }

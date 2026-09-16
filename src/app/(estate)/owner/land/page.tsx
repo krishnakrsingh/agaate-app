@@ -1,72 +1,13 @@
 import { requireSession } from "@/lib/auth";
-import { accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
+import { getOwnerLandData } from "@modules/plots";
 import { Navbar } from "@/components/navigation/navbar";
-import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
-import { PlotsExplorer } from "@modules/estates/ui/plots-explorer";
+import { PlotsExplorer } from "@modules/plots/ui/plots-explorer";
 
 export const dynamic = "force-dynamic";
 
 export default async function OwnerLandPage() {
   const session = await requireSession();
-  const farmWhere = await accessibleFarmWhere();
-
-  const farms = await prisma.farm.findMany({
-    where: farmWhere,
-    include: {
-      plots: {
-        where: { deletedAt: null, status: { not: "ARCHIVED" } },
-        include: {
-          irrigation: true,
-          cropCycles: {
-            where: { status: "ACTIVE" },
-            select: {
-              id: true,
-              cropName: true,
-              varieties: { select: { name: true } },
-              status: true,
-              startDate: true,
-              expectedFirstHarvestDate: true,
-            },
-          },
-        },
-        orderBy: { name: "asc" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const serializedFarms = farms.map((f) => ({
-    id: f.id,
-    name: f.name,
-    cultivableArea: f.cultivableArea?.toString() ?? "0",
-    totalArea: f.totalArea?.toString() ?? "0",
-    latitude: f.latitude?.toString() ?? "0",
-    longitude: f.longitude?.toString() ?? "0",
-    boundaryGeoJson: f.boundaryGeoJson ?? null,
-    plots: f.plots.map((p) => ({
-      id: p.id,
-      name: p.name,
-      area: p.area?.toString() ?? "0",
-      soilType: p.soilType,
-      status: p.status,
-      latitude: p.latitude?.toString() ?? "0",
-      longitude: p.longitude?.toString() ?? "0",
-      irrigation: p.irrigation.map((i) => ({
-        id: i.id,
-        type: i.type,
-        details: i.details,
-      })),
-      cropCycles: p.cropCycles.map((c) => ({
-        id: c.id,
-        cropName: c.cropName,
-        variety: c.varieties[0]?.name || null,
-        status: c.status,
-        startDate: c.startDate.toISOString(),
-        endDate: c.expectedFirstHarvestDate ? c.expectedFirstHarvestDate.toISOString() : null,
-      })),
-    })),
-  }));
+  const serializedFarms = await getOwnerLandData();
 
   return (
     <>
@@ -76,7 +17,7 @@ export default async function OwnerLandPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Land &amp; Plots</h1>
         </div>
 
-        <PlotsExplorer farms={serializedFarms} />
+        <PlotsExplorer farms={serializedFarms as any} />
       </main>
     </>
   );
