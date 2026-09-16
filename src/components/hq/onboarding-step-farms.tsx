@@ -27,9 +27,9 @@ function F({ label, error, sameAsClient, onSameAsClient, children }: {
             type="button"
             onClick={onSameAsClient}
             style={{
-              background: sameAsClient ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
-              color: sameAsClient ? "#059669" : "var(--ink)",
-              border: `1px solid ${sameAsClient ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+              background: sameAsClient ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
+              color: sameAsClient ? "var(--green, #15803d)" : "var(--ink)",
+              border: `1px solid ${sameAsClient ? "var(--green, #86efac)" : "var(--hairline)"}`,
               borderRadius: 4,
               fontSize: 10,
               fontWeight: 600,
@@ -186,14 +186,15 @@ export function OnboardingStepFarms({ value, onChange, errors, client }: {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                background: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.3)",
+                background: "var(--surface-card)",
+                border: "1px solid var(--hairline)",
+                borderLeft: "3.5px solid var(--green, #15803d)",
                 borderRadius: "var(--radius-md)",
                 padding: "10px 14px",
                 boxShadow: "var(--shadow-card)",
               }}>
                 <div style={{ fontSize: 12, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icons.CheckCircle size={15} style={{ color: "#10b981", flexShrink: 0 }} />
+                  <Icons.CheckCircle size={15} style={{ color: "var(--green, #15803d)", flexShrink: 0 }} />
                   <span>
                     Auto-fill from client: <strong>{client.name || "Client Details"}</strong>
                   </span>
@@ -351,9 +352,9 @@ export function OnboardingStepFarms({ value, onChange, errors, client }: {
                   type="button"
                   onClick={() => patch(idx, { latitude: 13.0827, longitude: 77.5877 })}
                   style={{
-                    background: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
-                    color: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "#059669" : "var(--ink)",
-                    border: `1px solid ${cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+                    background: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
+                    color: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green, #15803d)" : "var(--ink)",
+                    border: `1px solid ${cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "var(--green, #86efac)" : "var(--hairline)"}`,
                     borderRadius: 4,
                     fontSize: 10,
                     fontWeight: 600,
