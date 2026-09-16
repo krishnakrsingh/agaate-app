@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
+import { audit } from "@/infrastructure/audit";
 import { requireFarmAccess } from "@modules/auth";
 import type { Actor } from "@modules/auth";
 import {

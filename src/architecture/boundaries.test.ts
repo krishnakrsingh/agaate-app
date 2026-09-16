@@ -58,6 +58,9 @@ const PURE_FILES = [
   "src/modules/estates/domain/estatePolicy.ts",
   "src/modules/plots/domain/plotPolicy.ts",
   "src/modules/cropping/domain/cropCyclePolicy.ts",
+  "src/modules/auth/domain/rbac.ts",
+  "src/modules/auth/domain/actorPolicy.ts",
+  "src/modules/auth/domain/rolePolicy.ts",
 ];
 
 // Physical locations killed by checkpoint 3 (git mv). If any reappears,
@@ -74,6 +77,9 @@ const DELETED_PATHS = [
   "src/lib/walk-queue.ts",
   "src/lib/plot-visits.ts",
   "src/lib/plot-visit-service.ts",
+  "src/lib/utils.ts",
+  "src/lib/validation.ts",
+  "src/lib/empty.ts",
   "public/init_migration.sql",
   "public/migrations_upgrade.sql",
   "public/schema_full.sql",
@@ -401,5 +407,49 @@ describe("architecture boundaries", () => {
     ]) {
       expect(cropping[key], `modules/cropping missing ${key}`).toBeDefined();
     }
+    const storage = (await import("@/infrastructure/storage")) as Record<string, unknown>;
+    for (const key of ["uploadUrl", "downloadUrl", "headObject", "putObject", "isStorageConfigured"]) {
+      expect(storage[key], `infrastructure/storage missing ${key}`).toBeDefined();
+    }
+    const auditMod = (await import("@/infrastructure/audit")) as Record<string, unknown>;
+    expect(auditMod["audit"], "infrastructure/audit missing audit").toBeDefined();
+    const security = (await import("@/infrastructure/security")) as Record<string, unknown>;
+    for (const key of ["acquireRateLimitSlot", "throttle", "getClientIp", "assertSameOrigin", "assertSafeStorageKey"]) {
+      expect(security[key], `infrastructure/security missing ${key}`).toBeDefined();
+    }
+    const http = (await import("@/infrastructure/http")) as Record<string, unknown>;
+    for (const key of ["apiError", "noStore", "paginationParams", "paginatedJson", "parseSort"]) {
+      expect(http[key], `infrastructure/http missing ${key}`).toBeDefined();
+    }
+    const dates = (await import("@/shared/dates")) as Record<string, unknown>;
+    for (const key of ["utcDateOnly", "parseUtcDate", "isWithinRollingSevenDays"]) {
+      expect(dates[key], `shared/dates missing ${key}`).toBeDefined();
+    }
+    const format = (await import("@/shared/format")) as Record<string, unknown>;
+    for (const key of ["formatDate", "formatTime", "formatDateTime"]) {
+      expect(format[key], `shared/format missing ${key}`).toBeDefined();
+    }
+    const math = (await import("@/shared/math")) as Record<string, unknown>;
+    expect(math["variance"], "shared/math missing variance").toBeDefined();
+  });
+
+  it("migrated modules do not import legacy lib plumbing (@/lib/prisma, @/lib/audit, @/lib/storage, @/lib/access, @/lib/actor, @/lib/auth)", () => {
+    const MIGRATED_DOMAINS = ["spatial", "operations", "attendance", "estates", "plots", "cropping", "auth"];
+    const violations: string[] = [];
+    for (const dom of MIGRATED_DOMAINS) {
+      const dir = join(SRC, "modules", dom);
+      for (const f of allSourceFiles(dir)) {
+        const rel = f.replace(ROOT + sep, "").replaceAll(sep, "/");
+        for (const imp of importsOf(f)) {
+          if (imp === "@/lib/prisma") violations.push(`${rel} imports legacy @/lib/prisma`);
+          if (imp === "@/lib/audit") violations.push(`${rel} imports legacy @/lib/audit`);
+          if (imp === "@/lib/storage") violations.push(`${rel} imports legacy @/lib/storage`);
+          if (imp === "@/lib/access") violations.push(`${rel} imports legacy @/lib/access`);
+          if (imp === "@/lib/actor") violations.push(`${rel} imports legacy @/lib/actor`);
+          if (imp === "@/lib/auth") violations.push(`${rel} imports legacy @/lib/auth`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
   });
 });

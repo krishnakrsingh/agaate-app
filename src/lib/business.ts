@@ -1,68 +1,50 @@
-export const DEFAULT_GEOFENCE_RADIUS_METERS = 500;
-const EARTH_RADIUS_METERS = 6_371_000;
-const radians = (degrees: number) => degrees * Math.PI / 180;
-export function distanceMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
-  if (!Number.isFinite(a.latitude) || !Number.isFinite(a.longitude) || !Number.isFinite(b.latitude) || !Number.isFinite(b.longitude)) return Number.POSITIVE_INFINITY;
-  const dLat = radians(b.latitude - a.latitude); const dLon = radians(b.longitude - a.longitude);
-  const raw = Math.sin(dLat / 2) ** 2 + Math.cos(radians(a.latitude)) * Math.cos(radians(b.latitude)) * Math.sin(dLon / 2) ** 2;
-  const x = Math.min(1, Math.max(0, raw));
-  return EARTH_RADIUS_METERS * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
-export function calculatedInfrastructure(plotArea: number, bedsPerAcre?: number | null, plantsPerAcre?: number | null) {
-  return { expectedTotalBeds: bedsPerAcre == null ? null : plotArea * bedsPerAcre, expectedPlants: plantsPerAcre == null ? null : plotArea * plantsPerAcre };
-}
-export function variance(expected: number | null, actual: number | null) {
-  if (expected == null || actual == null) return null;
-  const amount = actual - expected; return { amount, percentage: expected === 0 ? null : (amount / expected) * 100 };
-}
-export function labourHours(labourers: number, hours: number) { return labourers * hours; }
-export function utcDateOnly(date = new Date()) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-export function parseUtcDate(value: string | Date) {
-  const d = typeof value === "string" ? new Date(value) : value;
-  return utcDateOnly(d);
-}
-export function isWithinRollingSevenDays(value: Date, now = new Date()) {
-  const start = utcDateOnly(now);
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 6);
-  const candidate = utcDateOnly(value);
-  return candidate >= start && candidate <= end;
-}
 /**
- * COMPATIBILITY SHIM (checkpoint 7): canonical owner is now
- * modules/operations/domain/taskTransitions.ts. This re-export keeps
- * hq/tasks/[taskId] + business.test.ts + domain-verification.test.ts working
- * until the hq slice migrates. Do NOT add new importers — import from
- * @modules/operations instead. Removal criteria: zero importers outside tests.
+ * COMPATIBILITY SHIM (checkpoint 7 / Phase E.1):
+ *
+ * All business and utility logic has been moved to canonical owners:
+ * - Spatial: distanceMeters, DEFAULT_GEOFENCE_RADIUS_METERS -> @/modules/spatial
+ * - Cropping: calculatedInfrastructure, milestoneTemplates -> @/modules/cropping
+ * - Operations: labourHours, taskTransitions, canTransitionTask -> @/modules/operations
+ * - Dates: utcDateOnly, parseUtcDate, isWithinRollingSevenDays -> @/shared/dates
+ * - Formatting: formatDate, formatTime, formatDateTime -> @/shared/format
+ * - Math: variance -> @/shared/math
+ *
+ * Do NOT add new callers to this file.
  */
-export { TASK_TRANSITIONS as taskTransitions, canTransitionTask } from "@modules/operations/domain/taskTransitions";
-export function milestoneTemplates(input: { mulchEnabled: boolean; establishmentType: "NURSERY_TRANSPLANTATION" | "DIRECT_SOWING"; firstHarvestDate?: Date | null }) {
-  return ["Land Preparation", input.mulchEnabled ? "Mulching & TP / Sowing Readiness" : "TP / Sowing Readiness", input.establishmentType === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing", "First Harvest"].map((name) => ({ name, targetDate: name === "First Harvest" && input.firstHarvestDate ? input.firstHarvestDate : null }));
+
+export {
+  DEFAULT_GEOFENCE_RADIUS_METERS,
+  distanceMeters,
+} from "@modules/spatial/domain/geo-core";
+
+export {
+  calculatedInfrastructure,
+  milestoneTemplates,
+} from "@modules/cropping/domain/cropCyclePolicy";
+
+export function labourHours(labourers: number, hours: number) {
+  return labourers * hours;
 }
 
-const timeFormatter = new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "2-digit", year: "numeric" });
+export {
+  TASK_TRANSITIONS as taskTransitions,
+  canTransitionTask,
+} from "@modules/operations/domain/taskTransitions";
 
-export function formatTime(iso: string | Date | null | undefined): string {
-  if (!iso) return "--:--";
-  const d = typeof iso === "string" ? new Date(iso) : iso;
-  if (isNaN(d.getTime())) return "--:--";
-  return timeFormatter.format(d);
-}
+export {
+  utcDateOnly,
+  parseUtcDate,
+  isWithinRollingSevenDays,
+} from "@/shared/dates";
 
-export function formatDate(iso: string | Date | null | undefined): string {
-  if (!iso) return "--";
-  const d = typeof iso === "string" ? new Date(iso) : iso;
-  if (isNaN(d.getTime())) return "--";
-  return dateFormatter.format(d);
-}
+export {
+  formatTime,
+  formatDate,
+  formatDateTime,
+} from "@/shared/format";
 
-export function formatDateTime(iso: string | Date | null | undefined): string {
-  if (!iso) return "--";
-  const d = typeof iso === "string" ? new Date(iso) : iso;
-  if (isNaN(d.getTime())) return "--";
-  return `${formatDate(d)} • ${formatTime(d)}`;
-}
+export {
+  variance,
+} from "@/shared/math";
+
 

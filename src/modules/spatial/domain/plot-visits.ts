@@ -9,8 +9,7 @@
  * NEVER = no completion and no activity on record + no GPS hit in window.
  */
 
-import { pointInRing, parseBoundaryToRing, representativePoint, type LngLat } from "./geo-core";
-import { distanceMeters } from "@/lib/business";
+import { pointInRing, parseBoundaryToRing, representativePoint, distanceMeters, type LngLat } from "./geo-core";
 
 export interface VisitPlot {
   id: string;

@@ -44,6 +44,7 @@ export { completeTask } from "./application/completeTask";
 export { completionSchema, type CompletionInput } from "./schemas/completion";
 export {
   CompletionFault,
+  labourHours,
   assertAssignee,
   assertCompletableStatus,
   assertActualsAllowed,

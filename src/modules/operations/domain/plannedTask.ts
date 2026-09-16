@@ -16,7 +16,7 @@
  */
 
 import { HttpError } from "@/shared/errors";
-import { isWithinRollingSevenDays } from "@/lib/business";
+import { isWithinRollingSevenDays } from "@/shared/dates";
 
 export interface OfficerEligibilityRow {
   role: unknown;

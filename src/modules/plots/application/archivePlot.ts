@@ -6,7 +6,7 @@
 
 import { prisma } from "@/infrastructure/db";
 import { audit } from "@/infrastructure/audit";
-import { requireFarmAccess } from "@/lib/access";
+import { requireFarmAccess } from "@modules/auth";
 import { PlotFault, assertPlotCanBeArchived } from "../domain/plotPolicy";
 import {
   findPlotForPatch,

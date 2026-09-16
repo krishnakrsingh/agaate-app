@@ -21,12 +21,13 @@
  * - Import via `@modules/spatial` (or `@/modules/spatial`); cross-module
  *   deep imports are banned (arch-tested). Same-module ui/ subpaths are fine.
  * - Never add a second area/containment/distance implementation.
- * - PENDING: domain still reads haversine from `@/lib/business`
- *   (business.ts split into operations/cropping/shared is a later slice).
+ * - Haversine distanceMeters and default radius live canonically in domain/geo-core.ts.
  */
 
 // Pure geometry (safe in client + server + tests)
 export {
+  DEFAULT_GEOFENCE_RADIUS_METERS,
+  distanceMeters,
   EARTH_RADIUS_M,
   SQM_PER_ACRE,
   MAX_BOUNDARY_POINTS,

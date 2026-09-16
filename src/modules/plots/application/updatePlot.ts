@@ -7,8 +7,8 @@
  */
 
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
-import { requireFarmAccess } from "@/lib/access";
+import { audit } from "@/infrastructure/audit";
+import { requireFarmAccess } from "@modules/auth";
 import { validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
 import { plotPatchSchema, type PlotPatchInput } from "../schemas/plot";
 import {

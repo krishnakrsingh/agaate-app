@@ -21,8 +21,7 @@
  * Pure functions only: no Prisma, no request objects.
  */
 
-import { pointInRing, parseBoundaryToRing, type LngLat } from "./geo-core";
-import { distanceMeters } from "@/lib/business";
+import { pointInRing, parseBoundaryToRing, distanceMeters, type LngLat } from "./geo-core";
 
 export type GeofenceBasis = "PLOT_POLYGON" | "FARM_POLYGON" | "RADIUS";
 export interface FarmGeoInput {

@@ -6,7 +6,7 @@ import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Icons } from "@/components/icons";
 import { StatusBadge, PriorityBadge } from "@/components/ui/badge";
-import { variance } from "@/lib/business";
+import { variance } from "@/shared/math";
 
 export const dynamic = "force-dynamic";
 

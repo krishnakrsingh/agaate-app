@@ -5,10 +5,9 @@
  * and audit logging.
  */
 
-import { requireRole } from "@/lib/access";
-import type { Actor } from "@/lib/actor";
+import { requireRole, type Actor } from "@modules/auth";
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
+import { audit } from "@/infrastructure/audit";
 import { estateCreateSchema, type EstateCreateInput } from "../schemas/estate";
 import { createEstateRecord } from "../infrastructure/estateQueries";
 

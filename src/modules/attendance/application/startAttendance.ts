@@ -1,7 +1,7 @@
 import type { GeofenceBasis } from "@prisma/client";
 import { prisma } from "@/infrastructure/db";
-import { utcDateOnly } from "@/lib/business";
-import { audit } from "@/lib/audit";
+import { utcDateOnly } from "@/shared/dates";
+import { audit } from "@/infrastructure/audit";
 import { requireFarmAccess } from "@modules/auth";
 import type { Actor } from "@modules/auth";
 import { validateAttendanceLocation } from "@modules/spatial";

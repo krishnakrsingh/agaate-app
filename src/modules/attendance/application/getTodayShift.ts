@@ -1,5 +1,5 @@
 import { prisma } from "@/infrastructure/db";
-import { utcDateOnly } from "@/lib/business";
+import { utcDateOnly } from "@/shared/dates";
 import { getTodayShift as readTodayShift } from "../infrastructure/attendanceQueries";
 
 type Db = typeof prisma;

@@ -9,8 +9,8 @@
  */
 
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
-import { requireFarmAccess } from "@/lib/access";
+import { audit } from "@/infrastructure/audit";
+import { requireFarmAccess } from "@modules/auth";
 import { EstateFault } from "../domain/estatePolicy";
 import {
   estateOfficerAssignSchema,

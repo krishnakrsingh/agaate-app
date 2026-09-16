@@ -14,9 +14,9 @@ import {
   ringAcres,
   validatePolygon,
   pathPerimeterM,
+  distanceMeters,
   type LngLat,
 } from "./geo-core";
-import { distanceMeters } from "@/lib/business";
 
 /** Raw GPS fix from the device. acc = accuracy radius in meters, t = epoch ms. */
 export interface GpsSample {

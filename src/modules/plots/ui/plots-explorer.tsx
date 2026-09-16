@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
-import { formatDate } from "@/lib/business";
+import { formatDate } from "@/shared/format";
 import { parseBoundary, ringAcres, toGeoJsonPolygon } from "@modules/spatial/ui/geo";
 import { ringWithinRing } from "@modules/spatial";
 

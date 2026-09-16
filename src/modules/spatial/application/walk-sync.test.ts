@@ -2,7 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
 import { prisma } from "@/infrastructure/db";
-import { testSessionContext } from "@/lib/auth";
+import { testSessionContext } from "@modules/auth";
 import { POST as syncHandler } from "@/app/api/geo/captures/sync/route";
 import type { GpsSample } from "../domain/track";
 

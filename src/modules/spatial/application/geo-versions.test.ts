@@ -2,7 +2,7 @@ import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
 import { prisma } from "@/infrastructure/db";
-import { testSessionContext } from "@/lib/auth";
+import { testSessionContext } from "@modules/auth";
 import { commitBoundary } from "./geo-versions";
 import { PATCH as patchFarmHandler } from "@/app/api/farms/[farmId]/route";
 import { POST as restoreHandler } from "@/app/api/boundary-versions/[id]/restore/route";

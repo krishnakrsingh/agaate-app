@@ -1,12 +1,11 @@
 import type { Prisma } from "@prisma/client";
-import { HttpError, requireFarmAccess } from "@/lib/access";
-import { audit } from "@/lib/audit";
-import { labourHours } from "@/lib/business";
+import { HttpError, requireFarmAccess, type Actor } from "@modules/auth";
+import { audit } from "@/infrastructure/audit";
 import { prisma } from "@/infrastructure/db";
 import { validateAttendanceLocation, type GeofenceBasis } from "@modules/spatial";
-import type { Actor } from "@modules/auth";
 import {
   CompletionFault,
+  labourHours,
   assertAssignee,
   assertCompletableStatus,
   assertActualsAllowed,

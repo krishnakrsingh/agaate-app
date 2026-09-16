@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/infrastructure/db";
-import { parseUtcDate } from "@/lib/business";
+import { parseUtcDate } from "@/shared/dates";
 import { requireFarmAccess } from "@modules/auth";
 import type { Actor } from "@modules/auth";
 import { findTasksPage } from "../infrastructure/taskQueries";

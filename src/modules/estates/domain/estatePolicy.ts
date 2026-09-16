@@ -6,7 +6,8 @@
  * and activation requirements.
  */
 
-import { milestoneTemplates } from "@/lib/business";
+import { milestoneTemplates } from "@modules/cropping";
+
 export class EstateFault extends Error {
   constructor(
     public status: number,

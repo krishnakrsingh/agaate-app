@@ -7,7 +7,7 @@
  */
 
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
+import { audit } from "@/infrastructure/audit";
 import {
   parseBoundary,
   roundAcresForDb,

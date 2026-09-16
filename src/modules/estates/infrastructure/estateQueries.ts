@@ -6,8 +6,7 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { EstateCreateInput, EstateListFilters } from "../schemas/estate";
-import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
-import { commitBoundary } from "@modules/spatial";
+import { commitBoundary, DEFAULT_GEOFENCE_RADIUS_METERS } from "@modules/spatial";
 import { assertCultivableNotBelowAllocated } from "../domain/estatePolicy";
 
 type Db = Pick<PrismaClient, "farm" | "plot" | "auditLog">;

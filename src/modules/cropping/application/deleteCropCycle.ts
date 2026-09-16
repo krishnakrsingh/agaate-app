@@ -6,8 +6,8 @@
  */
 
 import { prisma } from "@/infrastructure/db";
-import { audit } from "@/lib/audit";
-import { requireFarmAccess } from "@/lib/access";
+import { audit } from "@/infrastructure/audit";
+import { requireFarmAccess } from "@modules/auth";
 import { assertActiveCycleNotDeleted } from "../domain/cropCyclePolicy";
 import {
   findCropCycleForDelete,

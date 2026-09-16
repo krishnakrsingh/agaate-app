@@ -21,6 +21,10 @@ export class CompletionFault extends Error {
   }
 }
 
+export function labourHours(labourers: number, hours: number): number {
+  return labourers * hours;
+}
+
 export interface CompletableTask {
   status: string;
   assignedOfficerId: string | null;

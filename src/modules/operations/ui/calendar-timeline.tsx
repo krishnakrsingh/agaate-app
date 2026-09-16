@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { formatDate } from "@/lib/business";
+import { formatDate } from "@/shared/format";
 import type { HistoryItem, HistoryKind } from "@/app/api/hq/history/route";
 import type { OfficerRow } from "@/app/api/hq/history/officers/route";
 

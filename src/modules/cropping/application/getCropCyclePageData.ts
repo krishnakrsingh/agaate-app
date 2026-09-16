@@ -5,7 +5,7 @@
  */
 
 import { prisma } from "@/infrastructure/db";
-import { requireFarmAccess } from "@/lib/access";
+import { requireFarmAccess } from "@modules/auth";
 import {
   findPlotForNewCropCyclePage,
   findCropCycleForDetailPage,
