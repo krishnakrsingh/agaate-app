@@ -141,6 +141,12 @@ model Client {
   gstin            String?
   billingAddress   String?
   secondaryContact String?
+  whatsappNo       String?
+  village          String?
+  city             String?
+  pincode          String?
+  financeConnect   String?
+  purchaserConnect String?
   state            String?
   district         String?
   address          String?
@@ -215,6 +221,7 @@ model Farm {
   client                 Client?                 @relation(fields: [clientId], references: [id])
   name                   String
   ownerName              String
+  localConnect           String?
   location               String
   address                String?
   latitude               Decimal                 @db.Decimal(10, 7)
@@ -225,6 +232,7 @@ model Farm {
   soilType               String?
   surveyNumber           String?                 // Khasra / Patta / Survey No.
   village                String?
+  city                   String?
   taluk                  String?
   district               String?
   state                  String?
