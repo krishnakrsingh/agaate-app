@@ -211,14 +211,20 @@ export const teamSchema = z
     phone: z.string().trim().max(20).optional().nullable(),
     password: z.string().max(128).optional().nullable(),
     confirmPassword: z.string().max(128).optional().nullable(),
-    agronomistId: z.string().trim().min(1, "Please assign an Agronomist.").max(100),
+    agronomistId: z.string().trim().max(100).optional().nullable(),
     agronomistName: optionalText(120),
-    fieldOfficerId: z.string().trim().min(1, "Please assign a Field Officer.").max(100),
+    fieldOfficerId: z.string().trim().max(100).optional().nullable(),
     fieldOfficerName: optionalText(120),
     createFirstTask: z.boolean().default(true),
     firstTaskTitle: z.string().trim().min(2).default("Initial Demarcation & Soil Testing"),
   })
   .superRefine((data, ctx) => {
+    if (!data.agronomistId || !data.agronomistId.trim()) {
+      ctx.addIssue({ code: "custom", path: ["agronomistId"], message: "Please assign an Agronomist." });
+    }
+    if (!data.fieldOfficerId || !data.fieldOfficerId.trim()) {
+      ctx.addIssue({ code: "custom", path: ["fieldOfficerId"], message: "Please assign a Field Officer." });
+    }
     if (data.mode === "later") return;
     if (!data.name?.trim() || data.name.trim().length < 2) {
       ctx.addIssue({ code: "custom", path: ["name"], message: "Admin name is required." });

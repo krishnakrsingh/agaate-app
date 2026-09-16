@@ -110,7 +110,7 @@ export function OnboardingStepTeam({
       <div
         style={{
           background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
+          border: errors["agronomistId"] ? "1px solid var(--semantic-error, #dc2626)" : "1px solid var(--hairline)",
           borderRadius: "var(--radius-md)",
           padding: "20px 24px",
           boxShadow: "var(--shadow-card)",
@@ -118,8 +118,15 @@ export function OnboardingStepTeam({
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>1. Assigned Agronomist</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+              1. Assigned Agronomist <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
+            </div>
             <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Responsible for crop advisory, nutrition protocols, and health scouting</div>
+            {errors["agronomistId"] && (
+              <div style={{ fontSize: 12, color: "var(--semantic-error, #dc2626)", fontWeight: 600, marginTop: 4 }}>
+                ⚠️ {errors["agronomistId"]}
+              </div>
+            )}
           </div>
 
           {selectedAgronomist && (
@@ -231,7 +238,7 @@ export function OnboardingStepTeam({
       <div
         style={{
           background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
+          border: errors["fieldOfficerId"] ? "1px solid var(--semantic-error, #dc2626)" : "1px solid var(--hairline)",
           borderRadius: "var(--radius-md)",
           padding: "20px 24px",
           boxShadow: "var(--shadow-card)",
@@ -239,8 +246,15 @@ export function OnboardingStepTeam({
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>2. Assigned Field Officer</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
+              2. Assigned Field Officer <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
+            </div>
             <div style={{ fontSize: 11.5, color: "var(--muted)" }}>Responsible for daily task execution, biometric attendance, and plot log updates</div>
+            {errors["fieldOfficerId"] && (
+              <div style={{ fontSize: 12, color: "var(--semantic-error, #dc2626)", fontWeight: 600, marginTop: 4 }}>
+                ⚠️ {errors["fieldOfficerId"]}
+              </div>
+            )}
           </div>
 
           {selectedFieldOfficer && (
