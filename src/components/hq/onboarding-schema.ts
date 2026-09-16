@@ -69,34 +69,34 @@ export const clientSchema = z
   .object({
     name: z.string().trim().min(2, "Client name is required.").max(120),
     companyName: optionalText(180),
-    phone: z.string().trim().max(20).optional().nullable(),
+    phone: z.string().trim().min(1, "Mobile number is required.").max(20),
     whatsappNo: optionalText(20),
-    email: z.string().trim().max(254).optional().nullable(),
+    email: z.string().trim().min(1, "Email address is required.").max(254),
     panNumber: optionalText(20),
     gstin: optionalText(25),
-    billingAddress: optionalText(500),
-    village: optionalText(100),
-    city: optionalText(100),
-    state: optionalText(100),
+    billingAddress: z.string().trim().min(2, "Billing location / address is required.").max(500),
+    village: z.string().trim().min(1, "Village is required.").max(100),
+    city: z.string().trim().min(1, "City is required.").max(100),
+    state: z.string().trim().min(1, "State is required.").max(100),
     district: optionalText(100),
-    pincode: optionalText(20),
+    pincode: z.string().trim().min(1, "PIN code is required.").max(20),
     financeConnect: optionalText(150),
     purchaserConnect: optionalText(150),
   })
   .superRefine((data, ctx) => {
     const phone = normalizePhone(data.phone ?? null);
     const email = normalizeEmail(data.email ?? null);
-    if (data.phone?.trim() && !phone) {
-      ctx.addIssue({ code: "custom", path: ["phone"], message: "Phone must hold 10-15 digits." });
+    if (!phone) {
+      ctx.addIssue({ code: "custom", path: ["phone"], message: "Please enter a valid 10-digit mobile number." });
     }
     if (data.whatsappNo?.trim() && !normalizePhone(data.whatsappNo)) {
       ctx.addIssue({ code: "custom", path: ["whatsappNo"], message: "WhatsApp number must hold 10-15 digits." });
     }
-    if (data.email?.trim() && !email) {
-      ctx.addIssue({ code: "custom", path: ["email"], message: "Email address is invalid." });
+    if (!email) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "Please enter a valid email address." });
     }
-    if (!phone && !email) {
-      ctx.addIssue({ code: "custom", path: ["phone"], message: "Either mobile number or email address is required." });
+    if (data.pincode && !/^[1-9][0-9]{5}$/.test(data.pincode.replace(/\s+/g, ""))) {
+      ctx.addIssue({ code: "custom", path: ["pincode"], message: "PIN Code must be a 6-digit Indian postal code." });
     }
     if (data.panNumber && !PAN_RE.test(data.panNumber.toUpperCase())) {
       ctx.addIssue({ code: "custom", path: ["panNumber"], message: "PAN must look like ABCDE1234F." });
@@ -114,11 +114,20 @@ export const contactItemSchema = z.object({
   role: z.enum(["FINANCE", "PURCHASER", "LOCAL", "OTHER"]),
 });
 
-export const contactsSchema = z.object({
-  financeContact: contactItemSchema.optional().nullable(),
-  purchaserContact: contactItemSchema.optional().nullable(),
-  additionalContacts: z.array(contactItemSchema).default([]),
-});
+export const contactsSchema = z
+  .object({
+    financeContact: contactItemSchema.optional().nullable(),
+    purchaserContact: contactItemSchema.optional().nullable(),
+    additionalContacts: z.array(contactItemSchema).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.financeContact || !data.financeContact.name?.trim() || !data.financeContact.phone?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["financeContact"], message: "Finance Connect contact is required." });
+    }
+    if (!data.purchaserContact || !data.purchaserContact.name?.trim() || !data.purchaserContact.phone?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["purchaserContact"], message: "Purchaser Connect contact is required." });
+    }
+  });
 
 /** Drawn boundary ring in [lng,lat] order (GeoMap shape). Null = pin only. */
 const boundaryRingField = z
@@ -135,24 +144,24 @@ export const farmSchema = z
     areaUnit: z.enum(["Acre", "Hectare", "Gunta"]).default("Acre"),
     totalArea: numField("Total area", 0.01, 100000).optional(),
     cultivableArea: numField("Cultivable area", 0.01, 100000).optional(),
-    localConnect: optionalText(150),
+    localConnect: z.string().trim().min(2, "Local Connect is required.").max(150),
     localContactId: optionalText(100),
     localContactName: optionalText(120),
     localContactPhone: optionalText(20),
     localConnectSameAsClient: z.boolean().default(false),
-    location: z.string().trim().min(2, "Location is required.").max(180),
+    location: z.string().trim().min(2, "Farm location is required.").max(180),
     latitude: numField("Latitude", -90, 90),
     longitude: numField("Longitude", -180, 180),
     waterSource: z.string().trim().min(2, "Water source is required.").max(300),
     surveyNumber: optionalText(100),
-    village: optionalText(100),
-    city: optionalText(100),
+    village: z.string().trim().min(1, "Farm village is required.").max(100),
+    city: z.string().trim().min(1, "Farm city is required.").max(100),
     taluk: optionalText(100),
     district: optionalText(100),
-    state: optionalText(100),
-    pincode: optionalText(20),
+    state: z.string().trim().min(1, "Farm state is required.").max(100),
+    pincode: z.string().trim().min(1, "Farm PIN Code is required.").max(20),
     sameAsClientAddress: z.boolean().default(false),
-    soilType: optionalText(100),
+    soilType: z.string().trim().min(1, "Farm soil type is required.").max(100),
     boundaryRing: boundaryRingField,
   })
   .superRefine((data, ctx) => {
@@ -163,6 +172,9 @@ export const farmSchema = z
     if (typeof tot === "number" && typeof data.cultivableArea === "number" && data.cultivableArea > tot) {
       ctx.addIssue({ code: "custom", path: ["cultivableArea"], message: "Cultivable area cannot exceed total area." });
     }
+    if (data.pincode && !/^[1-9][0-9]{5}$/.test(data.pincode.replace(/\s+/g, ""))) {
+      ctx.addIssue({ code: "custom", path: ["pincode"], message: "PIN Code must be 6 digits." });
+    }
   });
 
 export const plotSchema = z.object({
@@ -170,11 +182,11 @@ export const plotSchema = z.object({
   farmRowId: z.string().min(1, "Plot must belong to a farm."),
   name: z.string().trim().min(2, "Plot name is required.").max(100),
   area: numField("Plot area", 0.01, 100000),
-  soilType: optionalText(100),
-  irrigationSetup: optionalText(100),
-  valves: optionalText(100),
-  bedDetails: optionalText(150),
-  landPrepStatus: optionalText(100),
+  soilType: z.string().trim().min(1, "Plot soil type is required.").max(100),
+  irrigationSetup: z.string().trim().min(1, "Irrigation setup is required.").max(100),
+  valves: z.string().trim().min(1, "Valves details are required.").max(100),
+  bedDetails: z.string().trim().min(1, "Bed details are required.").max(150),
+  landPrepStatus: z.string().trim().min(1, "Land preparation status is required.").max(100),
   boundaryRing: boundaryRingField,
 });
 
@@ -182,12 +194,12 @@ export const cropSchema = z.object({
   rowId: z.string().optional(),
   plotRowId: z.string().min(1, "Crop must belong to a plot."),
   cropName: z.string().trim().min(2, "Crop name is required.").max(120),
-  plantingMethod: optionalText(100),
-  spacing: optionalText(100),
+  plantingMethod: z.string().trim().min(1, "Planting method is required.").max(100),
+  spacing: z.string().trim().min(1, "Spacing is required.").max(100),
   basalDose: optionalText(200),
-  mulching: optionalText(100),
-  plantingDate: optionalText(30),
-  expectedHarvestDate: optionalText(30),
+  mulching: z.string().trim().min(1, "Mulching is required.").max(100),
+  plantingDate: z.string().trim().min(1, "Planting date is required.").max(30),
+  expectedHarvestDate: z.string().trim().min(1, "Expected harvest date is required.").max(30),
   keyDates: optionalText(300),
 });
 
@@ -199,9 +211,9 @@ export const teamSchema = z
     phone: z.string().trim().max(20).optional().nullable(),
     password: z.string().max(128).optional().nullable(),
     confirmPassword: z.string().max(128).optional().nullable(),
-    agronomistId: optionalText(100),
+    agronomistId: z.string().trim().min(1, "Please assign an Agronomist.").max(100),
     agronomistName: optionalText(120),
-    fieldOfficerId: optionalText(100),
+    fieldOfficerId: z.string().trim().min(1, "Please assign a Field Officer.").max(100),
     fieldOfficerName: optionalText(120),
     createFirstTask: z.boolean().default(true),
     firstTaskTitle: z.string().trim().min(2).default("Initial Demarcation & Soil Testing"),

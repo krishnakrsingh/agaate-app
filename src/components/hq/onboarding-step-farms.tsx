@@ -9,11 +9,14 @@ import { representativePoint } from "@/lib/geo-core";
 
 const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.GeoMap), { ssr: false });
 
-function F({ label, error, helper, children }: { label: string; error?: string; helper?: React.ReactNode; children: React.ReactNode }) {
+function F({ label, error, helper, required, children }: { label: string; error?: string; helper?: React.ReactNode; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
-        <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{label}</label>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
+          {label}
+          {required && <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>}
+        </label>
         {helper}
       </div>
       {children}
@@ -312,7 +315,8 @@ export function OnboardingStepFarms({
 
             <div className="ob-grid-3">
               <F
-                label="Farm Name *"
+                label="Farm Name"
+                required
                 error={e(idx, "name")}
                 helper={
                   <button
@@ -346,7 +350,7 @@ export function OnboardingStepFarms({
               {/* Area + Unit Selector */}
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>
-                  Total Area & Unit *
+                  Total Area & Unit <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
                 </label>
                 <div style={{ display: "flex", gap: 6 }}>
                   <input
@@ -373,7 +377,7 @@ export function OnboardingStepFarms({
                 {e(idx, "totalArea") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{e(idx, "totalArea")}</div>}
               </div>
 
-              <F label="Water Source *" error={e(idx, "waterSource")}>
+              <F label="Water Source" required error={e(idx, "waterSource")}>
                 <input
                   className="input-field"
                   value={cur.waterSource}
@@ -389,7 +393,9 @@ export function OnboardingStepFarms({
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>Local Connect (Farm In-charge)</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>
+                    Local Connect (Farm In-charge) <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 2, fontWeight: 700 }}>*</span>
+                  </div>
                   <div style={{ fontSize: 11, color: "var(--muted)" }}>Manager or primary contact residing at the farm location</div>
                 </div>
 
@@ -542,7 +548,7 @@ export function OnboardingStepFarms({
 
             {/* Lat/Long and Location Name inputs */}
             <div className="ob-grid-3">
-              <F label="Farm Location Name *" error={e(idx, "location")}>
+              <F label="Farm Location Name" required error={e(idx, "location")}>
                 <input
                   className="input-field"
                   value={cur.location}
@@ -552,7 +558,7 @@ export function OnboardingStepFarms({
                   style={{ borderRadius: 8 }}
                 />
               </F>
-              <F label="Latitude *" error={e(idx, "latitude")}>
+              <F label="Latitude" required error={e(idx, "latitude")}>
                 <input
                   className="input-field"
                   type="number"
@@ -563,7 +569,7 @@ export function OnboardingStepFarms({
                   style={{ borderRadius: 8 }}
                 />
               </F>
-              <F label="Longitude *" error={e(idx, "longitude")}>
+              <F label="Longitude" required error={e(idx, "longitude")}>
                 <input
                   className="input-field"
                   type="number"
@@ -577,7 +583,7 @@ export function OnboardingStepFarms({
             </div>
           </div>
 
-          {/* Card 3: Farm Address with 'Same as Client Address' */}
+          {/* Card 3: Farm Address & Soil Type */}
           <div
             style={{
               background: "var(--surface-card)",
@@ -591,7 +597,7 @@ export function OnboardingStepFarms({
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <Icons.FileText size={15} style={{ color: "var(--primary)" }} />
                 <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                  Farm Address & Land Records
+                  Farm Address & Soil Type
                 </span>
               </div>
 
@@ -620,16 +626,23 @@ export function OnboardingStepFarms({
             </div>
 
             <div className="ob-grid-3">
-              <F label="Survey No." error={e(idx, "surveyNumber")}>
-                <input
+              <F label="Soil Type" required error={e(idx, "soilType")}>
+                <select
                   className="input-field"
-                  value={cur.surveyNumber ?? ""}
-                  placeholder="e.g., 42/1A"
-                  onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })}
+                  value={cur.soilType ?? ""}
+                  onChange={(ev) => patch(idx, { soilType: ev.target.value })}
                   style={{ borderRadius: 8 }}
-                />
+                >
+                  <option value="">-- Select Soil Type --</option>
+                  <option value="Red Sandy Loam">Red Sandy Loam</option>
+                  <option value="Black Cotton Soil">Black Cotton Soil</option>
+                  <option value="Clay Loam">Clay Loam</option>
+                  <option value="Alluvial Soil">Alluvial Soil</option>
+                  <option value="Laterite Soil">Laterite Soil</option>
+                  <option value="Sandy Soil">Sandy Soil</option>
+                </select>
               </F>
-              <F label="Village" error={e(idx, "village")}>
+              <F label="Village" required error={e(idx, "village")}>
                 <input
                   className="input-field"
                   value={cur.village ?? ""}
@@ -638,7 +651,7 @@ export function OnboardingStepFarms({
                   style={{ borderRadius: 8 }}
                 />
               </F>
-              <F label="City" error={e(idx, "city")}>
+              <F label="City" required error={e(idx, "city")}>
                 <input
                   className="input-field"
                   value={cur.city ?? ""}
@@ -647,16 +660,7 @@ export function OnboardingStepFarms({
                   style={{ borderRadius: 8 }}
                 />
               </F>
-              <F label="Taluk" error={e(idx, "taluk")}>
-                <input
-                  className="input-field"
-                  value={cur.taluk ?? ""}
-                  placeholder="e.g., Magadi"
-                  onChange={(ev) => patch(idx, { taluk: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="State" error={e(idx, "state")}>
+              <F label="State" required error={e(idx, "state")}>
                 <input
                   className="input-field"
                   value={cur.state ?? ""}
@@ -665,12 +669,21 @@ export function OnboardingStepFarms({
                   style={{ borderRadius: 8 }}
                 />
               </F>
-              <F label="PIN Code" error={e(idx, "pincode")}>
+              <F label="PIN Code" required error={e(idx, "pincode")}>
                 <input
                   className="input-field"
                   value={cur.pincode ?? ""}
                   placeholder="e.g., 562127"
                   onChange={(ev) => patch(idx, { pincode: ev.target.value })}
+                  style={{ borderRadius: 8 }}
+                />
+              </F>
+              <F label="Survey No." error={e(idx, "surveyNumber")}>
+                <input
+                  className="input-field"
+                  value={cur.surveyNumber ?? ""}
+                  placeholder="e.g., 42/1A (Optional)"
+                  onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })}
                   style={{ borderRadius: 8 }}
                 />
               </F>

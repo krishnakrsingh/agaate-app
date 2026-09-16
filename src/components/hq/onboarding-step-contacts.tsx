@@ -134,12 +134,14 @@ export function OnboardingStepContacts({
   ) => {
     const isAdding = addingRole === role;
     const isEditing = editRole === role;
+    const roleError = errors[role === "FINANCE" ? "financeContact" : "purchaserContact"]
+      ?? errors[`contacts.${role === "FINANCE" ? "financeContact" : "purchaserContact"}`];
 
     return (
       <div
         style={{
           background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
+          border: roleError ? "1px solid var(--semantic-error, #dc2626)" : "1px solid var(--hairline)",
           borderRadius: "var(--radius-md)",
           padding: "22px 24px",
           boxShadow: "var(--shadow-card)",
@@ -167,9 +169,16 @@ export function OnboardingStepContacts({
               >
                 {role === "FINANCE" ? "₹" : "🛍️"}
               </span>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{title}</h3>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
+                {title} <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 2, fontWeight: 700 }}>*</span>
+              </h3>
             </div>
             <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>{description}</p>
+            {roleError && !contact && (
+              <div role="alert" style={{ fontSize: 11.5, color: "var(--semantic-error, #dc2626)", fontWeight: 600, marginTop: 6 }}>
+                ⚠ {roleError}
+              </div>
+            )}
           </div>
 
           {!contact && !isAdding && (

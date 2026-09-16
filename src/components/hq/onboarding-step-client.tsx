@@ -5,10 +5,13 @@ import { Icons } from "@/components/icons";
 
 /* inp retired: global .input-field */
 
-function F({ label, error, span, children }: { label: string; error?: string; span?: boolean; children: React.ReactNode }) {
+function F({ label, error, span, required, children }: { label: string; error?: string; span?: boolean; required?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ gridColumn: span ? "1 / -1" : undefined }}>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>{label}</label>
+      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>
+        {label}
+        {required && <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>}
+      </label>
       {children}
       {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
     </div>
@@ -28,24 +31,21 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
     const phone = (value.phone ?? "").trim(), email = (value.email ?? "").trim();
     if (!phone && !email) { onAsyncIssue(null); return; }
     const q = `${phone}::${email}::${existingClientId ?? ""}`; lastQ.current = q; setChecking(true);
-    const t = setTimeout(() => {
-      const p = new URLSearchParams();
-      if (phone) p.set("phone", phone);
-      if (email) p.set("email", email);
-      if (existingClientId) p.set("clientId", existingClientId);
-      fetch(`/api/hq/onboarding/check-unique?${p}`, { cache: "no-store" })
-        .then((r) => r.json())
-        .then((d) => {
-          if (lastQ.current !== q) return;
-          if (d.phoneExists) onAsyncIssue("Phone belongs to another client.");
-          else if (d.emailExists) onAsyncIssue("Email belongs to another user.");
-          else onAsyncIssue(null);
-        })
-        .catch(() => { if (lastQ.current === q) onAsyncIssue(null); })
-        .finally(() => { if (lastQ.current === q) setChecking(false); });
-    }, 450);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/hq/onboarding/check-unique", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: phone || undefined, email: email || undefined, excludeClientId: existingClientId }),
+        });
+        if (q !== lastQ.current) return;
+        const body = await res.json().catch(() => ({}));
+        onAsyncIssue(res.ok ? null : (body.error ?? "Already taken."));
+      } catch { if (q === lastQ.current) onAsyncIssue(null); }
+      finally { if (q === lastQ.current) setChecking(false); }
+    }, 400);
     return () => clearTimeout(t);
-  }, [value.phone, value.email, existingClientId, onAsyncIssue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value.phone, value.email, existingClientId]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -75,8 +75,8 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
               </div>
             </div>
           </div>
-          <span style={{ fontSize: 10.5, fontWeight: 700, color: "#15803d", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "3px 10px", borderRadius: 20, letterSpacing: "0.03em" }}>
-            ACTIVE CLIENT
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green-ink, #166534)", background: "var(--green-light, #dcfce7)", padding: "3px 8px", borderRadius: 6 }}>
+            Verified
           </span>
         </div>
       )}
@@ -105,13 +105,13 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
         </div>
 
         <div className="ob-grid-2">
-          <F label="Full Name *" error={errors["name"]}>
+          <F label="Full Name" required error={errors["name"]}>
             <input className="input-field" value={value.name} maxLength={120} placeholder="e.g., Ramesh Patel" onChange={(e) => set({ name: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label="Business Name" error={errors["companyName"]}>
-            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
+            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label={`Mob (Mobile Number)${checking ? " — checking…" : ""}`} error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
+          <F label={`Mobile Number${checking ? " — checking…" : ""}`} required error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
             <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ phone: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <div>
@@ -143,11 +143,11 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
             <input className="input-field" value={value.whatsappNo ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ whatsappNo: e.target.value })} style={{ borderRadius: 8 }} />
             {errors["whatsappNo"] && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{errors["whatsappNo"]}</div>}
           </div>
-          <F label="Email ID" error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
+          <F label="Email ID" required error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
             <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label="GST (GSTIN)" error={errors["gstin"]}>
-            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="e.g., 29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
+            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="e.g., 29ABCDE1234F1Z5 (Optional)" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
           </F>
         </div>
       </div>
@@ -168,19 +168,19 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
         </div>
 
         <div className="ob-grid-2">
-          <F label="Village" error={errors["village"]}>
+          <F label="Village" required error={errors["village"]}>
             <input className="input-field" value={value.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(e) => set({ village: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="City" error={errors["city"]}>
+          <F label="City" required error={errors["city"]}>
             <input className="input-field" value={value.city ?? ""} maxLength={100} placeholder="e.g., Bengaluru" onChange={(e) => set({ city: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="State" error={errors["state"]}>
+          <F label="State" required error={errors["state"]}>
             <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(e) => set({ state: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="PIN Code" error={errors["pincode"]}>
+          <F label="PIN Code" required error={errors["pincode"]}>
             <input className="input-field" value={value.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(e) => set({ pincode: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Billing Location" error={errors["billingAddress"]} span>
+          <F label="Billing Location" required error={errors["billingAddress"]} span>
             <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door / Survey no, street name, layout" onChange={(e) => set({ billingAddress: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
         </div>

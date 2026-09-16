@@ -70,6 +70,26 @@ export function OnboardingStepPlots({
       setValidationErr("Please enter a valid plot area.");
       return;
     }
+    if (!soilType.trim()) {
+      setValidationErr("Soil Type is required.");
+      return;
+    }
+    if (!irrigationSetup.trim()) {
+      setValidationErr("Irrigation Setup is required.");
+      return;
+    }
+    if (!valves.trim()) {
+      setValidationErr("Valves & Control information is required.");
+      return;
+    }
+    if (!bedDetails.trim()) {
+      setValidationErr("Bed Details are required.");
+      return;
+    }
+    if (!landPrepStatus.trim()) {
+      setValidationErr("Land Preparation Status is required.");
+      return;
+    }
     if (fence && (fence.length < 4 || fenceOutside)) {
       setValidationErr("Plot fence lies outside the farm fence — redraw or clear.");
       return;
@@ -84,11 +104,11 @@ export function OnboardingStepPlots({
                 farmRowId: farmId,
                 name: name.trim(),
                 area: numArea,
-                soilType: soilType || null,
-                irrigationSetup: irrigationSetup || null,
-                valves: valves || null,
-                bedDetails: bedDetails || null,
-                landPrepStatus: landPrepStatus || null,
+                soilType: soilType.trim(),
+                irrigationSetup: irrigationSetup.trim(),
+                valves: valves.trim(),
+                bedDetails: bedDetails.trim(),
+                landPrepStatus: landPrepStatus.trim(),
                 boundaryRing: fence,
               }
             : p
@@ -102,11 +122,11 @@ export function OnboardingStepPlots({
         farmRowId: farmId,
         name: name.trim(),
         area: numArea,
-        soilType: soilType || null,
-        irrigationSetup: irrigationSetup || null,
-        valves: valves || null,
-        bedDetails: bedDetails || null,
-        landPrepStatus: landPrepStatus || null,
+        soilType: soilType.trim(),
+        irrigationSetup: irrigationSetup.trim(),
+        valves: valves.trim(),
+        bedDetails: bedDetails.trim(),
+        landPrepStatus: landPrepStatus.trim(),
         boundaryRing: fence,
       };
       onChange([...plots, newP]);
@@ -317,7 +337,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Plot Name / Number *
+                Plot Name / Number <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -331,7 +351,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Plot Area (Acres) *
+                Plot Area (Acres) <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -347,7 +367,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Soil Type
+                Soil Type <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -361,7 +381,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Irrigation Setup
+                Irrigation Setup <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <select
                 className="input-field"
@@ -369,6 +389,7 @@ export function OnboardingStepPlots({
                 onChange={(e) => setIrrigationSetup(e.target.value)}
                 style={{ borderRadius: 8 }}
               >
+                <option value="">-- Select Irrigation --</option>
                 <option value="Drip Irrigation">Drip Irrigation</option>
                 <option value="Micro Sprinkler">Micro Sprinkler</option>
                 <option value="Overhead Sprinkler">Overhead Sprinkler</option>
@@ -379,7 +400,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Valves & Control
+                Valves & Control <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -393,7 +414,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Bed Details
+                Bed Details <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -407,7 +428,7 @@ export function OnboardingStepPlots({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Land Preparation Status
+                Land Preparation Status <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <select
                 className="input-field"
@@ -415,6 +436,7 @@ export function OnboardingStepPlots({
                 onChange={(e) => setLandPrepStatus(e.target.value)}
                 style={{ borderRadius: 8 }}
               >
+                <option value="">-- Select Status --</option>
                 <option value="Ready for Planting">Ready for Planting</option>
                 <option value="Beds Formed & Ready">Beds Formed & Ready</option>
                 <option value="Secondary Tillage">Secondary Tillage</option>
