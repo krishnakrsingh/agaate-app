@@ -88,6 +88,26 @@ export function OnboardingStepCrops({
       setFormErr("Please select a target plot for this crop.");
       return;
     }
+    if (!plantingMethod.trim()) {
+      setFormErr("Planting method is required.");
+      return;
+    }
+    if (!spacing.trim()) {
+      setFormErr("Spacing is required.");
+      return;
+    }
+    if (!mulching.trim()) {
+      setFormErr("Mulching is required.");
+      return;
+    }
+    if (!plantingDate.trim()) {
+      setFormErr("Planting date is required.");
+      return;
+    }
+    if (!expectedHarvestDate.trim()) {
+      setFormErr("Expected harvest date is required.");
+      return;
+    }
 
     if (editingCropId) {
       onChange(
@@ -97,13 +117,13 @@ export function OnboardingStepCrops({
                 ...c,
                 plotRowId: activePlotId,
                 cropName: cropName.trim(),
-                plantingMethod,
-                spacing,
-                basalDose,
-                mulching,
-                plantingDate,
-                expectedHarvestDate,
-                keyDates,
+                plantingMethod: plantingMethod.trim(),
+                spacing: spacing.trim(),
+                basalDose: basalDose.trim() || null,
+                mulching: mulching.trim(),
+                plantingDate: plantingDate.trim(),
+                expectedHarvestDate: expectedHarvestDate.trim(),
+                keyDates: keyDates.trim() || null,
               }
             : c
         )
@@ -113,13 +133,13 @@ export function OnboardingStepCrops({
         rowId: newRowId(),
         plotRowId: activePlotId,
         cropName: cropName.trim(),
-        plantingMethod,
-        spacing,
-        basalDose,
-        mulching,
-        plantingDate,
-        expectedHarvestDate,
-        keyDates,
+        plantingMethod: plantingMethod.trim(),
+        spacing: spacing.trim(),
+        basalDose: basalDose.trim() || null,
+        mulching: mulching.trim(),
+        plantingDate: plantingDate.trim(),
+        expectedHarvestDate: expectedHarvestDate.trim(),
+        keyDates: keyDates.trim() || null,
       };
       onChange([...crops, newC]);
     }
@@ -381,7 +401,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Crop Name & Variety *
+                Crop Name & Variety <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -395,7 +415,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Planting Method
+                Planting Method <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <select
                 className="input-field"
@@ -403,6 +423,7 @@ export function OnboardingStepCrops({
                 onChange={(e) => setPlantingMethod(e.target.value)}
                 style={{ borderRadius: 8 }}
               >
+                <option value="">-- Select Method --</option>
                 <option value="Nursery Transplantation">Nursery Transplantation</option>
                 <option value="Direct Sowing">Direct Sowing</option>
                 <option value="Tissue Culture">Tissue Culture</option>
@@ -412,7 +433,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Spacing (Plant × Row)
+                Spacing (Plant × Row) <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -426,7 +447,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Mulching Material
+                Mulching Material <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <select
                 className="input-field"
@@ -434,6 +455,7 @@ export function OnboardingStepCrops({
                 onChange={(e) => setMulching(e.target.value)}
                 style={{ borderRadius: 8 }}
               >
+                <option value="">-- Select Mulching --</option>
                 <option value="Silver-Black 25 micron">Silver-Black 25 micron</option>
                 <option value="Black 30 micron">Black 30 micron</option>
                 <option value="Organic Straw / Husk">Organic Straw / Husk</option>
@@ -449,7 +471,7 @@ export function OnboardingStepCrops({
                 className="input-field"
                 value={basalDose}
                 maxLength={200}
-                placeholder="e.g., DAP 50kg + Neem Cake 100kg"
+                placeholder="e.g., DAP 50kg + Neem Cake 100kg (Optional)"
                 onChange={(e) => setBasalDose(e.target.value)}
                 style={{ borderRadius: 8 }}
               />
@@ -457,7 +479,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Planting Date
+                Planting Date <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
@@ -470,7 +492,7 @@ export function OnboardingStepCrops({
 
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: 5 }}>
-                Expected Harvest Date
+                Expected Harvest Date <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
               </label>
               <input
                 className="input-field"
