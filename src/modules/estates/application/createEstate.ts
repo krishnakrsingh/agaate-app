@@ -7,7 +7,7 @@
 
 import { requireRole } from "@/lib/access";
 import type { Actor } from "@/lib/actor";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import { estateCreateSchema, type EstateCreateInput } from "../schemas/estate";
 import { createEstateRecord } from "../infrastructure/estateQueries";

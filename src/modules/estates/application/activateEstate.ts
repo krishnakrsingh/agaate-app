@@ -6,7 +6,7 @@
  * executes the multi-entity activation transaction, and logs an audit record.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import { requireFarmAccess } from "@/lib/access";
 import { assertCanActivateEstate, EstateFault } from "../domain/estatePolicy";

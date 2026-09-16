@@ -6,8 +6,8 @@
  * persistence under farm-row lock, and audit logging.
  */
 
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
+import { prisma } from "@/infrastructure/db";
+import { audit } from "@/infrastructure/audit";
 import { validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
 import { plotCreateSchema, type PlotCreateInput } from "../schemas/plot";
 import {

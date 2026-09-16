@@ -4,8 +4,8 @@
  * Enforces live-cycle guards, sets status to ARCHIVED with deletedAt, and records audit log.
  */
 
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
+import { prisma } from "@/infrastructure/db";
+import { audit } from "@/infrastructure/audit";
 import { requireFarmAccess } from "@/lib/access";
 import { PlotFault, assertPlotCanBeArchived } from "../domain/plotPolicy";
 import {

@@ -8,7 +8,7 @@
  * - Audit logging
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import { requireFarmAccess } from "@/lib/access";
 import { EstateFault } from "../domain/estatePolicy";

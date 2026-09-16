@@ -1,4 +1,4 @@
-import { downloadUrl } from "@/lib/storage";
+import { downloadUrl } from "@/infrastructure/storage";
 
 /**
  * Task media presentation — the ONE place task rows gain URLs.

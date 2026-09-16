@@ -1,14 +1,21 @@
-/**
- * infrastructure/db — the ONLY sanctioned Prisma import path going forward.
- *
- * Today: re-export of the existing singleton (src/lib/prisma.ts).
- * Target: connection policy, query logging, and read/write splitting
- * attach HERE, not in 133 scattered route files.
- *
- * Rule: new application code imports `prisma` from
- * `@/infrastructure/db` (or `@infrastructure/db`), never `@/lib/prisma`.
- * Old path kept as compat until callers migrate (tracked in
- * docs/architecture/MIGRATION_STATUS.md).
- */
+import { PrismaClient } from "@prisma/client";
 
-export { prisma } from "@/lib/prisma";
+/**
+ * infrastructure/db — the ONLY sanctioned Prisma import path.
+ *
+ * Connection policy, query logging, and connection singleton attach HERE.
+ * Rule: application/infrastructure code imports `prisma` from `@/infrastructure/db`,
+ * never `@/lib/prisma`.
+ */
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+

@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { testSessionContext } from "@/lib/auth";
 import { commitBoundary } from "./geo-versions";
 import { PATCH as patchFarmHandler } from "@/app/api/farms/[farmId]/route";

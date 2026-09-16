@@ -4,7 +4,7 @@
  * Verifies caller farm read permissions and retrieves crop cycle with varieties and ordered milestones.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { requireFarmAccess } from "@/lib/access";
 import { findPlotForCropCycle, findCropCycleDetail } from "../infrastructure/cropCycleQueries";
 

@@ -6,7 +6,7 @@
  * atomic database persistence with concurrency lock, and audit logging.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import {
   parseBoundary,

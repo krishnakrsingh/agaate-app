@@ -5,7 +5,7 @@
 
 import { prisma } from "@/infrastructure/db";
 import { requireFarmAccess } from "@modules/auth";
-import { downloadUrl } from "@/lib/storage";
+import { downloadUrl } from "@/infrastructure/storage";
 import { findEstateCommandCenterData } from "../infrastructure/estateQueries";
 
 type Db = typeof prisma;

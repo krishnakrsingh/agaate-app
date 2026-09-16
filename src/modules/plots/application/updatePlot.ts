@@ -6,7 +6,7 @@
  * transactional persistence under farm-row lock, and audit logging.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import { requireFarmAccess } from "@/lib/access";
 import { validatePlotGeometry, roundAcresForDb } from "@modules/spatial";

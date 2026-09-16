@@ -6,7 +6,7 @@
  * (with automatic task creation for each milestone), and audit logging.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { audit } from "@/lib/audit";
 import { requireFarmAccess } from "@/lib/access";
 import {

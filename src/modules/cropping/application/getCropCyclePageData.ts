@@ -4,7 +4,7 @@
  * Eliminates direct Prisma usage from crop cycle server pages.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { requireFarmAccess } from "@/lib/access";
 import {
   findPlotForNewCropCyclePage,

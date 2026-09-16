@@ -5,7 +5,7 @@
  * with existence-oracle protection on farm access.
  */
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/infrastructure/db";
 import { requireFarmAccess } from "@/lib/access";
 import { EstateFault } from "../domain/estatePolicy";
 import { findEstateTaskPinsData } from "../infrastructure/estateQueries";
