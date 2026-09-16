@@ -70,18 +70,27 @@ export const clientSchema = z
     name: z.string().trim().min(2, "Client name is required.").max(120),
     companyName: optionalText(180),
     phone: z.string().trim().max(20).optional().nullable(),
+    whatsappNo: optionalText(20),
     email: z.string().trim().max(254).optional().nullable(),
     panNumber: optionalText(20),
     gstin: optionalText(25),
     billingAddress: optionalText(500),
+    village: optionalText(100),
+    city: optionalText(100),
     state: optionalText(100),
     district: optionalText(100),
+    pincode: optionalText(20),
+    financeConnect: optionalText(150),
+    purchaserConnect: optionalText(150),
   })
   .superRefine((data, ctx) => {
     const phone = normalizePhone(data.phone ?? null);
     const email = normalizeEmail(data.email ?? null);
     if (data.phone?.trim() && !phone) {
       ctx.addIssue({ code: "custom", path: ["phone"], message: "Phone must hold 10-15 digits." });
+    }
+    if (data.whatsappNo?.trim() && !normalizePhone(data.whatsappNo)) {
+      ctx.addIssue({ code: "custom", path: ["whatsappNo"], message: "WhatsApp number must hold 10-15 digits." });
     }
     if (data.email?.trim() && !email) {
       ctx.addIssue({ code: "custom", path: ["email"], message: "Email address is invalid." });
@@ -108,6 +117,7 @@ export const farmSchema = z
   .object({
     rowId: z.string().optional(),
     name: z.string().trim().min(2, "Farm name is required.").max(120),
+    localConnect: optionalText(150),
     location: z.string().trim().min(2, "Location is required.").max(180),
     latitude: numField("Latitude", -90, 90),
     longitude: numField("Longitude", -180, 180),
@@ -116,9 +126,11 @@ export const farmSchema = z
     waterSource: z.string().trim().min(2, "Water source is required.").max(300),
     surveyNumber: optionalText(100),
     village: optionalText(100),
+    city: optionalText(100),
     taluk: optionalText(100),
     district: optionalText(100),
     state: optionalText(100),
+    pincode: optionalText(20),
     soilType: optionalText(100),
     boundaryRing: boundaryRingField,
   })

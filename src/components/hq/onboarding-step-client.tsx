@@ -107,58 +107,111 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           <F label="Full Name *" error={errors["name"]}>
             <input className="input-field" value={value.name} maxLength={120} placeholder="e.g., Ramesh Patel" onChange={(e) => set({ name: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Company Name" error={errors["companyName"]}>
+          <F label="Business Name" error={errors["companyName"]}>
             <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label={`Mobile Number${checking ? " — checking…" : ""}`} error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
+          <F label={`Mob (Mobile Number)${checking ? " — checking…" : ""}`} error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
             <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ phone: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Email Address" error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>Whatsapp No</label>
+              <button
+                type="button"
+                onClick={() => set({ whatsappNo: value.phone ?? "" })}
+                disabled={!value.phone}
+                style={{
+                  background: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
+                  color: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "#059669" : "var(--ink)",
+                  border: `1px solid ${value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+                  borderRadius: 4,
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  padding: "1px 6px",
+                  cursor: value.phone ? "pointer" : "not-allowed",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 3,
+                  opacity: value.phone ? 1 : 0.5,
+                }}
+                title="Copy Mobile number to Whatsapp number"
+              >
+                <span>{value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "✓ Same as Mob" : "Option to add same as Mob"}</span>
+              </button>
+            </div>
+            <input className="input-field" value={value.whatsappNo ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ whatsappNo: e.target.value })} style={{ borderRadius: 8 }} />
+            {errors["whatsappNo"] && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{errors["whatsappNo"]}</div>}
+          </div>
+          <F label="Email ID" error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
             <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} style={{ borderRadius: 8 }} />
+          </F>
+          <F label="GST (GSTIN)" error={errors["gstin"]}>
+            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="e.g., 29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
           </F>
         </div>
       </div>
 
-      {/* Tax & Location Accordion Card */}
-      <details style={{
+      {/* Location & Address Card */}
+      <div style={{
         background: "var(--surface-card)",
         border: "1px solid var(--hairline)",
         borderRadius: "var(--radius-md)",
-        padding: "14px 18px",
+        padding: "18px 20px",
         boxShadow: "var(--shadow-card)"
       }}>
-        <summary style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", userSelect: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 26, height: 26, borderRadius: 6, background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icons.MapPin size={13} style={{ color: "var(--ink)" }} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", letterSpacing: "0.05em" }}>Tax & Location Details (Optional)</div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "none", letterSpacing: "normal", marginTop: 1 }}>PAN, GSTIN & Billing Address</div>
-            </div>
-          </div>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icons.ChevronDown size={13} className="ob-chevron" style={{ color: "var(--ink)", transition: "transform 0.2s ease" }} />
-          </div>
-        </summary>
-        <div className="ob-grid-2" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
-          <F label="PAN Number" error={errors["panNumber"]}>
-            <input className="input-field" value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
+          <Icons.MapPin size={13} style={{ color: "var(--primary)" }} />
+          <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+            Location & Billing Address
+          </span>
+        </div>
+
+        <div className="ob-grid-2">
+          <F label="Village" error={errors["village"]}>
+            <input className="input-field" value={value.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(e) => set({ village: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="GSTIN Identification" error={errors["gstin"]}>
-            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="29ABCDE1234F1Z5" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
+          <F label="City" error={errors["city"]}>
+            <input className="input-field" value={value.city ?? ""} maxLength={100} placeholder="e.g., Bengaluru" onChange={(e) => set({ city: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label="State" error={errors["state"]}>
-            <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="Karnataka" onChange={(e) => set({ state: e.target.value })} style={{ borderRadius: 8 }} />
+            <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(e) => set({ state: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="District" error={errors["district"]}>
-            <input className="input-field" value={value.district ?? ""} maxLength={100} placeholder="Chikkaballapur" onChange={(e) => set({ district: e.target.value })} style={{ borderRadius: 8 }} />
+          <F label="Pin Code" error={errors["pincode"]}>
+            <input className="input-field" value={value.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(e) => set({ pincode: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Billing Address" error={errors["billingAddress"]} span>
-            <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door no, street name, PIN code" onChange={(e) => set({ billingAddress: e.target.value })} style={{ borderRadius: 8 }} />
+          <F label="Billing Location" error={errors["billingAddress"]} span>
+            <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door / Survey no, street name, layout" onChange={(e) => set({ billingAddress: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
         </div>
-      </details>
+      </div>
+
+      {/* Connects & Stakeholders Card */}
+      <div style={{
+        background: "var(--surface-card)",
+        border: "1px solid var(--hairline)",
+        borderRadius: "var(--radius-md)",
+        padding: "18px 20px",
+        boxShadow: "var(--shadow-card)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
+          <Icons.Shield size={13} style={{ color: "var(--primary)" }} />
+          <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+            Commercial & Connect Contacts
+          </span>
+        </div>
+
+        <div className="ob-grid-2">
+          <F label="Finance Connect" error={errors["financeConnect"]}>
+            <input className="input-field" value={value.financeConnect ?? ""} maxLength={150} placeholder="e.g., Priya Sharma (Accounts Head) - 9876501234" onChange={(e) => set({ financeConnect: e.target.value })} style={{ borderRadius: 8 }} />
+          </F>
+          <F label="Purchaser Connect" error={errors["purchaserConnect"]}>
+            <input className="input-field" value={value.purchaserConnect ?? ""} maxLength={150} placeholder="e.g., Arun Verma (Procurement Lead) - 9876504321" onChange={(e) => set({ purchaserConnect: e.target.value })} style={{ borderRadius: 8 }} />
+          </F>
+          <F label="PAN Number (Optional)" error={errors["panNumber"]}>
+            <input className="input-field" value={value.panNumber ?? ""} maxLength={20} placeholder="ABCDE1234F" onChange={(e) => set({ panNumber: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
+          </F>
+        </div>
+      </div>
     </div>
   );
 }

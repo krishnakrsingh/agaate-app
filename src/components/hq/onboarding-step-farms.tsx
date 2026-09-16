@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Icons } from "@/components/icons";
-import { MAX_FARMS, type FarmInput } from "./onboarding-schema";
+import { MAX_FARMS, type FarmInput, type ClientInput } from "./onboarding-schema";
 import { emptyFarm } from "./onboarding-draft";
 import { ringAcres } from "@/lib/geo";
 import { representativePoint } from "@/lib/geo-core";
@@ -11,18 +11,46 @@ const GeoMap = dynamic(() => import("@/components/map/geo-map").then((m) => m.Ge
 
 /* inp retired: global .input-field */
 
-function F({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function F({ label, error, sameAsClient, onSameAsClient, children }: {
+  label: string;
+  error?: string;
+  sameAsClient?: boolean;
+  onSameAsClient?: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>{label}</label>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{label}</label>
+        {onSameAsClient && (
+          <button
+            type="button"
+            onClick={onSameAsClient}
+            style={{
+              background: sameAsClient ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
+              color: sameAsClient ? "#059669" : "var(--ink)",
+              border: `1px solid ${sameAsClient ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+              borderRadius: 4,
+              fontSize: 10,
+              fontWeight: 600,
+              padding: "1px 5px",
+              cursor: "pointer",
+              lineHeight: "1.2",
+            }}
+            title="Option to add same as client"
+          >
+            {sameAsClient ? "✓ Same as client" : "Option to add same as client"}
+          </button>
+        )}
+      </div>
       {children}
       {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
     </div>
   );
 }
 
-export function OnboardingStepFarms({ value, onChange, errors }: {
-  value: FarmInput[]; onChange: (v: FarmInput[]) => void; errors: Record<string, string>;
+export function OnboardingStepFarms({ value, onChange, errors, client }: {
+  value: FarmInput[]; onChange: (v: FarmInput[]) => void; errors: Record<string, string>; client?: ClientInput;
 }) {
   const [sel, setSel] = useState(0);
   const [gpsBusy, setGpsBusy] = useState(false);
@@ -71,6 +99,28 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
   const ring = (cur?.boundaryRing ?? null) as [number, number][] | null;
   const ringAcresLive = ring && ring.length >= 4 ? (() => { try { return ringAcres(ring); } catch { return 0; } })() : 0;
   const mapCenter: [number, number] = hasCoords ? [lat, lng] : [20.59, 78.96];
+
+  // Helper values to copy from Client
+  const clientConnect = client ? (client.name ? `${client.name}${client.phone ? ` (${client.phone})` : ""}` : (client.phone ?? "")) : "";
+  const clientFarmName = client ? (client.companyName ? `${client.companyName} Estate` : (client.name ? `${client.name}'s Farm` : "")) : "";
+  const clientLoc = client ? (client.billingAddress || [client.city, client.state].filter(Boolean).join(", ")) : "";
+  const clientVillage = client?.village ?? "";
+  const clientCity = client?.city ?? "";
+  const clientState = client?.state ?? "";
+  const clientPincode = client?.pincode ?? "";
+
+  const copyAllFromClient = () => {
+    if (!client) return;
+    patch(idx, {
+      localConnect: clientConnect || cur?.localConnect || "",
+      name: cur?.name ? cur.name : clientFarmName,
+      location: clientLoc || cur?.location || "",
+      village: clientVillage || cur?.village || "",
+      city: clientCity || cur?.city || "",
+      state: clientState || cur?.state || "",
+      pincode: clientPincode || cur?.pincode || "",
+    });
+  };
 
   return (
     <div className="ob-section">
@@ -130,6 +180,36 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
 
           {/* Left: fields in cards */}
           <div className="ob-section">
+            {/* Quick copy all banner */}
+            {client && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                borderRadius: "var(--radius-md)",
+                padding: "10px 14px",
+                boxShadow: "var(--shadow-card)",
+              }}>
+                <div style={{ fontSize: 12, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icons.CheckCircle size={15} style={{ color: "#10b981", flexShrink: 0 }} />
+                  <span>
+                    Auto-fill from client: <strong>{client.name || "Client Details"}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={copyAllFromClient}
+                  style={{ fontSize: 11, height: 26, padding: "0 10px", gap: 4 }}
+                >
+                  <Icons.Copy size={12} />
+                  <span>Copy details from Client</span>
+                </button>
+              </div>
+            )}
+
             <div style={{
               background: "var(--surface-card)",
               border: "1px solid var(--hairline)",
@@ -147,20 +227,43 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
                 <span style={{ fontSize: 11, color: "var(--muted)" }}>Step 2 of 5</span>
               </div>
               <div className="ob-grid-3">
-                <F label="Farm name *" error={e(idx, "name")}>
+                <F
+                  label="Farm name *"
+                  error={e(idx, "name")}
+                  sameAsClient={!!(cur.name && clientFarmName && cur.name === clientFarmName)}
+                  onSameAsClient={clientFarmName ? () => patch(idx, { name: clientFarmName }) : undefined}
+                >
                   <input className="input-field" value={cur.name} maxLength={120} placeholder="e.g., North Valley Estate" onChange={(ev) => patch(idx, { name: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
-                <F label="Location *" error={e(idx, "location")}>
+                <F
+                  label="Local Connect"
+                  error={e(idx, "localConnect")}
+                  sameAsClient={!!(cur.localConnect && clientConnect && cur.localConnect === clientConnect)}
+                  onSameAsClient={clientConnect ? () => patch(idx, { localConnect: clientConnect }) : undefined}
+                >
+                  <input className="input-field" value={cur.localConnect ?? ""} maxLength={150} placeholder="e.g., Suresh Gowda (9876543210)" onChange={(ev) => patch(idx, { localConnect: ev.target.value })} style={{ borderRadius: 8 }} />
+                </F>
+                <F
+                  label="Farm Location *"
+                  error={e(idx, "location")}
+                  sameAsClient={!!(cur.location && clientLoc && cur.location === clientLoc)}
+                  onSameAsClient={clientLoc ? () => patch(idx, { location: clientLoc }) : undefined}
+                >
                   <input className="input-field" value={cur.location} maxLength={180} placeholder="e.g., Near Hoskote Gate" onChange={(ev) => patch(idx, { location: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
-                <F label="Water source *" error={e(idx, "waterSource")}>
-                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="e.g., Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} style={{ borderRadius: 8 }} />
-                </F>
-                <F label="Total area (ac) *" error={e(idx, "totalArea")}>
-                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} placeholder="12.5" onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
+                <F
+                  label="Area (ac) *"
+                  error={e(idx, "totalArea")}
+                  sameAsClient={Number(cur.totalArea) === 10}
+                  onSameAsClient={() => patch(idx, { totalArea: 10, cultivableArea: 10 })}
+                >
+                  <input className="input-field" type="number" step="0.01" min="0" value={cur.totalArea as unknown as string} placeholder="10.0" onChange={(ev) => patch(idx, { totalArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Cultivable area (ac) *" error={e(idx, "cultivableArea")}>
                   <input className="input-field" type="number" step="0.01" min="0" value={cur.cultivableArea as unknown as string} placeholder="10.0" onChange={(ev) => patch(idx, { cultivableArea: ev.target.value as unknown as number })} style={{ borderRadius: 8 }} />
+                </F>
+                <F label="Water source *" error={e(idx, "waterSource")}>
+                  <input className="input-field" value={cur.waterSource} maxLength={300} placeholder="e.g., Borewell + farm pond" onChange={(ev) => patch(idx, { waterSource: ev.target.value })} style={{ borderRadius: 8 }} />
                 </F>
                 <F label="Soil type" error={e(idx, "soilType")}>
                   <input className="input-field" value={cur.soilType ?? ""} maxLength={100} placeholder="e.g., Red sandy loam" onChange={(ev) => patch(idx, { soilType: ev.target.value })} style={{ borderRadius: 8 }} />
@@ -169,7 +272,7 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
             </div>
 
             {/* Land records accordion card */}
-            <details open={["surveyNumber","village","taluk","district","state"].some((f) => e(idx, f))} style={{
+            <details open={["surveyNumber","village","city","taluk","district","state","pincode"].some((f) => e(idx, f))} style={{
               background: "var(--surface-card)",
               border: "1px solid var(--hairline)",
               borderRadius: "var(--radius-md)",
@@ -183,7 +286,7 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
                   </div>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", letterSpacing: "0.05em" }}>Land Records & Cadastral (Optional)</div>
-                    <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "none", letterSpacing: "normal", marginTop: 1 }}>Survey, Village, Taluk & District Details</div>
+                    <div style={{ fontSize: 11, fontWeight: 500, color: "var(--muted)", textTransform: "none", letterSpacing: "normal", marginTop: 1 }}>Survey, Village, City, State & Pin Code</div>
                   </div>
                 </div>
                 <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-strong)", border: "1px solid var(--hairline)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -192,10 +295,40 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
               </summary>
               <div className="ob-grid-3" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
                 <F label="Survey no." error={e(idx, "surveyNumber")}><input className="input-field" value={cur.surveyNumber ?? ""} maxLength={100} placeholder="e.g., 42/1A" onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })} style={{ borderRadius: 8 }} /></F>
-                <F label="Village" error={e(idx, "village")}><input className="input-field" value={cur.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(ev) => patch(idx, { village: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F
+                  label="Village"
+                  error={e(idx, "village")}
+                  sameAsClient={!!(cur.village && clientVillage && cur.village === clientVillage)}
+                  onSameAsClient={clientVillage ? () => patch(idx, { village: clientVillage }) : undefined}
+                >
+                  <input className="input-field" value={cur.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(ev) => patch(idx, { village: ev.target.value })} style={{ borderRadius: 8 }} />
+                </F>
+                <F
+                  label="City"
+                  error={e(idx, "city")}
+                  sameAsClient={!!(cur.city && clientCity && cur.city === clientCity)}
+                  onSameAsClient={clientCity ? () => patch(idx, { city: clientCity }) : undefined}
+                >
+                  <input className="input-field" value={cur.city ?? ""} maxLength={100} placeholder="e.g., Bengaluru" onChange={(ev) => patch(idx, { city: ev.target.value })} style={{ borderRadius: 8 }} />
+                </F>
                 <F label="Taluk" error={e(idx, "taluk")}><input className="input-field" value={cur.taluk ?? ""} maxLength={100} placeholder="e.g., Magadi" onChange={(ev) => patch(idx, { taluk: ev.target.value })} style={{ borderRadius: 8 }} /></F>
                 <F label="District" error={e(idx, "district")}><input className="input-field" value={cur.district ?? ""} maxLength={100} placeholder="e.g., Ramanagara" onChange={(ev) => patch(idx, { district: ev.target.value })} style={{ borderRadius: 8 }} /></F>
-                <F label="State" error={e(idx, "state")}><input className="input-field" value={cur.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(ev) => patch(idx, { state: ev.target.value })} style={{ borderRadius: 8 }} /></F>
+                <F
+                  label="State"
+                  error={e(idx, "state")}
+                  sameAsClient={!!(cur.state && clientState && cur.state === clientState)}
+                  onSameAsClient={clientState ? () => patch(idx, { state: clientState }) : undefined}
+                >
+                  <input className="input-field" value={cur.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(ev) => patch(idx, { state: ev.target.value })} style={{ borderRadius: 8 }} />
+                </F>
+                <F
+                  label="Pin Code"
+                  error={e(idx, "pincode")}
+                  sameAsClient={!!(cur.pincode && clientPincode && cur.pincode === clientPincode)}
+                  onSameAsClient={clientPincode ? () => patch(idx, { pincode: clientPincode }) : undefined}
+                >
+                  <input className="input-field" value={cur.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(ev) => patch(idx, { pincode: ev.target.value })} style={{ borderRadius: 8 }} />
+                </F>
               </div>
             </details>
 
@@ -207,11 +340,30 @@ export function OnboardingStepFarms({ value, onChange, errors }: {
               padding: "16px 20px",
               boxShadow: "var(--shadow-card)"
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
-                <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                  Geographic Coordinates
-                </span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
+                  <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
+                    Geographic Coordinates (Lat long)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => patch(idx, { latitude: 13.0827, longitude: 77.5877 })}
+                  style={{
+                    background: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "rgba(16, 185, 129, 0.15)" : "var(--surface-strong)",
+                    color: cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "#059669" : "var(--ink)",
+                    border: `1px solid ${cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "rgba(16, 185, 129, 0.4)" : "var(--hairline)"}`,
+                    borderRadius: 4,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    cursor: "pointer",
+                  }}
+                  title="Option to set default coordinates for regional hub"
+                >
+                  {cur.latitude === 13.0827 && cur.longitude === 77.5877 ? "✓ Region Lat/Long" : "Option to add same as client"}
+                </button>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "10px 12px", alignItems: "end" }}>
                 <F label="Latitude *" error={e(idx, "latitude")}>

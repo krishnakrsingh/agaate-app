@@ -418,7 +418,7 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
 
           {/* Step content — flat, no outer card */}
           {step === 1 && <OnboardingStepClient value={data.client} onChange={(client) => setData((d) => ({ ...d, client }))} errors={errors} idempotencyKey={data.idempotencyKey} asyncIssue={asyncIssue} onAsyncIssue={setAsyncIssue} existingClientId={existingClientId} />}
-          {step === 2 && <OnboardingStepFarms value={data.farms} onChange={(farms) => setData((d) => ({ ...d, farms }))} errors={errors} />}
+          {step === 2 && <OnboardingStepFarms value={data.farms} onChange={(farms) => setData((d) => ({ ...d, farms }))} errors={errors} client={data.client} />}
           {step === 3 && <OnboardingStepPlots plots={data.plots} farms={data.farms} onChange={(plots) => setData((d) => ({ ...d, plots }))} errors={errors} />}
           {step === 4 && <OnboardingStepTeam value={data.team} onChange={(team) => setData((d) => ({ ...d, team }))} errors={errors} clientName={data.client.name} clientEmail={data.client.email ?? ""} />}
           {step === 5 && <OnboardingStepReview data={data} submitting={submitting} submitError={submitError} onActivate={activate} />}

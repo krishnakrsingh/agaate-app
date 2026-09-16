@@ -1,4 +1,4 @@
- mport { PrismaClient, Role, FarmStatus, FarmSetupStage, PlotStatus } from "@prisma/client";
+import { PrismaClient, Role, FarmStatus, FarmSetupStage, PlotStatus } from "@prisma/client";
 
 // Regional agricultural hubs across India
 const REGIONS = [
