@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
-import { requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
+import { getCropCycleDetailPageData } from "@/modules/cropping";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Icons } from "@/components/icons";
@@ -21,64 +20,8 @@ export default async function CropCycleDetailPage({
 
   let cycle;
   try {
-    cycle = await prisma.cropCycle.findUniqueOrThrow({
-      where: { id: cycleId, plotId },
-      include: {
-        plot: {
-          include: {
-            farm: { select: { id: true, name: true, location: true } },
-          },
-        },
-        varieties: true,
-        milestones: {
-          orderBy: { targetDate: "asc" },
-          include: {
-            tasks: {
-              include: {
-                assignedOfficer: { select: { name: true } },
-                executions: {
-                  include: {
-                    materials: true,
-                    labour: true,
-                    media: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        monitoring: {
-          orderBy: { createdAt: "desc" },
-          include: {
-            officer: { select: { name: true } },
-            media: true,
-          },
-        },
-        incidents: {
-          orderBy: { createdAt: "desc" },
-          include: {
-            reporter: { select: { name: true } },
-            media: true,
-            followUps: true,
-          },
-        },
-        tasks: {
-          orderBy: { dueDate: "asc" },
-          include: {
-            assignedOfficer: { select: { name: true } },
-            executions: {
-              include: {
-                materials: true,
-                labour: true,
-                media: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    await requireFarmAccess(cycle.plot.farmId);
+    const data = await getCropCycleDetailPageData({ plotId, cycleId });
+    cycle = data.cycle;
   } catch {
     return notFound();
   }

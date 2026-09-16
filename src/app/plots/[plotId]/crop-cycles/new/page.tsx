@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
-import { requireFarmAccess } from "@/lib/access";
+import { getNewCropCyclePageData } from "@modules/cropping";
 import { CropCycleForm } from "@modules/cropping/ui/crop-cycle-form";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
@@ -18,11 +17,8 @@ export default async function NewCropCyclePage({
 
   let plot;
   try {
-    plot = await prisma.plot.findUniqueOrThrow({
-      where: { id: plotId },
-      include: { farm: { select: { id: true, name: true } } },
-    });
-    await requireFarmAccess(plot.farmId, true);
+    const data = await getNewCropCyclePageData({ plotId });
+    plot = data.plot;
   } catch {
     return notFound();
   }

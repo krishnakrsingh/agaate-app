@@ -13,8 +13,8 @@
 | operations | NOT_STARTED | Next up (task machine) |
 | attendance | NOT_STARTED | After operations |
 | estates | VERIFIED (complete) | Phase C + D + D.1: `src/modules/estates/{domain,application,infrastructure,schemas}` complete. Primary CRUD + sub-resources (`/activate`, `/access`, `/task-pins`) modularized to pure adapters; `src/app/farms/[farmId]/page.tsx` Prisma removed; pure policy tests green; pinned by THIN_ROUTES. |
-| plots | VERIFIED (complete) | Phase C + D: `src/modules/plots/{domain,application,infrastructure,schemas,ui}` complete. `GET/POST /api/plots`, `GET/PATCH/DELETE /api/plots/[plotId]`, `POST /api/farms/[farmId]/plots` thinned to pure adapters; pages Prisma removed; spatial canonically consumed; pinned by THIN_ROUTES. |
-| cropping/agronomy/incidents/harvest/inventory/finance/reporting/audit/media/organization | NOT_STARTED | In plan order |
+| cropping | VERIFIED (slice 1) | Phase E: `src/modules/cropping/{domain,application,infrastructure,schemas,ui}` established. `POST /api/plots/[plotId]/crop-cycles` and `GET/PATCH/DELETE /api/plots/[plotId]/crop-cycles/[cycleId]` modularized to thin adapters. Direct Prisma removed from crop pages (`new`, `[cycleId]`, `[cycleId]/edit`). Pure policy unit tests & boundaries tests green; pinned in `THIN_ROUTES` and `PAGE_PRISMA_COUNT: 29`. |
+| agronomy/incidents/harvest/inventory/finance/reporting/audit/media/organization | NOT_STARTED | In plan order |
 | Role-tree collapse (hq/officer/owner) | IN_PROGRESS (filesystem) | Checkpoint 4: pages nested under `(control)/(estate)/(field)` groups — URLs byte-stable, no group layouts (inherit root). Business-rule collapse still LAST. |
 | Components → domain ui/ | MIGRATED | Checkpoint 4: ~114 components git-mv'd to `modules/*/ui/`; nav consolidated to `components/navigation/`; 9 empty role dirs removed. Debt (gods/dead/duplicates) in UI_TECHNICAL_DEBT.md. |
 | Legacy | — | No `modules/legacy` created: nothing is abandoned yet; nothing dumped |

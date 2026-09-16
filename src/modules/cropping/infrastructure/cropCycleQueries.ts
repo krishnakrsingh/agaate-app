@@ -284,12 +284,21 @@ export async function findCropCycleForDetailPage(
         orderBy: { createdAt: "desc" },
         include: {
           reporter: { select: { name: true } },
+          media: true,
+          followUps: true,
         },
       },
-      harvests: {
-        orderBy: { date: "desc" },
+      tasks: {
+        orderBy: { dueDate: "asc" },
         include: {
-          logger: { select: { name: true } },
+          assignedOfficer: { select: { name: true } },
+          executions: {
+            include: {
+              materials: true,
+              labour: true,
+              media: true,
+            },
+          },
         },
       },
     },

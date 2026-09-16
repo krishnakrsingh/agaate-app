@@ -57,6 +57,7 @@ const PURE_FILES = [
   "src/modules/operations/schemas/completion.ts",
   "src/modules/estates/domain/estatePolicy.ts",
   "src/modules/plots/domain/plotPolicy.ts",
+  "src/modules/cropping/domain/cropCyclePolicy.ts",
 ];
 
 // Physical locations killed by checkpoint 3 (git mv). If any reappears,
@@ -103,10 +104,10 @@ const BANNED_APP_DIRS = [
   "src/app/officer",
 ];
 
-// Server pages with direct Prisma reads (checkpoint-4 audit: 35; checkpoint-8 estates/plots: 32). May only
-// shrink as reporting/estates/operations slices introduce query modules.
+// Server pages with direct Prisma reads (checkpoint-4 audit: 35; checkpoint-8 estates/plots: 32; phase E cropping: 29). May only
+// shrink as reporting/estates/operations/cropping slices introduce query modules.
 // Exact-count pin: fails loudly on growth AND on unrecorded shrinkage.
-const PAGE_PRISMA_COUNT = 32;
+const PAGE_PRISMA_COUNT = 29;
 
 // UI components with direct Prisma access (checkpoint-3 audit, paths updated
 // checkpoint 4). NOT allowed to grow: offenders must stay a subset of this
@@ -136,6 +137,8 @@ const THIN_ROUTES = [
   "src/app/api/plots/route.ts",
   "src/app/api/plots/[plotId]/route.ts",
   "src/app/api/farms/[farmId]/plots/route.ts",
+  "src/app/api/plots/[plotId]/crop-cycles/route.ts",
+  "src/app/api/plots/[plotId]/crop-cycles/[cycleId]/route.ts",
 ];
 
 const BANNED_IN_PURE = ["react", "next/", "next-", "@prisma/", "@/lib/prisma", "server-only", "next/headers", "next/server"];
@@ -290,6 +293,7 @@ describe("architecture boundaries", () => {
     expect(existsSync(join(SRC, "modules", "attendance", "index.ts"))).toBe(true);
     expect(existsSync(join(SRC, "modules", "estates", "index.ts"))).toBe(true);
     expect(existsSync(join(SRC, "modules", "plots", "index.ts"))).toBe(true);
+    expect(existsSync(join(SRC, "modules", "cropping", "index.ts"))).toBe(true);
     const violations: string[] = [];
     const modRe = /@\/(?:modules)\/([^/"']+)\/([^"']*)/;
     const aliasRe = /@(?:modules)\/([^/"']+)\/([^"']*)/;
@@ -379,6 +383,23 @@ describe("architecture boundaries", () => {
     const plots = (await import("@/modules/plots")) as Record<string, unknown>;
     for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "getOwnerLandData", "createPlot", "updatePlot", "archivePlot", "assertPlotAreaWithinRemaining"]) {
       expect(plots[key], `modules/plots missing ${key}`).toBeDefined();
+    }
+    const cropping = (await import("@/modules/cropping")) as Record<string, unknown>;
+    for (const key of [
+      "createCropCycle",
+      "getCropCycleDetail",
+      "updateCropCycle",
+      "deleteCropCycle",
+      "getNewCropCyclePageData",
+      "getCropCycleDetailPageData",
+      "getEditCropCyclePageData",
+      "canTransitionCropCycle",
+      "calculatedInfrastructure",
+      "milestoneTemplates",
+      "assertStandardMilestones",
+      "CropCycleFault",
+    ]) {
+      expect(cropping[key], `modules/cropping missing ${key}`).toBeDefined();
     }
   });
 });
