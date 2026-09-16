@@ -12,7 +12,9 @@
 | lib boundary rule | ESTABLISHED | Business logic leaves lib; infra stays; shared only when justified. Read path adds: query mechanics → operations, envelope/pagination/date-truncation stay (transport/shared pending). |
 | operations | NOT_STARTED | Next up (task machine) |
 | attendance | NOT_STARTED | After operations |
-| estates/cropping/agronomy/incidents/harvest/inventory/finance/reporting/audit/media/organization | NOT_STARTED | In plan order |
+| estates (slice) | VERIFIED (physical) | Phase C: `src/modules/estates/{domain,application,infrastructure,schemas}` created; `GET /api/farms` & `GET /api/farms/[farmId]` thinned to pure adapters; `src/app/farms/[farmId]/page.tsx` Prisma removed; pure policy tests green. `admin-farm-registry.tsx` eliminated. |
+| plots (slice) | VERIFIED (physical) | Phase C: `src/modules/plots/{domain,application,infrastructure,schemas,ui}` created; `plot-edit-form`, `plot-form`, `plots-explorer` git-mv'd from estates; `GET /api/plots` & `GET /api/plots/[plotId]` thinned to pure adapters; `src/app/plots/[plotId]/page.tsx` & `src/app/(estate)/owner/land/page.tsx` Prisma removed; pure policy tests green. |
+| cropping/agronomy/incidents/harvest/inventory/finance/reporting/audit/media/organization | NOT_STARTED | In plan order |
 | Role-tree collapse (hq/officer/owner) | IN_PROGRESS (filesystem) | Checkpoint 4: pages nested under `(control)/(estate)/(field)` groups — URLs byte-stable, no group layouts (inherit root). Business-rule collapse still LAST. |
 | Components → domain ui/ | MIGRATED | Checkpoint 4: ~114 components git-mv'd to `modules/*/ui/`; nav consolidated to `components/navigation/`; 9 empty role dirs removed. Debt (gods/dead/duplicates) in UI_TECHNICAL_DEBT.md. |
 | Legacy | — | No `modules/legacy` created: nothing is abandoned yet; nothing dumped |
