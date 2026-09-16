@@ -3,6 +3,8 @@ import {
   canTransitionEstate,
   assertCultivableWithinTotal,
   assertCanActivateEstate,
+  assertValidEstateStatusTransition,
+  assertCultivableNotBelowAllocated,
   EstateFault,
 } from "./estatePolicy";
 
@@ -85,5 +87,19 @@ describe("estatePolicy domain rules", () => {
     ];
     const res = assertCanActivateEstate("SETUP", plots);
     expect(res.ready).toBe(true);
+  });
+
+  it("asserts valid status transition or throws EstateFault", () => {
+    expect(() => assertValidEstateStatusTransition("SETUP", "SETUP")).not.toThrow();
+    expect(() => assertValidEstateStatusTransition("SETUP", "ACTIVE")).not.toThrow();
+    expect(() => assertValidEstateStatusTransition("SETUP", "COMPLETED")).toThrow(EstateFault);
+    expect(() => assertValidEstateStatusTransition("COMPLETED", "ACTIVE")).toThrow(EstateFault);
+  });
+
+  it("asserts cultivable area not below allocated plots area", () => {
+    expect(() => assertCultivableNotBelowAllocated(10, 8)).not.toThrow();
+    expect(() => assertCultivableNotBelowAllocated(10, 10)).not.toThrow();
+    expect(() => assertCultivableNotBelowAllocated(9.9, 10)).toThrow(EstateFault);
+    expect(() => assertCultivableNotBelowAllocated(9.9, 10)).toThrow("Cultivable area cannot be reduced below the area already allocated to plots.");
   });
 });

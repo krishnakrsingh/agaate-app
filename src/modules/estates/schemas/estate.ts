@@ -48,6 +48,19 @@ export const estatePatchSchema = z.object({
 
 export type EstatePatchInput = z.infer<typeof estatePatchSchema>;
 
+export const estateOfficerAssignSchema = z.object({
+  userId: z.string().min(1),
+  canManage: z.boolean().default(false),
+});
+
+export type EstateOfficerAssignInput = z.infer<typeof estateOfficerAssignSchema>;
+
+export const estateOfficerUnassignSchema = z.object({
+  userId: z.string().min(1),
+});
+
+export type EstateOfficerUnassignInput = z.infer<typeof estateOfficerUnassignSchema>;
+
 export interface EstateListFilters {
   search?: string;
   clientId?: string;

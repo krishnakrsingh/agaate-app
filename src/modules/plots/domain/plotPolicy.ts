@@ -42,3 +42,15 @@ export function assertIrrigationValid(entries: IrrigationEntry[]): void {
     }
   }
 }
+
+export function assertPlotCanBeEdited(status: string): void {
+  if (status === "ARCHIVED") {
+    throw new PlotFault(422, { error: "An archived plot cannot be edited." });
+  }
+}
+
+export function assertPlotCanBeArchived(activeOrPlannedCyclesCount: number): void {
+  if (activeOrPlannedCyclesCount > 0) {
+    throw new PlotFault(409, { error: "A plot with active/planned crop cycles cannot be archived." });
+  }
+}

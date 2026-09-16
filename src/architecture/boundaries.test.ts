@@ -128,6 +128,14 @@ const COMPONENT_PRISMA_GRANDFATHER = [
 const THIN_ROUTES = [
   "src/app/api/tasks/[taskId]/complete/route.ts",
   "src/app/api/tasks/route.ts",
+  "src/app/api/farms/route.ts",
+  "src/app/api/farms/[farmId]/route.ts",
+  "src/app/api/farms/[farmId]/activate/route.ts",
+  "src/app/api/farms/[farmId]/access/route.ts",
+  "src/app/api/farms/[farmId]/task-pins/route.ts",
+  "src/app/api/plots/route.ts",
+  "src/app/api/plots/[plotId]/route.ts",
+  "src/app/api/farms/[farmId]/plots/route.ts",
 ];
 
 const BANNED_IN_PURE = ["react", "next/", "next-", "@prisma/", "@/lib/prisma", "server-only", "next/headers", "next/server"];
@@ -365,11 +373,11 @@ describe("architecture boundaries", () => {
       expect(operations[key], `modules/operations missing ${key}`).toBeDefined();
     }
     const estates = (await import("@/modules/estates")) as Record<string, unknown>;
-    for (const key of ["listEstates", "getEstateDetail", "getEstateCommandCenter", "canTransitionEstate", "assertCultivableWithinTotal"]) {
+    for (const key of ["listEstates", "getEstateDetail", "getEstateCommandCenter", "createEstate", "updateEstate", "activateEstate", "listEstateAccess", "assignEstateOfficer", "unassignEstateOfficer", "getEstateTaskPins", "canTransitionEstate", "assertCultivableWithinTotal"]) {
       expect(estates[key], `modules/estates missing ${key}`).toBeDefined();
     }
     const plots = (await import("@/modules/plots")) as Record<string, unknown>;
-    for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "getOwnerLandData", "assertPlotAreaWithinRemaining"]) {
+    for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "getOwnerLandData", "createPlot", "updatePlot", "archivePlot", "assertPlotAreaWithinRemaining"]) {
       expect(plots[key], `modules/plots missing ${key}`).toBeDefined();
     }
   });

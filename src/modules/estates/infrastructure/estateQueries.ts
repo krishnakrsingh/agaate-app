@@ -7,6 +7,8 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { EstateCreateInput, EstateListFilters } from "../schemas/estate";
 import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
+import { commitBoundary } from "@modules/spatial";
+import { assertCultivableNotBelowAllocated } from "../domain/estatePolicy";
 
 type Db = Pick<PrismaClient, "farm" | "plot" | "auditLog">;
 
@@ -256,4 +258,200 @@ export async function createEstateRecord(
       },
     },
   });
+}
+
+export async function findEstateForPatch(db: Db, estateId: string) {
+  return db.farm.findUniqueOrThrow({
+    where: { id: estateId },
+    select: { status: true, totalArea: true, cultivableArea: true },
+  });
+}
+
+export async function countEstateActivePlots(db: Db, estateId: string) {
+  return db.plot.count({ where: { farmId: estateId, deletedAt: null } });
+}
+
+export type BoundaryIntent =
+  | { kind: "keep" }
+  | { kind: "set"; geoJson: string; acres: number }
+  | { kind: "clear" };
+
+export async function updateEstateWithBoundaryTransaction(
+  prismaClient: PrismaClient,
+  args: {
+    estateId: string;
+    updateData: Record<string, unknown>;
+    boundaryIntent: BoundaryIntent;
+    cultivableArea: number;
+    actor: { id: string; name?: string | null };
+  }
+) {
+  const { estateId, updateData, boundaryIntent, cultivableArea, actor } = args;
+
+  const { result: farm } = await prismaClient.$transaction(async (tx) => {
+    await tx.$queryRawUnsafe("SELECT id FROM `Farm` WHERE id = ? FOR UPDATE", estateId);
+    const allocated = await tx.plot.aggregate({
+      where: { farmId: estateId, deletedAt: null },
+      _sum: { area: true },
+    });
+    const totalAllocated = Math.round(Number(allocated._sum.area ?? 0) * 100) / 100;
+    assertCultivableNotBelowAllocated(cultivableArea, totalAllocated);
+
+    if (boundaryIntent.kind === "keep") {
+      const unchanged = await tx.farm.update({ where: { id: estateId }, data: updateData });
+      return { result: unchanged };
+    }
+
+    const b =
+      boundaryIntent.kind === "set"
+        ? { geoJson: boundaryIntent.geoJson, acres: boundaryIntent.acres }
+        : { geoJson: null, acres: null };
+
+    return commitBoundary(
+      tx,
+      { type: "FARM", id: estateId },
+      b,
+      { source: "MANUAL_DRAW", actorId: actor.id, actorName: actor.name ?? undefined },
+      async (t) =>
+        t.farm.update({
+          where: { id: estateId },
+          data: { ...updateData, boundaryGeoJson: b.geoJson, measuredAcres: b.acres },
+        })
+    );
+  });
+
+  return farm;
+}
+
+export async function findEstateForActivation(db: Db, estateId: string) {
+  const prismaDb = db as unknown as PrismaClient;
+  return prismaDb.farm.findUniqueOrThrow({
+    where: { id: estateId },
+    include: {
+      plots: {
+        where: { deletedAt: null, status: { not: "ARCHIVED" } },
+        include: {
+          cropCycles: {
+            where: { status: { in: ["PLANNED", "ACTIVE"] } },
+            include: { milestones: true },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function activateEstateTransaction(prismaClient: PrismaClient, estateId: string) {
+  return prismaClient.$transaction(async (tx) => {
+    const active = await tx.farm.update({
+      where: { id: estateId },
+      data: { status: "ACTIVE" },
+    });
+
+    await tx.plot.updateMany({
+      where: { farmId: estateId, status: "SETUP", deletedAt: null },
+      data: { status: "ACTIVE" },
+    });
+
+    await tx.cropCycle.updateMany({
+      where: { plot: { farmId: estateId }, status: "PLANNED" },
+      data: { status: "ACTIVE" },
+    });
+
+    return active;
+  });
+}
+
+export async function findEstateAccessList(db: Db, estateId: string) {
+  const prismaDb = db as unknown as PrismaClient;
+  const [access, users] = await Promise.all([
+    prismaDb.farmAccess.findMany({
+      where: { farmId: estateId },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true, active: true },
+        },
+      },
+    }),
+    prismaDb.user.findMany({
+      where: { role: "FARM_OFFICER", active: true },
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  return { access, users };
+}
+
+export async function findUserForOfficerAssignment(db: Db, userId: string) {
+  const prismaDb = db as unknown as PrismaClient;
+  return prismaDb.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { role: true, active: true },
+  });
+}
+
+export async function assignEstateOfficerTransaction(
+  prismaClient: PrismaClient,
+  args: { estateId: string; userId: string; canManage?: boolean }
+) {
+  const { estateId, userId, canManage = false } = args;
+  return prismaClient.$transaction(async (tx) => {
+    const access = await tx.farmAccess.upsert({
+      where: { userId_farmId: { userId, farmId: estateId } },
+      update: { canManage },
+      create: { userId, farmId: estateId, canManage },
+    });
+
+    await tx.task.updateMany({
+      where: { farmId: estateId, assignedOfficerId: null, origin: "SYSTEM", status: "AVAILABLE" },
+      data: { assignedOfficerId: userId, status: "ASSIGNED" },
+    });
+
+    return access;
+  });
+}
+
+export async function unassignEstateOfficerRecord(db: Db, estateId: string, userId: string) {
+  const prismaDb = db as unknown as PrismaClient;
+  return prismaDb.farmAccess.delete({
+    where: { userId_farmId: { userId, farmId: estateId } },
+  });
+}
+
+const TASK_PIN_STATUSES = ["DRAFT", "ASSIGNED", "AVAILABLE", "IN_PROGRESS", "COMPLETED", "CANCELLED", "BLOCKED"] as const;
+
+export async function findEstateTaskPinsData(
+  db: Db,
+  estateId: string,
+  statusParam?: string | null
+) {
+  const prismaDb = db as unknown as PrismaClient;
+  const farm = await prismaDb.farm.findUniqueOrThrow({
+    where: { id: estateId },
+    select: { id: true, name: true, boundaryGeoJson: true, latitude: true, longitude: true },
+  });
+
+  const tasks = await prismaDb.task.findMany({
+    where: {
+      farmId: estateId,
+      plotId: { not: null },
+      ...(statusParam && statusParam !== "ALL" && (TASK_PIN_STATUSES as readonly string[]).includes(statusParam)
+        ? { status: statusParam as (typeof TASK_PIN_STATUSES)[number] }
+        : { status: { notIn: ["COMPLETED", "CANCELLED"] as const } }),
+    },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      priority: true,
+      dueDate: true,
+      plot: { select: { id: true, name: true, boundaryGeoJson: true, latitude: true, longitude: true } },
+      assignedOfficer: { select: { name: true } },
+    },
+    orderBy: { dueDate: "asc" },
+    take: 200,
+  });
+
+  return { farm, tasks };
 }

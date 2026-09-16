@@ -10,6 +10,9 @@ export { listPlots } from "./application/listPlots";
 export { getPlotDetail } from "./application/getPlotDetail";
 export { getPlotPageData } from "./application/getPlotPageData";
 export { getOwnerLandData } from "./application/getOwnerLandData";
+export { createPlot } from "./application/createPlot";
+export { updatePlot } from "./application/updatePlot";
+export { archivePlot } from "./application/archivePlot";
 export {
   plotCreateSchema,
   plotPatchSchema,
@@ -23,6 +26,8 @@ export {
   PLOT_STATUSES,
   assertPlotAreaWithinRemaining,
   assertIrrigationValid,
+  assertPlotCanBeEdited,
+  assertPlotCanBeArchived,
   PlotFault,
   type PlotStatus,
   type IrrigationEntry,

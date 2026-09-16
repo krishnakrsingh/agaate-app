@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   assertPlotAreaWithinRemaining,
   assertIrrigationValid,
+  assertPlotCanBeEdited,
+  assertPlotCanBeArchived,
   PlotFault,
 } from "./plotPolicy";
 
@@ -43,5 +45,16 @@ describe("plotPolicy domain rules", () => {
     expect(() =>
       assertIrrigationValid([{ type: "Other" }])
     ).toThrow("Details are required for Other irrigation type.");
+  });
+
+  it("asserts plot can be edited unless archived", () => {
+    expect(() => assertPlotCanBeEdited("SETUP")).not.toThrow();
+    expect(() => assertPlotCanBeEdited("ACTIVE")).not.toThrow();
+    expect(() => assertPlotCanBeEdited("ARCHIVED")).toThrow("An archived plot cannot be edited.");
+  });
+
+  it("asserts plot can be archived only without active/planned cycles", () => {
+    expect(() => assertPlotCanBeArchived(0)).not.toThrow();
+    expect(() => assertPlotCanBeArchived(1)).toThrow("A plot with active/planned crop cycles cannot be archived.");
   });
 });

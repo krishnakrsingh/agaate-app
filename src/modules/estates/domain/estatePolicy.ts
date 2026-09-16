@@ -31,9 +31,27 @@ export function canTransitionEstate(from: string, to: string): boolean {
   return ESTATE_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
+export function assertValidEstateStatusTransition(currentStatus: string, targetStatus: string): void {
+  if (currentStatus === targetStatus) return;
+  const allowed = ESTATE_STATUS_TRANSITIONS[currentStatus] ?? [];
+  if (!allowed.includes(targetStatus)) {
+    throw new EstateFault(409, {
+      error: `Invalid farm status transition from ${currentStatus} to ${targetStatus}. Allowed: ${allowed.join(", ") || "none (terminal)"}.`,
+    });
+  }
+}
+
 export function assertCultivableWithinTotal(cultivableArea: number, totalArea: number): void {
   if (cultivableArea > totalArea) {
     throw new EstateFault(422, { error: "Cultivable area cannot exceed total area." });
+  }
+}
+
+export function assertCultivableNotBelowAllocated(cultivableArea: number, totalAllocatedPlotsArea: number): void {
+  const roundedAllocated = Math.round(totalAllocatedPlotsArea * 100) / 100;
+  const roundedCultivable = Math.round(cultivableArea * 100) / 100;
+  if (roundedAllocated > roundedCultivable) {
+    throw new EstateFault(422, { error: "Cultivable area cannot be reduced below the area already allocated to plots." });
   }
 }
 
