@@ -165,6 +165,7 @@ export function OnboardingStepFarms({
       id: "client_owner",
       name: `${client.name} (Client Primary)`,
       phone: client.phone,
+      email: client.email || null,
       role: "LOCAL",
     });
   }

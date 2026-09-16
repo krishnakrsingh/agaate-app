@@ -52,8 +52,9 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
       {/* Existing Client Alert Banner */}
       {existingClientId && (
         <div style={{
-          background: "linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.02) 100%)",
-          border: "1px solid rgba(16, 185, 129, 0.3)",
+          background: "var(--surface-card)",
+          border: "1px solid var(--hairline)",
+          borderLeft: "3.5px solid var(--green, #15803d)",
           borderRadius: 12,
           padding: "12px 16px",
           display: "flex",
@@ -62,7 +63,7 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           gap: 12,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#10b981", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--green, #15803d)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>
               ✓
             </div>
             <div>

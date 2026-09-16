@@ -131,10 +131,10 @@ export const farmSchema = z
   .object({
     rowId: z.string().optional(),
     name: z.string().trim().min(2, "Farm name is required.").max(120),
-    area: numField("Area", 0.01, 100000),
+    area: numField("Area", 0.01, 100000).optional(),
     areaUnit: z.enum(["Acre", "Hectare", "Gunta"]).default("Acre"),
-    totalArea: numField("Total area", 0.01, 100000),
-    cultivableArea: numField("Cultivable area", 0.01, 100000),
+    totalArea: numField("Total area", 0.01, 100000).optional(),
+    cultivableArea: numField("Cultivable area", 0.01, 100000).optional(),
     localConnect: optionalText(150),
     localContactId: optionalText(100),
     localContactName: optionalText(120),
@@ -156,7 +156,11 @@ export const farmSchema = z
     boundaryRing: boundaryRingField,
   })
   .superRefine((data, ctx) => {
-    if (typeof data.totalArea === "number" && typeof data.cultivableArea === "number" && data.cultivableArea > data.totalArea) {
+    if (data.area === undefined && data.totalArea === undefined) {
+      ctx.addIssue({ code: "custom", path: ["area"], message: "Area is required." });
+    }
+    const tot = typeof data.totalArea === "number" ? data.totalArea : typeof data.area === "number" ? data.area : undefined;
+    if (typeof tot === "number" && typeof data.cultivableArea === "number" && data.cultivableArea > tot) {
       ctx.addIssue({ code: "custom", path: ["cultivableArea"], message: "Cultivable area cannot exceed total area." });
     }
   });

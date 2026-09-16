@@ -6,15 +6,18 @@ import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import {
-  clientSchema, farmSchema, flattenIssues, newIdempotencyKey,
-  plotSchema, submitSchema, teamSchema, type WizardData,
+  clientSchema, contactsSchema, farmSchema, flattenIssues, newIdempotencyKey,
+  plotSchema, cropSchema, submitSchema, teamSchema, type WizardData,
 } from "./onboarding-schema";
 import { clearLocal, hydrate, loadLocal, saveLocal, type StoredDraft } from "./onboarding-draft";
 import { ringWithinRing } from "@/lib/geo-core";
 import { OnboardingStepClient } from "./onboarding-step-client";
+import { OnboardingStepContacts } from "./onboarding-step-contacts";
 import { OnboardingStepFarms } from "./onboarding-step-farms";
 import { OnboardingStepPlots } from "./onboarding-step-plots";
+import { OnboardingStepCrops } from "./onboarding-step-crops";
 import { OnboardingStepTeam } from "./onboarding-step-team";
+import { OnboardingStepCompletion } from "./onboarding-step-completion";
 import { OnboardingStepReview, type ActivationResult } from "./onboarding-step-review";
 
 export type ServerDraftProp = {
@@ -22,11 +25,13 @@ export type ServerDraftProp = {
 } | null;
 
 const STEPS = [
-  { label: "Client", stepNum: 1, Icon: Icons.User },
-  { label: "Farms",  stepNum: 2, Icon: Icons.Farm },
-  { label: "Plots",  stepNum: 3, Icon: Icons.Plot },
-  { label: "Team",   stepNum: 4, Icon: Icons.Shield },
-  { label: "Review", stepNum: 5, Icon: Icons.CheckCircle },
+  { label: "Client",   stepNum: 1, Icon: Icons.User },
+  { label: "Contacts", stepNum: 2, Icon: Icons.Users },
+  { label: "Farm",     stepNum: 3, Icon: Icons.Farm },
+  { label: "Plots",    stepNum: 4, Icon: Icons.Plot },
+  { label: "Crops",    stepNum: 5, Icon: Icons.Leaf },
+  { label: "Team",     stepNum: 6, Icon: Icons.Shield },
+  { label: "Complete", stepNum: 7, Icon: Icons.CheckCircle },
 ];
 
 function plotCrossErrors(data: WizardData): Record<string, string> {
@@ -56,10 +61,56 @@ function plotCrossErrors(data: WizardData): Record<string, string> {
 }
 
 function validateStep(step: number, data: WizardData): Record<string, string> {
-  if (step === 1) { const r = clientSchema.safeParse(data.client); return r.success ? {} : flattenIssues(r.error); }
-  if (step === 2) { const out: Record<string, string> = {}; data.farms.forEach((f, i) => { const r = farmSchema.safeParse(f); if (!r.success) for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`farms.${i}.${k}`] = v; const br = (f.boundaryRing ?? null) as [number, number][] | null; if (br && br.length > 0 && br.length < 4) out[`farms.${i}.boundaryRing`] = "Incomplete fence — finish the polygon or clear it."; }); return out; }
-  if (step === 3) { const out: Record<string, string> = {}; data.plots.forEach((p, i) => { const r = plotSchema.safeParse(p); if (!r.success) for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`plots.${i}.${k}`] = v; }); return { ...out, ...plotCrossErrors(data) }; }
-  if (step === 4) { const r = teamSchema.safeParse(data.team); return r.success ? {} : flattenIssues(r.error); }
+  if (step === 1) {
+    const r = clientSchema.safeParse(data.client);
+    return r.success ? {} : flattenIssues(r.error);
+  }
+  if (step === 2) {
+    const r = contactsSchema.safeParse(data.contacts);
+    return r.success ? {} : flattenIssues(r.error);
+  }
+  if (step === 3) {
+    const out: Record<string, string> = {};
+    if (!data.farms || data.farms.length === 0) {
+      out["farms"] = "Please add at least one farm.";
+      return out;
+    }
+    data.farms.forEach((f, i) => {
+      const r = farmSchema.safeParse(f);
+      if (!r.success) {
+        for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`farms.${i}.${k}`] = v;
+      }
+      const br = (f.boundaryRing ?? null) as [number, number][] | null;
+      if (br && br.length > 0 && br.length < 4) {
+        out[`farms.${i}.boundaryRing`] = "Incomplete fence — finish the polygon or clear it.";
+      }
+    });
+    return out;
+  }
+  if (step === 4) {
+    const out: Record<string, string> = {};
+    data.plots.forEach((p, i) => {
+      const r = plotSchema.safeParse(p);
+      if (!r.success) {
+        for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`plots.${i}.${k}`] = v;
+      }
+    });
+    return { ...out, ...plotCrossErrors(data) };
+  }
+  if (step === 5) {
+    const out: Record<string, string> = {};
+    data.crops.forEach((c, i) => {
+      const r = cropSchema.safeParse(c);
+      if (!r.success) {
+        for (const [k, v] of Object.entries(flattenIssues(r.error))) out[`crops.${i}.${k}`] = v;
+      }
+    });
+    return out;
+  }
+  if (step === 6) {
+    const r = teamSchema.safeParse(data.team);
+    return r.success ? {} : flattenIssues(r.error);
+  }
   const r = submitSchema.safeParse(data);
   if (r.success) return {};
   const out: Record<string, string> = {};
@@ -68,6 +119,7 @@ function validateStep(step: number, data: WizardData): Record<string, string> {
     out[key] = v;
     // Remap prefixed keys so step components show field-level errors.
     if (key.startsWith("client.")) out[key.replace(/^client\./, "")] = v;
+    if (key.startsWith("contacts.")) out[key.replace(/^contacts\./, "")] = v;
     if (key.startsWith("team.")) out[key.replace(/^team\./, "")] = v;
   }
   return out;
@@ -149,13 +201,15 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
   };
 
   const activate = async () => {
-    const errs = validateStep(5, data);
+    const errs = validateStep(7, data);
     if (Object.keys(errs).length) {
       setErrors(errs); setSubmitError(null);
       if (errs["client.name"] || Object.keys(errs).some((k) => k.startsWith("client.")) || asyncIssue) setStep(1);
-      else if (Object.keys(errs).some((k) => k.startsWith("farms."))) setStep(2);
-      else if (Object.keys(errs).some((k) => k.startsWith("plots."))) setStep(3);
-      else if (Object.keys(errs).some((k) => k.startsWith("team."))) setStep(4);
+      else if (Object.keys(errs).some((k) => k.startsWith("contacts."))) setStep(2);
+      else if (Object.keys(errs).some((k) => k.startsWith("farms."))) setStep(3);
+      else if (Object.keys(errs).some((k) => k.startsWith("plots."))) setStep(4);
+      else if (Object.keys(errs).some((k) => k.startsWith("crops."))) setStep(5);
+      else if (Object.keys(errs).some((k) => k.startsWith("team."))) setStep(6);
       return;
     }
     if (asyncIssue) { setStep(1); return; }
@@ -165,9 +219,11 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
       const body = await res.json().catch(() => ({}));
       if (!res.ok) { setSubmitError(body.error ?? "Activation failed. Draft is safe — fix and retry."); return; }
       setResult(body as ActivationResult);
+      setStep(7);
+      setMaxVisited(7);
       clearLocal(draftIdRef.current);
       if (body.deduped) toast.show("Duplicate submit — original activation shown.", "info");
-      else toast.show("Client activated.", "success");
+      else toast.show("Farm setup activated successfully.", "success");
     } catch { setSubmitError("Network error. Draft is safe — retry when connected."); }
     finally { setSubmitting(false); }
   };
@@ -182,73 +238,6 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
       router.push("/hq/onboarding");
     } finally { setDiscarding(false); }
   };
-
-  // ── SUCCESS ──────────────────────────────────────────────────────────────
-  if (result) {
-    const showSheet = data.team.mode === "create" && result.credential.status === "ACTIVE" && !result.deduped;
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 640 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--green-ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icons.CheckCircle size={22} style={{ color: "#fff" }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{result.deduped ? "Already activated" : "Client activated"}</div>
-            <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>ID: <strong>{result.client.code}</strong></div>
-          </div>
-        </div>
-
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <tbody>
-            {[
-              { label: "Client", value: result.client.name },
-              { label: `Farms (${result.farms.length})`, value: result.farms.map((f) => f.name).join(", ") || "None" },
-              { label: `Plots (${result.plots.length})`, value: result.plots.map((p) => p.name).join(", ") || "None" },
-              { label: "Credentials", value: result.credential.status === "ACTIVE" ? `Login → ${result.credential.loginEmail}` : "Pending invite" },
-            ].map((r) => (
-              <tr key={r.label} style={{ borderBottom: "1px solid var(--hairline)" }}>
-                <td style={{ padding: "8px 0", color: "var(--muted)", width: 140, verticalAlign: "top" }}>{r.label}</td>
-                <td style={{ padding: "8px 0" }}>{r.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {showSheet && (
-          <div style={{ padding: "14px 16px", border: "1px solid var(--amber)", borderRadius: "var(--radius-md)", background: "var(--amber-light)" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--amber)", marginBottom: 10 }}>⚠ Show-once credentials — read to client now</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <tbody>
-                {[
-                  { label: "Email", value: result.credential.loginEmail },
-                  { label: "Password", value: data.team.password, mono: true },
-                  { label: "Page", value: result.credential.loginUrl },
-                ].map((r) => (
-                  <tr key={r.label}>
-                    <td style={{ padding: "4px 0", color: "var(--amber)", width: 80, verticalAlign: "top" }}>{r.label}</td>
-                    <td style={{ padding: "4px 0", fontFamily: r.mono ? "monospace" : undefined }}>{r.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => { const t = `Login: ${result.credential.loginEmail}\nPassword: ${data.team.password}\nPage: ${result.credential.loginUrl}`; try { const p = navigator.clipboard?.writeText(t); if (p?.then) p.then(() => toast.show("Copied.", "success"), () => toast.show("Copy failed — select manually.", "error")); else toast.show("Copy unavailable — select manually.", "error"); } catch { toast.show("Copy failed — select manually.", "error"); } }}>
-                <Icons.Copy size={13} /><span>Copy</span>
-              </button>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setData((d) => ({ ...d, team: { ...d.team, password: "", confirmPassword: "" } }))}>
-                <Icons.Eye size={13} /><span>Dismiss</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: 10 }}>
-          <Link className="btn btn-secondary" href="/hq/onboarding">Back to list</Link>
-          <Link className="btn btn-green" href="/hq/onboarding/new">Onboard another</Link>
-        </div>
-      </div>
-    );
-  }
 
   // ── WIZARD ───────────────────────────────────────────────────────────────
   const saveLabel = !online ? "Offline" : saveState === "saving" ? "Saving…" : saveState === "saved" && savedAt ? `Saved ${new Date(savedAt).toLocaleTimeString()}` : saveState === "error" ? "Save failed" : "";
@@ -342,9 +331,9 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
 
           {STEPS.map((s, i) => {
             const n = i + 1;
-            const done = n < step;
+            const done = n < step || (n === 7 && !!result);
             const active = n === step;
-            const locked = n > maxVisited;
+            const locked = n > maxVisited && !result;
             return (
               <button
                 key={s.label}
@@ -366,7 +355,7 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
                   width: 24, height: 24, borderRadius: "50%",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  background: done ? "#16a34a" : active ? "var(--ink)" : "var(--surface-card)",
+                  background: done ? "var(--green, #16a34a)" : active ? "var(--ink)" : "var(--surface-card)",
                   border: done ? "none" : active ? "none" : "1.5px solid var(--hairline-strong)",
                   color: done || active ? "#fff" : "var(--muted)",
                   boxShadow: active ? "0 2px 6px rgba(0,0,0,0.12)" : undefined,
@@ -385,12 +374,12 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
           <div className="ob-rail-foot" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--hairline)", display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{
               width: 7, height: 7, borderRadius: "50%",
-              background: saveState === "saving" ? "var(--amber)" : online ? "#22c55e" : "var(--muted)",
+              background: saveState === "saving" ? "var(--amber)" : online ? "var(--green, #22c55e)" : "var(--muted)",
               boxShadow: online && saveState === "saved" ? "0 0 6px rgba(34, 197, 94, 0.7)" : undefined,
               display: "inline-block", flexShrink: 0
             }} />
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)" }}>
-              {saveState === "saving" ? "Saving progress…" : online ? "Draft Auto-Saved" : "Saved Offline"}
+              {saveState === "saving" ? "Saving progress…" : online ? (saveLabel || "Draft Auto-Saved") : "Saved Offline"}
             </div>
           </div>
         </nav>
@@ -405,67 +394,142 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
               </span>
               <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "var(--ink)" }}>{STEPS[step - 1].label}</h2>
             </div>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ color: "var(--muted)", fontSize: 12, height: 30, padding: "4px 8px" }}
-              onClick={discard}
-              disabled={discarding}
-            >
-              <Icons.Trash size={13} /><span style={{ marginLeft: 4 }}>{discarding ? "Discarding…" : "Discard Draft"}</span>
-            </button>
-          </div>
-
-          {/* Step content — flat, no outer card */}
-          {step === 1 && <OnboardingStepClient value={data.client} onChange={(client) => setData((d) => ({ ...d, client }))} errors={errors} idempotencyKey={data.idempotencyKey} asyncIssue={asyncIssue} onAsyncIssue={setAsyncIssue} existingClientId={existingClientId} />}
-          {step === 2 && <OnboardingStepFarms value={data.farms} onChange={(farms) => setData((d) => ({ ...d, farms }))} errors={errors} client={data.client} />}
-          {step === 3 && <OnboardingStepPlots plots={data.plots} farms={data.farms} onChange={(plots) => setData((d) => ({ ...d, plots }))} errors={errors} />}
-          {step === 4 && <OnboardingStepTeam value={data.team} onChange={(team) => setData((d) => ({ ...d, team }))} errors={errors} clientName={data.client.name} clientEmail={data.client.email ?? ""} />}
-          {step === 5 && <OnboardingStepReview data={data} submitting={submitting} submitError={submitError} onActivate={activate} />}
-
-          {/* Nav — sticky so Continue is always visible without scrolling */}
-          <div
-            className="ob-nav"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => goStep(step - 1)}
-              disabled={step === 1}
-              style={{ padding: "6px 16px", height: 34, gap: 6 }}
-            >
-              <Icons.ArrowLeft size={13} />
-              <span>Back</span>
-            </button>
-            {step < 5 ? (
+            {!result && (
               <button
                 type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => goStep(step + 1)}
-                disabled={step === 1 && !!asyncIssue}
-                style={{ padding: "6px 20px", height: 34, gap: 6 }}
+                className="btn btn-ghost btn-sm"
+                style={{ color: "var(--muted)", fontSize: 12, height: 30, padding: "4px 8px" }}
+                onClick={discard}
+                disabled={discarding}
               >
-                <span>Continue to {STEPS[step]?.label}</span>
-                <Icons.ArrowRight size={13} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-green btn-sm"
-                onClick={activate}
-                disabled={submitting}
-                style={{ padding: "6px 22px", height: 34, gap: 6, fontWeight: 700 }}
-              >
-                <span>{submitting ? "Activating Client…" : "Activate Client & Estates"}</span>
-                <Icons.ArrowRight size={14} />
+                <Icons.Trash size={13} /><span style={{ marginLeft: 4 }}>{discarding ? "Discarding…" : "Discard Draft"}</span>
               </button>
             )}
           </div>
+
+          {/* Step content */}
+          {step === 1 && (
+            <OnboardingStepClient
+              value={data.client}
+              onChange={(client) => setData((d) => ({ ...d, client }))}
+              errors={errors}
+              idempotencyKey={data.idempotencyKey}
+              asyncIssue={asyncIssue}
+              onAsyncIssue={setAsyncIssue}
+              existingClientId={existingClientId}
+            />
+          )}
+          {step === 2 && (
+            <OnboardingStepContacts
+              value={data.contacts}
+              onChange={(contacts) => setData((d) => ({ ...d, contacts }))}
+              client={data.client}
+              errors={errors}
+            />
+          )}
+          {step === 3 && (
+            <OnboardingStepFarms
+              value={data.farms}
+              onChange={(farms) => setData((d) => ({ ...d, farms }))}
+              errors={errors}
+              client={data.client}
+              contacts={data.contacts}
+            />
+          )}
+          {step === 4 && (
+            <OnboardingStepPlots
+              plots={data.plots}
+              farms={data.farms}
+              onChange={(plots) => setData((d) => ({ ...d, plots }))}
+              errors={errors}
+            />
+          )}
+          {step === 5 && (
+            <OnboardingStepCrops
+              crops={data.crops}
+              plots={data.plots}
+              farms={data.farms}
+              onChange={(crops) => setData((d) => ({ ...d, crops }))}
+              errors={errors}
+            />
+          )}
+          {step === 6 && (
+            <OnboardingStepTeam
+              value={data.team}
+              onChange={(team) => setData((d) => ({ ...d, team }))}
+              errors={errors}
+              clientName={data.client.name}
+              clientEmail={data.client.email ?? ""}
+            />
+          )}
+          {step === 7 && (
+            result ? (
+              <OnboardingStepCompletion data={data} result={result} />
+            ) : (
+              <OnboardingStepReview
+                data={data}
+                submitting={submitting}
+                submitError={submitError}
+                onActivate={activate}
+              />
+            )
+          )}
+
+          {/* Nav — sticky so Continue is always visible without scrolling */}
+          {!(step === 7 && result) && (
+            <div
+              className="ob-nav"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => goStep(step - 1)}
+                disabled={step === 1}
+                style={{ padding: "6px 16px", height: 34, gap: 6 }}
+              >
+                <Icons.ArrowLeft size={13} />
+                <span>Back</span>
+              </button>
+              {step < 6 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => goStep(step + 1)}
+                  disabled={step === 1 && !!asyncIssue}
+                  style={{ padding: "6px 20px", height: 34, gap: 6 }}
+                >
+                  <span>Continue to {STEPS[step]?.label}</span>
+                  <Icons.ArrowRight size={13} />
+                </button>
+              ) : step === 6 ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => goStep(7)}
+                  style={{ padding: "6px 22px", height: 34, gap: 6, fontWeight: 700 }}
+                >
+                  <span>Review & Complete</span>
+                  <Icons.ArrowRight size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-green btn-sm"
+                  onClick={activate}
+                  disabled={submitting}
+                  style={{ padding: "6px 24px", height: 36, gap: 8, fontWeight: 700 }}
+                >
+                  <span>{submitting ? "Activating Farm Setup…" : "Activate Farm & Complete"}</span>
+                  <Icons.CheckCircle size={15} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>

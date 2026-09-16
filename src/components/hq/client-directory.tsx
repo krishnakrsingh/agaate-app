@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
+import { useToast } from "@/components/ui/toast";
 
 interface ClientRow {
   id: string;
@@ -20,82 +22,98 @@ interface ClientRow {
   totalAcreage: number;
 }
 
-interface SavedView {
-  name: string;
-  v: { search: string; status: string; state: string; sort: string };
-}
-
 const LIMIT = 20;
 const BULK_MAX = 50;
 
-function loadViews(): SavedView[] {
-  try {
-    return JSON.parse(localStorage.getItem("hq-client-views-v1") || "[]");
-  } catch {
-    return [];
-  }
+const STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh",
+  "Lakshadweep", "Puducherry",
+];
+
+const SORT_OPTIONS = [
+  { value: "name", label: "Name A–Z" },
+  { value: "farms", label: "Most farms" },
+  { value: "acreage", label: "Most acreage" },
+  { value: "recent", label: "Recently active" },
+];
+
+const QUICK_VIEWS = [
+  { label: "All clients", preset: {} },
+  { label: "Largest active", preset: { status: "ACTIVE", sort: "acreage" } },
+  { label: "Inactive", preset: { status: "INACTIVE" } },
+  { label: "Suspended", preset: { status: "SUSPENDED" } },
+];
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  ACTIVE: { label: "Active", color: "var(--green-ink)" },
+  INACTIVE: { label: "Inactive", color: "var(--red)" },
+  SUSPENDED: { label: "Suspended", color: "var(--amber)" },
+};
+
+function statusMeta(status: string) {
+  return STATUS_META[status.toUpperCase()] ?? { label: status, color: "var(--muted)" };
 }
 
-function StatusPill({ status }: { status: string }) {
-  const s = status.toUpperCase();
-  const map: Record<string, { bg: string; color: string; border: string; label: string }> = {
-    ACTIVE: {
-      bg: "rgba(34, 197, 94, 0.12)",
-      color: "#15803d",
-      border: "rgba(34, 197, 94, 0.25)",
-      label: "Active",
-    },
-    INACTIVE: {
-      bg: "rgba(239, 68, 68, 0.12)",
-      color: "#dc2626",
-      border: "rgba(239, 68, 68, 0.25)",
-      label: "Inactive",
-    },
-    SUSPENDED: {
-      bg: "rgba(245, 158, 11, 0.12)",
-      color: "#d97706",
-      border: "rgba(245, 158, 11, 0.25)",
-      label: "Suspended",
-    },
-  };
-  const style = map[s] ?? {
-    bg: "var(--surface-strong)",
-    color: "var(--muted)",
-    border: "var(--hairline)",
-    label: s,
-  };
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "—";
+  const diff = Date.now() - then;
+  const hour = 3600000;
+  const day = 86400000;
+  if (diff < hour) return "Just now";
+  if (diff < day) return `${Math.floor(diff / hour)}h ago`;
+  if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
+function fullTime(iso: string): string {
+  const d = new Date(iso);
+  return Number.isFinite(d.getTime()) ? d.toLocaleString() : "—";
+}
+
+function StatusDot({ status }: { status: string }) {
+  const meta = statusMeta(status);
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        padding: "3px 9px",
-        borderRadius: "9999px",
-        fontSize: 11,
-        fontWeight: 600,
-        background: style.bg,
-        color: style.color,
-        border: `1px solid ${style.border}`,
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: "50%",
-          background: style.color,
-          display: "inline-block",
-        }}
-      />
-      {style.label}
+    <span className="client-status" style={{ color: meta.color }}>
+      <span className="client-status-dot" style={{ background: meta.color }} />
+      {meta.label}
     </span>
   );
 }
 
-export function ClientDirectory() {
+function ClientIdentity({ c }: { c: ClientRow }) {
+  const primary = c.companyName?.trim() || c.name;
+  return (
+    <div className="client-identity">
+      <Link href={`/hq/clients/${c.id}`} className="client-name" title={primary}>
+        {primary}
+      </Link>
+      {c.companyName && c.name && c.name !== c.companyName && (
+        <span className="client-sub">{c.name}</span>
+      )}
+      <span className="client-code">{c.code}</span>
+    </div>
+  );
+}
+
+export function ClientDirectory({
+  canWrite = false,
+  canOnboard = false,
+}: {
+  canWrite?: boolean;
+  canOnboard?: boolean;
+}) {
+  const toast = useToast();
+  const router = useRouter();
   const [rows, setRows] = useState<ClientRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -106,16 +124,15 @@ export function ClientDirectory() {
   const [stateFilter, setStateFilter] = useState("");
   const [debouncedState, setDebouncedState] = useState("");
   const [sortBy, setSortBy] = useState("name");
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    setSavedViews(loadViews());
-  }, []);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -166,7 +183,8 @@ export function ClientDirectory() {
   }, [debouncedSearch, statusFilter, debouncedState, sortBy, page]);
 
   useEffect(() => {
-    load();
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
   }, [load]);
 
   const applyPreset = (
@@ -177,22 +195,10 @@ export function ClientDirectory() {
     setStateFilter(p.state ?? "");
     if (p.sort) setSortBy(p.sort);
     setPage(1);
+    setFiltersOpen(false);
   };
 
-  const saveView = () => {
-    const name = prompt("Save current filters as view:");
-    if (!name?.trim()) return;
-    const next = [
-      ...savedViews,
-      { name: name.trim(), v: { search, status: statusFilter, state: stateFilter, sort: sortBy } },
-    ];
-    setSavedViews(next);
-    try {
-      localStorage.setItem("hq-client-views-v1", JSON.stringify(next));
-    } catch {
-      /* storage unavailable */
-    }
-  };
+  const clearAll = () => applyPreset({});
 
   const toggleOne = (id: string) =>
     setSelected((prev) => {
@@ -214,12 +220,8 @@ export function ClientDirectory() {
       return next;
     });
 
-  const bulkStatus = async (status: "ACTIVE" | "INACTIVE") => {
-    const ids = Array.from(selected);
-    if (ids.length === 0) return;
-    if (!confirm(`Set ${ids.length} client(s) to ${status}?`)) return;
+  const patchStatus = async (ids: string[], status: "ACTIVE" | "INACTIVE") => {
     setBulkBusy(true);
-    setBulkMsg(null);
     try {
       const res = await fetch("/api/hq/clients", {
         method: "PATCH",
@@ -227,257 +229,241 @@ export function ClientDirectory() {
         body: JSON.stringify({ ids, status }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error || "Bulk update failed.");
-      setBulkMsg(`Updated ${body.updated} client(s) to ${status}.`);
+      if (!res.ok) throw new Error(body?.error || "Status update failed.");
+      toast.success(
+        ids.length === 1
+          ? `Client set to ${status.toLowerCase()}.`
+          : `Updated ${body.updated} client(s) to ${status}.`
+      );
       load();
     } catch (e) {
-      setBulkMsg(e instanceof Error ? e.message : "Bulk update failed.");
+      toast.error(e instanceof Error ? e.message : "Status update failed.");
     } finally {
       setBulkBusy(false);
     }
   };
 
+  const bulkStatus = async (status: "ACTIVE" | "INACTIVE") => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    await patchStatus(ids, status);
+  };
+
+  const copyCode = (code: string) => {
+    setOpenMenuId(null);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(
+        () => toast.success("Client code copied."),
+        () => toast.error("Could not copy to clipboard.")
+      );
+    } else {
+      toast.error("Clipboard unavailable in this browser.");
+    }
+  };
+
   const totalPages = Math.ceil(total / LIMIT) || 1;
-  const filtersActive = !!search || statusFilter !== "ALL" || !!stateFilter || sortBy !== "name";
+  const filtersActive = !!search || statusFilter !== "ALL" || !!stateFilter;
+  const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
+  const activeChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (stateFilter.trim())
+      chips.push({ key: "state", label: `State: ${stateFilter.trim()}`, onClear: () => setStateFilter("") });
+    if (statusFilter !== "ALL")
+      chips.push({
+        key: "status",
+        label: `Status: ${statusMeta(statusFilter).label}`,
+        onClear: () => setStatusFilter("ALL"),
+      });
+    return chips;
+  }, [stateFilter, statusFilter]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* ── Toolbar Controls Container ── */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          padding: 14,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          {/* Search Input */}
-          <div style={{ position: "relative", flex: 1, minWidth: 240, maxWidth: 380 }}>
-            <input
-              className="input-field"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, phone, or client code..."
-              style={{
-                paddingLeft: 34,
-                width: "100%",
-                fontSize: 13,
-                height: 36,
-                borderRadius: "var(--radius-md)",
-                border: "1px solid var(--hairline)",
-                background: "var(--canvas-floor)",
-              }}
-            />
-            <span
-              style={{
-                position: "absolute",
-                left: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--muted)",
-                pointerEvents: "none",
-              }}
-            >
-              <Icons.Search size={14} />
-            </span>
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--muted)",
-                  padding: 0,
-                }}
-              >
-                <Icons.X size={13} />
-              </button>
-            )}
-          </div>
+    <div className="client-dir">
+      <datalist id="hq-client-states">
+        {STATES.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
 
-          {/* State Filter */}
+      {/* ── Header ── */}
+      <header className="client-header">
+        <div className="client-header-text">
+          <h1 className="client-title">Clients</h1>
+          <p className="client-subtitle">Manage clients, farms and their operations.</p>
+        </div>
+        {canOnboard && (
+          <Link href="/hq/onboarding/new" className="btn btn-primary btn-sm client-add-btn">
+            <Icons.Plus size={14} />
+            <span>Add Client</span>
+          </Link>
+        )}
+      </header>
+
+      {/* ── Toolbar ── */}
+      <div className="client-toolbar">
+        <div className="client-search">
+          <Icons.Search size={14} className="client-search-icon" />
           <input
-            className="input-field"
+            className="input-field client-search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search clients…"
+            aria-label="Search clients by name, phone, code or business"
+          />
+          {search && (
+            <button
+              type="button"
+              className="client-search-clear"
+              onClick={() => setSearch("")}
+              aria-label="Clear search"
+            >
+              <Icons.X size={13} />
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm client-filters-toggle"
+          onClick={() => setMobileFiltersOpen((v) => !v)}
+          aria-expanded={mobileFiltersOpen}
+        >
+          <Icons.SlidersHorizontal size={13} />
+          <span>Filters{activeChips.length ? ` (${activeChips.length})` : ""}</span>
+        </button>
+
+        <div className={`client-controls ${mobileFiltersOpen ? "open" : ""}`}>
+          <input
+            className="input-field client-select"
+            list="hq-client-states"
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
-            placeholder="Filter State..."
-            style={{
-              width: 130,
-              fontSize: 13,
-              height: 36,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--hairline)",
-              background: "var(--canvas-floor)",
-            }}
-            title="Filter by state"
+            placeholder="State"
+            aria-label="Filter by state"
           />
 
-          {/* Status Select */}
           <select
-            className="input-field"
+            className="input-field client-select"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            style={{
-              fontSize: 13,
-              height: 36,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--hairline)",
-              background: "var(--canvas-floor)",
-              cursor: "pointer",
-            }}
+            aria-label="Filter by status"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="ACTIVE">Active Only</option>
-            <option value="INACTIVE">Inactive Only</option>
-            <option value="SUSPENDED">Suspended Only</option>
+            <option value="ALL">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="SUSPENDED">Suspended</option>
           </select>
 
-          {/* Sort Selector */}
+          <div className="client-popover-wrap">
+            <button
+              type="button"
+              className={`btn btn-secondary btn-sm client-more-btn ${filtersOpen ? "active" : ""}`}
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-haspopup="menu"
+            >
+              <Icons.SlidersHorizontal size={13} />
+              <span>More filters</span>
+              <Icons.ChevronDown size={12} />
+            </button>
+            {filtersOpen && (
+              <>
+                <button
+                  type="button"
+                  className="client-popover-backdrop"
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setFiltersOpen(false)}
+                />
+                <div role="menu" className="client-popover" onKeyDown={(e) => e.key === "Escape" && setFiltersOpen(false)}>
+                  <div className="client-popover-label">Quick views</div>
+                  {QUICK_VIEWS.map((v) => (
+                    <button
+                      key={v.label}
+                      type="button"
+                      role="menuitem"
+                      className="client-popover-item"
+                      onClick={() => applyPreset(v.preset)}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                  {filtersActive && (
+                    <>
+                      <div className="client-popover-divider" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="client-popover-item danger"
+                        onClick={clearAll}
+                      >
+                        <Icons.X size={13} /> Reset all filters
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="client-sort">
+          <span className="client-sort-label">Sort:</span>
           <select
-            className="input-field"
+            className="input-field client-select"
             value={sortBy}
             onChange={(e) => {
               setSortBy(e.target.value);
               setPage(1);
             }}
-            style={{
-              fontSize: 13,
-              height: 36,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--hairline)",
-              background: "var(--canvas-floor)",
-              cursor: "pointer",
-            }}
+            aria-label="Sort clients"
           >
-            <option value="name">Sort: Name A–Z</option>
-            <option value="farms">Sort: Most Farms</option>
-            <option value="acreage">Sort: Most Acreage</option>
-            <option value="recent">Sort: Recently Active</option>
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
-
-          <div style={{ display: "flex", gap: 6, marginLeft: "auto", alignItems: "center" }}>
-            {filtersActive && (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => applyPreset({})}
-                style={{ borderRadius: "var(--radius-md)" }}
-              >
-                <Icons.X size={12} /> Clear
-              </button>
-            )}
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={saveView}
-              style={{ borderRadius: "var(--radius-md)" }}
-            >
-              Save View
-            </button>
-          </div>
         </div>
+      </div>
 
-        {/* Preset Pills */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          {[
-            { label: "All Clients", preset: {} },
-            { label: "Largest Active", preset: { status: "ACTIVE", sort: "acreage" } },
-            { label: "Inactive", preset: { status: "INACTIVE" } },
-            { label: "Suspended", preset: { status: "SUSPENDED" } },
-          ].map(({ label, preset }) => (
-            <button
-              key={label}
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => applyPreset(preset)}
-              style={{ borderRadius: "var(--radius-pill)", fontSize: 12, padding: "3px 10px" }}
-            >
-              {label}
-            </button>
-          ))}
-
-          {savedViews.map((sv) => (
-            <span key={sv.name} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+      {/* ── Active filter chips ── */}
+      {activeChips.length > 0 && (
+        <div className="client-chips">
+          {activeChips.map((chip) => (
+            <span key={chip.key} className="client-chip">
+              {chip.label}
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setSearch(sv.v.search);
-                  setStatusFilter(sv.v.status);
-                  setStateFilter(sv.v.state);
-                  setSortBy(sv.v.sort);
-                  setPage(1);
-                }}
-                style={{ borderRadius: "var(--radius-pill)", fontSize: 12, padding: "3px 10px" }}
-              >
-                {sv.name}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = savedViews.filter((x) => x.name !== sv.name);
-                  setSavedViews(next);
-                  try {
-                    localStorage.setItem("hq-client-views-v1", JSON.stringify(next));
-                  } catch {
-                    /* unavailable */
-                  }
-                }}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--muted)",
-                  display: "flex",
-                  padding: 2,
-                }}
-                title={`Delete ${sv.name}`}
+                onClick={chip.onClear}
+                aria-label={`Remove ${chip.label} filter`}
               >
                 <Icons.X size={11} />
               </button>
             </span>
           ))}
+          <button type="button" className="client-chip-clear" onClick={clearAll}>
+            Clear all
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* ── Bulk Action Bar ── */}
-      {selected.size > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
-            padding: "10px 16px",
-            background: "var(--surface-strong)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-md)",
-            fontSize: 13,
-          }}
-        >
-          <strong style={{ color: "var(--ink)" }}>{selected.size} selected</strong>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>max {BULK_MAX}</span>
+      {/* ── Bulk action bar ── */}
+      {canWrite && selected.size > 0 && (
+        <div className="client-bulkbar">
+          <strong>{selected.size} selected</strong>
+          <span className="client-bulk-max">max {BULK_MAX}</span>
           <button
             type="button"
-            className="btn btn-green btn-sm"
+            className="btn btn-primary btn-sm"
             disabled={bulkBusy}
             onClick={() => bulkStatus("ACTIVE")}
           >
-            Set Active
+            Set active
           </button>
           <button
             type="button"
@@ -485,194 +471,58 @@ export function ClientDirectory() {
             disabled={bulkBusy}
             onClick={() => bulkStatus("INACTIVE")}
           >
-            Set Inactive
+            Set inactive
           </button>
-          <button
-            type="button"
-            onClick={() => setSelected(new Set())}
-            style={{
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              color: "var(--muted)",
-              fontSize: 12,
-            }}
-          >
-            Clear Selection
+          <button type="button" className="client-chip-clear" onClick={() => setSelected(new Set())}>
+            Clear selection
           </button>
-          {bulkMsg && <span style={{ fontSize: 12, color: "var(--muted)" }}>{bulkMsg}</span>}
         </div>
       )}
 
-      {/* ── Result Count Bar ── */}
+      {/* ── Count caption ── */}
       {!loading && !error && (
-        <div style={{ fontSize: 12, color: "var(--muted)", paddingLeft: 4 }}>
-          <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""} registered
+        <div className="client-count">
+          <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""}
           {filtersActive ? " matching filters" : ""}
-          {total > LIMIT ? ` • Page ${page} of ${totalPages}` : ""}
+          {total > LIMIT ? ` · Page ${page} of ${totalPages}` : ""}
         </div>
       )}
 
-      {/* ── Clean Client Table ── */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          overflow: "hidden",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-          <table
-            style={{
-              width: "100%",
-              minWidth: 720,
-              fontSize: 13,
-              borderCollapse: "collapse",
-            }}
-          >
+      {/* ── Desktop table ── */}
+      <div className="client-table-card">
+        <div className="client-table-scroll">
+          <table className="client-table">
             <thead>
-              <tr
-                style={{
-                  background: "var(--canvas-floor)",
-                  borderBottom: "1px solid var(--hairline)",
-                }}
-              >
-                <th style={{ width: 40, padding: "10px 14px", textAlign: "center" }}>
+              <tr>
+                <th className="client-check-col">
                   <input
                     type="checkbox"
-                    checked={rows.length > 0 && rows.every((r) => selected.has(r.id))}
+                    checked={allOnPageSelected}
                     onChange={togglePage}
-                    aria-label="Select page"
-                    style={{ cursor: "pointer" }}
+                    aria-label="Select all clients on this page"
                   />
                 </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Client & Account
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Phone
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Location
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "right",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Farms
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "right",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Plots
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "right",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Acreage
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "center",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Status
-                </th>
-                <th
-                  style={{
-                    padding: "10px 14px",
-                    textAlign: "right",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.05em",
-                    color: "var(--muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Action
-                </th>
+                <th>Client</th>
+                <th>Contact</th>
+                <th>Location</th>
+                <th className="client-num">Farms</th>
+                <th>Status</th>
+                <th className="client-activity-col">Last Activity</th>
+                <th className="client-actions-col" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={9}
-                    style={{ textAlign: "center", padding: 48, color: "var(--muted)" }}
-                  >
-                    Loading clients...
+                  <td colSpan={8} className="client-state-cell">
+                    <Icons.Spinner size={16} className="spin" /> Loading clients…
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: 48 }}>
-                    <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 6 }}>
-                      Could not load clients
-                    </div>
-                    <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 12px" }}>
-                      {error}
-                    </p>
+                  <td colSpan={8} className="client-state-cell">
+                    <div className="client-state-title">Couldn’t load clients</div>
+                    <p className="client-state-hint">{error}</p>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
                       Retry
                     </button>
@@ -680,167 +530,370 @@ export function ClientDirectory() {
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: 48 }}>
-                    <div style={{ fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                      No clients match your filter
-                    </div>
-                    <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
-                      Try adjusting the search keyword or filter settings.
-                    </p>
+                  <td colSpan={8} className="client-state-cell">
+                    <div className="client-state-title">No clients found</div>
+                    <p className="client-state-hint">Try changing your search or filters.</p>
+                    {filtersActive && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
+                        Clear all
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
-                rows.map((c) => (
-                  <tr
-                    key={c.id}
-                    style={{
-                      borderBottom: "1px solid var(--hairline)",
-                      transition: "background 0.12s ease",
-                    }}
-                  >
-                    <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "middle" }}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(c.id)}
-                        onChange={() => toggleOne(c.id)}
-                        aria-label={`Select ${c.name}`}
-                        style={{ cursor: "pointer" }}
-                      />
-                    </td>
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle" }}>
-                      <Link
-                        href={`/hq/clients/${c.id}`}
-                        style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}
+                rows.map((c) => {
+                  const menuOpen = openMenuId === c.id;
+                  return (
+                    <tr
+                      key={c.id}
+                      className="client-row"
+                      onClick={() => {
+                        if (!menuOpen) router.push(`/hq/clients/${c.id}`);
+                      }}
+                    >
+                      <td
+                        className="client-check-col"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {c.name}
-                      </Link>
-                      {c.companyName && (
-                        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>
-                          {c.companyName}
+                        <input
+                          type="checkbox"
+                          checked={selected.has(c.id)}
+                          onChange={() => toggleOne(c.id)}
+                          aria-label={`Select ${c.name}`}
+                        />
+                      </td>
+                      <td>
+                        <ClientIdentity c={c} />
+                      </td>
+                      <td className="client-contact-col">
+                        {c.companyName && c.name && (
+                          <span className="client-contact-name">{c.name}</span>
+                        )}
+                        {c.phone ? (
+                          <a href={`tel:${c.phone}`} className="client-phone" onClick={(e) => e.stopPropagation()}>
+                            {c.phone}
+                          </a>
+                        ) : (
+                          <span className="client-muted">—</span>
+                        )}
+                      </td>
+                      <td className="client-loc-col">
+                        {c.state || c.district ? (
+                          <span>
+                            {[c.district, c.state].filter(Boolean).join(", ")}
+                          </span>
+                        ) : (
+                          <span className="client-muted">—</span>
+                        )}
+                      </td>
+                      <td className="client-num">
+                        <Link
+                          href={`/hq/farms?clientId=${c.id}`}
+                          className="client-farms-link"
+                          onClick={(e) => e.stopPropagation()}
+                          title="View client farms"
+                        >
+                          {c.farmCount}
+                          <span className="client-farms-unit">
+                            {c.farmCount === 1 ? "farm" : "farms"}
+                          </span>
+                        </Link>
+                        {c.totalAcreage > 0 && (
+                          <span className="client-farms-acreage">
+                            {c.totalAcreage.toFixed(1)} ac
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <StatusDot status={c.status} />
+                      </td>
+                      <td className="client-activity-col">
+                        <span title={fullTime(c.updatedAt)}>{relativeTime(c.updatedAt)}</span>
+                      </td>
+                      <td className="client-actions-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="client-menu-wrap">
+                          <button
+                            type="button"
+                            className="client-kebab"
+                            aria-haspopup="menu"
+                            aria-expanded={menuOpen}
+                            aria-label={`Actions for ${c.name}`}
+                            onClick={() => setOpenMenuId(menuOpen ? null : c.id)}
+                          >
+                            <Icons.MoreVertical size={16} />
+                          </button>
+                          {menuOpen && (
+                            <>
+                              <button
+                                type="button"
+                                className="client-popover-backdrop"
+                                aria-hidden
+                                tabIndex={-1}
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <div
+                                role="menu"
+                                className="client-popover client-menu"
+                                onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
+                              >
+                                <Link
+                                  role="menuitem"
+                                  href={`/hq/clients/${c.id}`}
+                                  className="client-popover-item"
+                                >
+                                  <Icons.Eye size={13} /> View details
+                                </Link>
+                                {canOnboard && (
+                                  <>
+                                    <Link
+                                      role="menuitem"
+                                      href={`/hq/onboarding/new?clientId=${c.id}`}
+                                      className="client-popover-item"
+                                    >
+                                      <Icons.Edit size={13} /> Edit client
+                                    </Link>
+                                    <Link
+                                      role="menuitem"
+                                      href={`/hq/onboarding/new?clientId=${c.id}`}
+                                      className="client-popover-item"
+                                    >
+                                      <Icons.Plus size={13} /> Add farm
+                                    </Link>
+                                  </>
+                                )}
+                                <div className="client-popover-divider" />
+                                <div className="client-popover-label">More actions</div>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="client-popover-item"
+                                  onClick={() => copyCode(c.code)}
+                                >
+                                  <Icons.Copy size={13} /> Copy client code
+                                </button>
+                                {canWrite && (
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    className="client-popover-item"
+                                    disabled={bulkBusy}
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      void patchStatus([c.id], c.status === "ACTIVE" ? "INACTIVE" : "ACTIVE");
+                                    }}
+                                  >
+                                    {c.status === "ACTIVE" ? (
+                                      <>
+                                        <Icons.X size={13} /> Set inactive
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Icons.Check size={13} /> Set active
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
-                      )}
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "var(--muted)",
-                          fontFamily: "var(--font-mono)",
-                          marginTop: 1,
-                        }}
-                      >
-                        {c.code}
-                      </div>
-                    </td>
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle", color: "var(--body)", fontSize: 12, whiteSpace: "nowrap" }}>
-                      {c.phone ? (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                          <Icons.User size={12} style={{ color: "var(--muted)" }} />
-                          <span>{c.phone}</span>
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--muted)" }}>—</span>
-                      )}
-                    </td>
-                    <td style={{ padding: "12px 14px", verticalAlign: "middle", whiteSpace: "nowrap" }}>
-                      {c.state ? (
-                        <span style={{ fontWeight: 500, color: "var(--ink)", fontSize: 12 }}>
-                          {c.district ? `${c.district}, ${c.state}` : c.state}
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--muted)" }}>—</span>
-                      )}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 14px",
-                        textAlign: "right",
-                        fontWeight: 600,
-                        verticalAlign: "middle",
-                      }}
-                    >
-                      {c.farmCount}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 14px",
-                        textAlign: "right",
-                        fontWeight: 600,
-                        verticalAlign: "middle",
-                      }}
-                    >
-                      {c.plotCount}
-                    </td>
-                    <td
-                      style={{
-                        padding: "12px 14px",
-                        textAlign: "right",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "var(--ink)",
-                        verticalAlign: "middle",
-                      }}
-                    >
-                      {c.totalAcreage.toFixed(1)} ac
-                    </td>
-                    <td style={{ padding: "12px 14px", textAlign: "center", verticalAlign: "middle" }}>
-                      <StatusPill status={c.status} />
-                    </td>
-                    <td style={{ padding: "12px 14px", textAlign: "right", verticalAlign: "middle" }}>
-                      <Link
-                        href={`/hq/clients/${c.id}`}
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: "3px 10px", fontSize: 12, borderRadius: "var(--radius-md)" }}
-                      >
-                        <span>Inspect &rarr;</span>
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Pagination Footer */}
-        {total > LIMIT && (
-          <div
-            style={{
-              padding: "12px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderTop: "1px solid var(--hairline)",
-              fontSize: 12,
-              color: "var(--muted)",
-              background: "var(--canvas-floor)",
-            }}
-          >
-            <span>
-              Showing <strong>{(page - 1) * LIMIT + 1}</strong>&ndash;
-              <strong>{Math.min(page * LIMIT, total)}</strong> of{" "}
-              <strong>{total.toLocaleString()}</strong> clients
-            </span>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                &larr; Prev
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Next &rarr;
-              </button>
-            </div>
+      {/* ── Mobile cards ── */}
+      <div className="client-cards">
+        {loading ? (
+          <div className="client-card-state">Loading clients…</div>
+        ) : error ? (
+          <div className="client-card-state">
+            <div className="client-state-title">Couldn’t load clients</div>
+            <p className="client-state-hint">{error}</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
+              Retry
+            </button>
           </div>
+        ) : rows.length === 0 ? (
+          <div className="client-card-state">
+            <div className="client-state-title">No clients found</div>
+            <p className="client-state-hint">Try changing your search or filters.</p>
+            {filtersActive && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
+                Clear all
+              </button>
+            )}
+          </div>
+        ) : (
+          rows.map((c) => {
+            const menuOpen = openMenuId === c.id;
+            return (
+              <article key={c.id} className="client-card">
+                <div className="client-card-head">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(c.id)}
+                    onChange={() => toggleOne(c.id)}
+                    aria-label={`Select ${c.name}`}
+                  />
+                  <Link href={`/hq/clients/${c.id}`} className="client-name">
+                    {c.companyName?.trim() || c.name}
+                  </Link>
+                  <StatusDot status={c.status} />
+                </div>
+                <div className="client-card-meta">
+                  <span className="client-code">{c.code}</span>
+                  {(c.district || c.state) && (
+                    <span className="client-muted">
+                      {[c.district, c.state].filter(Boolean).join(", ")}
+                    </span>
+                  )}
+                </div>
+                <div className="client-card-grid">
+                  <div>
+                    <span className="client-card-key">Contact</span>
+                    {c.companyName && <span className="client-card-val">{c.name}</span>}
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`} className="client-phone">
+                        {c.phone}
+                      </a>
+                    )}
+                  </div>
+                  <div>
+                    <span className="client-card-key">Farms</span>
+                    <Link href={`/hq/farms?clientId=${c.id}`} className="client-farms-link">
+                      {c.farmCount}
+                      <span className="client-farms-unit">
+                        {c.farmCount === 1 ? "farm" : "farms"}
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+                <div className="client-card-foot">
+                  <span className="client-muted" title={fullTime(c.updatedAt)}>
+                    Active {relativeTime(c.updatedAt)}
+                  </span>
+                  <div className="client-menu-wrap">
+                    <button
+                      type="button"
+                      className="client-kebab"
+                      aria-haspopup="menu"
+                      aria-expanded={menuOpen}
+                      aria-label={`Actions for ${c.name}`}
+                      onClick={() => setOpenMenuId(menuOpen ? null : c.id)}
+                    >
+                      <Icons.MoreVertical size={16} />
+                    </button>
+                    {menuOpen && (
+                      <>
+                        <button
+                          type="button"
+                          className="client-popover-backdrop"
+                          aria-hidden
+                          tabIndex={-1}
+                          onClick={() => setOpenMenuId(null)}
+                        />
+                        <div
+                          role="menu"
+                          className="client-popover client-menu"
+                          onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
+                        >
+                          <Link role="menuitem" href={`/hq/clients/${c.id}`} className="client-popover-item">
+                            <Icons.Eye size={13} /> View details
+                          </Link>
+                          {canOnboard && (
+                            <>
+                              <Link
+                                role="menuitem"
+                                href={`/hq/onboarding/new?clientId=${c.id}`}
+                                className="client-popover-item"
+                              >
+                                <Icons.Edit size={13} /> Edit client
+                              </Link>
+                              <Link
+                                role="menuitem"
+                                href={`/hq/onboarding/new?clientId=${c.id}`}
+                                className="client-popover-item"
+                              >
+                                <Icons.Plus size={13} /> Add farm
+                              </Link>
+                            </>
+                          )}
+                          <div className="client-popover-divider" />
+                          <div className="client-popover-label">More actions</div>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="client-popover-item"
+                            onClick={() => copyCode(c.code)}
+                          >
+                            <Icons.Copy size={13} /> Copy client code
+                          </button>
+                          {canWrite && (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="client-popover-item"
+                              disabled={bulkBusy}
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                void patchStatus([c.id], c.status === "ACTIVE" ? "INACTIVE" : "ACTIVE");
+                              }}
+                            >
+                              {c.status === "ACTIVE" ? (
+                                <>
+                                  <Icons.X size={13} /> Set inactive
+                                </>
+                              ) : (
+                                <>
+                                  <Icons.Check size={13} /> Set active
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })
         )}
       </div>
+
+      {/* ── Pagination ── */}
+      {!loading && !error && total > LIMIT && (
+        <div className="client-pagination">
+          <span>
+            Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of{" "}
+            {total.toLocaleString()}
+          </span>
+          <div className="client-pagination-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <Icons.ChevronLeft size={13} /> Prev
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next <Icons.ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

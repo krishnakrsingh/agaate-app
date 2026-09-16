@@ -21,13 +21,15 @@ export default async function HqClientsPage() {
     );
   }
 
+  const canWrite = hasPermission(session.permissions, "clients:write");
+  const canOnboard = hasPermission(session.permissions, "onboarding:manage");
+
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Clients</h1>
         <Suspense fallback={<div style={{ padding: "48px", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading…</div>}>
-          <ClientDirectory />
+          <ClientDirectory canWrite={canWrite} canOnboard={canOnboard} />
         </Suspense>
       </main>
     </>

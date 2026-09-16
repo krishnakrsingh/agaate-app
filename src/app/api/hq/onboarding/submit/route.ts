@@ -103,8 +103,12 @@ export async function POST(request: NextRequest) {
             state: input.client.state || undefined,
             district: input.client.district || undefined,
             pincode: input.client.pincode || undefined,
-            financeConnect: input.client.financeConnect || undefined,
-            purchaserConnect: input.client.purchaserConnect || undefined,
+            financeConnect: input.contacts?.financeContact?.name
+              ? `${input.contacts.financeContact.name} (${input.contacts.financeContact.phone})`
+              : input.client.financeConnect || undefined,
+            purchaserConnect: input.contacts?.purchaserContact?.name
+              ? `${input.contacts.purchaserContact.name} (${input.contacts.purchaserContact.phone})`
+              : input.client.purchaserConnect || undefined,
           },
         });
       } else {
@@ -147,8 +151,12 @@ export async function POST(request: NextRequest) {
                 state: input.client.state || null,
                 district: input.client.district || null,
                 pincode: input.client.pincode || null,
-                financeConnect: input.client.financeConnect || null,
-                purchaserConnect: input.client.purchaserConnect || null,
+                financeConnect: input.contacts?.financeContact?.name
+                  ? `${input.contacts.financeContact.name} (${input.contacts.financeContact.phone})`
+                  : input.client.financeConnect || null,
+                purchaserConnect: input.contacts?.purchaserContact?.name
+                  ? `${input.contacts.purchaserContact.name} (${input.contacts.purchaserContact.phone})`
+                  : input.client.purchaserConnect || null,
                 status: "ACTIVE",
               },
               select: { id: true, code: true, name: true },
@@ -159,6 +167,44 @@ export async function POST(request: NextRequest) {
           }
         }
         if (!client) throw new Error("Validation failed: could not assign a client ID. Please retry.");
+      }
+
+      // First-class ClientContact records
+      if (input.contacts?.financeContact?.name) {
+        await tx.clientContact.create({
+          data: {
+            clientId: client.id,
+            name: input.contacts.financeContact.name.trim(),
+            phone: input.contacts.financeContact.phone.trim(),
+            email: input.contacts.financeContact.email?.trim() || null,
+            role: "FINANCE",
+            isPrimary: true,
+          },
+        });
+      }
+      if (input.contacts?.purchaserContact?.name) {
+        await tx.clientContact.create({
+          data: {
+            clientId: client.id,
+            name: input.contacts.purchaserContact.name.trim(),
+            phone: input.contacts.purchaserContact.phone.trim(),
+            email: input.contacts.purchaserContact.email?.trim() || null,
+            role: "PURCHASER",
+            isPrimary: false,
+          },
+        });
+      }
+      if (input.contacts?.additionalContacts?.length) {
+        await tx.clientContact.createMany({
+          data: input.contacts.additionalContacts.map((c) => ({
+            clientId: client.id,
+            name: c.name.trim(),
+            phone: c.phone.trim(),
+            email: c.email?.trim() || null,
+            role: c.role || "OTHER",
+            isPrimary: false,
+          })),
+        });
       }
 
       // Optional FARM_ADMIN login.
@@ -180,8 +226,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Farms: sequential so any failure names its row (single tx = all-or-nothing).
-      // Drawn fences are normalized server-side (same path as the plot API):
-      // invalid geometry names its row instead of silently landing unfenced.
       const farms: { id: string; name: string }[] = [];
       const farmGeoJsonByRow = new Map<string, string | null>();
       for (let i = 0; i < input.farms.length; i += 1) {
@@ -194,19 +238,29 @@ export async function POST(request: NextRequest) {
         } catch (e) {
           throw new Error(`Validation failed: ${rowLabel} fence is invalid — ${e instanceof Error ? e.message : "redraw the boundary."}`);
         }
+
+        const localConnectVal = f.localConnectSameAsClient
+          ? `${input.client.name} (${input.client.phone})`
+          : f.localContactName
+          ? `${f.localContactName}${f.localContactPhone ? ` (${f.localContactPhone})` : ""}`
+          : f.localConnect || null;
+
+        const effectiveTotalArea = Number(f.area) || Number(f.totalArea);
+        const effectiveCultivableArea = Number(f.cultivableArea) || effectiveTotalArea;
+
         try {
           const created = await tx.farm.create({
             data: {
               clientId: client.id,
               name: f.name.trim(),
               ownerName: input.client.name.trim(),
-              localConnect: f.localConnect || null,
+              localConnect: localConnectVal,
               location: f.location.trim(),
               latitude: Number(f.latitude),
               longitude: Number(f.longitude),
-              totalArea: Number(f.totalArea),
-              cultivableArea: Number(f.cultivableArea),
-              waterSource: f.waterSource.trim(),
+              totalArea: effectiveTotalArea,
+              cultivableArea: effectiveCultivableArea,
+              waterSource: f.waterSource?.trim() || "Borewell",
               surveyNumber: f.surveyNumber || null,
               village: f.village || null,
               city: f.city || null,
@@ -223,7 +277,6 @@ export async function POST(request: NextRequest) {
             select: { id: true, name: true },
           });
           if (geo) {
-            // First fence becomes BoundaryVersion v1 (perimeter, centroid, flag).
             await commitBoundary(
               tx,
               { type: "FARM", id: created.id },
@@ -245,20 +298,31 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Team Access assignments (Owner, Agronomist, Field Officer)
+      const accessRecords: { userId: string; farmId: string; canManage: boolean }[] = [];
       if (owner) {
+        farms.forEach((f) => accessRecords.push({ userId: owner.id, farmId: f.id, canManage: true }));
+      }
+      if (input.team.agronomistId) {
+        farms.forEach((f) => accessRecords.push({ userId: input.team.agronomistId!, farmId: f.id, canManage: true }));
+      }
+      if (input.team.fieldOfficerId && input.team.fieldOfficerId !== input.team.agronomistId) {
+        farms.forEach((f) => accessRecords.push({ userId: input.team.fieldOfficerId!, farmId: f.id, canManage: false }));
+      }
+      if (accessRecords.length > 0) {
         await tx.farmAccess.createMany({
-          data: farms.map((f) => ({ userId: owner.id, farmId: f.id, canManage: true })),
+          data: accessRecords,
+          skipDuplicates: true,
         });
       }
 
-      // Plots: map wizard rowIds to real farm ids. Fenced plots are
-      // containment-checked against their farm fence (same rule as the plot
-      // API); server-computed acres win over the typed area, and the pin
-      // falls on the fence centroid instead of stacking on the farm point.
+      // Plots: map wizard rowIds to real farm ids.
       const farmIdByRow = new Map<string, string>();
       input.farms.forEach((f, i) => farmIdByRow.set(f.rowId ?? `index:${i}`, farms[i].id));
       const plots: { id: string; name: string; farmId: string }[] = [];
+      const plotIdByRow = new Map<string, string>();
       const allocatedByFarm = new Map<string, number>();
+
       for (let i = 0; i < input.plots.length; i += 1) {
         const p = input.plots[i];
         const rowLabel = `plot row ${i + 1} ("${p.name.trim() || "unnamed"}")`;
@@ -274,9 +338,9 @@ export async function POST(request: NextRequest) {
           throw new Error(`Validation failed: ${rowLabel} fence rejected — ${e instanceof Error ? e.message : "redraw inside the farm fence."}`);
         }
         const finalArea = geo ? geo.acres : Number(p.area);
-        const cap = Number(farm.cultivableArea);
+        const cap = Number(farm.cultivableArea) || Number(farm.area) || Number(farm.totalArea);
         const running = Math.round(((allocatedByFarm.get(farmId) ?? 0) + finalArea) * 100) / 100;
-        if (Number.isFinite(cap) && running > Math.round(cap * 100) / 100) {
+        if (Number.isFinite(cap) && cap > 0 && running > Math.round(cap * 100) / 100) {
           throw new Error(`Validation failed: ${rowLabel} pushes farm "${farm.name}" past its cultivable area.`);
         }
         let pinLat = Number(farm.latitude);
@@ -287,6 +351,9 @@ export async function POST(request: NextRequest) {
             if (c) { pinLng = c[0]; pinLat = c[1]; }
           } catch { /* keep farm centroid */ }
         }
+
+        const parsedValves = p.valves ? parseInt(p.valves, 10) : null;
+
         try {
           const data = {
             farmId,
@@ -295,6 +362,10 @@ export async function POST(request: NextRequest) {
             latitude: pinLat,
             longitude: pinLng,
             soilType: p.soilType || farm.soilType || null,
+            irrigationSetup: p.irrigationSetup || null,
+            valvesCount: Number.isFinite(parsedValves) ? parsedValves : null,
+            bedDetails: p.bedDetails || null,
+            landPrepStatus: p.landPrepStatus || null,
             boundaryGeoJson: geo?.geoJson ?? null,
             measuredAcres: geo ? geo.acres : null,
             status: "SETUP" as const,
@@ -310,7 +381,9 @@ export async function POST(request: NextRequest) {
                 )
               ).result
             : await tx.plot.create({ data, select: { id: true, name: true, farmId: true } });
+
           plots.push(created);
+          plotIdByRow.set(p.rowId ?? `index:${i}`, created.id);
           allocatedByFarm.set(farmId, running);
         } catch (e) {
           if (e instanceof Error && e.message.startsWith("Validation failed")) throw e;
@@ -319,6 +392,59 @@ export async function POST(request: NextRequest) {
           }
           throw new Error(`Validation failed: ${rowLabel} could not be saved.`);
         }
+      }
+
+      // Crop Cycles: attach crops to plots
+      if (input.crops && input.crops.length > 0) {
+        for (let i = 0; i < input.crops.length; i += 1) {
+          const c = input.crops[i];
+          const targetPlotId = plotIdByRow.get(c.plotRowId) || (plots.length > 0 ? plots[0].id : null);
+          if (targetPlotId) {
+            const isTransplant = !c.plantingMethod || c.plantingMethod.toLowerCase().includes("transplant");
+            const estType = isTransplant ? "NURSERY_TRANSPLANTATION" : "DIRECT_SOWING";
+            const pDate = c.plantingDate ? new Date(c.plantingDate) : new Date();
+            const hDate = c.expectedHarvestDate ? new Date(c.expectedHarvestDate) : null;
+            await tx.cropCycle.create({
+              data: {
+                plotId: targetPlotId,
+                cropName: c.cropName.trim(),
+                startDate: pDate,
+                expectedFirstHarvestDate: hDate,
+                establishmentType: estType,
+                status: "PLANNED",
+                plantingMethod: c.plantingMethod || null,
+                spacing: c.spacing || null,
+                basalDose: c.basalDose || null,
+                mulching: c.mulching || null,
+                keyDates: c.keyDates || null,
+              },
+            });
+          }
+        }
+      }
+
+      // Automatic First Task for the assigned Field Team
+      if (input.team.createFirstTask !== false && farms.length > 0) {
+        const primaryFarm = farms[0];
+        const primaryPlot = plots.length > 0 ? plots[0] : null;
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 3);
+
+        await tx.task.create({
+          data: {
+            farmId: primaryFarm.id,
+            plotId: primaryPlot?.id || null,
+            origin: "SYSTEM",
+            category: "SETUP",
+            title: input.team.firstTaskTitle?.trim() || "Initial Demarcation & Soil Testing",
+            description: `Conduct initial field setup for ${client.name} (${primaryFarm.name}). Demarcate plot boundaries, inspect water source, and collect baseline soil test samples.`,
+            priority: "HIGH",
+            dueDate,
+            status: input.team.fieldOfficerId ? "ASSIGNED" : "AVAILABLE",
+            assignedOfficerId: input.team.fieldOfficerId || null,
+            createdById: actor.id,
+          },
+        });
       }
 
       const summary: ActivationSummary = {

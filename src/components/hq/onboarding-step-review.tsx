@@ -72,7 +72,7 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green, #15803d)" }} />
               <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
                 Estate Manifest ({data.farms.length})
               </span>
@@ -121,7 +121,7 @@ export function OnboardingStepReview({ data, submitting, submitError, onActivate
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green, #15803d)" }} />
               <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
                 Allocated Plots ({data.plots.length})
               </span>
