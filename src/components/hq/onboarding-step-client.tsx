@@ -30,16 +30,29 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
   useEffect(() => {
     const phone = (value.phone ?? "").trim(), email = (value.email ?? "").trim();
     if (!phone && !email) { onAsyncIssue(null); return; }
-    const q = `${phone}::${email}::${existingClientId ?? ""}`; lastQ.current = q; setChecking(true);
+    const q = `${phone}::${email}::${existingClientId ?? ""}`; lastQ.current = q;
     const t = setTimeout(async () => {
+      if (q === lastQ.current) setChecking(true);
       try {
-        const res = await fetch("/api/hq/onboarding/check-unique", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: phone || undefined, email: email || undefined, excludeClientId: existingClientId }),
-        });
+        const params = new URLSearchParams();
+        if (phone) params.set("phone", phone);
+        if (email) params.set("email", email);
+        if (existingClientId) params.set("clientId", existingClientId);
+        const res = await fetch(`/api/hq/onboarding/check-unique?${params.toString()}`);
         if (q !== lastQ.current) return;
         const body = await res.json().catch(() => ({}));
-        onAsyncIssue(res.ok ? null : (body.error ?? "Already taken."));
+        if (!res.ok) {
+          onAsyncIssue(body.error ?? "Could not verify phone/email. Try again.");
+          return;
+        }
+        const issues: string[] = [];
+        if (body.phoneTaken) {
+          issues.push(`Phone ${body.phoneHolder ? `already in use by ${body.phoneHolder}` : "already in use"}.`);
+        }
+        if (body.emailTaken) {
+          issues.push(`Email ${body.emailHolder ? `already in use by ${body.emailHolder}` : "already in use"}.`);
+        }
+        onAsyncIssue(issues.length ? issues.join(" ") : null);
       } catch { if (q === lastQ.current) onAsyncIssue(null); }
       finally { if (q === lastQ.current) setChecking(false); }
     }, 400);
