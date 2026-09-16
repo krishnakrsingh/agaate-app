@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession, clearSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { LoginForm } from "@/components/login-form";
-import { AgronomyShowcasePanel } from "@/components/agronomy-showcase-panel";
+import { LoginForm } from "@modules/onboarding/ui/login-form";
+import { AgronomyShowcasePanel } from "@modules/agronomy/ui/agronomy-showcase-panel";
 
 export const dynamic = "force-dynamic";
 

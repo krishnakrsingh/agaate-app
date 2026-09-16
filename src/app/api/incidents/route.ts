@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError, noStore, paginatedJson, paginationParams } from "@/lib/api";
 import { downloadUrl } from "@/lib/storage";
-import { validateAttendanceLocation } from "@/lib/attendance-geo";
-import { parseBoundaryToRing, pointInRing, ringAcres, type LngLat } from "@/lib/geo-core";
+import { validateAttendanceLocation } from "@modules/spatial";
+import { parseBoundaryToRing, pointInRing, ringAcres, type LngLat } from "@modules/spatial";
 
 export const dynamic = "force-dynamic";
 

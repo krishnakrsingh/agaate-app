@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireFarmAccess } from "@/lib/access";
 import { apiError } from "@/lib/api";
-import { getPlotVisits } from "@/lib/plot-visit-service";
+import { getPlotVisits } from "@modules/spatial";
 
 /**
  * Field coverage per plot: VISITED (in window) / MISSED (older) / NEVER.

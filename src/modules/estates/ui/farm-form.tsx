@@ -1,0 +1,236 @@
+"use client";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Icons } from "@/components/icons";
+
+export function FarmForm() {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [pending, setPending] = useState(false);
+
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+
+  function capture() {
+    if (!navigator.geolocation) {
+      setError("Location is not supported on this device. Enter coordinates manually.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(String(pos.coords.latitude));
+        setLng(String(pos.coords.longitude));
+        setSuccess("Current device GPS coordinates captured.");
+        setError("");
+      },
+      (err) =>
+        setError(
+          err.code === 1
+            ? "Location permission was denied. Enter coordinates manually."
+            : err.code === 3
+            ? "Location timed out. Try again or enter coordinates manually."
+            : "Location is unavailable. Enter coordinates manually."
+        ),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError("");
+    setSuccess("");
+
+    const f = new FormData(e.currentTarget);
+    const totalArea = Number(f.get("totalArea"));
+    const cultivableArea = Number(f.get("cultivableArea"));
+    const latitude = Number(f.get("latitude"));
+    const longitude = Number(f.get("longitude"));
+    const geofenceRadiusMeters = Number(f.get("geofenceRadiusMeters") || 500);
+
+    if (cultivableArea > totalArea) {
+      setPending(false);
+      setError(`Cultivable area (${cultivableArea} acres) cannot exceed total farm area (${totalArea} acres).`);
+      return;
+    }
+
+    if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+      setPending(false);
+      setError("Please enter a valid latitude between -90 and 90.");
+      return;
+    }
+
+    if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+      setPending(false);
+      setError("Please enter a valid longitude between -180 and 180.");
+      return;
+    }
+
+    const payload = {
+      name: String(f.get("name") || "").trim(),
+      ownerName: String(f.get("ownerName") || "").trim(),
+      location: String(f.get("location") || "").trim(),
+      waterSource: String(f.get("waterSource") || "").trim(),
+      address: String(f.get("address") || "").trim() || undefined,
+      latitude,
+      longitude,
+      totalArea,
+      cultivableArea,
+      geofenceRadiusMeters,
+    };
+
+    try {
+      const res = await fetch("/api/farms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPending(false);
+        setError(body.error ?? "Unable to create farm. Please verify all details.");
+        return;
+      }
+
+      // Smooth direct navigation to the new farm console
+      window.location.replace(`/farms/${body.id}`);
+    } catch {
+      setPending(false);
+      setError("Network connectivity error. Please try again.");
+    }
+  }
+
+  return (
+    <article style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="page-header" style={{ paddingBottom: 14 }}>
+        <div>
+          <div className="eyebrow">
+            <span className="eyebrow-dot" />
+            <span>ESTATE ONBOARDING</span>
+          </div>
+          <h2 className="section-title">Setup New Farm Property</h2>
+        </div>
+      </div>
+
+      <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="section-block">
+          <div className="form-section-title">1. General Information</div>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Farm Name</label>
+              <input name="name" placeholder="e.g., Greenfield Agro Farms" required maxLength={120} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Client / Owner Name</label>
+              <input name="ownerName" placeholder="e.g., Ramesh Patel" required maxLength={120} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Location (City / District)</label>
+              <input name="location" placeholder="e.g., Hosur, Krishnagiri" required maxLength={180} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Primary Water Source</label>
+              <input name="waterSource" placeholder="e.g., Borewell (20 HP) + Farm Pond" required maxLength={180} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Full Address / Landmark</label>
+              <input name="address" placeholder="Survey No. 42/1, Denkanikottai Road…" maxLength={500} />
+            </div>
+          </div>
+        </div>
+
+        <div className="section-block">
+          <div className="form-section-title">2. Geodata &amp; Acreage</div>
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <label>Latitude</label>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={capture}>
+                  Capture GPS
+                </button>
+              </div>
+              <input
+                name="latitude"
+                type="number"
+                step="any"
+                min="-90"
+                max="90"
+                placeholder="e.g., 12.5284"
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Longitude</label>
+              <input
+                name="longitude"
+                type="number"
+                step="any"
+                min="-180"
+                max="180"
+                placeholder="e.g., 77.8341"
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Total Farm Area (Acres)</label>
+              <input name="totalArea" type="number" step="0.01" min="0.01" placeholder="e.g., 10.0" required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Cultivable Area (Acres)</label>
+              <input name="cultivableArea" type="number" step="0.01" min="0.01" placeholder="e.g., 8.5" required />
+            </div>
+
+            <div className="form-group" style={{ margin: 0, gridColumn: "1 / -1" }}>
+              <label>Geofence Radius (Meters)</label>
+              <input
+                name="geofenceRadiusMeters"
+                type="number"
+                defaultValue="500"
+                min="50"
+                max="10000"
+                required
+              />
+              <small className="muted" style={{ display: "block", marginTop: 4, fontSize: "12px" }}>
+                Used for automatic presence attendance validation. Default is 500m around coordinates.
+              </small>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="error" role="alert">
+            <Icons.AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="success-banner" role="status">
+            <Icons.CheckCircle size={16} />
+            <span>{success}</span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+          <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
+            <span>{pending ? "Creating Farm…" : "Save & Continue to Farm Hub"}</span>
+            <Icons.ArrowRight size={16} />
+          </button>
+        </div>
+      </form>
+    </article>
+  );
+}

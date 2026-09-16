@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
-import { SpatialConsole } from "@/components/admin/spatial-console";
+import { Navbar } from "@/components/navigation/navbar";
+import { SpatialConsole } from "@modules/spatial/ui/spatial-console";
 
 export const dynamic = "force-dynamic";
 

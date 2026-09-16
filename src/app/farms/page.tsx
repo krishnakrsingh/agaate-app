@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
-import { FarmRegistry } from "@/components/admin/farm-registry";
+import { Navbar } from "@/components/navigation/navbar";
+import { FarmRegistry } from "@modules/estates/ui/admin-farm-registry";
 
 export const dynamic = "force-dynamic";
 

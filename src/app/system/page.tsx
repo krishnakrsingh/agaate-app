@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { AuditConsole } from "@/components/audit-console";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import { AuditConsole } from "@modules/audit/ui/audit-console";
 import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
 
 export const dynamic = "force-dynamic";

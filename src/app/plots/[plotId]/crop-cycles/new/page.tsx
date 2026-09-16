@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
-import { CropCycleForm } from "@/components/crop-cycle-form";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
+import { CropCycleForm } from "@modules/cropping/ui/crop-cycle-form";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 

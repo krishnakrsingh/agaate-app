@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
-import { TaskForm } from "@/components/task-form";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
+import { TaskForm } from "@modules/operations/ui/task-form";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 

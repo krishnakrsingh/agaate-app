@@ -17,21 +17,22 @@ describe("Plot Get Current Location (MVP UX)", () => {
   });
 
   it("keeps manual entry available (inputs remain editable after capture)", async () => {
-    // Verify source files contain both capture and manual input
-    const plotForm = fs.readFileSync(path.join(process.cwd(), "src/components/plot-form.tsx"), "utf-8");
+    // Verify source files contain both capture and manual input.
+    // Forms live with their domain (estates/ui) — paths, not behavior.
+    const plotForm = fs.readFileSync(path.join(process.cwd(), "src/modules/estates/ui/plot-form.tsx"), "utf-8");
     expect(plotForm).toContain("Capture GPS");
     expect(plotForm).toContain('name="latitude"');
     expect(plotForm).toContain('name="longitude"');
     expect(plotForm).toContain("enableHighAccuracy: true");
     expect(plotForm).toContain("timeout: 10000");
 
-    const farmForm = fs.readFileSync(path.join(process.cwd(), "src/components/farm-form.tsx"), "utf-8");
+    const farmForm = fs.readFileSync(path.join(process.cwd(), "src/modules/estates/ui/farm-form.tsx"), "utf-8");
     expect(farmForm).toContain("Capture GPS");
     expect(farmForm).toContain('name="latitude"');
   });
 
   it("handles permission denied, unavailable, timeout, and unsupported", async () => {
-    const files = ["src/components/plot-form.tsx", "src/components/farm-form.tsx", "src/components/farm-edit-form.tsx", "src/components/plot-edit-form.tsx"];
+    const files = ["src/modules/estates/ui/plot-form.tsx", "src/modules/estates/ui/farm-form.tsx", "src/modules/estates/ui/farm-edit-form.tsx", "src/modules/estates/ui/plot-edit-form.tsx"];
     for (const f of files) {
       const content = fs.readFileSync(path.join(process.cwd(), f), "utf-8");
       const hasUnsupported = content.includes("not supported") || content.includes("cannot provide") || content.includes("does not provide");
@@ -44,7 +45,7 @@ describe("Plot Get Current Location (MVP UX)", () => {
   });
 
   it("navigator.geolocation.getCurrentPosition is called with high accuracy and timeout", () => {
-    const plotForm = fs.readFileSync(path.join(process.cwd(), "src/components/plot-form.tsx"), "utf-8");
+    const plotForm = fs.readFileSync(path.join(process.cwd(), "src/modules/estates/ui/plot-form.tsx"), "utf-8");
     expect(plotForm).toContain("getCurrentPosition");
     expect(plotForm).toMatch(/enableHighAccuracy:\s*true/);
     expect(plotForm).toMatch(/timeout:\s*10000/);

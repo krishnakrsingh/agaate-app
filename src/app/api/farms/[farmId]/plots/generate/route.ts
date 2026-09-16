@@ -14,8 +14,8 @@ import {
   gridSplitRing,
   representativePoint,
   type LngLat,
-} from "@/lib/geo-server";
-import { commitBoundary } from "@/lib/geo-versions";
+} from "@modules/spatial";
+import { commitBoundary } from "@modules/spatial";
 
 const irrigationItem = z.object({
   type: z.enum(["Drip", "Rain Pipe", "Sprinkler", "Flood", "Other"]),

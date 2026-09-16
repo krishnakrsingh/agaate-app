@@ -3,7 +3,7 @@ import { z } from "zod";
 import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
-import { MAX_FARMS } from "@/components/hq/onboarding-schema";
+import { MAX_FARMS } from "@modules/onboarding/ui/onboarding-schema";
 
 const saveSchema = z.object({
   id: z.string().min(1).optional().nullable(),

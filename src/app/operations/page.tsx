@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Navbar } from "@/components/navbar";
-import { OperationsTriageConsole, type TriageData } from "@/components/admin/operations-triage-console";
+import { Navbar } from "@/components/navigation/navbar";
+import { OperationsTriageConsole, type TriageData } from "@modules/reporting/ui/operations-triage-console";
 import { utcDateOnly } from "@/lib/business";
 
 export const dynamic = "force-dynamic";

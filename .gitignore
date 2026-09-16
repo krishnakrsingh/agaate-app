@@ -11,6 +11,12 @@
 *.db
 *.db-journal
 
+# local dev leftovers (never commit: session cookies, dev server output,
+# locally-dropped upload fallbacks — S3/MinIO is the evidence store)
+cookies.txt
+server.log
+/public/uploads/
+
 # generated files and OS noise
 *.tsbuildinfo
 npm-debug.log*

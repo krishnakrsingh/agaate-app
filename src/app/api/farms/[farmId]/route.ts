@@ -4,9 +4,9 @@ import { currentActor, requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { parseBoundary, roundAcresForDb } from "@/lib/geo-server";
-import { commitBoundary, plotsOutsideRing } from "@/lib/geo-versions";
-import { parseBoundaryToRing } from "@/lib/geo-core";
+import { parseBoundary, roundAcresForDb } from "@modules/spatial";
+import { commitBoundary, plotsOutsideRing } from "@modules/spatial";
+import { parseBoundaryToRing } from "@modules/spatial";
 
 const patchSchema = z.object({
   name: z.string().min(2).max(120).optional(),

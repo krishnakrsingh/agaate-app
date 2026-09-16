@@ -7,8 +7,8 @@ import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
 import { sendNotification } from "@/lib/notifications";
-import { parseBoundary, roundAcresForDb } from "@/lib/geo-server";
-import { commitBoundary } from "@/lib/geo-versions";
+import { parseBoundary, roundAcresForDb } from "@modules/spatial";
+import { commitBoundary } from "@modules/spatial";
 
 const onboardSchema = z.object({
   // Client Legal Entity & Profile

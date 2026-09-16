@@ -3,10 +3,10 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { PlotEditForm } from "@/components/plot-edit-form";
-import { BoundaryHistory } from "@/components/boundary-history";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
+import { PlotEditForm } from "@modules/estates/ui/plot-edit-form";
+import { BoundaryHistory } from "@modules/spatial/ui/boundary-history";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 

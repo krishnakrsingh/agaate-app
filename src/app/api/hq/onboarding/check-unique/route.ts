@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentActor, requirePermission } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
-import { normalizeEmail, normalizePhone } from "@/components/hq/onboarding-schema";
+import { normalizeEmail, normalizePhone } from "@modules/onboarding/ui/onboarding-schema";
 
 // Live uniqueness probe for Step 1 (debounced client-side). Never leaks
 // hashes; returns only taken flags plus the holding display name.

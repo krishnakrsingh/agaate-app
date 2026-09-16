@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { ClientOnboardingWizardV2 } from "@/components/admin/onboarding/client-onboarding-wizard-v2";
-import { FarmForm } from "@/components/farm-form";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import { ClientOnboardingWizardV2 } from "@modules/onboarding/ui/client-onboarding-wizard-v2";
+import { FarmForm } from "@modules/estates/ui/farm-form";
 
 export const dynamic = "force-dynamic";
 

@@ -3,8 +3,8 @@ import { requireSession } from "@/lib/auth";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { downloadUrl } from "@/lib/storage";
-import { FarmCommandCenter } from "@/components/admin/farm-command-center";
-import { Navbar } from "@/components/navbar";
+import { FarmCommandCenter } from "@modules/estates/ui/farm-command-center";
+import { Navbar } from "@/components/navigation/navbar";
 
 export const dynamic = "force-dynamic";
 

@@ -3,9 +3,9 @@ import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { commitBoundary, serializeBoundaryVersion, plotsOutsideRing } from "@/lib/geo-versions";
-import { validatePlotGeometry } from "@/lib/geo-server";
-import { parseBoundaryToRing } from "@/lib/geo-core";
+import { commitBoundary, serializeBoundaryVersion, plotsOutsideRing } from "@modules/spatial";
+import { validatePlotGeometry } from "@modules/spatial";
+import { parseBoundaryToRing } from "@modules/spatial";
 import { z } from "zod";
 
 /**

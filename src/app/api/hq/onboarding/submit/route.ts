@@ -6,10 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { normalizeEmail, normalizePhone, submitSchema } from "@/components/hq/onboarding-schema";
-import { parseBoundary, validatePlotGeometry, roundAcresForDb } from "@/lib/geo-server";
-import { representativePoint } from "@/lib/geo-core";
-import { commitBoundary } from "@/lib/geo-versions";
+import { normalizeEmail, normalizePhone, submitSchema } from "@modules/onboarding/ui/onboarding-schema";
+import { parseBoundary, validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
+import { representativePoint } from "@modules/spatial";
+import { commitBoundary } from "@modules/spatial";
 
 // Single transactional activation for the HQ onboarding wizard.
 // Idempotent on idempotencyKey: a retried double-click returns the stored

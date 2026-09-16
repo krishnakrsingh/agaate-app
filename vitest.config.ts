@@ -17,6 +17,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@modules": path.resolve(__dirname, "./src/modules"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
+      "@infrastructure": path.resolve(__dirname, "./src/infrastructure"),
       "server-only": path.resolve(__dirname, "./src/lib/empty.ts"),
     },
   },

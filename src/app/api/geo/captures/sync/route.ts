@@ -4,7 +4,7 @@ import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { cleanSamples, assessTrack, type GpsSample } from "@/lib/track";
+import { cleanSamples, assessTrack, type GpsSample } from "@modules/spatial";
 import {
   toGeoJsonPolygon,
   roundAcresForDb,
@@ -12,8 +12,8 @@ import {
   parseBoundaryToRing,
   validatePlotGeometry,
   type LngLat,
-} from "@/lib/geo-server";
-import { commitBoundary } from "@/lib/geo-versions";
+} from "@modules/spatial";
+import { commitBoundary } from "@modules/spatial";
 
 const sampleSchema = z.object({
   lat: z.number().finite(),

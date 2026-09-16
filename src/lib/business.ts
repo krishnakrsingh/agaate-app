@@ -30,8 +30,14 @@ export function isWithinRollingSevenDays(value: Date, now = new Date()) {
   const candidate = utcDateOnly(value);
   return candidate >= start && candidate <= end;
 }
-export const taskTransitions: Record<string, string[]> = { DRAFT: ["ASSIGNED", "AVAILABLE", "CANCELLED"], ASSIGNED: ["IN_PROGRESS", "CANCELLED"], AVAILABLE: ["IN_PROGRESS", "CANCELLED"], IN_PROGRESS: ["COMPLETED", "BLOCKED"], BLOCKED: ["IN_PROGRESS", "CANCELLED"] };
-export function canTransitionTask(from: string, to: string) { return taskTransitions[from]?.includes(to) ?? false; }
+/**
+ * COMPATIBILITY SHIM (checkpoint 7): canonical owner is now
+ * modules/operations/domain/taskTransitions.ts. This re-export keeps
+ * hq/tasks/[taskId] + business.test.ts + domain-verification.test.ts working
+ * until the hq slice migrates. Do NOT add new importers — import from
+ * @modules/operations instead. Removal criteria: zero importers outside tests.
+ */
+export { TASK_TRANSITIONS as taskTransitions, canTransitionTask } from "@modules/operations/domain/taskTransitions";
 export function milestoneTemplates(input: { mulchEnabled: boolean; establishmentType: "NURSERY_TRANSPLANTATION" | "DIRECT_SOWING"; firstHarvestDate?: Date | null }) {
   return ["Land Preparation", input.mulchEnabled ? "Mulching & TP / Sowing Readiness" : "TP / Sowing Readiness", input.establishmentType === "NURSERY_TRANSPLANTATION" ? "Transplantation" : "Direct Sowing", "First Harvest"].map((name) => ({ name, targetDate: name === "First Harvest" && input.firstHarvestDate ? input.firstHarvestDate : null }));
 }

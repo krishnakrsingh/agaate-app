@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   Radio,
 } from "lucide-react";
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandLogo } from "@/components/navigation/brand-logo";
 
 export default function AuthSectionOne() {
   const [identifier, setIdentifier] = useState("");

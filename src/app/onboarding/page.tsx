@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { OnboardingWorkspace } from "@/components/admin/onboarding/onboarding-workspace";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import { OnboardingWorkspace } from "@modules/onboarding/ui/onboarding-workspace";
 
 export const dynamic = "force-dynamic";
 

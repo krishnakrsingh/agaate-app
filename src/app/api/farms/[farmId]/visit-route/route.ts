@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError } from "@/lib/api";
-import { getPlotVisits } from "@/lib/plot-visit-service";
-import { planVisitRoute } from "@/lib/plot-visits";
+import { getPlotVisits } from "@modules/spatial";
+import { planVisitRoute } from "@modules/spatial";
 
 /**
  * Walking order over unvisited plots (MISSED + NEVER with fences),

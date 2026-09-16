@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth";
-import { AdminConsole } from "@/components/admin-console";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
+import { AdminConsole } from "@modules/people/ui/admin-console";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 

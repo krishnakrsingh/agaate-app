@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, paginatedJson, paginationParams } from "@/lib/api";
-import { serializeBoundaryVersion } from "@/lib/geo-versions";
+import { serializeBoundaryVersion } from "@modules/spatial";
 
 /**
  * Immutable boundary history for a plot, newest first.

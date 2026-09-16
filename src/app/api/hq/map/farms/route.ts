@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentActor, requireRole, accessibleFarmWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
-import { parseBoundary } from "@/lib/geo-server";
+import { parseBoundary } from "@modules/spatial";
 
 export const dynamic = "force-dynamic";
 

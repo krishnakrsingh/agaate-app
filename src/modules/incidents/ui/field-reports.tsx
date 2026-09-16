@@ -1,0 +1,231 @@
+"use client";
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @next/next/no-img-element */
+import { FormEvent, useEffect, useState } from "react";
+import { Icons } from "@/components/icons";
+import { IncidentReportForm } from "@modules/incidents/ui/incident-report-form";
+import { uploadEvidencePhotos, PhotoItem } from "@/components/photo-upload-zone";
+
+type Cycle = { id: string; cropName: string };
+type Plot = { id: string; name: string; cropCycles: Cycle[] };
+type Farm = { id: string; name: string; plots: Plot[] };
+
+const cropStages = ["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"];
+
+import { basisText, captureFieldGps as captureScoutGps } from "@modules/spatial/ui/scout-gps";
+
+export function FieldReports({
+  initialFarmId, initialPlotId, initialCropCycleId, initialTab = "monitoring", onSuccess, onCancel, hideTabs = false,
+}: {
+  initialFarmId?: string; initialPlotId?: string; initialCropCycleId?: string; initialTab?: "monitoring" | "incident";
+  onSuccess?: () => void; onCancel?: () => void; hideTabs?: boolean;
+} = {}) {
+  const [farms, setFarms] = useState<Array<{ id: string; name: string }>>([]);
+  const [farm, setFarm] = useState<Farm | null>(null);
+  const [farmId, setFarmId] = useState(initialFarmId || "");
+  const [plotId, setPlotId] = useState(initialPlotId || "");
+  const [cycleId, setCycleId] = useState(initialCropCycleId || "");
+  const [tab, setTab] = useState<"monitoring" | "incident">(initialTab);
+  const [health, setHealth] = useState<"GOOD" | "POOR">("GOOD");
+  const [monitoringPhotos, setMonitoringPhotos] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/farms").then((r) => r.ok ? r.json() : []).then((list) => {
+      setFarms(list);
+      if (!farmId && list.length > 0) setFarmId(list[0].id);
+    });
+  }, [farmId]);
+
+  useEffect(() => {
+    if (!farmId) { setFarm(null); return; }
+    fetch(`/api/farms/${farmId}`).then((r) => r.ok ? r.json() : null).then((f) => {
+      setFarm(f);
+      if (initialPlotId) setPlotId(initialPlotId);
+      if (initialCropCycleId) setCycleId(initialCropCycleId);
+    });
+  }, [farmId, initialPlotId, initialCropCycleId]);
+
+  const activePlot = farm?.plots.find((p) => p.id === plotId);
+  const availableCrops = activePlot?.cropCycles ?? [];
+
+  async function submitMonitoring(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setMessage("");
+    const f = new FormData(e.currentTarget);
+    try {
+      if (!farmId || !plotId || !cycleId) throw new Error("Select farm, plot, and crop cycle.");
+      const photos = f.getAll("photos").filter((p): p is File => p instanceof File && p.size > 0);
+      if (!photos.length) {
+        throw new Error("At least one crop photo is required.");
+      }
+      const photoItems: PhotoItem[] = photos.map((file, i) => ({
+        id: `${i}`,
+        file,
+        previewUrl: "",
+        source: "file",
+      }));
+      const mediaIds = await uploadEvidencePhotos(farmId, "CROP_PHOTO", photoItems);
+      // Best-effort scouting GPS: verified inside the plot server-side.
+      let gps: { latitude: number; longitude: number; accuracyMeters: number } | null = null;
+      let gpsNote = "";
+      try {
+        gps = await captureScoutGps();
+      } catch {
+        gpsNote = "No GPS fix — submitting without location proof.";
+      }
+      const res = await fetch("/api/monitoring", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          farmId,
+          plotId,
+          cropCycleId: cycleId,
+          status: health,
+          stage: f.get("stage"),
+          impactPercent: health === "POOR" && f.get("impactPercent") ? Number(f.get("impactPercent")) : null,
+          remarks: f.get("remarks") || null,
+          mediaIds,
+          ...(gps ? { latitude: gps.latitude, longitude: gps.longitude, accuracyMeters: gps.accuracyMeters } : {}),
+        }),
+      });
+      setPending(false);
+      if (!res.ok) throw new Error((await res.json()).error ?? "Submission failed.");
+      const done = await res.json().catch(() => ({}));
+      setMessage(
+        `Daily crop monitoring update recorded${done.geofenceBasis ? ` (verified inside ${basisText(done.geofenceBasis)})` : ""}${gpsNote ? ` ${gpsNote}` : ""}`
+      );
+      setMonitoringPhotos([]);
+      onSuccess?.();
+    } catch (err: any) {
+      setPending(false);
+      setMessage(err.message ?? "Error submitting monitoring report.");
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {!hideTabs && (
+        <div className="tabs-nav">
+          <button type="button" className={`tab-btn ${tab === "monitoring" ? "active" : ""}`} onClick={() => setTab("monitoring")}>
+            <Icons.Eye size={14} /><span>Daily Crop Health &amp; Stage Capture</span>
+          </button>
+          <button type="button" className={`tab-btn ${tab === "incident" ? "active" : ""}`} onClick={() => setTab("incident")}>
+            <Icons.AlertTriangle size={14} /><span>Report Field Incident</span>
+          </button>
+        </div>
+      )}
+
+      {/* Target Cascading Selects */}
+      <div className="compact-card" style={{ padding: 18, gap: 12 }}>
+        <div className="form-section-title">Target Operational Context</div>
+        <div className="two-column" style={{ marginTop: 8 }}>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Target Farm</label>
+            <select value={farmId} onChange={(e) => { setFarmId(e.target.value); setPlotId(""); setCycleId(""); }} required>
+              {farms.map((f) => (<option key={f.id} value={f.id}>{f.name}</option>))}
+            </select>
+          </div>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Target Plot</label>
+            <select value={plotId} onChange={(e) => { setPlotId(e.target.value); setCycleId(""); }} disabled={!farm?.plots?.length}>
+              <option value="">Select plot…</option>
+              {farm?.plots.map((p) => (<option key={p.id} value={p.id}>{p.name}</option>))}
+            </select>
+          </div>
+          {tab === "monitoring" && (
+            <div className="form-group wide" style={{ margin: 0 }}>
+              <label>Target Crop Cycle</label>
+              <select value={cycleId} onChange={(e) => setCycleId(e.target.value)} disabled={!availableCrops.length} required>
+                <option value="">Select crop cycle…</option>
+                {availableCrops.map((c) => (<option key={c.id} value={c.id}>{c.cropName}</option>))}
+              </select>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {message && <div className={message.includes("success") || message.includes("logged") ? "success-banner" : "error"} role="status"><span>{message}</span></div>}
+
+      {/* FORM: MONITORING */}
+      {tab === "monitoring" && (
+        <form onSubmit={submitMonitoring} className="compact-card" style={{ padding: 22, gap: 16 }}>
+          <div className="form-section-title">Crop Health Observation</div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Crop Health Condition</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <button
+                type="button"
+                className={`btn ${health === "GOOD" ? "btn-green" : "btn-secondary"}`}
+                onClick={() => setHealth("GOOD")}
+                style={{ minHeight: 44 }}
+              >
+                <Icons.CheckCircle size={16} /><span>Good / Healthy</span>
+              </button>
+              <button
+                type="button"
+                className={`btn ${health === "POOR" ? "btn-danger" : "btn-secondary"}`}
+                onClick={() => setHealth("POOR")}
+                style={{ minHeight: 44 }}
+              >
+                <Icons.AlertTriangle size={16} /><span>Poor / Distressed</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="two-column">
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Growth Stage</label>
+              <select name="stage" required>{cropStages.map((s) => (<option key={s} value={s}>{s}</option>))}</select>
+            </div>
+            {health === "POOR" && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Estimated Yield Impact (%)</label>
+                <input name="impactPercent" type="number" min="1" max="100" placeholder="e.g., 20" required />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Field Observations &amp; Remarks</label>
+            <textarea name="remarks" rows={2} placeholder="e.g. Excellent foliage, robust fruit setting observed." />
+          </div>
+
+          <div className="form-group" style={{ margin: 0 }}>
+            <label>Evidence Photos (Required)</label>
+            <input type="file" name="photos" accept="image/*" multiple onChange={(e) => setMonitoringPhotos(Array.from(e.target.files ?? []).map((f) => URL.createObjectURL(f)))} required />
+            {monitoringPhotos.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                {monitoringPhotos.map((src, i) => (<img key={i} src={src} alt="preview" style={{ width: 60, height: 60, borderRadius: "var(--radius-xs)", objectFit: "cover", border: "1px solid var(--line)" }} />))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+            {onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>}
+            <button type="submit" className="btn btn-green btn-lg" disabled={pending}>
+              <Icons.Check size={16} /><span>{pending ? "Submitting…" : "Submit Daily Monitoring"}</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* FORM: INCIDENT */}
+      {tab === "incident" && (
+        <IncidentReportForm
+          initialFarmId={farmId}
+          initialPlotId={plotId}
+          initialCropCycleId={cycleId}
+          onSuccess={() => {
+            setMessage("Field incident logged with visual evidence.");
+            onSuccess?.();
+          }}
+          onCancel={onCancel}
+        />
+      )}
+    </div>
+  );
+}

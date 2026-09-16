@@ -3,7 +3,7 @@ import { currentActor, accessibleFarmWhere } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { apiError, noStore } from "@/lib/api";
 import { distanceMeters, utcDateOnly } from "@/lib/business";
-import { attendanceDisplayVerdict } from "@/lib/attendance-geo";
+import { attendanceDisplayVerdict } from "@modules/spatial";
 
 export const dynamic = "force-dynamic";
 

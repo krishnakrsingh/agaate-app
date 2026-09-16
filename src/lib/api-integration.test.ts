@@ -572,6 +572,108 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(res.status).toBe(422);
     });
 
+    it("rejects unauthenticated task creation (401)", async () => {
+      const req = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+        farmId: testFarmA.id,
+        title: "No Auth Task",
+        description: "Missing credentials",
+        category: "FERTIGATION",
+        priority: "MEDIUM",
+        date: new Date().toISOString().slice(0, 10),
+        assignedOfficerId: officerA.id,
+      });
+      const res = await withAuth(undefined, () => createTaskHandler(req));
+      expect(res.status).toBe(401);
+    });
+
+    it("rejects task creation by Farm Officer role (403)", async () => {
+      const req = createJsonRequest(
+        "http://localhost:3000/api/tasks",
+        "POST",
+        {
+          farmId: testFarmA.id,
+          title: "Officer-Created Task",
+          description: "Role gate",
+          category: "FERTIGATION",
+          priority: "MEDIUM",
+          date: new Date().toISOString().slice(0, 10),
+          assignedOfficerId: officerA.id,
+        },
+        officerACookie
+      );
+      const res = await withAuth(officerACookie, () => createTaskHandler(req));
+      expect(res.status).toBe(403);
+    });
+
+    it("rejects task creation on an inactive farm (422)", async () => {
+      const req = createJsonRequest(
+        "http://localhost:3000/api/tasks",
+        "POST",
+        {
+          farmId: testFarmB.id,
+          title: "Setup Farm Task",
+          description: "Farm not active",
+          category: "FERTIGATION",
+          priority: "MEDIUM",
+          date: new Date().toISOString().slice(0, 10),
+          assignedOfficerId: officerB.id,
+        },
+        agroCookie
+      );
+      const res = await withAuth(agroCookie, () => createTaskHandler(req));
+      expect(res.status).toBe(422);
+    });
+
+    it("rejects ineligible assignees (422)", async () => {
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const bodies = [
+        { assignedOfficerId: officerB.id, why: "officer without farm access" },
+        { assignedOfficerId: farmAdmin.id, why: "non-officer role" },
+        { assignedOfficerId: disabledUser.id, why: "inactive account" },
+      ];
+      for (const b of bodies) {
+        const req = createJsonRequest(
+          "http://localhost:3000/api/tasks",
+          "POST",
+          {
+            farmId: testFarmA.id,
+            plotId: testPlot1.id,
+            cropCycleId: testCropCycle.id,
+            title: "Bad Assignee Task",
+            description: b.why,
+            category: "FERTIGATION",
+            priority: "MEDIUM",
+            date: dateStr,
+            assignedOfficerId: b.assignedOfficerId,
+          },
+          agroCookie
+        );
+        const res = await withAuth(agroCookie, () => createTaskHandler(req));
+        expect(res.status, b.why).toBe(422);
+      }
+    });
+
+    it("rejects task creation for a past date (422)", async () => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const req = createJsonRequest(
+        "http://localhost:3000/api/tasks",
+        "POST",
+        {
+          farmId: testFarmA.id,
+          title: "Yesterday Task",
+          description: "Outside window",
+          category: "FERTIGATION",
+          priority: "MEDIUM",
+          date: yesterday.toISOString().slice(0, 10),
+          assignedOfficerId: officerA.id,
+        },
+        agroCookie
+      );
+      const res = await withAuth(agroCookie, () => createTaskHandler(req));
+      expect(res.status).toBe(422);
+    });
+
     it("enforces task view isolation: Officer A sees assigned task, Officer B does not", async () => {
       const reqA = createJsonRequest("http://localhost:3000/api/tasks", "GET", undefined, officerACookie);
       const resA = await withAuth(officerACookie, () => getTasksHandler(reqA));
@@ -582,6 +684,100 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       const resB = await withAuth(officerBCookie, () => getTasksHandler(reqB));
       const tasksB = await resB.json();
       expect(tasksB.some((t: any) => t.id === testTaskId)).toBe(false);
+    });
+
+    it("rejects unauthenticated task list (401) and cross-farm scoped list (403)", async () => {
+      const noAuth = createJsonRequest("http://localhost:3000/api/tasks", "GET");
+      const res401 = await withAuth(undefined, () => getTasksHandler(noAuth));
+      expect(res401.status).toBe(401);
+
+      const cross = createJsonRequest(
+        `http://localhost:3000/api/tasks?farmId=${testFarmA.id}`,
+        "GET",
+        undefined,
+        officerBCookie
+      );
+      const res403 = await withAuth(officerBCookie, () => getTasksHandler(cross));
+      expect(res403.status).toBe(403);
+    });
+
+    it("filters task list by search, status, and priority (GET /api/tasks)", async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const mk = async (title: string, priority: "HIGH" | "LOW", category: "FERTIGATION" | "PEST_CONTROL") => {
+        const req = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+          farmId: testFarmA.id,
+          plotId: testPlot1.id,
+          cropCycleId: testCropCycle.id,
+          title,
+          description: "read-path filter fixture",
+          category,
+          priority,
+          date: today,
+          assignedOfficerId: officerA.id,
+        }, agroCookie);
+        const res = await withAuth(agroCookie, () => createTaskHandler(req));
+        expect(res.status).toBe(201);
+        return (await res.json()).id as string;
+      };
+      const idA = await mk("CKPT6-READ-Alpha fertigation", "HIGH", "FERTIGATION");
+      const idB = await mk("CKPT6-READ-Beta pest control", "LOW", "PEST_CONTROL");
+
+      const bySearch = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ-Alpha", "GET", undefined, agroCookie)));
+      const searchRows = (await bySearch.json()) as any[];
+      expect(searchRows.map((t) => t.id)).toEqual([idA]);
+
+      const byStatus = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ&status=QUEUED", "GET", undefined, agroCookie)));
+      expect(((await byStatus.json()) as any[]).map((t) => t.id).sort()).toEqual([idA, idB].sort());
+
+      const byPriority = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ&priority=HIGH", "GET", undefined, agroCookie)));
+      expect(((await byPriority.json()) as any[]).map((t) => t.id)).toEqual([idA]);
+
+      const byCategory = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ&category=PEST_CONTROL", "GET", undefined, agroCookie)));
+      expect(((await byCategory.json()) as any[]).map((t) => t.id)).toEqual([idB]);
+    });
+
+    it("orders by dueDate, paginates, and reports X-Total-Count (GET /api/tasks)", async () => {
+      const page1 = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ&limit=1&offset=0", "GET", undefined, agroCookie)));
+      expect(page1.status).toBe(200);
+      const rows1 = (await page1.json()) as any[];
+      expect(rows1).toHaveLength(1);
+      expect(Number(page1.headers.get("X-Total-Count"))).toBe(2);
+
+      const page2 = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ&limit=1&offset=1", "GET", undefined, agroCookie)));
+      const rows2 = (await page2.json()) as any[];
+      expect(rows2).toHaveLength(1);
+      expect(rows2[0].id).not.toBe(rows1[0].id);
+      // Same dueDate → stable secondary order; rows carry the list contract.
+      for (const t of [...rows1, ...rows2]) {
+        expect(t.farm?.id).toBe(testFarmA.id);
+        expect(t.assignedOfficer?.name).toBeTruthy();
+        expect(t).toHaveProperty("primaryImageUrl");
+        expect(t.media).toEqual([]);
+      }
+    });
+
+    it("returns empty array with zero total for no-match filters (GET /api/tasks)", async () => {
+      const res = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest("http://localhost:3000/api/tasks?search=CKPT6-READ-NoSuchTask", "GET", undefined, agroCookie)));
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual([]);
+      expect(res.headers.get("X-Total-Count")).toBe("0");
+    });
+
+    it("filters task list by date range (GET /api/tasks)", async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const res = await withAuth(agroCookie, () =>
+        getTasksHandler(createJsonRequest(
+          `http://localhost:3000/api/tasks?search=CKPT6-READ&dateFrom=${today}&dateTo=${today}`,
+          "GET", undefined, agroCookie)));
+      expect(res.status).toBe(200);
+      expect(((await res.json()) as any[]).length).toBe(2);
     });
 
     it("blocks Officer B from modifying Officer A's task (403)", async () => {
@@ -629,6 +825,155 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(res.status).toBe(200);
       expect(data.priority).toBe("HIGH");
       expect(data.instructions).toBe("Ensure drip lines are flushed after fertigation cycle.");
+    });
+
+    it("officer transition writes execution claim and UPDATE audit (PATCH IN_PROGRESS)", async () => {
+      const mk = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+        farmId: testFarmA.id,
+        plotId: testPlot1.id,
+        cropCycleId: testCropCycle.id,
+        title: "CKPT7-PATCH-Transition target",
+        description: "dedicated transition fixture",
+        category: "FERTIGATION",
+        priority: "MEDIUM",
+        date: new Date().toISOString().slice(0, 10),
+        assignedOfficerId: officerA.id,
+      }, agroCookie);
+      const mkRes = await withAuth(agroCookie, () => createTaskHandler(mk));
+      expect(mkRes.status).toBe(201);
+      const fixtureId = (await mkRes.json()).id as string;
+
+      const req = createJsonRequest(`http://localhost:3000/api/tasks/${fixtureId}`, "PATCH", { status: "IN_PROGRESS" }, officerACookie);
+      const res = await withAuth(officerACookie, () =>
+        updateTaskHandler(req, { params: Promise.resolve({ taskId: fixtureId }) }));
+      expect(res.status).toBe(200);
+      expect((await res.json()).status).toBe("IN_PROGRESS");
+
+      const execution = await prisma.taskExecution.findUniqueOrThrow({ where: { taskId: fixtureId } });
+      expect(execution.officerId).toBe(officerA.id);
+      expect(execution.status).toBe("IN_PROGRESS");
+      expect(execution.startedAt).toBeTruthy();
+
+      const auditRow = await prisma.auditLog.findFirstOrThrow({
+        where: { action: "UPDATE", entityType: "Task", entityId: fixtureId },
+        orderBy: { createdAt: "desc" },
+      });
+      expect(auditRow.metadata).toMatchObject({ from: "ASSIGNED", to: "IN_PROGRESS" });
+    });
+
+    it("rejects officer illegal transition and COMPLETED-via-PATCH (409 vs 403)", async () => {
+      const mk = async (title: string) => {
+        const req = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+          farmId: testFarmA.id,
+          title,
+          description: "dedicated 409 fixture",
+          category: "FERTIGATION",
+          priority: "MEDIUM",
+          date: new Date().toISOString().slice(0, 10),
+          assignedOfficerId: officerA.id,
+        }, agroCookie);
+        const res = await withAuth(agroCookie, () => createTaskHandler(req));
+        expect(res.status).toBe(201);
+        return (await res.json()).id as string;
+      };
+      const illegalId = await mk("CKPT7-PATCH-Illegal transition target");
+      const done = createJsonRequest(`http://localhost:3000/api/tasks/${illegalId}`, "PATCH", { status: "BLOCKED" }, officerACookie);
+      const resIllegal = await withAuth(officerACookie, () =>
+        updateTaskHandler(done, { params: Promise.resolve({ taskId: illegalId }) }));
+      expect(resIllegal.status).toBe(409);
+
+      // Officer never reaches the COMPLETED redirect: whitelist 403 fires first.
+      const compOfficer = createJsonRequest(`http://localhost:3000/api/tasks/${illegalId}`, "PATCH", { status: "COMPLETED" }, officerACookie);
+      const resOfficer = await withAuth(officerACookie, () =>
+        updateTaskHandler(compOfficer, { params: Promise.resolve({ taskId: illegalId }) }));
+      expect(resOfficer.status).toBe(403);
+
+      // Privileged roles reach the redirect: 409, never a silent complete.
+      const compAgro = createJsonRequest(`http://localhost:3000/api/tasks/${illegalId}`, "PATCH", { status: "COMPLETED" }, agroCookie);
+      const resAgro = await withAuth(agroCookie, () =>
+        updateTaskHandler(compAgro, { params: Promise.resolve({ taskId: illegalId }) }));
+      expect(resAgro.status).toBe(409);
+      expect((await resAgro.json()).error).toContain("execution completion endpoint");
+    });
+
+    it("rejects officer planning-field edits (403) but allows privileged bypass of the table", async () => {
+      const mk = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+        farmId: testFarmA.id,
+        title: "CKPT7-PATCH-Field ban target",
+        description: "dedicated ban fixture",
+        category: "FERTIGATION",
+        priority: "MEDIUM",
+        date: new Date().toISOString().slice(0, 10),
+        assignedOfficerId: officerA.id,
+      }, agroCookie);
+      const mkRes = await withAuth(agroCookie, () => createTaskHandler(mk));
+      const fixtureId = (await mkRes.json()).id as string;
+
+      const ban = createJsonRequest(`http://localhost:3000/api/tasks/${fixtureId}`, "PATCH", { priority: "LOW" }, officerACookie);
+      const resBan = await withAuth(officerACookie, () =>
+        updateTaskHandler(ban, { params: Promise.resolve({ taskId: fixtureId }) }));
+      expect(resBan.status).toBe(403);
+
+      // Privileged: ASSIGNED → BLOCKED skips the officer table gate entirely.
+      const bypass = createJsonRequest(`http://localhost:3000/api/tasks/${fixtureId}`, "PATCH", { status: "BLOCKED" }, agroCookie);
+      const resBypass = await withAuth(agroCookie, () =>
+        updateTaskHandler(bypass, { params: Promise.resolve({ taskId: fixtureId }) }));
+      expect(resBypass.status).toBe(200);
+      expect((await resBypass.json()).status).toBe("BLOCKED");
+    });
+
+    it("self-assigns unassigned AVAILABLE task on officer start (PATCH IN_PROGRESS)", async () => {
+      const open = await prisma.task.create({
+        data: {
+          farmId: testFarmA.id,
+          origin: "SYSTEM",
+          category: "CROP_MONITORING",
+          title: "CKPT7-PATCH-Unassigned pool task",
+          description: "dedicated self-assign fixture",
+          dueDate: new Date(),
+          status: "AVAILABLE",
+          createdById: agronomist.id,
+        },
+      });
+      const req = createJsonRequest(`http://localhost:3000/api/tasks/${open.id}`, "PATCH", { status: "IN_PROGRESS" }, officerACookie);
+      const res = await withAuth(officerACookie, () =>
+        updateTaskHandler(req, { params: Promise.resolve({ taskId: open.id }) }));
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.status).toBe("IN_PROGRESS");
+      expect(data.assignedOfficerId).toBe(officerA.id);
+      await prisma.task.delete({ where: { id: open.id } }).catch(() => undefined);
+    });
+
+    it("rejects invalid assignee and cross-farm plot on PATCH (422)", async () => {
+      const mk = createJsonRequest("http://localhost:3000/api/tasks", "POST", {
+        farmId: testFarmA.id,
+        title: "CKPT7-PATCH-Revalidation target",
+        description: "dedicated revalidation fixture",
+        category: "FERTIGATION",
+        priority: "MEDIUM",
+        date: new Date().toISOString().slice(0, 10),
+        assignedOfficerId: officerA.id,
+      }, agroCookie);
+      const mkRes = await withAuth(agroCookie, () => createTaskHandler(mk));
+      const fixtureId = (await mkRes.json()).id as string;
+
+      const badAssignee = createJsonRequest(`http://localhost:3000/api/tasks/${fixtureId}`, "PATCH", { assignedOfficerId: farmAdmin.id }, farmAdminCookie);
+      const resAssignee = await withAuth(farmAdminCookie, () =>
+        updateTaskHandler(badAssignee, { params: Promise.resolve({ taskId: fixtureId }) }));
+      expect(resAssignee.status).toBe(422);
+
+      const farmBPlot = await prisma.plot.create({
+        data: { farmId: testFarmB.id, name: "CKPT7 Cross-Farm Plot", area: 1, latitude: 12.9, longitude: 77.5 },
+      });
+      try {
+        const badPlot = createJsonRequest(`http://localhost:3000/api/tasks/${fixtureId}`, "PATCH", { plotId: farmBPlot.id }, farmAdminCookie);
+        const resPlot = await withAuth(farmAdminCookie, () =>
+          updateTaskHandler(badPlot, { params: Promise.resolve({ taskId: fixtureId }) }));
+        expect(resPlot.status).toBe(422);
+      } finally {
+        await prisma.plot.delete({ where: { id: farmBPlot.id } }).catch(() => undefined);
+      }
     });
 
     it("completes task with materials ledger and labour hours tracking (POST /complete)", async () => {
@@ -828,6 +1173,144 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(res.status).toBe(200);
       expect(data.attendance.status).toBe("COMPLETED");
       expect(data.attendance.endAt).toBeDefined();
+    });
+
+    it("rejects START with an expired selfie (422)", async () => {
+      const staleAt = new Date(Date.now() - 31 * 60 * 1000);
+      const officer = await prisma.user.create({
+        data: { name: "API Officer Expired", email: "expired@api-test.agaate.local", passwordHash: "x", role: "FARM_OFFICER" },
+      });
+      await prisma.farmAccess.create({ data: { userId: officer.id, farmId: testFarmA.id } });
+      const stale = await prisma.mediaAsset.create({
+        data: {
+          storageKey: `evidence/${testFarmA.id}/2026-08-30/selfie-expired.jpg`,
+          kind: "SELFIE",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024,
+          farmId: testFarmA.id,
+          uploadedById: officer.id,
+          verifiedAt: staleAt,
+          createdAt: staleAt,
+        },
+      });
+      const cookie = await createAuthCookie(officer);
+      const req = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "START",
+        latitude: Number(testFarmA.latitude),
+        longitude: Number(testFarmA.longitude),
+        selfieMediaId: stale.id,
+      }, cookie);
+      const res = await withAuth(cookie, () => postAttendanceHandler(req));
+      expect(res.status).toBe(422);
+    });
+
+    it("writes START_DAY audit and silently drops a replayed END selfie", async () => {
+      const officer = await prisma.user.create({
+        data: { name: "API Officer Replay", email: "replay@api-test.agaate.local", passwordHash: "x", role: "FARM_OFFICER" },
+      });
+      await prisma.farmAccess.create({ data: { userId: officer.id, farmId: testFarmA.id } });
+      const selfie = await prisma.mediaAsset.create({
+        data: {
+          storageKey: `evidence/${testFarmA.id}/2026-08-30/selfie-replay.jpg`,
+          kind: "SELFIE",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024,
+          farmId: testFarmA.id,
+          uploadedById: officer.id,
+          verifiedAt: new Date(),
+        },
+      });
+      const cookie = await createAuthCookie(officer);
+      const startReq = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "START",
+        latitude: Number(testFarmA.latitude),
+        longitude: Number(testFarmA.longitude),
+        selfieMediaId: selfie.id,
+      }, cookie);
+      const startRes = await withAuth(cookie, () => postAttendanceHandler(startReq));
+      expect(startRes.status).toBe(200);
+      const shiftId = (await startRes.json()).attendance.id as string;
+
+      const auditStart = await prisma.auditLog.findFirstOrThrow({
+        where: { action: "START_DAY", entityType: "Attendance", entityId: shiftId },
+      });
+      expect(auditStart.metadata).toMatchObject({ farmId: testFarmA.id, outside: false });
+
+      // Same selfie on END is a replay: silently dropped, clock-out succeeds.
+      const endReq = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "END",
+        latitude: Number(testFarmA.latitude),
+        longitude: Number(testFarmA.longitude),
+        selfieMediaId: selfie.id,
+      }, cookie);
+      const endRes = await withAuth(cookie, () => postAttendanceHandler(endReq));
+      expect(endRes.status).toBe(200);
+      const row = await prisma.attendance.findUniqueOrThrow({ where: { id: shiftId } });
+      expect(row.status).toBe("COMPLETED");
+      expect(row.endSelfieKey).toBeNull();
+
+      const auditEnd = await prisma.auditLog.findFirstOrThrow({
+        where: { action: "END_DAY", entityType: "Attendance", entityId: shiftId },
+      });
+      expect(auditEnd.metadata).toMatchObject({ farmId: testFarmA.id });
+    });
+
+    it("rejects END with poor GPS accuracy and upserts exception on outside END", async () => {
+      const officer = await prisma.user.create({
+        data: { name: "API Officer Outside", email: "outside@api-test.agaate.local", passwordHash: "x", role: "FARM_OFFICER" },
+      });
+      await prisma.farmAccess.create({ data: { userId: officer.id, farmId: testFarmA.id } });
+      const selfie = await prisma.mediaAsset.create({
+        data: {
+          storageKey: `evidence/${testFarmA.id}/2026-08-30/selfie-outside.jpg`,
+          kind: "SELFIE",
+          mimeType: "image/jpeg",
+          sizeBytes: 1024,
+          farmId: testFarmA.id,
+          uploadedById: officer.id,
+          verifiedAt: new Date(),
+        },
+      });
+      const cookie = await createAuthCookie(officer);
+      const startReq = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "START",
+        latitude: Number(testFarmA.latitude),
+        longitude: Number(testFarmA.longitude),
+        selfieMediaId: selfie.id,
+      }, cookie);
+      const startRes = await withAuth(cookie, () => postAttendanceHandler(startReq));
+      expect(startRes.status).toBe(200);
+      const shiftId = (await startRes.json()).attendance.id as string;
+
+      const poorReq = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "END",
+        latitude: Number(testFarmA.latitude),
+        longitude: Number(testFarmA.longitude),
+        accuracyMeters: 2500,
+      }, cookie);
+      const poorRes = await withAuth(cookie, () => postAttendanceHandler(poorReq));
+      expect(poorRes.status).toBe(422);
+      expect((await poorRes.json()).code).toBe("GPS_ACCURACY_POOR");
+
+      const outsideReq = createJsonRequest("http://localhost:3000/api/attendance", "POST", {
+        farmId: testFarmA.id,
+        action: "END",
+        latitude: Number(testFarmA.latitude) + 0.05,
+        longitude: Number(testFarmA.longitude),
+        reason: "Clocking out from the equipment shed",
+      }, cookie);
+      const outsideRes = await withAuth(cookie, () => postAttendanceHandler(outsideReq));
+      expect(outsideRes.status).toBe(200);
+      const data = await outsideRes.json();
+      expect(data.attendance.status).toBe("EXCEPTION_PENDING");
+      expect(data.withinGeofence).toBe(false);
+      const exc = await prisma.attendanceException.findUniqueOrThrow({ where: { attendanceId: shiftId } });
+      expect(exc.reason).toBe("Clocking out from the equipment shed");
     });
   });
 

@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
-import { WorkforceAttendanceConsole } from "@/components/workforce-attendance-console";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import { WorkforceAttendanceConsole } from "@modules/attendance/ui/workforce-attendance-console";
 
 export const dynamic = "force-dynamic";
 

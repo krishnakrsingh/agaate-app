@@ -4,8 +4,8 @@ import { requireFarmAccess } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { apiError } from "@/lib/api";
-import { validatePlotGeometry, roundAcresForDb } from "@/lib/geo-server";
-import { commitBoundary } from "@/lib/geo-versions";
+import { validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
+import { commitBoundary } from "@modules/spatial";
 
 const schema = z.object({
   name: z.string().min(1).max(120).optional(),

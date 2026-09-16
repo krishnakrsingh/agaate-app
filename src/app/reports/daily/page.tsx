@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
-import { DailyReport } from "@/components/daily-report";
-import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
+import { DailyReport } from "@modules/reporting/ui/daily-report";
+import { Navbar } from "@/components/navigation/navbar";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export const dynamic = "force-dynamic";
 
