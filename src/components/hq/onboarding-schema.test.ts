@@ -29,7 +29,13 @@ describe("Onboarding Schema — Extended Client & Farm Fields", () => {
     const invalidClient = {
       name: "Ramesh Patel",
       phone: "9876543210",
-      whatsappNo: "123", // invalid length
+      whatsappNo: "123", // invalid length (<10 digits)
+      email: "ramesh@patelorganics.in",
+      billingAddress: "45 Agri Tech Park, Hoskote",
+      village: "Solur",
+      city: "Bengaluru",
+      state: "Karnataka",
+      pincode: "562114",
     };
 
     const parsed = clientSchema.safeParse(invalidClient);
@@ -39,7 +45,7 @@ describe("Onboarding Schema — Extended Client & Farm Fields", () => {
     }
   });
 
-  it("validates farmSchema with localConnect, city, pincode", () => {
+  it("validates farmSchema with localConnect, city, pincode, soilType", () => {
     const validFarm = {
       name: "Patel North Estate",
       localConnect: "Ramesh Patel (+919876543210)",
@@ -68,12 +74,29 @@ describe("Onboarding Schema — Extended Client & Farm Fields", () => {
         name: "Ramesh Patel",
         phone: "9876543210",
         whatsappNo: "9876543210",
+        email: "ramesh@patelorganics.in",
+        billingAddress: "45 Agri Tech Park, Hoskote",
         village: "Solur",
         city: "Bengaluru",
         state: "Karnataka",
         pincode: "562114",
         financeConnect: "Priya Sharma (9876501234)",
         purchaserConnect: "Arun Verma (9876504321)",
+      },
+      contacts: {
+        financeContact: {
+          name: "Priya Sharma",
+          phone: "9876501234",
+          email: "priya@patelorganics.in",
+          role: "FINANCE" as const,
+        },
+        purchaserContact: {
+          name: "Arun Verma",
+          phone: "9876504321",
+          email: "arun@patelorganics.in",
+          role: "PURCHASER" as const,
+        },
+        additionalContacts: [],
       },
       farms: [
         {
@@ -90,10 +113,17 @@ describe("Onboarding Schema — Extended Client & Farm Fields", () => {
           city: "Bengaluru",
           state: "Karnataka",
           pincode: "562114",
+          soilType: "Red Sandy Loam",
         },
       ],
       plots: [],
-      team: { mode: "later" as const },
+      team: {
+        mode: "later" as const,
+        agronomistId: "agr_1",
+        agronomistName: "Dr. Ananya Rao",
+        fieldOfficerId: "fo_1",
+        fieldOfficerName: "Sanjay Kumar",
+      },
     };
 
     const parsed = submitSchema.safeParse(wizardPayload);
