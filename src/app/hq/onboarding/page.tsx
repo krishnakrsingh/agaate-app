@@ -4,10 +4,13 @@ import { requireSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
-import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Icons } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default async function HqOnboardingListPage() {
   const session = await requireSession();
@@ -24,65 +27,81 @@ export default async function HqOnboardingListPage() {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <div className="page-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Onboarding</h1>
-            {drafts.length > 0 && (
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--muted)",
-                  background: "var(--surface-strong)",
-                  padding: "2px 8px",
-                  borderRadius: 12,
-                }}
-              >
-                {drafts.length} draft{drafts.length === 1 ? "" : "s"}
-              </span>
-            )}
-          </div>
-          <Link className="btn btn-primary" href="/hq/onboarding/new">
-            <Icons.Plus size={15} />
-            <span>New onboarding</span>
-          </Link>
-        </div>
+        <div className="dir-root">
+          <header className="dir-header">
+            <div className="dir-header-text">
+              <h1 className="dir-title">Onboarding</h1>
+              <p className="dir-subtitle">Resume client onboarding drafts or start a new estate setup.</p>
+            </div>
+            <Link href="/hq/onboarding/new" className="btn btn-primary btn-sm dir-add-btn">
+              <Icons.Plus size={14} />
+              <span>Add Client</span>
+            </Link>
+          </header>
 
-        <div className="section-block">
-          <div className="form-section-title">Resume a draft ({drafts.length})</div>
+          {drafts.length > 0 && (
+            <div className="dir-count">
+              <strong>{drafts.length}</strong> draft{drafts.length === 1 ? "" : "s"} in progress
+            </div>
+          )}
+
           {drafts.length === 0 ? (
-            <p className="muted" style={{ fontSize: 13 }}>
-              No drafts in progress. Start a new onboarding, or open the wizard — an unsent draft stored on this device is offered
-              automatically on load.
-            </p>
+            <div className="dir-table-card">
+              <div className="dir-state-cell">
+                <div className="dir-state-title">No drafts in progress</div>
+                <p className="dir-state-hint">
+                  Start a new onboarding. An unsent draft stored on this device is offered automatically on load.
+                </p>
+                <Link href="/hq/onboarding/new" className="btn btn-primary btn-sm">
+                  New onboarding
+                </Link>
+              </div>
+            </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {drafts.map((d) => (
-                <div
-                  key={d.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    border: "1px solid var(--hairline)",
-                    padding: "10px 12px",
-                    background: "var(--surface-card)",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <span style={{ flex: 1, minWidth: 180, fontSize: 13 }}>
-                    <strong>{d.clientName || "Unnamed client"}</strong>
-                    <span className="muted">
-                      {" "}
-                      — {d.farmCount} farm{d.farmCount === 1 ? "" : "s"} — updated {new Date(d.updatedAt).toLocaleString()}
-                    </span>
-                  </span>
-                  <Link className="btn btn-secondary btn-sm" href={`/hq/onboarding/${d.id}`}>
-                    <span>Resume</span>
-                    <Icons.ArrowRight size={14} />
-                  </Link>
-                </div>
-              ))}
+            <div className="dir-table-card">
+              <div className="dir-table-scroll">
+                <table className="dir-table">
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th className="dir-num">Farms</th>
+                      <th>Created</th>
+                      <th>Last edited</th>
+                      <th style={{ textAlign: "right" }} aria-label="Actions" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {drafts.map((d) => (
+                      <tr key={d.id} className="dir-row">
+                        <td>
+                          <div className="dir-identity">
+                            <span className="dir-name">{d.clientName || "Unnamed client"}</span>
+                            <span className="dir-code">{d.id}</span>
+                          </div>
+                        </td>
+                        <td className="dir-num">
+                          {d.farmCount}
+                          <span className="dir-farms-unit">
+                            {d.farmCount === 1 ? "farm" : "farms"}
+                          </span>
+                        </td>
+                        <td className="dir-muted">{formatDate(d.createdAt)}</td>
+                        <td title={d.updatedAt.toLocaleString()}>{formatDate(d.updatedAt)}</td>
+                        <td style={{ textAlign: "right" }}>
+                          <Link
+                            href={`/hq/onboarding/${d.id}`}
+                            className="btn btn-secondary btn-sm"
+                            style={{ gap: 4 }}
+                          >
+                            <span>Resume</span>
+                            <Icons.ArrowRight size={13} />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

@@ -83,8 +83,8 @@ function fullTime(iso: string): string {
 function StatusDot({ status }: { status: string }) {
   const meta = statusMeta(status);
   return (
-    <span className="client-status" style={{ color: meta.color }}>
-      <span className="client-status-dot" style={{ background: meta.color }} />
+    <span className="dir-status" style={{ color: meta.color }}>
+      <span className="dir-status-dot" style={{ background: meta.color }} />
       {meta.label}
     </span>
   );
@@ -93,14 +93,14 @@ function StatusDot({ status }: { status: string }) {
 function ClientIdentity({ c }: { c: ClientRow }) {
   const primary = c.companyName?.trim() || c.name;
   return (
-    <div className="client-identity">
-      <Link href={`/hq/clients/${c.id}`} className="client-name" title={primary}>
+    <div className="dir-identity">
+      <Link href={`/hq/clients/${c.id}`} className="dir-name" title={primary}>
         {primary}
       </Link>
       {c.companyName && c.name && c.name !== c.companyName && (
-        <span className="client-sub">{c.name}</span>
+        <span className="dir-sub">{c.name}</span>
       )}
-      <span className="client-code">{c.code}</span>
+      <span className="dir-code">{c.code}</span>
     </div>
   );
 }
@@ -279,21 +279,21 @@ export function ClientDirectory({
   }, [stateFilter, statusFilter]);
 
   return (
-    <div className="client-dir">
-      <datalist id="hq-client-states">
+    <div className="dir-root">
+      <datalist id="hq-dir-states">
         {STATES.map((s) => (
           <option key={s} value={s} />
         ))}
       </datalist>
 
       {/* ── Header ── */}
-      <header className="client-header">
-        <div className="client-header-text">
-          <h1 className="client-title">Clients</h1>
-          <p className="client-subtitle">Manage clients, farms and their operations.</p>
+      <header className="dir-header">
+        <div className="dir-header-text">
+          <h1 className="dir-title">Clients</h1>
+          <p className="dir-subtitle">Manage clients, farms and their operations.</p>
         </div>
         {canOnboard && (
-          <Link href="/hq/onboarding/new" className="btn btn-primary btn-sm client-add-btn">
+          <Link href="/hq/onboarding/new" className="btn btn-primary btn-sm dir-add-btn">
             <Icons.Plus size={14} />
             <span>Add Client</span>
           </Link>
@@ -301,11 +301,11 @@ export function ClientDirectory({
       </header>
 
       {/* ── Toolbar ── */}
-      <div className="client-toolbar">
-        <div className="client-search">
-          <Icons.Search size={14} className="client-search-icon" />
+      <div className="dir-toolbar">
+        <div className="dir-search">
+          <Icons.Search size={14} className="dir-search-icon" />
           <input
-            className="input-field client-search-input"
+            className="input-field dir-search-input"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search clients…"
@@ -314,7 +314,7 @@ export function ClientDirectory({
           {search && (
             <button
               type="button"
-              className="client-search-clear"
+              className="dir-search-clear"
               onClick={() => setSearch("")}
               aria-label="Clear search"
             >
@@ -325,7 +325,7 @@ export function ClientDirectory({
 
         <button
           type="button"
-          className="btn btn-secondary btn-sm client-filters-toggle"
+          className="btn btn-secondary btn-sm dir-filters-toggle"
           onClick={() => setMobileFiltersOpen((v) => !v)}
           aria-expanded={mobileFiltersOpen}
         >
@@ -333,10 +333,10 @@ export function ClientDirectory({
           <span>Filters{activeChips.length ? ` (${activeChips.length})` : ""}</span>
         </button>
 
-        <div className={`client-controls ${mobileFiltersOpen ? "open" : ""}`}>
+        <div className={`dir-controls ${mobileFiltersOpen ? "open" : ""}`}>
           <input
-            className="input-field client-select"
-            list="hq-client-states"
+            className="input-field dir-select"
+            list="hq-dir-states"
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
             placeholder="State"
@@ -344,7 +344,7 @@ export function ClientDirectory({
           />
 
           <select
-            className="input-field client-select"
+            className="input-field dir-select"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
@@ -358,10 +358,10 @@ export function ClientDirectory({
             <option value="SUSPENDED">Suspended</option>
           </select>
 
-          <div className="client-popover-wrap">
+          <div className="dir-popover-wrap">
             <button
               type="button"
-              className={`btn btn-secondary btn-sm client-more-btn ${filtersOpen ? "active" : ""}`}
+              className={`btn btn-secondary btn-sm dir-more-btn ${filtersOpen ? "active" : ""}`}
               onClick={() => setFiltersOpen((v) => !v)}
               aria-expanded={filtersOpen}
               aria-haspopup="menu"
@@ -374,19 +374,19 @@ export function ClientDirectory({
               <>
                 <button
                   type="button"
-                  className="client-popover-backdrop"
+                  className="dir-popover-backdrop"
                   aria-hidden
                   tabIndex={-1}
                   onClick={() => setFiltersOpen(false)}
                 />
-                <div role="menu" className="client-popover" onKeyDown={(e) => e.key === "Escape" && setFiltersOpen(false)}>
-                  <div className="client-popover-label">Quick views</div>
+                <div role="menu" className="dir-popover" onKeyDown={(e) => e.key === "Escape" && setFiltersOpen(false)}>
+                  <div className="dir-popover-label">Quick views</div>
                   {QUICK_VIEWS.map((v) => (
                     <button
                       key={v.label}
                       type="button"
                       role="menuitem"
-                      className="client-popover-item"
+                      className="dir-popover-item"
                       onClick={() => applyPreset(v.preset)}
                     >
                       {v.label}
@@ -394,11 +394,11 @@ export function ClientDirectory({
                   ))}
                   {filtersActive && (
                     <>
-                      <div className="client-popover-divider" />
+                      <div className="dir-popover-divider" />
                       <button
                         type="button"
                         role="menuitem"
-                        className="client-popover-item danger"
+                        className="dir-popover-item danger"
                         onClick={clearAll}
                       >
                         <Icons.X size={13} /> Reset all filters
@@ -411,10 +411,10 @@ export function ClientDirectory({
           </div>
         </div>
 
-        <div className="client-sort">
-          <span className="client-sort-label">Sort:</span>
+        <div className="dir-sort">
+          <span className="dir-sort-label">Sort:</span>
           <select
-            className="input-field client-select"
+            className="input-field dir-select"
             value={sortBy}
             onChange={(e) => {
               setSortBy(e.target.value);
@@ -433,9 +433,9 @@ export function ClientDirectory({
 
       {/* ── Active filter chips ── */}
       {activeChips.length > 0 && (
-        <div className="client-chips">
+        <div className="dir-chips">
           {activeChips.map((chip) => (
-            <span key={chip.key} className="client-chip">
+            <span key={chip.key} className="dir-chip">
               {chip.label}
               <button
                 type="button"
@@ -446,7 +446,7 @@ export function ClientDirectory({
               </button>
             </span>
           ))}
-          <button type="button" className="client-chip-clear" onClick={clearAll}>
+          <button type="button" className="dir-chip-clear" onClick={clearAll}>
             Clear all
           </button>
         </div>
@@ -454,9 +454,9 @@ export function ClientDirectory({
 
       {/* ── Bulk action bar ── */}
       {canWrite && selected.size > 0 && (
-        <div className="client-bulkbar">
+        <div className="dir-bulkbar">
           <strong>{selected.size} selected</strong>
-          <span className="client-bulk-max">max {BULK_MAX}</span>
+          <span className="dir-bulk-max">max {BULK_MAX}</span>
           <button
             type="button"
             className="btn btn-primary btn-sm"
@@ -473,7 +473,7 @@ export function ClientDirectory({
           >
             Set inactive
           </button>
-          <button type="button" className="client-chip-clear" onClick={() => setSelected(new Set())}>
+          <button type="button" className="dir-chip-clear" onClick={() => setSelected(new Set())}>
             Clear selection
           </button>
         </div>
@@ -481,7 +481,7 @@ export function ClientDirectory({
 
       {/* ── Count caption ── */}
       {!loading && !error && (
-        <div className="client-count">
+        <div className="dir-count">
           <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""}
           {filtersActive ? " matching filters" : ""}
           {total > LIMIT ? ` · Page ${page} of ${totalPages}` : ""}
@@ -489,12 +489,12 @@ export function ClientDirectory({
       )}
 
       {/* ── Desktop table ── */}
-      <div className="client-table-card">
-        <div className="client-table-scroll">
-          <table className="client-table">
+      <div className="dir-table-card">
+        <div className="dir-table-scroll">
+          <table className="dir-table">
             <thead>
               <tr>
-                <th className="client-check-col">
+                <th className="dir-check-col">
                   <input
                     type="checkbox"
                     checked={allOnPageSelected}
@@ -505,24 +505,24 @@ export function ClientDirectory({
                 <th>Client</th>
                 <th>Contact</th>
                 <th>Location</th>
-                <th className="client-num">Farms</th>
+                <th className="dir-num">Farms</th>
                 <th>Status</th>
-                <th className="client-activity-col">Last Activity</th>
-                <th className="client-actions-col" aria-label="Actions" />
+                <th className="dir-activity-col">Last Activity</th>
+                <th className="dir-actions-col" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="client-state-cell">
+                  <td colSpan={8} className="dir-state-cell">
                     <Icons.Spinner size={16} className="spin" /> Loading clients…
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={8} className="client-state-cell">
-                    <div className="client-state-title">Couldn’t load clients</div>
-                    <p className="client-state-hint">{error}</p>
+                  <td colSpan={8} className="dir-state-cell">
+                    <div className="dir-state-title">Couldn’t load clients</div>
+                    <p className="dir-state-hint">{error}</p>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
                       Retry
                     </button>
@@ -530,9 +530,9 @@ export function ClientDirectory({
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="client-state-cell">
-                    <div className="client-state-title">No clients found</div>
-                    <p className="client-state-hint">Try changing your search or filters.</p>
+                  <td colSpan={8} className="dir-state-cell">
+                    <div className="dir-state-title">No clients found</div>
+                    <p className="dir-state-hint">Try changing your search or filters.</p>
                     {filtersActive && (
                       <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
                         Clear all
@@ -546,13 +546,13 @@ export function ClientDirectory({
                   return (
                     <tr
                       key={c.id}
-                      className="client-row"
+                      className="dir-row"
                       onClick={() => {
                         if (!menuOpen) router.push(`/hq/clients/${c.id}`);
                       }}
                     >
                       <td
-                        className="client-check-col"
+                        className="dir-check-col"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
@@ -565,41 +565,41 @@ export function ClientDirectory({
                       <td>
                         <ClientIdentity c={c} />
                       </td>
-                      <td className="client-contact-col">
+                      <td className="dir-contact-col">
                         {c.companyName && c.name && (
-                          <span className="client-contact-name">{c.name}</span>
+                          <span className="dir-contact-name">{c.name}</span>
                         )}
                         {c.phone ? (
-                          <a href={`tel:${c.phone}`} className="client-phone" onClick={(e) => e.stopPropagation()}>
+                          <a href={`tel:${c.phone}`} className="dir-phone" onClick={(e) => e.stopPropagation()}>
                             {c.phone}
                           </a>
                         ) : (
-                          <span className="client-muted">—</span>
+                          <span className="dir-muted">—</span>
                         )}
                       </td>
-                      <td className="client-loc-col">
+                      <td className="dir-loc-col">
                         {c.state || c.district ? (
                           <span>
                             {[c.district, c.state].filter(Boolean).join(", ")}
                           </span>
                         ) : (
-                          <span className="client-muted">—</span>
+                          <span className="dir-muted">—</span>
                         )}
                       </td>
-                      <td className="client-num">
+                      <td className="dir-num">
                         <Link
                           href={`/hq/farms?clientId=${c.id}`}
-                          className="client-farms-link"
+                          className="dir-farms-link"
                           onClick={(e) => e.stopPropagation()}
                           title="View client farms"
                         >
                           {c.farmCount}
-                          <span className="client-farms-unit">
+                          <span className="dir-farms-unit">
                             {c.farmCount === 1 ? "farm" : "farms"}
                           </span>
                         </Link>
                         {c.totalAcreage > 0 && (
-                          <span className="client-farms-acreage">
+                          <span className="dir-farms-acreage">
                             {c.totalAcreage.toFixed(1)} ac
                           </span>
                         )}
@@ -607,14 +607,14 @@ export function ClientDirectory({
                       <td>
                         <StatusDot status={c.status} />
                       </td>
-                      <td className="client-activity-col">
+                      <td className="dir-activity-col">
                         <span title={fullTime(c.updatedAt)}>{relativeTime(c.updatedAt)}</span>
                       </td>
-                      <td className="client-actions-col" onClick={(e) => e.stopPropagation()}>
-                        <div className="client-menu-wrap">
+                      <td className="dir-actions-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="dir-menu-wrap">
                           <button
                             type="button"
-                            className="client-kebab"
+                            className="dir-kebab"
                             aria-haspopup="menu"
                             aria-expanded={menuOpen}
                             aria-label={`Actions for ${c.name}`}
@@ -626,20 +626,20 @@ export function ClientDirectory({
                             <>
                               <button
                                 type="button"
-                                className="client-popover-backdrop"
+                                className="dir-popover-backdrop"
                                 aria-hidden
                                 tabIndex={-1}
                                 onClick={() => setOpenMenuId(null)}
                               />
                               <div
                                 role="menu"
-                                className="client-popover client-menu"
+                                className="dir-popover dir-menu"
                                 onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
                               >
                                 <Link
                                   role="menuitem"
                                   href={`/hq/clients/${c.id}`}
-                                  className="client-popover-item"
+                                  className="dir-popover-item"
                                 >
                                   <Icons.Eye size={13} /> View details
                                 </Link>
@@ -648,25 +648,25 @@ export function ClientDirectory({
                                     <Link
                                       role="menuitem"
                                       href={`/hq/onboarding/new?clientId=${c.id}`}
-                                      className="client-popover-item"
+                                      className="dir-popover-item"
                                     >
                                       <Icons.Edit size={13} /> Edit client
                                     </Link>
                                     <Link
                                       role="menuitem"
                                       href={`/hq/onboarding/new?clientId=${c.id}`}
-                                      className="client-popover-item"
+                                      className="dir-popover-item"
                                     >
                                       <Icons.Plus size={13} /> Add farm
                                     </Link>
                                   </>
                                 )}
-                                <div className="client-popover-divider" />
-                                <div className="client-popover-label">More actions</div>
+                                <div className="dir-popover-divider" />
+                                <div className="dir-popover-label">More actions</div>
                                 <button
                                   type="button"
                                   role="menuitem"
-                                  className="client-popover-item"
+                                  className="dir-popover-item"
                                   onClick={() => copyCode(c.code)}
                                 >
                                   <Icons.Copy size={13} /> Copy client code
@@ -675,7 +675,7 @@ export function ClientDirectory({
                                   <button
                                     type="button"
                                     role="menuitem"
-                                    className="client-popover-item"
+                                    className="dir-popover-item"
                                     disabled={bulkBusy}
                                     onClick={() => {
                                       setOpenMenuId(null);
@@ -708,21 +708,21 @@ export function ClientDirectory({
       </div>
 
       {/* ── Mobile cards ── */}
-      <div className="client-cards">
+      <div className="dir-cards">
         {loading ? (
-          <div className="client-card-state">Loading clients…</div>
+          <div className="dir-card-state">Loading clients…</div>
         ) : error ? (
-          <div className="client-card-state">
-            <div className="client-state-title">Couldn’t load clients</div>
-            <p className="client-state-hint">{error}</p>
+          <div className="dir-card-state">
+            <div className="dir-state-title">Couldn’t load clients</div>
+            <p className="dir-state-hint">{error}</p>
             <button type="button" className="btn btn-secondary btn-sm" onClick={load}>
               Retry
             </button>
           </div>
         ) : rows.length === 0 ? (
-          <div className="client-card-state">
-            <div className="client-state-title">No clients found</div>
-            <p className="client-state-hint">Try changing your search or filters.</p>
+          <div className="dir-card-state">
+            <div className="dir-state-title">No clients found</div>
+            <p className="dir-state-hint">Try changing your search or filters.</p>
             {filtersActive && (
               <button type="button" className="btn btn-secondary btn-sm" onClick={clearAll}>
                 Clear all
@@ -733,55 +733,55 @@ export function ClientDirectory({
           rows.map((c) => {
             const menuOpen = openMenuId === c.id;
             return (
-              <article key={c.id} className="client-card">
-                <div className="client-card-head">
+              <article key={c.id} className="dir-card">
+                <div className="dir-card-head">
                   <input
                     type="checkbox"
                     checked={selected.has(c.id)}
                     onChange={() => toggleOne(c.id)}
                     aria-label={`Select ${c.name}`}
                   />
-                  <Link href={`/hq/clients/${c.id}`} className="client-name">
+                  <Link href={`/hq/clients/${c.id}`} className="dir-name">
                     {c.companyName?.trim() || c.name}
                   </Link>
                   <StatusDot status={c.status} />
                 </div>
-                <div className="client-card-meta">
-                  <span className="client-code">{c.code}</span>
+                <div className="dir-card-meta">
+                  <span className="dir-code">{c.code}</span>
                   {(c.district || c.state) && (
-                    <span className="client-muted">
+                    <span className="dir-muted">
                       {[c.district, c.state].filter(Boolean).join(", ")}
                     </span>
                   )}
                 </div>
-                <div className="client-card-grid">
+                <div className="dir-card-grid">
                   <div>
-                    <span className="client-card-key">Contact</span>
-                    {c.companyName && <span className="client-card-val">{c.name}</span>}
+                    <span className="dir-card-key">Contact</span>
+                    {c.companyName && <span className="dir-card-val">{c.name}</span>}
                     {c.phone && (
-                      <a href={`tel:${c.phone}`} className="client-phone">
+                      <a href={`tel:${c.phone}`} className="dir-phone">
                         {c.phone}
                       </a>
                     )}
                   </div>
                   <div>
-                    <span className="client-card-key">Farms</span>
-                    <Link href={`/hq/farms?clientId=${c.id}`} className="client-farms-link">
+                    <span className="dir-card-key">Farms</span>
+                    <Link href={`/hq/farms?clientId=${c.id}`} className="dir-farms-link">
                       {c.farmCount}
-                      <span className="client-farms-unit">
+                      <span className="dir-farms-unit">
                         {c.farmCount === 1 ? "farm" : "farms"}
                       </span>
                     </Link>
                   </div>
                 </div>
-                <div className="client-card-foot">
-                  <span className="client-muted" title={fullTime(c.updatedAt)}>
+                <div className="dir-card-foot">
+                  <span className="dir-muted" title={fullTime(c.updatedAt)}>
                     Active {relativeTime(c.updatedAt)}
                   </span>
-                  <div className="client-menu-wrap">
+                  <div className="dir-menu-wrap">
                     <button
                       type="button"
-                      className="client-kebab"
+                      className="dir-kebab"
                       aria-haspopup="menu"
                       aria-expanded={menuOpen}
                       aria-label={`Actions for ${c.name}`}
@@ -793,17 +793,17 @@ export function ClientDirectory({
                       <>
                         <button
                           type="button"
-                          className="client-popover-backdrop"
+                          className="dir-popover-backdrop"
                           aria-hidden
                           tabIndex={-1}
                           onClick={() => setOpenMenuId(null)}
                         />
                         <div
                           role="menu"
-                          className="client-popover client-menu"
+                          className="dir-popover dir-menu"
                           onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
                         >
-                          <Link role="menuitem" href={`/hq/clients/${c.id}`} className="client-popover-item">
+                          <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
                             <Icons.Eye size={13} /> View details
                           </Link>
                           {canOnboard && (
@@ -811,25 +811,25 @@ export function ClientDirectory({
                               <Link
                                 role="menuitem"
                                 href={`/hq/onboarding/new?clientId=${c.id}`}
-                                className="client-popover-item"
+                                className="dir-popover-item"
                               >
                                 <Icons.Edit size={13} /> Edit client
                               </Link>
                               <Link
                                 role="menuitem"
                                 href={`/hq/onboarding/new?clientId=${c.id}`}
-                                className="client-popover-item"
+                                className="dir-popover-item"
                               >
                                 <Icons.Plus size={13} /> Add farm
                               </Link>
                             </>
                           )}
-                          <div className="client-popover-divider" />
-                          <div className="client-popover-label">More actions</div>
+                          <div className="dir-popover-divider" />
+                          <div className="dir-popover-label">More actions</div>
                           <button
                             type="button"
                             role="menuitem"
-                            className="client-popover-item"
+                            className="dir-popover-item"
                             onClick={() => copyCode(c.code)}
                           >
                             <Icons.Copy size={13} /> Copy client code
@@ -838,7 +838,7 @@ export function ClientDirectory({
                             <button
                               type="button"
                               role="menuitem"
-                              className="client-popover-item"
+                              className="dir-popover-item"
                               disabled={bulkBusy}
                               onClick={() => {
                                 setOpenMenuId(null);
@@ -869,12 +869,12 @@ export function ClientDirectory({
 
       {/* ── Pagination ── */}
       {!loading && !error && total > LIMIT && (
-        <div className="client-pagination">
+        <div className="dir-pagination">
           <span>
             Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of{" "}
             {total.toLocaleString()}
           </span>
-          <div className="client-pagination-actions">
+          <div className="dir-pagination-actions">
             <button
               type="button"
               className="btn btn-secondary btn-sm"
