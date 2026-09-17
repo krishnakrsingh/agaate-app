@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
@@ -42,7 +42,7 @@ function F({
 }: {
   label: string;
   span?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="form-group" style={{ margin: 0, gridColumn: span ? "1 / -1" : undefined }}>

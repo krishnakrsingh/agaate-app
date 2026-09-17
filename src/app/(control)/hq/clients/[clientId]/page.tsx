@@ -41,7 +41,7 @@ export default async function HqClientDetailPage({
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         <Breadcrumbs
-          items={[{ label: "HQ" }, { label: "Clients", href: "/hq/clients" }, { label: clientLabel }]}
+          items={[{ label: "Dashboard", href: "/hq" }, { label: "Clients", href: "/hq/clients" }, { label: clientLabel }]}
         />
         <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading client details…</div>}>
           <Client360

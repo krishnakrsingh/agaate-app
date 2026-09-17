@@ -311,7 +311,7 @@ export default async function HqFarmDetailPage({
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         <Breadcrumbs
-          items={[{ label: "HQ" }, { label: "Farms", href: "/hq/farms" }, { label: farm.name }]}
+          items={[{ label: "Dashboard", href: "/hq" }, { label: "Farms", href: "/hq/farms" }, { label: farm.name }]}
         />
         <Suspense fallback={<div style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>Loading farm management…</div>}>
           <HqFarm360 farm={serialized} />

@@ -13,7 +13,7 @@ export default async function HqTasksPage() {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
-          <Breadcrumbs items={[{ label: "HQ Tasks" }]} />
+          <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Tasks Ledger" }]} />
           <h1>Access Restricted</h1>
           <p className="error">Only Super Admins can access the HQ task ledger.</p>
         </main>

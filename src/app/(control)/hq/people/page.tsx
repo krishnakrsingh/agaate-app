@@ -13,9 +13,9 @@ export default async function HqPeoplePage() {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
-          <Breadcrumbs items={[{ label: "Internal Team" }]} />
+          <Breadcrumbs items={[{ label: "Headquarters", href: "/hq" }, { label: "Internal Team" }]} />
           <h1>Access Restricted</h1>
-          <p className="error">Only Super Admins can access the HQ internal team directory.</p>
+          <p className="error">Only Super Admins can access the internal team directory.</p>
         </main>
       </>
     );

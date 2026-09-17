@@ -142,7 +142,7 @@ export function ClientWorkspace({ initialClient }: { initialClient: ClientData }
               <Icons.Edit size={13} />
               <span>{isEditing ? "Cancel Editing" : "Edit Profile"}</span>
             </button>
-            <Link href={`/farms/new?clientId=${client.id}`} className="btn btn-primary btn-sm">
+            <Link href={`/hq/clients/${client.id}/farms/new`} className="btn btn-primary btn-sm">
               <Icons.Plus size={13} />
               <span>Add Estate to Client</span>
             </Link>
@@ -355,7 +355,7 @@ export function ClientWorkspace({ initialClient }: { initialClient: ClientData }
               <p style={{ fontSize: "15px", color: "var(--muted)", marginBottom: "16px" }}>
                 No farm estates registered under this organization yet.
               </p>
-              <Link href={`/farms/new?clientId=${client.id}`} className="btn btn-primary btn-sm">
+              <Link href={`/hq/clients/${client.id}/farms/new`} className="btn btn-primary btn-sm">
                 Register First Farm
               </Link>
             </div>

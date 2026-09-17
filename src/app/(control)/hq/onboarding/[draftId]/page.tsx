@@ -24,7 +24,7 @@ export default async function HqOnboardingDraftPage({ params }: { params: Promis
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell">
-          <Breadcrumbs items={[{ label: "HQ" }, { label: "Client onboarding", href: "/hq/onboarding" }, { label: "Submitted" }]} />
+          <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Client onboarding", href: "/hq/onboarding" }, { label: "Submitted" }]} />
           <div className="section-block">
             <div className="form-section-title">Already activated</div>
             <p className="muted" style={{ fontSize: 13 }}>
@@ -43,7 +43,7 @@ export default async function HqOnboardingDraftPage({ params }: { params: Promis
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: draft.clientName || "Draft" }]} />
+        <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: draft.clientName || "Draft" }]} />
         <div className="page-header" style={{ paddingBottom: 10 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
             <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>

@@ -63,7 +63,7 @@ export default async function HqOnboardingNewPage({ searchParams }: Props) {
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
-        <Breadcrumbs items={[{ label: "HQ", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: "New" }]} />
+        <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: "New Client Intake" }]} />
         <div
           style={{
             margin: "8px 0 20px",

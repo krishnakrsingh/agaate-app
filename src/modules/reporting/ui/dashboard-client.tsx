@@ -1209,7 +1209,7 @@ export function DashboardClient({
                             <span>Inspect Portfolio →</span>
                           </button>
                           <Link
-                            href={`/farms/new?clientId=${client.id}`}
+                            href={`/hq/clients/${client.id}/farms/new`}
                             className="btn btn-sm btn-ghost"
                             style={{ fontSize: 11, padding: "4px 8px" }}
                             title="Add Another Farm"
@@ -1411,7 +1411,7 @@ export function DashboardClient({
             {/* Modal Footer */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
               <Link
-                href={`/farms/new?clientId=${selectedClient.id}`}
+                href={`/hq/clients/${selectedClient.id}/farms/new`}
                 className="btn btn-secondary btn-sm"
               >
                 <Icons.Plus size={13} />

@@ -108,9 +108,13 @@ function ClientIdentity({ c }: { c: ClientRow }) {
 export function ClientDirectory({
   canWrite = false,
   canOnboard = false,
+  canEditClient = false,
+  canCreateFarm = false,
 }: {
   canWrite?: boolean;
   canOnboard?: boolean;
+  canEditClient?: boolean;
+  canCreateFarm?: boolean;
 }) {
   const toast = useToast();
   const router = useRouter();

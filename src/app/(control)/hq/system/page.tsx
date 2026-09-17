@@ -62,7 +62,7 @@ export default async function HqSystemPage() {
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
-          <Breadcrumbs items={[{ label: "HQ" }, { label: "System" }]} />
+          <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "System Governance" }]} />
           <h1>Access Restricted</h1>
           <p className="error">Only Super Admins can access system configuration and audit controls.</p>
         </main>
