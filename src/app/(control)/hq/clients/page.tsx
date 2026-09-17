@@ -23,13 +23,18 @@ export default async function HqClientsPage() {
 
   const canWrite = hasPermission(session.permissions, "clients:write");
   const canOnboard = hasPermission(session.permissions, "onboarding:manage");
+  const canEditClient = session.role === "SUPER_ADMIN";
+  const canCreateFarm = ["SUPER_ADMIN", "FARM_ADMIN"].includes(session.role);
 
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         <Suspense fallback={<div style={{ padding: "48px", textAlign: "center", color: "var(--muted)", fontSize: 13 }}>Loading…</div>}>
-          <ClientDirectory canWrite={canWrite} canOnboard={canOnboard} />
+          <ClientDirectory
+            canWrite={canWrite}
+            canOnboard={canOnboard}
+          />
         </Suspense>
       </main>
     </>

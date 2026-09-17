@@ -314,13 +314,21 @@ function Metric({ label, value }: { label: string; value: ReactNode }) {
 
 export function Client360({
   clientId,
-  canEditClient = false,
-  canCreateFarm = false,
+  canOnboard = false,
+  canEditClient: propCanEditClient,
+  canCreateFarm: propCanCreateFarm,
+  canEditFarm = false,
 }: {
   clientId: string;
+  canOnboard?: boolean;
   canEditClient?: boolean;
   canCreateFarm?: boolean;
+  canEditFarm?: boolean;
 }) {
+  const canEditClient = propCanEditClient ?? canOnboard;
+  const canCreateFarm = propCanCreateFarm ?? canOnboard;
+  const editClientHref = `/hq/clients/${clientId}/edit`;
+  const addFarmHref = `/hq/clients/${clientId}/farms/new`;
   const [data, setData] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -471,8 +479,6 @@ export function Client360({
   const officers = data.team.filter((m) => m.role !== "FARM_ADMIN");
   const farmPages = Math.ceil(data.farms.total / data.farms.limit) || 1;
   const plotPages = Math.ceil(data.plots.total / data.plots.limit) || 1;
-  const editClientHref = `/hq/clients/${client.id}/edit`;
-  const addFarmHref = `/hq/clients/${client.id}/farms/new`;
   const locationText = [client.district, client.state].filter(Boolean).join(", ");
   const fullAddress = [client.address, client.district, client.state].filter(Boolean).join(", ");
 
@@ -626,10 +632,18 @@ export function Client360({
                         </div>
                       )}
                     </div>
-                    <Link href={`/hq/farms/${f.id}`} className="btn btn-secondary btn-sm">
-                      <span>View farm</span>
-                      <ArrowRight size={13} />
-                    </Link>
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      {canEditFarm && (
+                        <Link href={`/hq/farms/${f.id}/edit`} className="btn btn-secondary btn-sm" title="Edit farm details">
+                          <Pencil size={12} />
+                          <span>Edit farm</span>
+                        </Link>
+                      )}
+                      <Link href={`/hq/farms/${f.id}`} className="btn btn-secondary btn-sm">
+                        <span>View farm</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                    </div>
                   </article>
                 );
               })}
@@ -670,8 +684,8 @@ export function Client360({
         <Section
           title="Client Information"
           action={
-            canOnboard ? (
-              <Link href={editHref} className="btn btn-secondary btn-sm">
+            canEditClient ? (
+              <Link href={editClientHref} className="btn btn-secondary btn-sm">
                 <Pencil size={12} />
                 <span>Edit information</span>
               </Link>
@@ -751,8 +765,8 @@ export function Client360({
             title="No estate locations yet"
             description="Add a farm location to see it here."
             action={
-              canOnboard ? (
-                <Link href={editHref} className="btn btn-primary btn-sm">
+              canCreateFarm ? (
+                <Link href={addFarmHref} className="btn btn-primary btn-sm">
                   <Plus size={14} />
                   <span>Add Farm Estate</span>
                 </Link>

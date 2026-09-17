@@ -46,7 +46,9 @@ export default async function HqClientDetailPage({
         <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading client details…</div>}>
           <Client360
             clientId={clientId}
-            canOnboard={hasPermission(session.permissions, "onboarding:manage")}
+            canEditClient={session.role === "SUPER_ADMIN"}
+            canCreateFarm={["SUPER_ADMIN", "FARM_ADMIN"].includes(session.role)}
+            canEditFarm={hasPermission(session.permissions, "farms:write")}
           />
         </Suspense>
       </main>

@@ -656,14 +656,14 @@ export function ClientDirectory({
                                   <>
                                     <Link
                                       role="menuitem"
-                                      href={`/hq/onboarding/new?clientId=${c.id}`}
+                                      href={`/hq/clients/${c.id}/edit`}
                                       className="dir-popover-item"
                                     >
                                       <Icons.Edit size={13} /> Edit client
                                     </Link>
                                     <Link
                                       role="menuitem"
-                                      href={`/hq/onboarding/new?clientId=${c.id}`}
+                                      href={`/hq/clients/${c.id}/farms/new`}
                                       className="dir-popover-item"
                                     >
                                       <Icons.Plus size={13} /> Add farm
@@ -820,14 +820,14 @@ export function ClientDirectory({
                             <>
                               <Link
                                 role="menuitem"
-                                href={`/hq/onboarding/new?clientId=${c.id}`}
+                                href={`/hq/clients/${c.id}/edit`}
                                 className="dir-popover-item"
                               >
                                 <Icons.Edit size={13} /> Edit client
                               </Link>
                               <Link
                                 role="menuitem"
-                                href={`/hq/onboarding/new?clientId=${c.id}`}
+                                href={`/hq/clients/${c.id}/farms/new`}
                                 className="dir-popover-item"
                               >
                                 <Icons.Plus size={13} /> Add farm
