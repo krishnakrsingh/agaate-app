@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Prisma } from "@prisma/client";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 import { normalizeEmail, normalizePhone, submitSchema } from "@modules/onboarding/ui/onboarding-schema";
 import { parseBoundary, validatePlotGeometry, roundAcresForDb } from "@modules/spatial";
 import { representativePoint } from "@modules/spatial";
@@ -24,7 +24,7 @@ type ActivationSummary = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requirePermission(actor, "onboarding:manage");

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore, paginationParams } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore, paginationParams } from "@infrastructure/http";
 
 // GET /api/hq/people/labour — labour lens: FARM_OFFICERs grouped by
 // farm and by client. Answers "who works where, how many labour per client".

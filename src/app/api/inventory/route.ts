@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, HttpError } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, paginatedJson, paginationParams } from "@/lib/api";
+import { currentActor, requireFarmAccess, HttpError } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, paginatedJson, paginationParams } from "@infrastructure/http";
 
 const createItemSchema = z.object({
   farmId: z.string().min(1),
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Check if it's creating an item or a transaction
     if (body.itemId) {
-      const { assertSameOrigin } = await import("@/lib/security");
+      const { assertSameOrigin } = await import("@infrastructure/security");
       assertSameOrigin(request);
       const input = transactionSchema.parse(body);
       const item = await prisma.inventoryItem.findUnique({ where: { id: input.itemId } });
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     // Creating a new inventory item in the shed
     const input = createItemSchema.parse(body);
     {
-      const { assertSameOrigin } = await import("@/lib/security");
+      const { assertSameOrigin } = await import("@infrastructure/security");
       assertSameOrigin(request);
     }
     await requireFarmAccess(input.farmId, true);

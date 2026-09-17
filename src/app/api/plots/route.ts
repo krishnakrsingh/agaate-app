@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { accessibleFarmWhere, requireFarmAccess } from "@/lib/access";
-import { apiError, paginatedJson } from "@/lib/api";
+import { accessibleFarmWhere, requireFarmAccess } from "@modules/auth";
+import { apiError, paginatedJson } from "@infrastructure/http";
 import { listPlots, parsePlotListParams, createPlot, PlotFault } from "@modules/plots";
 
 export async function GET(request: NextRequest) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@infrastructure/db";
 
 const STAGE_ORDER = [
   "SURVEY_SOIL_TEST",

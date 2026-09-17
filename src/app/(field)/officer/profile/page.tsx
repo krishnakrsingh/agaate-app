@@ -1,8 +1,8 @@
-import { requireSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireSession } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { OfficerProfileView } from "@modules/people/ui/officer-profile-view";
-import { downloadUrl } from "@/lib/storage";
+import { downloadUrl } from "@infrastructure/storage";
 
 export const dynamic = "force-dynamic";
 

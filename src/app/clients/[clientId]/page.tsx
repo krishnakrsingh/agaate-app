@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 
 export const dynamic = "force-dynamic";
 

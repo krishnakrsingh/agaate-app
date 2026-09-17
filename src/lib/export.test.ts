@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeCsvCell, generateCsvString } from "./export";
+import { escapeCsvCell, generateCsvString } from "@shared/csv";
 
 describe("CSV Export Utility", () => {
   it("escapes cells containing commas and quotes properly", () => {

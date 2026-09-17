@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 import { commitBoundary, serializeBoundaryVersion, plotsOutsideRing } from "@modules/spatial";
 import { validatePlotGeometry } from "@modules/spatial";
 import { parseBoundaryToRing } from "@modules/spatial";

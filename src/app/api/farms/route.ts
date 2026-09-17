@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { accessibleFarmWhere, currentActor } from "@/lib/access";
-import { apiError, paginatedJson } from "@/lib/api";
+import { accessibleFarmWhere, currentActor } from "@modules/auth";
+import { apiError, paginatedJson } from "@infrastructure/http";
 import { listEstates, parseEstateListParams, createEstate } from "@modules/estates";
 
 export async function GET(request: NextRequest) {

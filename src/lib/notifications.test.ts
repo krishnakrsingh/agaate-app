@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { sendNotification } from "./notifications";
+import { sendNotification } from "@infrastructure/notifications";
 
 describe("Notifications & Webhook Dispatcher", () => {
   beforeEach(() => {

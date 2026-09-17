@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apiError } from "@/lib/api";
+import { apiError } from "@infrastructure/http";
 import {
   getCropCycleDetail,
   updateCropCycle,

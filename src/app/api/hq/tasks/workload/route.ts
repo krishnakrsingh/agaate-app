@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
 
 const asNum = (v: unknown): number => {
   if (typeof v === "bigint") return Number(v);

@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useState, useCallback, useRef } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { distanceMeters } from "@modules/spatial";
-import { compressImage } from "@/lib/image-compress";
+import { compressImage } from "@shared/media/image-compress";
 
 type Farm = {
   id: string;

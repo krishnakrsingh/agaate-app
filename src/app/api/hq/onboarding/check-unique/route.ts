@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
 import { normalizeEmail, normalizePhone } from "@modules/onboarding/ui/onboarding-schema";
 
 // Live uniqueness probe for Step 1 (debounced client-side). Never leaks

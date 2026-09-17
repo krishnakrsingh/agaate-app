@@ -2,7 +2,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
-import { formatDate } from "@/lib/business";
+import { formatDate } from "@shared/format";
 import { MobileCrewMuster } from "@modules/attendance/ui/mobile-crew-muster";
 
 type Plot = {

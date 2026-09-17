@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { parseSort, paginationParams } from "@/lib/api";
+import { parseSort, paginationParams } from "@infrastructure/http";
 
 export const estateCreateSchema = z
   .object({

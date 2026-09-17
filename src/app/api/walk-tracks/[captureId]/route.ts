@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError } from "@/lib/api";
+import { requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError } from "@infrastructure/http";
 
 /**
  * Retained GPS evidence for a walked boundary. Resolves the track's entity

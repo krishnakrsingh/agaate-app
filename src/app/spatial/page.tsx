@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { Navbar } from "@/components/navigation/navbar";
 import { SpatialConsole } from "@modules/spatial/ui/spatial-console";
 

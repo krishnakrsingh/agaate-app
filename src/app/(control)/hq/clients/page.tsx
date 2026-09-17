@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { requireSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
+import { requireSession } from "@modules/auth";
+import { hasPermission } from "@modules/auth";
 import { Navbar } from "@/components/navigation/navbar";
 import { ClientDirectory } from "@modules/estates/ui/client-directory";
 

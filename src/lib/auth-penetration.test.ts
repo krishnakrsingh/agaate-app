@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
-import { requireRole, requireFarmAccess, HttpError } from "./access";
-import { DEFAULT_GEOFENCE_RADIUS_METERS, distanceMeters } from "./business";
+import { prisma } from "@infrastructure/db";
+import { requireRole, requireFarmAccess, HttpError } from "@modules/auth";
+import { DEFAULT_GEOFENCE_RADIUS_METERS, distanceMeters } from "@modules/spatial";
 
 describe.sequential("Authorization Penetration & Boundary Guard Tests", () => {
   let superAdminId: string;

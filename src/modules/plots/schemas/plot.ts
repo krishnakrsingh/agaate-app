@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { paginationParams } from "@/lib/api";
+import { paginationParams } from "@infrastructure/http";
 
 const irrigationItemSchema = z.object({
   type: z.enum(["Drip", "Rain Pipe", "Sprinkler", "Flood", "Other"]),

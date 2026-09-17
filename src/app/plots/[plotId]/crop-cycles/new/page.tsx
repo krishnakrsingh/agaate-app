@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { getNewCropCyclePageData } from "@modules/cropping";
 import { CropCycleForm } from "@modules/cropping/ui/crop-cycle-form";
 import { Navbar } from "@/components/navigation/navbar";

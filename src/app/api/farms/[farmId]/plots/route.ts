@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireFarmAccess } from "@/lib/access";
-import { apiError } from "@/lib/api";
+import { requireFarmAccess } from "@modules/auth";
+import { apiError } from "@infrastructure/http";
 import { createPlot, PlotFault } from "@modules/plots";
 
 export async function POST(

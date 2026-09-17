@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
-import { utcDateOnly } from "@/lib/business";
-import { downloadUrl } from "@/lib/storage";
+import { currentActor, requireFarmAccess, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
+import { utcDateOnly } from "@shared/dates";
+import { downloadUrl } from "@infrastructure/storage";
 
 const officerTaskSchema = z.object({
   farmId: z.string().min(1),

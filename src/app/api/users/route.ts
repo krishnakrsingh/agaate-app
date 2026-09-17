@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { currentActor, requireRole, accessibleFarmWhere } from "@/lib/access";
-import { resolveManageFarmIds } from "@/lib/rbac";
-import { loadRoleDefinitionForAssignment } from "@/lib/role-definitions-seed";
+import {
+  currentActor,
+  requireRole,
+  accessibleFarmWhere,
+  resolveManageFarmIds,
+  loadRoleDefinitionForAssignment,
+} from "@modules/auth";
 import type { Role } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, paginationParams } from "@/lib/api";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, paginationParams } from "@infrastructure/http";
 
 const createUserSchema = z.object({
   name: z.string().min(2).max(100),
@@ -133,7 +137,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN"]);

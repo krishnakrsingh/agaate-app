@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -33,7 +33,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requirePermission(actor, "onboarding:manage");

@@ -1,6 +1,6 @@
-import { requireSession } from "@/lib/auth";
-import { accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
+import { requireSession } from "@modules/auth";
+import { accessibleFarmWhere } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { FarmSettingsConsole } from "@modules/estates/ui/farm-settings-console";

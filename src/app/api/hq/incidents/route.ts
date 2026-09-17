@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { accessibleFarmWhere, currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, paginatedJson } from "@/lib/api";
+import { accessibleFarmWhere, currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, paginatedJson } from "@infrastructure/http";
 
 export const dynamic = "force-dynamic";
 

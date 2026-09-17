@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, paginationParams } from "@/lib/api";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, paginationParams } from "@infrastructure/http";
 
 const createSchema = z.object({
   action: z.string().min(3).max(120),

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { downloadUrl } from "@/lib/storage";
-import { apiError } from "@/lib/api";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { downloadUrl } from "@infrastructure/storage";
+import { apiError } from "@infrastructure/http";
 
 export const dynamic = "force-dynamic";
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { AdminConsole } from "@modules/people/ui/admin-console";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";

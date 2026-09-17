@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, noStore, paginationParams } from "@/lib/api";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, noStore, paginationParams } from "@infrastructure/http";
 
 const DIRECTORY_PAGE_SIZE = 20;
 const BULK_MAX = 50;

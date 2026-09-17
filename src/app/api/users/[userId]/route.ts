@@ -1,12 +1,15 @@
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requirePermission } from "@/lib/access";
-import { resolveManageFarmIds } from "@/lib/rbac";
-import { loadRoleDefinitionForAssignment } from "@/lib/role-definitions-seed";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import {
+  currentActor,
+  requirePermission,
+  resolveManageFarmIds,
+  loadRoleDefinitionForAssignment,
+} from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 
 const schema = z.object({
   name: z.string().min(2).max(100).optional(),

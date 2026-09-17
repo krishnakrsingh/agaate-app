@@ -1,5 +1,4 @@
-import { requireSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
+import { requireSession, hasPermission } from "@modules/auth";
 import { InternalTeamConsole } from "@modules/people/ui/internal-team-console";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { formatDateTime } from "@/lib/business";
+import { prisma } from "@infrastructure/db";
+import { formatDateTime } from "@shared/format";
 import { OverviewAlertList, type OverviewAlert } from "@modules/reporting/ui/overview-alert-list";
 
 const SEVERITY_RANK: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { apiError, paginatedJson } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { apiError, paginatedJson } from "@infrastructure/http";
 import { plannedTaskSchema, planTask, parseTaskListParams, listTasks } from "@modules/operations";
 
 export async function GET(request: NextRequest) {

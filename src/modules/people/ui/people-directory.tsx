@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { RoleBadge } from "@/components/ui/badge";
-import { describeUserAccess } from "@/lib/rbac";
-import type { AccessScope } from "@/lib/rbac";
+import { describeUserAccess, type AccessScope } from "@modules/auth/rbac";
 import {
   CreateAccountDrawer,
   DirectoryUser,

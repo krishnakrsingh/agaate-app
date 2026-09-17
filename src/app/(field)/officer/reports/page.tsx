@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { FieldReports } from "@modules/incidents/ui/field-reports";
 import { LocationRequestForm } from "@modules/estates/ui/location-request-form";
 import { Navbar } from "@/components/navigation/navbar";

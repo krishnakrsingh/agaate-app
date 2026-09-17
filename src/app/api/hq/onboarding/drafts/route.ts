@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
 import { MAX_FARMS } from "@modules/onboarding/ui/onboarding-schema";
 
 const saveSchema = z.object({
@@ -40,7 +40,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requirePermission(actor, "onboarding:manage");

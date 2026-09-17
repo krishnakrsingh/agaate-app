@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 import { cleanSamples, assessTrack, type GpsSample } from "@modules/spatial";
 import {
   toGeoJsonPolygon,
@@ -118,11 +118,10 @@ async function recordWalkEvidence(args: {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin, getClientIp } = await import("@/lib/security");
+    const { assertSameOrigin, getClientIp, throttle } = await import("@infrastructure/security");
     assertSameOrigin(request);
-    const { currentActor } = await import("@/lib/access");
+    const { currentActor } = await import("@modules/auth");
     const syncActor = await currentActor();
-    const { throttle } = await import("@/lib/rate-limit");
     const slot = throttle(`geo-sync:${getClientIp(request.headers)}:${syncActor.id}`, 30, 60_000);
     if (!slot.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     const input = schema.parse(await request.json());

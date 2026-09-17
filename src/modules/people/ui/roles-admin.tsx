@@ -3,7 +3,7 @@
 import { FormEvent, Fragment, useCallback, useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PERMISSION_GROUPS, type Permission } from "@/lib/rbac";
+import { PERMISSION_GROUPS, type Permission } from "@modules/auth/rbac";
 
 export type RoleRow = {
   id: string;

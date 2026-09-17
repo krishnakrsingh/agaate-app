@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireRole, HttpError } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, noStore } from "@/lib/api";
-import { taskTransitions } from "@/lib/business";
+import { currentActor, requireRole, HttpError } from "@modules/auth";
+import { TASK_TRANSITIONS } from "@modules/operations";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, noStore } from "@infrastructure/http";
 
 const patchSchema = z.object({
   status: z.enum(["DRAFT", "ASSIGNED", "AVAILABLE", "IN_PROGRESS", "COMPLETED", "CANCELLED", "BLOCKED"]).optional(),
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     return NextResponse.json(
-      { task, history, allowedTransitions: taskTransitions[task.status] ?? [] },
+      { task, history, allowedTransitions: TASK_TRANSITIONS[task.status] ?? [] },
       { headers: noStore }
     );
   } catch (error) {
@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const task = await prisma.task.findUniqueOrThrow({ where: { id: taskId } });
     const input = patchSchema.parse(await request.json());
 
-    const allowed = taskTransitions[task.status] ?? [];
+    const allowed = TASK_TRANSITIONS[task.status] ?? [];
     const hasStatusChange = !!input.status && input.status !== task.status;
     if (input.status && input.status !== task.status) {
       if (input.status === "COMPLETED") {
@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       assignedToName: assignName,
     });
 
-    return NextResponse.json({ task: updated, allowedTransitions: taskTransitions[updated.status] ?? [] });
+    return NextResponse.json({ task: updated, allowedTransitions: TASK_TRANSITIONS[updated.status] ?? [] });
   } catch (error) {
     return apiError(error);
   }

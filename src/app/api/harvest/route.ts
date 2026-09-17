@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, paginatedJson, paginationParams } from "@/lib/api";
-import { parseUtcDate } from "@/lib/business";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, paginatedJson, paginationParams } from "@infrastructure/http";
+import { parseUtcDate } from "@shared/dates";
 
 const createSchema = z.object({
   farmId: z.string().min(1),
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     const body = await request.json();

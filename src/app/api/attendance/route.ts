@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { apiError } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { apiError } from "@infrastructure/http";
 import { attendanceSchema, startAttendance, endAttendance, getTodayShift, AttendanceFault } from "@modules/attendance";
 
 export async function GET() {
@@ -15,11 +15,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin, getClientIp } = await import("@/lib/security");
+    const { assertSameOrigin, getClientIp, throttle } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["FARM_OFFICER", "SUPER_ADMIN"]);
-    const { throttle } = await import("@/lib/rate-limit");
     const clockSlot = throttle(`attendance:${getClientIp(request.headers)}:${actor.id}`, 30, 60_000);
     if (!clockSlot.allowed) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     const input = attendanceSchema.parse(await request.json());

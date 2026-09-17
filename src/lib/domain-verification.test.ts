@@ -1,15 +1,11 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
-import {
-  calculatedInfrastructure,
-  canTransitionTask,
-  distanceMeters,
-  isWithinRollingSevenDays,
-  labourHours,
-  milestoneTemplates,
-  variance,
-} from "./business";
+import { prisma } from "@infrastructure/db";
+import { calculatedInfrastructure, milestoneTemplates } from "@modules/cropping";
+import { canTransitionTask, labourHours } from "@modules/operations";
+import { distanceMeters } from "@modules/spatial";
+import { isWithinRollingSevenDays } from "@shared/dates";
+import { variance } from "@shared/math";
 
 describe.sequential("Domain-by-Domain Integration & End-to-End Proof", () => {
   let superAdminId: string;

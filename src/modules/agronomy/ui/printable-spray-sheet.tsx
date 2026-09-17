@@ -1,5 +1,5 @@
 "use client";
-import { formatDate } from "@/lib/business";
+import { formatDate } from "@shared/format";
 import { Icons } from "@/components/icons";
 
 export type PrintableTask = {

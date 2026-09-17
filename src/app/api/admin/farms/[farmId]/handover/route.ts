@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 
 export async function POST(
   request: NextRequest,

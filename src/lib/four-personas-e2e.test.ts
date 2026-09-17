@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 
 // Routes to test the complete 4-tier lifecycle
 import { POST as onboardClientHandler } from "@/app/api/admin/onboard-client/route";

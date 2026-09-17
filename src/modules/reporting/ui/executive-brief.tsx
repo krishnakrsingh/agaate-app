@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
-import { formatDate } from "@/lib/business";
+import { formatDate } from "@shared/format";
 
 type Farm = {
   id: string;

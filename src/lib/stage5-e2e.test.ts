@@ -2,8 +2,8 @@ import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 
 // Route handlers for core BRD flow
 import { POST as postAttendanceHandler } from "@/app/api/attendance/route";

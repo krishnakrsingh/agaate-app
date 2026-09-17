@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, noStore } from "@/lib/api";
-import { normalizePermissions } from "@/lib/rbac";
-import { legacyRoleForDefinition, slugifyRoleName } from "@/lib/role-definitions-seed";
+import {
+  currentActor,
+  requirePermission,
+  normalizePermissions,
+  legacyRoleForDefinition,
+  slugifyRoleName,
+} from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, noStore } from "@infrastructure/http";
 
 const createSchema = z.object({
   label: z.string().min(2).max(80),
@@ -52,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requirePermission(actor, "internal_team:manage");

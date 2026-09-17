@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { getEstateCommandCenter } from "@modules/estates";
 import { FarmCommandCenter } from "@modules/estates/ui/farm-command-center";
 import { Navbar } from "@/components/navigation/navbar";

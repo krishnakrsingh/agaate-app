@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { BoundaryTargetPicker } from "@modules/spatial/ui/boundary-target-picker";

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/auth";
-import { actorSelect, buildActor } from "@/lib/actor";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
-import { acquireRateLimitSlot, resetRateLimit } from "@/lib/rate-limit";
-import { assertSameOrigin, getClientIp } from "@/lib/security";
+import { prisma } from "@infrastructure/db";
+import { createSession, actorSelect, buildActor } from "@modules/auth";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
+import { acquireRateLimitSlot, resetRateLimit, assertSameOrigin, getClientIp } from "@infrastructure/security";
 
 // Cost-matched dummy hash so miss path takes as long as hit path (no enumeration oracle).
 const DUMMY_HASH = "$2b$12$it081XdNqvkH.e8K8R5mgeht3W.wsxNzzBJUdiEnAA/G7CONJLVLe";

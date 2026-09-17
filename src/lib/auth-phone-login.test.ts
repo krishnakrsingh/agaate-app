@@ -1,6 +1,6 @@
 ﻿import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { POST as loginHandler } from "@/app/api/auth/login/route";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@infrastructure/db";
 import bcrypt from "bcryptjs";
 import { NextRequest } from "next/server";
 

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { clearRateLimitStore } from "./rate-limit";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { clearRateLimitStore } from "@infrastructure/security";
+import { testSessionContext } from "@modules/auth";
 
 import { POST as loginHandler } from "@/app/api/auth/login/route";
 import { POST as createFarmHandler, GET as listFarmsHandler } from "@/app/api/farms/route";
@@ -639,14 +639,16 @@ describe.sequential("Adversarial Audit", ()=>{
   // 10. Business Logic
   describe("Business Logic", ()=>{
     it("bed/plant calculations vs spec", async ()=>{
-      const { calculatedInfrastructure, variance, distanceMeters } = await import("./business");
+      const { calculatedInfrastructure } = await import("@modules/cropping");
+      const { variance } = await import("@shared/math");
+      const { distanceMeters } = await import("@modules/spatial");
       expect(calculatedInfrastructure(2.5,400,1600)).toEqual({expectedTotalBeds:1000, expectedPlants:4000});
       expect(variance(100,80)).toEqual({amount:-20, percentage:-20});
       const d = distanceMeters({latitude:12.9716, longitude:77.5946}, {latitude:12.9816, longitude:77.5946});
       expect(d).toBeGreaterThan(1000);
     });
     it("seven-day rolling window boundaries", async ()=>{
-      const { isWithinRollingSevenDays, utcDateOnly } = await import("./business");
+      const { isWithinRollingSevenDays, utcDateOnly } = await import("@shared/dates");
       const now = new Date("2026-09-01T00:00:00Z");
       expect(isWithinRollingSevenDays(new Date("2026-09-01"), now)).toBe(true);
       expect(isWithinRollingSevenDays(new Date("2026-09-07"), now)).toBe(true);

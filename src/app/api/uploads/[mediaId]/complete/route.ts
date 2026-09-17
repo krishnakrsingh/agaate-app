@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { headObject } from "@/lib/storage";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { headObject } from "@infrastructure/storage";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 
 export async function POST(_: Request, { params }: { params: Promise<{ mediaId: string }> }) {
   try {

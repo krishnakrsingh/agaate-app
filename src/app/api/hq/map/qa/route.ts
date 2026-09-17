@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
 import { parseBoundary } from "@modules/spatial";
 
 export const dynamic = "force-dynamic";

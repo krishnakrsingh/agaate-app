@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@infrastructure/db";
 
 function formatNumber(num: number): string {
   return new Intl.NumberFormat("en-IN").format(num);

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { formatDateTime } from "@/lib/business";
+import { prisma } from "@infrastructure/db";
+import { formatDateTime } from "@shared/format";
 
 function formatActionLabel(action: string, entityType: string): string {
   const act = action.toUpperCase();

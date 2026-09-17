@@ -1,5 +1,5 @@
-import { requireSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireSession } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { SystemPolicyCards } from "@modules/audit/ui/system-policy-cards";

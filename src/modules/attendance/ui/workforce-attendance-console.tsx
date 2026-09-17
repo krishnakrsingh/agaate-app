@@ -5,7 +5,7 @@ import { RoleBadge, StatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CardSkeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { formatTime } from "@/lib/business";
+import { formatTime } from "@shared/format";
 
 type Estate = { id: string; name: string; location: string };
 

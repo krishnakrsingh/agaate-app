@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { DailyReport } from "@modules/reporting/ui/daily-report";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";

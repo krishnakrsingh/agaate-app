@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession, clearSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSession, clearSession } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { LoginForm } from "@modules/onboarding/ui/login-form";
 import { AgronomyShowcasePanel } from "@modules/agronomy/ui/agronomy-showcase-panel";
 

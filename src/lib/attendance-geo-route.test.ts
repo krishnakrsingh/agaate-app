@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 import { POST as attendanceHandler } from "@/app/api/attendance/route";
 
 const secret = new TextEncoder().encode(process.env.APP_SESSION_SECRET || "local-development-session-secret-change-this-before-production-32chars");

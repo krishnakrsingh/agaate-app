@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
 export async function PATCH(request:NextRequest,{params}:{params:Promise<{requestId:string}>}){try{const {requestId}=await params;const actor=await currentActor();const item=await prisma.locationChangeRequest.findUniqueOrThrow({where:{id:requestId}});await requireFarmAccess(item.farmId,true);if(!["SUPER_ADMIN","FARM_ADMIN"].includes(actor.role))throw new Error("Only an administrator can review this request.");const {status}=z.object({status:z.enum(["APPROVED","REJECTED"])}).parse(await request.json());const result=await prisma.$transaction(async tx=>{const updated = await tx.locationChangeRequest.updateMany({where:{id:requestId, status:"PENDING"}, data:{status,reviewedById:actor.id,reviewedAt:new Date()}});if(updated.count===0) throw new Error("This request has already been reviewed.");const request = await tx.locationChangeRequest.findUniqueOrThrow({where:{id:requestId}});if(status==="APPROVED")await tx.farm.update({where:{id:item.farmId},data:{latitude:item.proposedLatitude,longitude:item.proposedLongitude}});return request;});await audit(actor.id,`LOCATION_CHANGE_${status}`,"LocationChangeRequest",requestId);return NextResponse.json(result);}catch(error){if(error instanceof Error && error.message==="This request has already been reviewed.") return NextResponse.json({error:error.message},{status:409}); return apiError(error);}}

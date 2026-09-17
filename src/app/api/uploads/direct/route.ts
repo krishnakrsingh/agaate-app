@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
-import { isStorageConfigured, putObject } from "@/lib/storage";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
+import { isStorageConfigured, putObject } from "@infrastructure/storage";
 import fs from "fs/promises";
 import path from "path";
 
@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV === "production" || process.env.ALLOW_DIRECT_UPLOAD === "false") {
       return NextResponse.json({ error: "Uploads are temporarily unavailable." }, { status: 410 });
     }
-    const { throttle } = await import("@/lib/rate-limit");
-    const { getClientIp, assertSameOrigin } = await import("@/lib/security");
+    const { throttle, getClientIp, assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     const ipSlot = throttle(`upload-direct:${getClientIp(request.headers)}:${actor.id}`, 20, 60_000);

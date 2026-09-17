@@ -265,7 +265,7 @@ describe.sequential("Phase 4: walk-sync (server-rebuilt geometry, idempotent)", 
   });
 
   it("sync endpoint is throttled (31st rapid call → 429)", async () => {
-    const { clearRateLimitStore } = await import("@/lib/rate-limit");
+    const { clearRateLimitStore } = await import("@infrastructure/security");
     clearRateLimitStore();
     // Re-grant (also proves retry-after-re-grant): revoked in the previous test.
     await prisma.farmAccess.create({ data: { userId: officer.id, farmId: bareFarmId, canManage: true } });

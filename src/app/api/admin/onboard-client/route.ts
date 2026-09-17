@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Prisma } from "@prisma/client";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
-import { sendNotification } from "@/lib/notifications";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
+import { sendNotification } from "@infrastructure/notifications";
 import { parseBoundary, roundAcresForDb } from "@modules/spatial";
 import { commitBoundary } from "@modules/spatial";
 
@@ -92,7 +92,7 @@ const onboardSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { assertSameOrigin } = await import("@/lib/security");
+    const { assertSameOrigin } = await import("@infrastructure/security");
     assertSameOrigin(request);
     const actor = await currentActor();
     requireRole(actor.role, ["SUPER_ADMIN"]);

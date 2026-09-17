@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { TasksQueue } from "@modules/operations/ui/tasks-queue";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";

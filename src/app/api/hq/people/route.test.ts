@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { testSessionContext } from "@/lib/auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 import { GET } from "./route";
 
 const secret = new TextEncoder().encode(

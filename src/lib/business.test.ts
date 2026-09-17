@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculatedInfrastructure,
-  canTransitionTask,
-  distanceMeters,
-  isWithinRollingSevenDays,
-  labourHours,
-  milestoneTemplates,
-  variance,
-  parseUtcDate,
-  utcDateOnly,
-  DEFAULT_GEOFENCE_RADIUS_METERS,
-} from "./business";
+import { calculatedInfrastructure, milestoneTemplates } from "@modules/cropping";
+import { canTransitionTask, labourHours } from "@modules/operations";
+import { distanceMeters, DEFAULT_GEOFENCE_RADIUS_METERS } from "@modules/spatial";
+import { isWithinRollingSevenDays, parseUtcDate, utcDateOnly } from "@shared/dates";
+import { variance } from "@shared/math";
 
 describe("Farm Business Rules & Domain Formulations", () => {
   describe("Infrastructure & Plant Population Calculations", () => {

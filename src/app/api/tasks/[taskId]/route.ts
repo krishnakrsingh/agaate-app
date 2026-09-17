@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireFarmAccess } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError } from "@/lib/api";
-import { downloadUrl } from "@/lib/storage";
+import { currentActor, requireFarmAccess } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError } from "@infrastructure/http";
+import { downloadUrl } from "@infrastructure/storage";
 import { updateTask } from "@modules/operations";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole, accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError, noStore, paginatedJson, paginationParams } from "@/lib/api";
-import { downloadUrl } from "@/lib/storage";
+import { currentActor, requireFarmAccess, requireRole, accessibleFarmWhere } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError, noStore, paginatedJson, paginationParams } from "@infrastructure/http";
+import { downloadUrl } from "@infrastructure/storage";
 import { validateAttendanceLocation } from "@modules/spatial";
 import { parseBoundaryToRing, pointInRing, ringAcres, type LngLat } from "@modules/spatial";
 

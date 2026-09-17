@@ -1,8 +1,8 @@
-import { requireSession } from "@/lib/auth";
-import { accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { downloadUrl } from "@/lib/storage";
-import { distanceMeters, utcDateOnly } from "@/lib/business";
+import { requireSession, accessibleFarmWhere } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { downloadUrl } from "@infrastructure/storage";
+import { distanceMeters } from "@modules/spatial";
+import { utcDateOnly } from "@shared/dates";
 import { attendanceDisplayVerdict } from "@modules/spatial";
 import { Navbar } from "@/components/navigation/navbar";
 import { OwnerCockpit, TelemetryPhoto } from "@modules/estates/ui/owner-cockpit";

@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 import { POST as officerCreateHandler } from "@/app/api/officer/tasks/route";
 import { POST as incidentHandler } from "@/app/api/incidents/route";
 import { POST as completeHandler } from "@/app/api/tasks/[taskId]/complete/route";

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState, useRef, useEffect, useCallback, ChangeEvent } from "react";
 import { Icons } from "./icons";
-import { compressImage } from "@/lib/image-compress";
+import { compressImage } from "@shared/media/image-compress";
 
 export interface PhotoItem {
   id: string;

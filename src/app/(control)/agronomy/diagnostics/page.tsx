@@ -1,7 +1,6 @@
-import { requireSession } from "@/lib/auth";
-import { accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { downloadUrl } from "@/lib/storage";
+import { requireSession, accessibleFarmWhere } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { downloadUrl } from "@infrastructure/storage";
 import { Navbar } from "@/components/navigation/navbar";
 import {
   DiagnosticsWorkbench,

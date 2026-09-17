@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { currentActor, requirePermission } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, paginatedJson, paginationParams, parseSort } from "@/lib/api";
+import { currentActor, requirePermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, paginatedJson, paginationParams, parseSort } from "@infrastructure/http";
 
 // GET /api/hq/people — internal Agaate team directory (HQ-tier role definitions).
 export async function GET(request: NextRequest) {

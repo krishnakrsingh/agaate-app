@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole, HttpError } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { audit } from "@/lib/audit";
-import { apiError } from "@/lib/api";
-import { utcDateOnly } from "@/lib/business";
+import { currentActor, requireFarmAccess, requireRole, HttpError } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { audit } from "@infrastructure/audit";
+import { apiError } from "@infrastructure/http";
+import { utcDateOnly } from "@shared/dates";
 import { validateAttendanceLocation } from "@modules/spatial";
 
 const schema = z.object({ farmId: z.string().min(1), plotId: z.string().min(1), cropCycleId: z.string().min(1), status: z.enum(["GOOD", "POOR"]), stage: z.enum(["Germination", "Establishment", "Vegetative", "Flowering", "Fruiting", "Harvesting"]), impactPercent: z.coerce.number().min(0).max(100).optional().nullable(), remarks: z.string().max(2000).optional().nullable(), mediaIds: z.array(z.string().min(1)).min(1).max(10), latitude: z.number().gte(-90).lte(90).optional(), longitude: z.number().gte(-180).lte(180).optional(), accuracyMeters: z.number().optional() }).superRefine((v, ctx) => { if (v.status === "POOR" && v.impactPercent == null) ctx.addIssue({ code: "custom", path: ["impactPercent"], message: "Impact percentage is required for a poor update." }); if ((v.latitude === undefined) !== (v.longitude === undefined)) ctx.addIssue({ code: "custom", path: ["latitude"], message: "Scouting GPS needs both latitude and longitude." }); });

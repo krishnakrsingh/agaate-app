@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { OfficerDay } from "@modules/operations/ui/officer-day";
 import { AttendanceForm } from "@modules/attendance/ui/attendance-form";
 import { Navbar } from "@/components/navigation/navbar";

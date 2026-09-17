@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { prisma } from "./prisma";
+import { prisma } from "@infrastructure/db";
 import bcrypt from "bcryptjs";
 
 describe("Tactical Onboarding, Operations Calendar & Workers Console", () => {

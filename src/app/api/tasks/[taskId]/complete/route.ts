@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { apiError } from "@/lib/api";
+import { currentActor, requireRole } from "@modules/auth";
+import { apiError } from "@infrastructure/http";
 import { completeTask, completionSchema, CompletionFault } from "@modules/operations";
 
 /**

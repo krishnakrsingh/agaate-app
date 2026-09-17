@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { requireSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
+import { requireSession, hasPermission } from "@modules/auth";
 import { Navbar } from "@/components/navigation/navbar";
 import { HqFarmRegistry } from "@modules/estates/ui/farm-registry";
 

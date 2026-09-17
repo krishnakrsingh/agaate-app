@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 
 import { POST as loginHandler } from "@/app/api/auth/login/route";
 import { POST as createFarmHandler } from "@/app/api/farms/route";

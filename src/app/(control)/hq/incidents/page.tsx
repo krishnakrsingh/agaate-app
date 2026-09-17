@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { IncidentsCommand } from "@modules/incidents/ui/incidents-command";

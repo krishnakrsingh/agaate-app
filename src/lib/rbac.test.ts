@@ -7,7 +7,7 @@ import {
   resolveManageFarmIds,
   INTERNAL_ROLES,
   PERMISSION_GROUPS,
-} from "./rbac";
+} from "@modules/auth/rbac";
 
 describe("rbac", () => {
   it("grants SUPER_ADMIN all permissions", () => {

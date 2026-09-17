@@ -2,9 +2,9 @@ import { describe, expect, it, beforeAll, afterAll, beforeEach } from "vitest";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
-import { clearRateLimitStore } from "./rate-limit";
-import { testSessionContext } from "./auth";
+import { prisma } from "@infrastructure/db";
+import { clearRateLimitStore } from "@infrastructure/security";
+import { testSessionContext } from "@modules/auth";
 
 // Import Next.js route handlers directly
 import { POST as loginHandler } from "@/app/api/auth/login/route";

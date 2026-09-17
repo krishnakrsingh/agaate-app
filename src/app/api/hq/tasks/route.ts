@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
-import { currentActor, requireRole, HttpError } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, paginatedJson } from "@/lib/api";
+import { currentActor, requireRole, HttpError } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, paginatedJson } from "@infrastructure/http";
 
 const TASK_STATUSES = ["DRAFT", "ASSIGNED", "AVAILABLE", "IN_PROGRESS", "COMPLETED", "CANCELLED", "BLOCKED"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];

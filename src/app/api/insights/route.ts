@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
-import { utcDateOnly } from "@/lib/business";
+import { currentActor, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
+import { utcDateOnly } from "@shared/dates";
 
 export async function GET(request: NextRequest) {
   try {

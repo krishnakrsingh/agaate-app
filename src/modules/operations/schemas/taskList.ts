@@ -1,4 +1,4 @@
-import { paginationParams } from "@/lib/api";
+import { paginationParams } from "@infrastructure/http";
 
 /**
  * Transport contract for GET /api/tasks query strings.

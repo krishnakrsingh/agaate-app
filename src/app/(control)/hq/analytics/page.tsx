@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { requireSession } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { AnalyticsConsole } from "@modules/reporting/ui/analytics-console";

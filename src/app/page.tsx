@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession, clearSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSession, clearSession } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 
 export const dynamic = "force-dynamic";
 

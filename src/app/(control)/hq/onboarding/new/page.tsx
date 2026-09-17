@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
+import { requireSession } from "@modules/auth";
+import { hasPermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Icons } from "@/components/icons";

@@ -6,7 +6,7 @@ import {
   describeUserAccess,
   roleUsesFarmAccess,
   type AccessScope,
-} from "@/lib/rbac";
+} from "@modules/auth/rbac";
 import type { RoleRow } from "./roles-admin";
 
 export type AssignedFarm = {

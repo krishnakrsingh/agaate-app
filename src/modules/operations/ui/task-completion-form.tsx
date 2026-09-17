@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FormEvent, useState } from "react";
 import { Icons } from "@/components/icons";
-import { compressImage } from "@/lib/image-compress";
+import { compressImage } from "@shared/media/image-compress";
 import { basisText, captureFieldGps as captureCompletionGps } from "@modules/spatial/ui/scout-gps";
 
 export function TaskCompletionForm({

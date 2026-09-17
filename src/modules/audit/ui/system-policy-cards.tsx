@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@/lib/business";
+import { DEFAULT_GEOFENCE_RADIUS_METERS } from "@modules/spatial";
 
 type Policy = {
   title: string;

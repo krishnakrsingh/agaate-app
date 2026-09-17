@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { redirect } from "next/navigation";
 import OperationsPage from "@/app/operations/page";
 

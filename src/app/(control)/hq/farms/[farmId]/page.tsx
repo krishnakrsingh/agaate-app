@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { requireSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/rbac";
-import { prisma } from "@/lib/prisma";
-import { downloadUrl } from "@/lib/storage";
+import { requireSession, hasPermission } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { downloadUrl } from "@infrastructure/storage";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { HqFarm360 } from "@modules/estates/ui/farm-360";

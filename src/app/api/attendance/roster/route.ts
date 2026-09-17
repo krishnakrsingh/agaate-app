@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentActor, accessibleFarmWhere } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, noStore } from "@/lib/api";
-import { distanceMeters, utcDateOnly } from "@/lib/business";
+import { currentActor, accessibleFarmWhere } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, noStore } from "@infrastructure/http";
+import { distanceMeters } from "@modules/spatial";
+import { utcDateOnly } from "@shared/dates";
 import { attendanceDisplayVerdict } from "@modules/spatial";
 
 export const dynamic = "force-dynamic";

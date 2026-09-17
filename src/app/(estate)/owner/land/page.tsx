@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { getOwnerLandData } from "@modules/plots";
 import { Navbar } from "@/components/navigation/navbar";
 import { PlotsExplorer } from "@modules/plots/ui/plots-explorer";

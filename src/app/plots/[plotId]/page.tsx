@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@modules/auth";
 import { getPlotPageData } from "@modules/plots";
 import { PlotEditForm } from "@modules/plots/ui/plot-edit-form";
 import { BoundaryHistory } from "@modules/spatial/ui/boundary-history";

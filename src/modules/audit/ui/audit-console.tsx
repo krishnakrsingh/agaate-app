@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Icons } from "@/components/icons";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CardSkeleton } from "@/components/ui/skeleton";
-import { formatDateTime } from "@/lib/business";
+import { formatDateTime } from "@shared/format";
 
 type AuditLog = {
   id: string;

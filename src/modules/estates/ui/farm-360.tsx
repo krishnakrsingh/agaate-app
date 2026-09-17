@@ -14,7 +14,7 @@ import { FarmAccessManager } from "@modules/estates/ui/farm-access-manager";
 import { FarmEditForm } from "@modules/estates/ui/farm-edit-form";
 import { isBoundaryCorrupt, parseBoundary, toGeoJsonPolygon, type LngLat } from "@modules/spatial/ui/geo";
 import { HqCalendarPlatform } from "@modules/operations/ui/calendar-platform";
-import { formatDate, formatDateTime } from "@/lib/business";
+import { formatDate, formatDateTime } from "@shared/format";
 
 const GeoMap = dynamic(() => import("@modules/spatial/ui/geo-map").then((m) => m.GeoMap), {
   ssr: false,

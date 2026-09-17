@@ -42,8 +42,6 @@ function importsOf(file: string): string[] {
 // Files that MUST stay framework-free (pure domain). If you add an import
 // of react/next/prisma here, this test fails — move the code instead.
 const PURE_FILES = [
-  "src/lib/business.ts",
-  "src/lib/rbac.ts",
   "src/shared/errors.ts",
   "src/modules/spatial/index.ts",
   "src/modules/spatial/domain/geo-core.ts",
@@ -59,6 +57,7 @@ const PURE_FILES = [
   "src/modules/plots/domain/plotPolicy.ts",
   "src/modules/cropping/domain/cropCyclePolicy.ts",
   "src/modules/auth/domain/rbac.ts",
+  "src/modules/auth/rbac.ts",
   "src/modules/auth/domain/actorPolicy.ts",
   "src/modules/auth/domain/rolePolicy.ts",
 ];
@@ -80,6 +79,21 @@ const DELETED_PATHS = [
   "src/lib/utils.ts",
   "src/lib/validation.ts",
   "src/lib/empty.ts",
+  "src/lib/export.ts",
+  "src/lib/image-compress.ts",
+  "src/lib/notifications.ts",
+  "src/lib/rate-limit.ts",
+  "src/lib/security.ts",
+  "src/lib/storage.ts",
+  "src/lib/audit.ts",
+  "src/lib/api.ts",
+  "src/lib/business.ts",
+  "src/lib/actor.ts",
+  "src/lib/role-definitions-seed.ts",
+  "src/lib/access.ts",
+  "src/lib/auth.ts",
+  "src/lib/prisma.ts",
+  "src/lib/rbac.ts",
   "public/init_migration.sql",
   "public/migrations_upgrade.sql",
   "public/schema_full.sql",
@@ -250,7 +264,7 @@ describe("architecture boundaries", () => {
     for (const f of allSourceFiles(join(SRC, "app"))) {
       const rel = f.replace(ROOT + sep, "").replaceAll(sep, "/");
       if (rel.startsWith("src/app/api/") || !rel.endsWith("page.tsx")) continue;
-      if (importsOf(f).some((imp) => imp === "@/lib/prisma" || imp.startsWith("@prisma/"))) count++;
+      if (importsOf(f).some((imp) => imp === "@/lib/prisma" || imp === "@infrastructure/db" || imp === "@/infrastructure/db" || imp.startsWith("@prisma/"))) count++;
     }
     expect(count).toBe(PAGE_PRISMA_COUNT);
   });
@@ -433,7 +447,7 @@ describe("architecture boundaries", () => {
     expect(math["variance"], "shared/math missing variance").toBeDefined();
   });
 
-  it("migrated modules do not import legacy lib plumbing (@/lib/prisma, @/lib/audit, @/lib/storage, @/lib/access, @/lib/actor, @/lib/auth)", () => {
+  it("migrated modules do not import legacy lib plumbing (@/lib/*)", () => {
     const MIGRATED_DOMAINS = ["spatial", "operations", "attendance", "estates", "plots", "cropping", "auth"];
     const violations: string[] = [];
     for (const dom of MIGRATED_DOMAINS) {
@@ -441,12 +455,9 @@ describe("architecture boundaries", () => {
       for (const f of allSourceFiles(dir)) {
         const rel = f.replace(ROOT + sep, "").replaceAll(sep, "/");
         for (const imp of importsOf(f)) {
-          if (imp === "@/lib/prisma") violations.push(`${rel} imports legacy @/lib/prisma`);
-          if (imp === "@/lib/audit") violations.push(`${rel} imports legacy @/lib/audit`);
-          if (imp === "@/lib/storage") violations.push(`${rel} imports legacy @/lib/storage`);
-          if (imp === "@/lib/access") violations.push(`${rel} imports legacy @/lib/access`);
-          if (imp === "@/lib/actor") violations.push(`${rel} imports legacy @/lib/actor`);
-          if (imp === "@/lib/auth") violations.push(`${rel} imports legacy @/lib/auth`);
+          if (imp.startsWith("@/lib/") || imp.startsWith("@/lib")) {
+            violations.push(`${rel} imports legacy ${imp}`);
+          }
         }
       }
     }

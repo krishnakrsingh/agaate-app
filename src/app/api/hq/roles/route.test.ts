@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { SignJWT } from "jose";
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { testSessionContext } from "@/lib/auth";
+import { prisma } from "@infrastructure/db";
+import { testSessionContext } from "@modules/auth";
 import { GET, POST } from "./route";
 import { DELETE as DELETE_ROLE } from "./[id]/route";
 

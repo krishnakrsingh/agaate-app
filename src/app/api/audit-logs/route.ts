@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { currentActor, requireFarmAccess, requireRole } from "@/lib/access";
-import { prisma } from "@/lib/prisma";
-import { apiError, paginatedJson, paginationParams } from "@/lib/api";
+import { currentActor, requireFarmAccess, requireRole } from "@modules/auth";
+import { prisma } from "@infrastructure/db";
+import { apiError, paginatedJson, paginationParams } from "@infrastructure/http";
 
 export async function GET(request: NextRequest) {
   try {
