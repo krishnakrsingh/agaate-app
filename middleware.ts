@@ -9,17 +9,99 @@ function originAllowed(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
   if (!origin && !referer) return true;
-  const host = request.headers.get("host") ?? request.headers.get("x-forwarded-host") ?? "";
-  if (!host) return true;
-  const candidates = new Set([`http://${host}`, `https://${host}`]);
-  const configured = process.env.WEBAUTHN_ORIGIN?.trim().replace(/\/$/, "");
-  if (configured) candidates.add(configured);
+
+  let candidate: string | null = null;
   try {
-    if (origin) return candidates.has(origin);
-    return candidates.has(new URL(referer!).origin);
+    if (origin) {
+      candidate = new URL(origin).origin;
+    } else if (referer) {
+      candidate = new URL(referer).origin;
+    }
   } catch {
     return false;
   }
+  if (!candidate) return true;
+
+  const allowed = new Set<string>();
+  const addCandidate = (raw: string | null | undefined) => {
+    if (!raw) return;
+    for (const item of raw.split(",")) {
+      const val = item.trim();
+      if (!val) continue;
+      try {
+        if (val.startsWith("http://") || val.startsWith("https://")) {
+          const u = new URL(val);
+          allowed.add(u.origin);
+          if (u.port === "443") allowed.add(`https://${u.hostname}`);
+          if (u.port === "80") allowed.add(`http://${u.hostname}`);
+        } else {
+          const hostOnly = val.replace(/\/.*$/, "");
+          allowed.add(`https://${hostOnly}`);
+          allowed.add(`http://${hostOnly}`);
+          if (hostOnly.includes(":443")) allowed.add(`https://${hostOnly.replace(/:443$/, "")}`);
+          if (hostOnly.includes(":80")) allowed.add(`http://${hostOnly.replace(/:80$/, "")}`);
+        }
+      } catch {
+        // ignore malformed
+      }
+    }
+  };
+
+  addCandidate(request.headers.get("x-forwarded-host"));
+  addCandidate(request.headers.get("host"));
+  addCandidate(request.headers.get("x-forwarded-server"));
+  try {
+    if (request.nextUrl?.origin) addCandidate(request.nextUrl.origin);
+  } catch {
+    // ignore
+  }
+
+  addCandidate(process.env.WEBAUTHN_ORIGIN);
+  addCandidate(process.env.APP_URL);
+  addCandidate(process.env.NEXT_PUBLIC_APP_URL);
+  addCandidate(process.env.ALLOWED_ORIGINS);
+  addCandidate(process.env.NEXTAUTH_URL);
+
+  if (process.env.NODE_ENV !== "production") {
+    allowed.add("http://localhost");
+    allowed.add("http://127.0.0.1");
+    allowed.add("https://localhost");
+    allowed.add("https://127.0.0.1");
+    const hostHeader = request.headers.get("host") || "";
+    const portMatch = hostHeader.match(/:(\d+)$/);
+    if (portMatch) {
+      allowed.add(`http://localhost:${portMatch[1]}`);
+      allowed.add(`http://127.0.0.1:${portMatch[1]}`);
+      allowed.add(`https://localhost:${portMatch[1]}`);
+      allowed.add(`https://127.0.0.1:${portMatch[1]}`);
+    }
+  }
+
+  if (allowed.has(candidate)) return true;
+
+  try {
+    const candUrl = new URL(candidate);
+    const candHost = candUrl.host.toLowerCase();
+    const candHostname = candUrl.hostname.toLowerCase();
+    const allHosts = [
+      request.headers.get("x-forwarded-host"),
+      request.headers.get("host"),
+      request.headers.get("x-forwarded-server"),
+    ];
+    for (const h of allHosts) {
+      if (!h) continue;
+      for (const piece of h.split(",")) {
+        const clean = piece.trim().toLowerCase().replace(/\/.*$/, "");
+        if (clean === candHost || clean === candHostname || clean.replace(/:(443|80)$/, "") === candHostname) {
+          return true;
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  return false;
 }
 
 export function middleware(request: NextRequest) {
