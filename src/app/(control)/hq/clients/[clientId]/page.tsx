@@ -36,7 +36,10 @@ export default async function HqClientDetailPage({
           items={[{ label: "HQ" }, { label: "Clients", href: "/hq/clients" }, { label: "Client 360" }]}
         />
         <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading client 360…</div>}>
-          <Client360 clientId={clientId} />
+          <Client360
+            clientId={clientId}
+            canOnboard={hasPermission(session.permissions, "onboarding:manage")}
+          />
         </Suspense>
       </main>
     </>

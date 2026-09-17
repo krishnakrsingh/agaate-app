@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/leaflet-safe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { MapContainer, TileLayer, CircleMarker, Popup, Polygon, Tooltip, useMap, useMapEvents } from "react-leaflet";

@@ -1,9 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  RefreshCw,
+  Sprout,
+  Users,
+} from "lucide-react";
 import { Icons } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ClientFarmsMap = dynamic(
+  () => import("@modules/estates/ui/client-farms-map").then((m) => m.ClientFarmsMap),
+  { ssr: false, loading: () => <div className="c360-map c360-map-loading">Loading map…</div> }
+);
 
 interface Pin {
   id: string;
@@ -135,153 +159,170 @@ interface Bundle {
   }>;
 }
 
-type Tab = "farms" | "plots" | "team" | "history" | "files";
+type ActivityEntry = {
+  id: string;
+  kind: "cycle" | "harvest" | "incident" | "followup" | "task";
+  title: string;
+  meta: string;
+  date: string;
+  status?: string;
+  href?: string;
+};
 
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "farms", label: "Farms Portfolio" },
-  { id: "plots", label: "Land Parcels & Plots" },
-  { id: "team", label: "Team & Field Workforce" },
-  { id: "history", label: "Operational History" },
-  { id: "files", label: "Documents & Evidence" },
-];
-
-function Field({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        padding: "10px 14px",
-        background: "var(--canvas-floor)",
-        borderRadius: "var(--radius-md)",
-        border: "1px solid var(--hairline)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.05em",
-          color: "var(--muted)",
-          textTransform: "uppercase",
-          display: "flex",
-          alignItems: "center",
-          gap: 5,
-        }}
-      >
-        {icon}
-        <span>{label}</span>
-      </div>
-      <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", wordBreak: "break-word" }}>
-        {value || <span style={{ color: "var(--muted)" }}>—</span>}
-      </div>
-    </div>
-  );
+function formatPhone(raw?: string | null): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, "");
+  const in91 = digits.match(/^\+91(\d{10})$/);
+  if (in91) return `+91 ${in91[1].slice(0, 5)} ${in91[1].slice(5)}`;
+  const local = digits.match(/^(\d{10})$/);
+  if (local) return `${local[1].slice(0, 5)} ${local[1].slice(5)}`;
+  return raw;
 }
 
-function Empty({ title, hint }: { title: string; hint?: string }) {
-  return (
-    <div style={{ textAlign: "center", padding: "40px 20px" }}>
-      <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>{title}</div>
-      {hint && <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>{hint}</p>}
-    </div>
-  );
+function formatDate(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function MiniMap({ pins, hasMore }: { pins: Pin[]; hasMore: boolean }) {
-  if (pins.length === 0) {
-    return <Empty title="No farm locations mapped yet" hint="Farm pins appear here once boundary coordinates are registered." />;
+function formatCoord(value: number, pos: string, neg: string): string {
+  return `${Math.abs(value).toFixed(4)}° ${value >= 0 ? pos : neg}`;
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function buildActivity(data: Bundle): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
+
+  for (const c of data.history.cycles) {
+    entries.push({
+      id: `cy-${c.id}`,
+      kind: "cycle",
+      title: `Crop cycle started — ${c.cropName}`,
+      meta: `${c.plotName} · ${c.farmName}`,
+      date: c.startDate,
+      status: c.status,
+      href: `/plots/${c.plotId}`,
+    });
   }
-  const lats = pins.map((p) => p.latitude);
-  const lngs = pins.map((p) => p.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const W = 100;
-  const H = 50;
-  const PAD = 10;
-  const x = (lng: number) =>
-    maxLng === minLng ? W / 2 : PAD + ((lng - minLng) / (maxLng - minLng)) * (W - PAD * 2);
-  const y = (lat: number) =>
-    maxLat === minLat ? H / 2 : PAD + ((maxLat - lat) / (maxLat - minLat)) * (H - PAD * 2);
+  for (const h of data.history.harvests) {
+    entries.push({
+      id: `hv-${h.id}`,
+      kind: "harvest",
+      title: `Harvest logged — ${h.quantity} ${h.unit} ${h.crop}`,
+      meta: `${h.plotName} · ${h.farmName} · Grade ${h.grade}`,
+      date: h.date,
+      href: `/hq/farms/${h.farmId}`,
+    });
+  }
+  for (const i of data.history.incidents) {
+    entries.push({
+      id: `in-${i.id}`,
+      kind: "incident",
+      title: `Incident — ${i.type}`,
+      meta: i.plotName ? `${i.plotName} · ${i.farmName}` : i.farmName,
+      date: i.createdAt,
+      status: i.status,
+      href: `/hq/farms/${i.farmId}`,
+    });
+  }
+  for (const n of data.notes) {
+    entries.push({
+      id: `nt-${n.id}`,
+      kind: "followup",
+      title: `Follow-up — ${n.action}`,
+      meta: `${n.authorName} · ${n.incidentType} · ${n.farmName}`,
+      date: n.createdAt,
+      href: `/hq/farms/${n.farmId}`,
+    });
+  }
+  for (const t of data.history.tasks) {
+    entries.push({
+      id: `tk-${t.id}`,
+      kind: "task",
+      title: `Task — ${t.title}`,
+      meta: `Due ${formatDate(t.dueDate)} · ${t.farmName}`,
+      date: t.dueDate,
+      status: t.status,
+    });
+  }
 
+  return entries
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 12);
+}
+
+const ACTIVITY_ICON: Record<ActivityEntry["kind"], ReactNode> = {
+  cycle: <Sprout size={14} />,
+  harvest: <CheckCircle2 size={14} />,
+  incident: <AlertTriangle size={14} />,
+  followup: <ClipboardList size={14} />,
+  task: <ClipboardList size={14} />,
+};
+
+function Section({
+  title,
+  count,
+  action,
+  children,
+}: {
+  title: string;
+  count?: number;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: 220,
-          background: "var(--canvas-floor)",
-          borderRadius: "var(--radius-md)",
-          border: "1px solid var(--hairline)",
-          overflow: "hidden",
-        }}
-      >
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          style={{ width: "100%", height: "100%", display: "block" }}
-          role="img"
-          aria-label="Map of client farms"
-        >
-          {/* Subtle grid lines */}
-          <line x1="0" y1="25" x2="100" y2="25" stroke="var(--hairline)" strokeDasharray="2 2" strokeWidth="0.5" />
-          <line x1="50" y1="0" x2="50" y2="50" stroke="var(--hairline)" strokeDasharray="2 2" strokeWidth="0.5" />
+    <section className="c360-section">
+      <div className="c360-section-head">
+        <h2 className="c360-section-title">
+          <span>{title}</span>
+          {typeof count === "number" && <span className="c360-count">{count}</span>}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
 
-          {pins.map((p) => {
-            const cx = x(p.longitude);
-            const cy = y(p.latitude);
-            const isActive = p.status === "ACTIVE";
-            return (
-              <g key={p.id} style={{ cursor: "pointer" }}>
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={4}
-                  fill={isActive ? "rgba(34, 197, 94, 0.2)" : "rgba(245, 158, 11, 0.2)"}
-                />
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={2.2}
-                  fill={isActive ? "#15803d" : "#d97706"}
-                  stroke="#ffffff"
-                  strokeWidth={0.6}
-                >
-                  <title>{p.name} — Click to inspect farm</title>
-                </circle>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <Icons.MapPin size={13} />
-          <span>
-            {pins.length} farm location{pins.length !== 1 ? "s" : ""} plotted
-            {hasMore ? " (showing first 200)" : ""}
-          </span>
-        </span>
-        <Link href="/spatial" style={{ color: "var(--ink)", fontWeight: 500, fontSize: 12 }}>
-          Open Spatial Console &rarr;
-        </Link>
-      </div>
+function InfoItem({ label, value, icon }: { label: string; value?: string | null; icon?: ReactNode }) {
+  const shown = value && value.trim() ? value : null;
+  return (
+    <div className="c360-info-item">
+      <span className="c360-info-label">
+        {icon}
+        {label}
+      </span>
+      {shown ? <span className="c360-info-value">{shown}</span> : <span className="c360-info-empty">Not provided</span>}
     </div>
   );
 }
 
-export function Client360({ clientId }: { clientId: string }) {
-  const [tab, setTab] = useState<Tab>("farms");
+function Metric({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="c360-metric">
+      <span className="c360-metric-label">{label}</span>
+      <span className="c360-metric-value">{value}</span>
+    </div>
+  );
+}
+
+export function Client360({ clientId, canOnboard = false }: { clientId: string; canOnboard?: boolean }) {
   const [data, setData] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [farmPage, setFarmPage] = useState(1);
   const [plotPage, setPlotPage] = useState(1);
+  const locItemRefs = useRef<Record<string, HTMLLIElement | null>>({});
   const [teamMsg, setTeamMsg] = useState<string | null>(null);
   const [teamBusy, setTeamBusy] = useState<string | null>(null);
+  const [focusPinId, setFocusPinId] = useState<string | null>(null);
+  const [fitToken, setFitToken] = useState(0);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -308,8 +349,15 @@ export function Client360({ clientId }: { clientId: string }) {
   }, [clientId, farmPage, plotPage]);
 
   useEffect(() => {
-    load();
+    const t = setTimeout(load, 0);
+    return () => clearTimeout(t);
   }, [load]);
+
+  // Keep the estate-locations panel in sync when a map marker is selected.
+  useEffect(() => {
+    if (!focusPinId) return;
+    locItemRefs.current[focusPinId]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusPinId]);
 
   const teamAction = async (userId: string, body: Record<string, unknown>, label: string) => {
     setTeamBusy(userId);
@@ -331,8 +379,10 @@ export function Client360({ clientId }: { clientId: string }) {
     }
   };
 
-  const toggleActive = (m: TeamMember) =>
-    teamAction(m.id, { active: !m.active }, m.active ? "Deactivation" : "Reactivation");
+  const toggleActive = (m: TeamMember) => {
+    if (m.active && !confirm(`Deactivate ${m.name}? They will lose access immediately.`)) return;
+    void teamAction(m.id, { active: !m.active }, m.active ? "Deactivation" : "Reactivation");
+  };
 
   const resetPassword = (m: TeamMember) => {
     const next = prompt(`Set a new password for ${m.name} (min 12 characters):`);
@@ -341,28 +391,55 @@ export function Client360({ clientId }: { clientId: string }) {
       setTeamMsg("Password must be at least 12 characters.");
       return;
     }
-    teamAction(m.id, { password: next }, "Credential reset");
+    void teamAction(m.id, { password: next }, "Credential reset");
   };
 
   if (loading && !data) {
     return (
-      <div style={{ padding: 64, textAlign: "center", color: "var(--muted)", fontSize: 14 }}>
-        Loading Client 360 profile...
+      <div className="c360">
+        <div className="c360-header">
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <Skeleton width={48} height={48} borderRadius="50%" />
+            <div style={{ display: "grid", gap: 8, flex: 1 }}>
+              <Skeleton width={220} height={20} />
+              <Skeleton width={300} height={13} />
+              <Skeleton width={240} height={13} />
+            </div>
+          </div>
+          <div className="c360-metrics">
+            {[0, 1, 2, 3].map((i) => (
+              <div className="c360-metric" key={i}>
+                <Skeleton width={64} height={11} />
+                <div style={{ height: 8 }} />
+                <Skeleton width={72} height={22} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="c360-section">
+          <Skeleton width={180} height={18} />
+          <div style={{ height: 14 }} />
+          <Skeleton width="100%" height={92} />
+        </div>
+        <div className="c360-grid-2">
+          <div className="c360-section">
+            <Skeleton width={160} height={18} />
+            <div style={{ height: 14 }} />
+            <Skeleton width="100%" height={150} />
+          </div>
+          <div className="c360-section">
+            <Skeleton width={120} height={18} />
+            <div style={{ height: 14 }} />
+            <Skeleton width="100%" height={150} />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          padding: 48,
-          textAlign: "center",
-        }}
-      >
+      <div className="c360-section" style={{ textAlign: "center", padding: 48 }}>
         <div style={{ fontWeight: 600, color: "var(--ink)", fontSize: 16, marginBottom: 4 }}>
           {error || "Client profile not found."}
         </div>
@@ -374,7 +451,7 @@ export function Client360({ clientId }: { clientId: string }) {
             <span>Retry</span>
           </button>
           <Link href="/hq/clients" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-            <span>&larr; Back to Client Directory</span>
+            <span>Back to Clients</span>
           </Link>
         </div>
       </div>
@@ -386,298 +463,411 @@ export function Client360({ clientId }: { clientId: string }) {
   const officers = data.team.filter((m) => m.role !== "FARM_ADMIN");
   const farmPages = Math.ceil(data.farms.total / data.farms.limit) || 1;
   const plotPages = Math.ceil(data.plots.total / data.plots.limit) || 1;
-  const initials = client.name.trim().charAt(0).toUpperCase();
+  const editHref = `/hq/onboarding/new?clientId=${client.id}`;
+  const locationText = [client.district, client.state].filter(Boolean).join(", ");
+  const fullAddress = [client.address, client.district, client.state].filter(Boolean).join(", ");
+
+  const officersByFarm = new Map<string, TeamMember[]>();
+  for (const m of data.team) {
+    for (const fa of m.farms) {
+      const list = officersByFarm.get(fa.id) ?? [];
+      list.push(m);
+      officersByFarm.set(fa.id, list);
+    }
+  }
+
+  const activity = buildActivity(data);
+  const pins = data.pins.items.map((p) => ({
+    id: p.id,
+    name: p.name,
+    lat: p.latitude,
+    lng: p.longitude,
+    status: p.status,
+    coord: `${formatCoord(p.latitude, "N", "S")}, ${formatCoord(p.longitude, "E", "W")}`,
+  }));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* ── 1. Client Profile Hero Header Card ── */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          padding: 24,
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        {/* Top Header Row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                background: "var(--surface-strong)",
-                border: "1px solid var(--hairline)",
-                color: "var(--ink)",
-                fontSize: 20,
-                fontWeight: 700,
-                display: "grid",
-                placeItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              {initials}
-            </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: "var(--ink)", letterSpacing: "-0.01em" }}>
-                  {client.name}
-                </h1>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    fontFamily: "var(--font-mono)",
-                    padding: "2px 8px",
-                    borderRadius: 4,
-                    background: "var(--surface-strong)",
-                    border: "1px solid var(--hairline)",
-                    color: "var(--ink)",
-                  }}
-                >
-                  {client.code}
-                </span>
+    <div className="c360">
+      {/* ── Client header ── */}
+      <header className="c360-header">
+        <div className="c360-header-top">
+          <div className="c360-identity">
+            <div className="c360-avatar">{initials(client.name)}</div>
+            <div className="c360-identity-text">
+              <div className="c360-name-row">
+                <h1 className="c360-name">{client.name}</h1>
+                <span className="c360-code">{client.code}</span>
                 <StatusBadge status={client.status} />
               </div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-                {client.companyName ? `${client.companyName} &bull; ` : ""}Client ID:{" "}
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{client.id}</span>
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href={`/hq/onboarding/new?clientId=${client.id}`}
-            className="btn btn-primary btn-sm"
-            style={{ textDecoration: "none", borderRadius: "var(--radius-md)" }}
-            title="Open onboarding wizard prefilled with this client"
-          >
-            <Icons.Plus size={14} />
-            <span>Add Farm Estate</span>
-          </Link>
-        </div>
-
-        {/* 4-Card Portfolio Metrics Summary */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Farms</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.farmCount}</div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Registered estates</div>
-          </div>
-
-          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Land Plots</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.plotCount}</div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Demarcated parcels</div>
-          </div>
-
-          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Workforce</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{metrics.officerCount}</div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Assigned field officers</div>
-          </div>
-
-          <div style={{ padding: "12px 14px", background: "var(--canvas-floor)", borderRadius: "var(--radius-md)", border: "1px solid var(--hairline)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Area</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", marginTop: 2, fontFamily: "var(--font-mono)" }}>
-              {metrics.totalAcreage.toFixed(2)} ac
-            </div>
-            <div style={{ fontSize: 11, color: "var(--muted)" }}>Total acreage</div>
-          </div>
-        </div>
-
-        {/* Detailed Account Attributes Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-          <Field label="Phone" value={client.phone} icon={<Icons.User size={11} />} />
-          <Field label="Email" value={client.email} icon={<Icons.User size={11} />} />
-          <Field label="Secondary Contact" value={client.secondaryContact} icon={<Icons.User size={11} />} />
-          <Field label="Primary Location" value={[client.address, client.district, client.state].filter(Boolean).join(", ")} icon={<Icons.MapPin size={11} />} />
-          <Field label="Billing Address" value={client.billingAddress} icon={<Icons.MapPin size={11} />} />
-          <Field label="PAN" value={client.panNumber} icon={<Icons.Shield size={11} />} />
-          <Field label="GSTIN" value={client.gstin} icon={<Icons.Shield size={11} />} />
-          <Field label="Entity Type" value={client.entityType} icon={<Icons.Users size={11} />} />
-        </div>
-      </div>
-
-      {/* ── 2. Farm Locations Spatial Map Box ── */}
-      <div
-        style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-lg)",
-          padding: 20,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", display: "flex", alignItems: "center", gap: 8 }}>
-          <Icons.MapPin size={16} style={{ color: "var(--muted)" }} />
-          <span>Authoritative Estate Locations</span>
-        </div>
-        <MiniMap pins={data.pins.items} hasMore={data.pins.hasMore} />
-      </div>
-
-      {/* ── 3. Segmented Navigation Tabs ── */}
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`btn btn-sm ${tab === t.id ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => setTab(t.id)}
-            style={{ borderRadius: "var(--radius-pill)", padding: "6px 14px", fontWeight: 600, fontSize: 12 }}
-          >
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tab 1: Farms Portfolio ── */}
-      {tab === "farms" && (
-        <div
-          style={{
-            background: "var(--surface-card)",
-            border: "1px solid var(--hairline)",
-            borderRadius: "var(--radius-lg)",
-            overflow: "hidden",
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "var(--canvas-floor)", borderBottom: "1px solid var(--hairline)" }}>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Farm ID</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Estate Name</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Status</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Stage</th>
-                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Acreage</th>
-                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plots</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Boundary</th>
-                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.farms.items.length === 0 ? (
-                  <tr>
-                    <td colSpan={8}>
-                      <Empty title="No farms onboarded yet" hint="Use Add farm above to register the first estate for this client." />
-                    </td>
-                  </tr>
-                ) : (
-                  data.farms.items.map((f) => (
-                    <tr key={f.id} style={{ borderBottom: "1px solid var(--hairline)" }}>
-                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)" }} title={f.id}>
-                        {f.id.slice(-8).toUpperCase()}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <Link href={`/hq/farms/${f.id}`} style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
-                          {f.name}
-                        </Link>
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <StatusBadge status={f.status} />
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--surface-strong)", fontWeight: 600 }}>
-                          {f.setupStage.replaceAll("_", " ")}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                        {f.totalArea.toFixed(2)} ac
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: 600 }}>
-                        {f.plotCount}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        {f.hasBoundary ? (
-                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(34,197,94,0.12)", color: "#15803d", border: "1px solid rgba(34,197,94,0.25)", fontWeight: 600 }}>
-                            &bull; Demarcated
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(245,158,11,0.12)", color: "#d97706", border: "1px solid rgba(245,158,11,0.25)", fontWeight: 600 }}>
-                            &bull; Missing boundary
-                          </span>
-                        )}
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                        <Link href={`/hq/farms/${f.id}`} className="btn btn-secondary btn-sm" style={{ padding: "3px 10px", fontSize: 12, borderRadius: "var(--radius-md)" }}>
-                          Inspect &rarr;
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
+              <div className="c360-sub">
+                {client.entityType && (
+                  <span className="c360-entity">
+                    <Building2 size={12} />
+                    {client.entityType}
+                  </span>
                 )}
-              </tbody>
-            </table>
+                {client.companyName && <span>{client.companyName}</span>}
+                <span className="c360-client-id">ID {client.id}</span>
+              </div>
+              <div className="c360-contact-row">
+                {client.phone && (
+                  <a href={`tel:${client.phone}`} className="c360-contact-item">
+                    <Phone size={13} />
+                    {formatPhone(client.phone)}
+                  </a>
+                )}
+                {client.email && (
+                  <a href={`mailto:${client.email}`} className="c360-contact-item">
+                    <Mail size={13} />
+                    {client.email}
+                  </a>
+                )}
+                {locationText && (
+                  <span className="c360-contact-item">
+                    <MapPin size={13} />
+                    {locationText}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          {data.farms.total > data.farms.limit && (
-            <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hairline)", fontSize: 12, color: "var(--muted)", background: "var(--canvas-floor)" }}>
-              <span>Showing {(farmPage - 1) * data.farms.limit + 1} to {Math.min(farmPage * data.farms.limit, data.farms.total)} of {data.farms.total} farms</span>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage <= 1} onClick={() => setFarmPage((p) => p - 1)}>← Prev</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={farmPage >= farmPages} onClick={() => setFarmPage((p) => p + 1)}>Next →</button>
-              </div>
+          {canOnboard && (
+            <div className="c360-actions">
+              <Link href={editHref} className="btn btn-secondary btn-sm" title="Edit client details in the onboarding wizard">
+                <Pencil size={13} />
+                <span>Edit Client</span>
+              </Link>
+              <Link href={editHref} className="btn btn-primary btn-sm" title="Add a new farm estate for this client">
+                <Plus size={14} />
+                <span>Add Farm Estate</span>
+              </Link>
             </div>
           )}
         </div>
-      )}
 
-      {/* ── Tab 2: Land Plots ── */}
-      {tab === "plots" && (
-        <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
+        {/* Metrics strip */}
+        <div className="c360-metrics">
+          <Metric label="Farms" value={metrics.farmCount} />
+          <Metric label="Land Plots" value={metrics.plotCount} />
+          <Metric label="Total Area" value={`${metrics.totalAcreage.toFixed(2)} ac`} />
+          <Metric label="Workforce" value={metrics.officerCount} />
+        </div>
+      </header>
+
+      {/* ── Farms & Estates ── */}
+      <Section
+        title="Farms & Estates"
+        count={data.farms.total}
+        action={
+          canOnboard ? (
+            <Link href={editHref} className="btn btn-primary btn-sm">
+              <Plus size={14} />
+              <span>Add Farm Estate</span>
+            </Link>
+          ) : undefined
+        }
+      >
+        {data.farms.items.length === 0 ? (
+          <EmptyState
+            icon={<Icons.Farm size={22} />}
+            title="No farms added yet"
+            description="Add a farm estate to start tracking operations."
+            action={
+              canOnboard ? (
+                <Link href={editHref} className="btn btn-primary btn-sm">
+                  <Plus size={14} />
+                  <span>Add Farm Estate</span>
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : (
+          <>
+            <div className="c360-farm-list">
+              {data.farms.items.map((f) => {
+                const farmOfficers = officersByFarm.get(f.id) ?? [];
+                return (
+                  <article key={f.id} className="c360-farm-card">
+                    <div className="c360-farm-main">
+                      <div className="c360-farm-title">
+                        <Link href={`/hq/farms/${f.id}`} className="c360-farm-name">
+                          {f.name}
+                        </Link>
+                        <StatusBadge status={f.status} />
+                      </div>
+                      <div className="c360-farm-meta">
+                        <span className="c360-tag">{f.setupStage.replaceAll("_", " ")}</span>
+                        <span>{f.totalArea.toFixed(2)} ac</span>
+                        <span>
+                          {f.plotCount} plot{f.plotCount === 1 ? "" : "s"}
+                        </span>
+                        <span className={f.hasBoundary ? "c360-ok" : "c360-warn"}>
+                          {f.hasBoundary ? "Boundary demarcated" : "Boundary missing"}
+                        </span>
+                      </div>
+                      {farmOfficers.length > 0 && (
+                        <div className="c360-farm-officers">
+                          <Users size={12} />
+                          {farmOfficers.map((o) => o.name).join(", ")}
+                        </div>
+                      )}
+                    </div>
+                    <Link href={`/hq/farms/${f.id}`} className="btn btn-secondary btn-sm">
+                      <span>View farm</span>
+                      <ArrowRight size={13} />
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
+
+            {data.farms.total > data.farms.limit && (
+              <div className="c360-pagination">
+                <span>
+                  Showing {(farmPage - 1) * data.farms.limit + 1}–
+                  {Math.min(farmPage * data.farms.limit, data.farms.total)} of {data.farms.total} farms
+                </span>
+                <div className="c360-pagination-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={farmPage <= 1}
+                    onClick={() => setFarmPage((p) => p - 1)}
+                  >
+                    <Icons.ChevronLeft size={13} /> Prev
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={farmPage >= farmPages}
+                    onClick={() => setFarmPage((p) => p + 1)}
+                  >
+                    Next <Icons.ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
+
+      {/* ── Client information + Contacts ── */}
+      <div className="c360-grid-2">
+        <Section
+          title="Client Information"
+          action={
+            canOnboard ? (
+              <Link href={editHref} className="btn btn-secondary btn-sm">
+                <Pencil size={12} />
+                <span>Edit information</span>
+              </Link>
+            ) : undefined
+          }
+        >
+          <div className="c360-info-grid">
+            <InfoItem label="Phone" value={formatPhone(client.phone)} icon={<Phone size={11} />} />
+            <InfoItem label="Email" value={client.email} icon={<Mail size={11} />} />
+            <InfoItem label="Secondary Contact" value={client.secondaryContact} icon={<Users size={11} />} />
+            <InfoItem label="Entity Type" value={client.entityType} icon={<Building2 size={11} />} />
+            <InfoItem label="PAN" value={client.panNumber} icon={<Icons.Shield size={11} />} />
+            <InfoItem label="GSTIN" value={client.gstin} icon={<Icons.Shield size={11} />} />
+            <InfoItem label="Billing Address" value={client.billingAddress} icon={<MapPin size={11} />} />
+            <InfoItem label="Primary Location" value={fullAddress} icon={<MapPin size={11} />} />
+          </div>
+        </Section>
+
+        <Section title="Contacts">
+          <div className="c360-contact-list">
+            <div className="c360-contact-card">
+              <div className="c360-contact-role">Primary contact</div>
+              <div className="c360-contact-name">{client.name}</div>
+              {client.phone && (
+                <a href={`tel:${client.phone}`} className="c360-contact-line">
+                  <Phone size={13} />
+                  {formatPhone(client.phone)}
+                </a>
+              )}
+              {client.email && (
+                <a href={`mailto:${client.email}`} className="c360-contact-line">
+                  <Mail size={13} />
+                  {client.email}
+                </a>
+              )}
+              {!client.phone && !client.email && <span className="c360-info-empty">No contact assigned</span>}
+            </div>
+
+            <div className="c360-contact-card">
+              <div className="c360-contact-role">Secondary contact</div>
+              {client.secondaryContact ? (
+                <div className="c360-contact-name">{client.secondaryContact}</div>
+              ) : (
+                <span className="c360-info-empty">Not provided</span>
+              )}
+            </div>
+          </div>
+        </Section>
+      </div>
+
+      {/* ── Location & Estates ── */}
+      <Section
+        title="Location & Estates"
+        action={
+          <div className="c360-section-actions">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setFitToken((t) => t + 1)}
+              disabled={pins.length === 0}
+            >
+              <Icons.Maximize2 size={13} />
+              <span>Fit all</span>
+            </button>
+            <Link href="/spatial" className="btn btn-secondary btn-sm">
+              <span>Open Spatial Console</span>
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        }
+      >
+        <p className="c360-section-desc">View and manage all registered farm locations.</p>
+
+        {pins.length === 0 ? (
+          <EmptyState
+            icon={<MapPin size={22} />}
+            title="No estate locations yet"
+            description="Add a farm location to see it here."
+            action={
+              canOnboard ? (
+                <Link href={editHref} className="btn btn-primary btn-sm">
+                  <Plus size={14} />
+                  <span>Add Farm Estate</span>
+                </Link>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="c360-location">
+            <ClientFarmsMap
+              pins={pins}
+              focusId={focusPinId}
+              fitToken={fitToken}
+              onSelectPin={(id) => setFocusPinId(id)}
+            />
+
+            <div className="c360-loc-panel">
+              <div className="c360-loc-panel-head">
+                <span className="c360-loc-panel-title">Estate Locations</span>
+                <span className="c360-loc-panel-count">
+                  {pins.length} location{pins.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <ul className="c360-loc-list">
+                {pins.map((p) => {
+                  const selected = focusPinId === p.id;
+                  return (
+                    <li
+                      key={p.id}
+                      ref={(el) => {
+                        locItemRefs.current[p.id] = el;
+                      }}
+                      className={`c360-loc-item ${selected ? "selected" : ""}`}
+                    >
+                      <button
+                        type="button"
+                        className="c360-loc-select"
+                        onClick={() => setFocusPinId(p.id)}
+                        aria-pressed={selected}
+                      >
+                        <span className="c360-loc-item-top">
+                          <span className="c360-loc-item-name">{p.name}</span>
+                          <span className={`c360-loc-status ${p.status.toLowerCase()}`} title={p.status} />
+                        </span>
+                        <span className="c360-loc-item-coord">{p.coord}</span>
+                      </button>
+                      <Link href={`/hq/farms/${p.id}`} className="c360-loc-view">
+                        <span>View Estate</span>
+                        <ArrowRight size={12} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      {/* ── Recent activity ── */}
+      <Section title="Recent Activity">
+        {activity.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardList size={22} />}
+            title="No activity recorded yet"
+            description="Crop cycles, harvests, incidents and tasks will appear here as field operations run."
+          />
+        ) : (
+          <ol className="c360-timeline">
+            {activity.map((a) => (
+              <li key={a.id} className={`c360-timeline-item ${a.kind}`}>
+                <span className="c360-timeline-icon">{ACTIVITY_ICON[a.kind]}</span>
+                <div className="c360-timeline-body">
+                  <div className="c360-timeline-title">{a.title}</div>
+                  <div className="c360-timeline-meta">{a.meta}</div>
+                </div>
+                <div className="c360-timeline-side">
+                  <span className="c360-timeline-date">{formatDate(a.date)}</span>
+                  {a.status && <StatusBadge status={a.status} />}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </Section>
+
+      {/* ── Land plots ── */}
+      <Section title="Land Plots" count={data.plots.total}>
+        <div className="c360-table-wrap">
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}>
+            <table className="c360-table">
               <thead>
-                <tr style={{ background: "var(--canvas-floor)", borderBottom: "1px solid var(--hairline)" }}>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plot ID</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Plot Name</th>
-                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Estate</th>
-                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Area</th>
-                  <th style={{ padding: "10px 14px", textAlign: "center", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Status</th>
-                  <th style={{ padding: "10px 14px", textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>Action</th>
+                <tr>
+                  <th>Plot</th>
+                  <th>Estate</th>
+                  <th style={{ textAlign: "right" }}>Area</th>
+                  <th>Status</th>
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
                 {data.plots.items.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
-                      <Empty title="No land plots registered yet" hint="Plots are created during farm plot demarcation." />
+                    <td colSpan={5}>
+                      <div className="c360-table-empty">No land plots registered yet. Plots are created during farm demarcation.</div>
                     </td>
                   </tr>
                 ) : (
                   data.plots.items.map((p) => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid var(--hairline)" }}>
-                      <td style={{ padding: "12px 14px", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)" }} title={p.id}>
-                        {p.id.slice(-8).toUpperCase()}
-                      </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <Link href={`/plots/${p.id}`} style={{ fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>
+                    <tr key={p.id}>
+                      <td>
+                        <Link href={`/plots/${p.id}`} className="c360-link">
                           {p.name}
                         </Link>
+                        <div className="c360-row-sub">{p.id.slice(-8).toUpperCase()}</div>
                       </td>
-                      <td style={{ padding: "12px 14px" }}>
-                        <Link href={`/hq/farms/${p.farmId}`} style={{ color: "var(--ink)", textDecoration: "none" }}>
+                      <td>
+                        <Link href={`/hq/farms/${p.farmId}`} className="c360-link-muted">
                           {p.farmName}
                         </Link>
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                        {p.area.toFixed(2)} ac
-                      </td>
-                      <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{p.area.toFixed(2)} ac</td>
+                      <td>
                         <StatusBadge status={p.status} />
                       </td>
-                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                        <Link href={`/plots/${p.id}`} className="btn btn-secondary btn-sm" style={{ padding: "3px 10px", fontSize: 12, borderRadius: "var(--radius-md)" }}>
-                          Inspect &rarr;
+                      <td style={{ textAlign: "right" }}>
+                        <Link href={`/plots/${p.id}`} className="btn btn-secondary btn-sm">
+                          <span>Inspect</span>
+                          <ArrowRight size={12} />
                         </Link>
                       </td>
                     </tr>
@@ -686,137 +876,101 @@ export function Client360({ clientId }: { clientId: string }) {
               </tbody>
             </table>
           </div>
+        </div>
 
-          {data.plots.total > data.plots.limit && (
-            <div style={{ padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--hairline)", fontSize: 12, color: "var(--muted)", background: "var(--canvas-floor)" }}>
-              <span>Showing {(plotPage - 1) * data.plots.limit + 1} to {Math.min(plotPage * data.plots.limit, data.plots.total)} of {data.plots.total} plots</span>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage <= 1} onClick={() => setPlotPage((p) => p - 1)}>← Prev</button>
-                <button type="button" className="btn btn-secondary btn-sm" disabled={plotPage >= plotPages} onClick={() => setPlotPage((p) => p + 1)}>Next →</button>
+        {data.plots.total > data.plots.limit && (
+          <div className="c360-pagination">
+            <span>
+              Showing {(plotPage - 1) * data.plots.limit + 1}–
+              {Math.min(plotPage * data.plots.limit, data.plots.total)} of {data.plots.total} plots
+            </span>
+            <div className="c360-pagination-actions">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={plotPage <= 1}
+                onClick={() => setPlotPage((p) => p - 1)}
+              >
+                <Icons.ChevronLeft size={13} /> Prev
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                disabled={plotPage >= plotPages}
+                onClick={() => setPlotPage((p) => p + 1)}
+              >
+                Next <Icons.ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      {/* ── Team & workforce ── */}
+      <Section title="Team & Workforce" count={data.team.length}>
+        {teamMsg && (
+          <div className="c360-note" role="status">
+            {teamMsg}
+          </div>
+        )}
+
+        <div className="c360-team-group">
+          <div className="c360-team-heading">Farm admin accounts ({admins.length})</div>
+          {admins.length === 0 ? (
+            <div className="c360-mini-empty">No farm admin provisioned.</div>
+          ) : (
+            admins.map((m) => (
+              <TeamRow
+                key={m.id}
+                member={m}
+                busy={teamBusy === m.id}
+                onToggle={() => toggleActive(m)}
+                onReset={() => resetPassword(m)}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="c360-team-group">
+          <div className="c360-team-heading">Field officers ({officers.length})</div>
+          {officers.length === 0 ? (
+            <div className="c360-mini-empty">No officers assigned.</div>
+          ) : (
+            officers.map((m) => (
+              <TeamRow
+                key={m.id}
+                member={m}
+                busy={teamBusy === m.id}
+                onToggle={() => toggleActive(m)}
+                onReset={() => resetPassword(m)}
+              />
+            ))
+          )}
+        </div>
+      </Section>
+
+      {/* ── Documents & evidence ── */}
+      <Section title="Documents & Evidence" count={data.files.length}>
+        {data.files.length === 0 ? (
+          <EmptyState
+            icon={<FileText size={22} />}
+            title="No documents or evidence uploaded"
+            description="Task evidence, crop photos and officer selfies appear here."
+          />
+        ) : (
+          <div className="c360-file-list">
+            {data.files.map((f) => (
+              <div key={f.id} className="c360-file-row">
+                <span className="c360-file-kind">{f.kind.replaceAll("_", " ")}</span>
+                <span className="c360-file-key">{f.storageKey}</span>
+                <span className="c360-file-meta">
+                  {f.mimeType} · {(f.sizeBytes / 1024).toFixed(1)} KB · {formatDate(f.createdAt)}
+                </span>
               </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab 3: Team & Labour ── */}
-      {tab === "team" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {teamMsg && (
-            <div style={{ padding: "10px 16px", background: "var(--surface-strong)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-md)", fontSize: 13, color: "var(--ink)" }}>
-              {teamMsg}
-            </div>
-          )}
-
-          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
-              Farm Admin Accounts ({admins.length})
-            </div>
-            {admins.length === 0 ? (
-              <Empty title="No farm admin provisioned" hint="Admin accounts are created during estate onboarding." />
-            ) : (
-              admins.map((m) => (
-                <TeamRow key={m.id} member={m} busy={teamBusy === m.id} onToggle={() => toggleActive(m)} onReset={() => resetPassword(m)} />
-              ))
-            )}
+            ))}
           </div>
-
-          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
-              Field Officers Hired per Estate ({officers.length})
-            </div>
-            {officers.length === 0 ? (
-              <Empty title="No officers assigned" hint="Field officers appear here once assigned to this client's estates." />
-            ) : (
-              officers.map((m) => (
-                <TeamRow key={m.id} member={m} busy={teamBusy === m.id} onToggle={() => toggleActive(m)} onReset={() => resetPassword(m)} />
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Tab 4: Operational History ── */}
-      {tab === "history" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <HistorySection title="Crop Cycles">
-            {data.history.cycles.length === 0 ? (
-              <Empty title="No active crop cycles" hint="Cycles appear once planting commences on any plot." />
-            ) : (
-              data.history.cycles.map((c) => (
-                <div key={c.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>{c.cropName}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                      Started {c.startDate} &bull; <Link href={`/plots/${c.plotId}`} style={{ color: "var(--ink)" }}>{c.plotName}</Link> &bull; {c.farmName}
-                    </div>
-                  </div>
-                  <StatusBadge status={c.status} />
-                </div>
-              ))
-            )}
-          </HistorySection>
-
-          <HistorySection title="Harvest Ledger">
-            {data.history.harvests.length === 0 ? (
-              <Empty title="No harvest records logged" />
-            ) : (
-              data.history.harvests.map((h) => (
-                <div key={h.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13 }}>
-                  <strong style={{ color: "var(--ink)" }}>{h.quantity} {h.unit}</strong> — {h.crop} ({h.grade})
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                    Harvested {h.date} &bull; {h.plotName} &bull; {h.farmName}
-                  </div>
-                </div>
-              ))
-            )}
-          </HistorySection>
-
-          <HistorySection title="Incidents & Signals">
-            {data.history.incidents.length === 0 ? (
-              <Empty title="No field incidents reported" />
-            ) : (
-              data.history.incidents.map((i) => (
-                <div key={i.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>{i.type}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                      {new Date(i.createdAt).toLocaleDateString()}{i.severity ? ` &bull; Severity ${i.severity}` : ""} &bull; {i.farmName}
-                    </div>
-                  </div>
-                  <StatusBadge status={i.status} />
-                </div>
-              ))
-            )}
-          </HistorySection>
-        </div>
-      )}
-
-      {/* ── Tab 5: Documents & Evidence ── */}
-      {tab === "files" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>
-              Document Files & Photo Evidence ({data.files.length})
-            </div>
-            {data.files.length === 0 ? (
-              <Empty title="No documents or photo evidence uploaded" hint="Task evidence, crop photos, and officer selfies appear here." />
-            ) : (
-              data.files.map((f) => (
-                <div key={f.id} style={{ padding: "10px 0", borderBottom: "1px solid var(--hairline)", fontSize: 13 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "var(--surface-strong)", marginRight: 8 }}>
-                    {f.kind.replaceAll("_", " ")}
-                  </span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 600, color: "var(--ink)" }}>{f.storageKey}</span>
-                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                    {f.mimeType} &bull; {(f.sizeBytes / 1024).toFixed(1)} KB &bull; Uploaded {new Date(f.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </Section>
     </div>
   );
 }
@@ -833,54 +987,29 @@ function TeamRow({
   onReset: () => void;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        flexWrap: "wrap",
-        padding: "12px 0",
-        borderBottom: "1px solid var(--hairline)",
-        fontSize: 13,
-      }}
-    >
+    <div className="c360-team-row">
       <div>
-        <div style={{ fontWeight: 600, color: member.active ? "var(--ink)" : "var(--muted)", display: "flex", alignItems: "center", gap: 6 }}>
+        <div className="c360-team-name">
           <span>{member.name}</span>
-          {!member.active && (
-            <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: "rgba(239, 68, 68, 0.12)", color: "#dc2626", fontWeight: 700 }}>
-              Inactive
-            </span>
-          )}
+          {!member.active && <span className="c360-inactive-tag">Inactive</span>}
         </div>
-        <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-          {member.role.replaceAll("_", " ")} &bull; {member.email}
-          {member.phone ? ` &bull; ${member.phone}` : ""}
+        <div className="c360-team-meta">
+          {member.role.replaceAll("_", " ")} · {member.email}
+          {member.phone ? ` · ${member.phone}` : ""}
         </div>
         {member.farms.length > 0 && (
-          <div style={{ fontSize: 12, color: "var(--body)", marginTop: 2 }}>
-            Assigned: {member.farms.map((f) => f.name).join(", ")}
-          </div>
+          <div className="c360-team-farms">Assigned: {member.farms.map((f) => f.name).join(", ")}</div>
         )}
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onToggle} style={{ borderRadius: "var(--radius-md)" }}>
+      <div className="c360-team-actions">
+        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onToggle}>
           <span>{member.active ? "Deactivate" : "Reactivate"}</span>
         </button>
-        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onReset} style={{ borderRadius: "var(--radius-md)" }}>
-          <span>Reset Credentials</span>
+        <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={onReset}>
+          <RefreshCw size={12} />
+          <span>Reset credentials</span>
         </button>
       </div>
-    </div>
-  );
-}
-
-function HistorySection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: "var(--surface-card)", border: "1px solid var(--hairline)", borderRadius: "var(--radius-lg)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
-      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)", marginBottom: 12 }}>{title}</div>
-      {children}
     </div>
   );
 }

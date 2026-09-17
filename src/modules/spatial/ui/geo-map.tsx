@@ -1,5 +1,6 @@
 "use client";
 
+import "@/lib/leaflet-safe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import * as L from "leaflet";
@@ -247,7 +248,7 @@ function ReferenceLayer({ ring, fitWhenIdle }: { ring: LngLat[] | null; fitWhenI
     fittedRef.current = `layer:${key}`;
     const layer = (map as unknown as { __refLayer?: L.Polyline }).__refLayer;
     if (layer) {
-      map.removeLayer(layer);
+      try { map.removeLayer(layer); } catch {}
       (map as unknown as { __refLayer?: L.Polyline }).__refLayer = undefined;
     }
     if (ring && ring.length > 2) {
@@ -266,6 +267,13 @@ function ReferenceLayer({ ring, fitWhenIdle }: { ring: LngLat[] | null; fitWhenI
         if (bounds.isValid()) map.fitBounds(bounds, { padding: [20, 20] });
       }
     }
+    return () => {
+      const l = (map as unknown as { __refLayer?: L.Polyline }).__refLayer;
+      if (l) {
+        try { map.removeLayer(l); } catch {}
+        (map as unknown as { __refLayer?: L.Polyline }).__refLayer = undefined;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, JSON.stringify(ring), fitWhenIdle]);
   return null;
@@ -280,7 +288,9 @@ function TrackLayer({ track }: { track: LngLat[] | null }) {
   useEffect(() => {
     const key = JSON.stringify(track);
     const holder = map as unknown as { __trackLayers?: L.Layer[] };
-    for (const l of holder.__trackLayers ?? []) map.removeLayer(l);
+    for (const l of holder.__trackLayers ?? []) {
+      try { map.removeLayer(l); } catch {}
+    }
     holder.__trackLayers = [];
     if (track && track.length > 1) {
       const latlngs = toLatLngs(track);
@@ -295,6 +305,12 @@ function TrackLayer({ track }: { track: LngLat[] | null }) {
       dot.addTo(map);
       holder.__trackLayers = [halo, line, dot];
     }
+    return () => {
+      for (const l of holder.__trackLayers ?? []) {
+        try { map.removeLayer(l); } catch {}
+      }
+      holder.__trackLayers = [];
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, JSON.stringify(track)]);
   return null;
@@ -308,7 +324,9 @@ function PinsLayer({ pins }: { pins: GeoMapPin[] | null }) {
   const map = useMap();
   useEffect(() => {
     const holder = map as unknown as { __pinLayers?: L.Layer[] };
-    for (const l of holder.__pinLayers ?? []) map.removeLayer(l);
+    for (const l of holder.__pinLayers ?? []) {
+      try { map.removeLayer(l); } catch {}
+    }
     holder.__pinLayers = [];
     if (pins && pins.length > 0) {
       const layers = pins
@@ -328,6 +346,12 @@ function PinsLayer({ pins }: { pins: GeoMapPin[] | null }) {
         });
       holder.__pinLayers = layers;
     }
+    return () => {
+      for (const l of holder.__pinLayers ?? []) {
+        try { map.removeLayer(l); } catch {}
+      }
+      holder.__pinLayers = [];
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, JSON.stringify(pins)]);
   return null;
