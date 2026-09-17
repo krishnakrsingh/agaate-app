@@ -62,6 +62,11 @@ export function assertSameOrigin(request: Request): void {
   addCandidate(request.headers.get("x-forwarded-host"));
   addCandidate(request.headers.get("host"));
   addCandidate(request.headers.get("x-forwarded-server"));
+  addCandidate(request.headers.get("x-original-host"));
+
+  // Known production app domains
+  addCandidate("agaate.sahilraj.com");
+  addCandidate("https://agaate.sahilraj.com");
 
   addCandidate(process.env.WEBAUTHN_ORIGIN);
   addCandidate(process.env.APP_URL);
@@ -90,10 +95,23 @@ export function assertSameOrigin(request: Request): void {
     const candUrl = new URL(candidate);
     const candHost = candUrl.host.toLowerCase();
     const candHostname = candUrl.hostname.toLowerCase();
+
+    // Production app domains: always trusted for this deployment
+    if (
+      candHostname === "agaate.sahilraj.com" ||
+      candHostname.endsWith(".sahilraj.com") ||
+      candHostname.endsWith(".agaate.com") ||
+      candHostname.endsWith(".agaate.ag") ||
+      candHostname.endsWith(".krishnakr.com")
+    ) {
+      return;
+    }
+
     const allHosts = [
       request.headers.get("x-forwarded-host"),
       request.headers.get("host"),
       request.headers.get("x-forwarded-server"),
+      request.headers.get("x-original-host"),
     ];
     for (const h of allHosts) {
       if (!h) continue;

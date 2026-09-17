@@ -69,7 +69,7 @@ export default async function LoginPage() {
         .showcase-bottom-quote {
           display: flex;
         }
-        @media (max-width: 820px) {
+        @media (max-width: 1024px) {
           .agaate-login-screen {
             position: fixed;
             top: 0;
@@ -106,7 +106,8 @@ export default async function LoginPage() {
           .agaate-login-left::-webkit-scrollbar {
             display: none;
           }
-          .agaate-login-right {
+          .agaate-login-right,
+          .agaate-showcase-panel {
             display: none !important;
           }
         }

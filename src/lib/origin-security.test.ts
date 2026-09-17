@@ -95,6 +95,19 @@ describe("assertSameOrigin Security Guard", () => {
     expect(() => assertSameOrigin(req)).not.toThrow();
   });
 
+  it("allows production domain agaate.sahilraj.com even when proxy sends Host: localhost:3000 with no X-Forwarded-Host", () => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+    const req = new Request("http://localhost:3000/api/auth/login", {
+      method: "POST",
+      headers: {
+        host: "localhost:3000",
+        origin: "https://agaate.sahilraj.com",
+      },
+    });
+
+    expect(() => assertSameOrigin(req)).not.toThrow();
+  });
+
   it("rejects cross-origin CSRF attempts from malicious origins", () => {
     (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     const req = new Request("http://localhost:3000/api/auth/login", {
