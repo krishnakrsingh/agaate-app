@@ -314,7 +314,7 @@ export default async function HqFarmDetailPage({
           items={[{ label: "Dashboard", href: "/hq" }, { label: "Farms", href: "/hq/farms" }, { label: farm.name }]}
         />
         <Suspense fallback={<div style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>Loading farm management…</div>}>
-          <HqFarm360 farm={serialized} />
+          <HqFarm360 farm={serialized} canEdit={hasPermission(session.permissions, "farms:write")} />
         </Suspense>
       </main>
     </>

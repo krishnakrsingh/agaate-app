@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -175,7 +175,7 @@ type TabKey =
   | "files"
   | "settings";
 
-export function HqFarm360({ farm }: { farm: Farm360 }) {
+export function HqFarm360({ farm, canEdit = true }: { farm: Farm360; canEdit?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
@@ -212,10 +212,15 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
     SETUP_STAGES.findIndex((s) => s.key === farm.setupStage)
   );
   const isHandedOver = farm.setupStage === "HANDED_OVER";
-  const daysStalled = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(farm.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
-  );
+  const [daysStalled, setDaysStalled] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDaysStalled(
+        Math.max(0, Math.floor((Date.now() - new Date(farm.updatedAt).getTime()) / (1000 * 60 * 60 * 24)))
+      );
+    }, 0);
+    return () => clearTimeout(t);
+  }, [farm.updatedAt]);
 
   // Chronological unified operational timeline
   const timeline = useMemo(() => {
@@ -483,16 +488,17 @@ export function HqFarm360({ farm }: { farm: Farm360 }) {
               </span>
             )}
 
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setActiveTab("settings")}
-              style={{ fontSize: 12, height: 32 }}
-              title="Edit farm parameters"
-            >
-              <Icons.Settings size={13} />
-              <span>Edit Farm</span>
-            </button>
+            {canEdit && (
+              <Link
+                href={`/hq/farms/${farm.id}/edit`}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: 12, height: 32 }}
+                title="Edit farm details"
+              >
+                <Icons.Settings size={13} />
+                <span>Edit Farm</span>
+              </Link>
+            )}
           </div>
         </div>
 
