@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requireSession } from "@modules/auth";
 import { hasPermission } from "@modules/auth";
+import { prisma } from "@/infrastructure/db";
 import { Navbar } from "@/components/navigation/navbar";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Client360 } from "@modules/estates/ui/client-360";
@@ -15,12 +16,19 @@ export default async function HqClientDetailPage({
   const { clientId } = await params;
   const session = await requireSession();
 
+  const client = await prisma.client.findFirst({
+    where: { OR: [{ id: clientId }, { code: clientId }] },
+    select: { name: true, companyName: true },
+  });
+
+  const clientLabel = client?.name || client?.companyName || "Client Details";
+
   if (!hasPermission(session.permissions, "clients:read")) {
     return (
       <>
         <Navbar role={session.role} userName={session.name} />
         <main className="shell narrow">
-          <Breadcrumbs items={[{ label: "Clients", href: "/hq/clients" }, { label: "Client 360" }]} />
+          <Breadcrumbs items={[{ label: "Clients", href: "/hq/clients" }, { label: clientLabel }]} />
           <h1>Access Restricted</h1>
           <p className="error">You do not have permission to access the HQ client view.</p>
         </main>
@@ -33,9 +41,9 @@ export default async function HqClientDetailPage({
       <Navbar role={session.role} userName={session.name} />
       <main className="shell">
         <Breadcrumbs
-          items={[{ label: "HQ" }, { label: "Clients", href: "/hq/clients" }, { label: "Client 360" }]}
+          items={[{ label: "HQ" }, { label: "Clients", href: "/hq/clients" }, { label: clientLabel }]}
         />
-        <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading client 360…</div>}>
+        <Suspense fallback={<div style={{ padding: "32px", textAlign: "center", color: "var(--muted)" }}>Loading client details…</div>}>
           <Client360
             clientId={clientId}
             canOnboard={hasPermission(session.permissions, "onboarding:manage")}

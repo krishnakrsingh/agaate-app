@@ -312,7 +312,15 @@ function Metric({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-export function Client360({ clientId, canOnboard = false }: { clientId: string; canOnboard?: boolean }) {
+export function Client360({
+  clientId,
+  canEditClient = false,
+  canCreateFarm = false,
+}: {
+  clientId: string;
+  canEditClient?: boolean;
+  canCreateFarm?: boolean;
+}) {
   const [data, setData] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -463,7 +471,8 @@ export function Client360({ clientId, canOnboard = false }: { clientId: string; 
   const officers = data.team.filter((m) => m.role !== "FARM_ADMIN");
   const farmPages = Math.ceil(data.farms.total / data.farms.limit) || 1;
   const plotPages = Math.ceil(data.plots.total / data.plots.limit) || 1;
-  const editHref = `/hq/onboarding/new?clientId=${client.id}`;
+  const editClientHref = `/hq/clients/${client.id}/edit`;
+  const addFarmHref = `/hq/clients/${client.id}/farms/new`;
   const locationText = [client.district, client.state].filter(Boolean).join(", ");
   const fullAddress = [client.address, client.district, client.state].filter(Boolean).join(", ");
 
@@ -532,16 +541,20 @@ export function Client360({ clientId, canOnboard = false }: { clientId: string; 
             </div>
           </div>
 
-          {canOnboard && (
+          {(canEditClient || canCreateFarm) && (
             <div className="c360-actions">
-              <Link href={editHref} className="btn btn-secondary btn-sm" title="Edit client details in the onboarding wizard">
-                <Pencil size={13} />
-                <span>Edit Client</span>
-              </Link>
-              <Link href={editHref} className="btn btn-primary btn-sm" title="Add a new farm estate for this client">
-                <Plus size={14} />
-                <span>Add Farm Estate</span>
-              </Link>
+              {canEditClient && (
+                <Link href={editClientHref} className="btn btn-secondary btn-sm" title="Edit client details">
+                  <Pencil size={13} />
+                  <span>Edit Client</span>
+                </Link>
+              )}
+              {canCreateFarm && (
+                <Link href={addFarmHref} className="btn btn-primary btn-sm" title="Add a new farm estate for this client">
+                  <Plus size={14} />
+                  <span>Add Farm Estate</span>
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -560,8 +573,8 @@ export function Client360({ clientId, canOnboard = false }: { clientId: string; 
         title="Farms & Estates"
         count={data.farms.total}
         action={
-          canOnboard ? (
-            <Link href={editHref} className="btn btn-primary btn-sm">
+          canCreateFarm ? (
+            <Link href={addFarmHref} className="btn btn-primary btn-sm">
               <Plus size={14} />
               <span>Add Farm Estate</span>
             </Link>
@@ -574,8 +587,8 @@ export function Client360({ clientId, canOnboard = false }: { clientId: string; 
             title="No farms added yet"
             description="Add a farm estate to start tracking operations."
             action={
-              canOnboard ? (
-                <Link href={editHref} className="btn btn-primary btn-sm">
+              canCreateFarm ? (
+                <Link href={addFarmHref} className="btn btn-primary btn-sm">
                   <Plus size={14} />
                   <span>Add Farm Estate</span>
                 </Link>
