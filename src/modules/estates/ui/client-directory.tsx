@@ -35,18 +35,23 @@ const STATES = [
   "Lakshadweep", "Puducherry",
 ];
 
+// Only the sort keys the backend actually supports.
 const SORT_OPTIONS = [
   { value: "name", label: "Name A–Z" },
   { value: "farms", label: "Most farms" },
-  { value: "acreage", label: "Most acreage" },
-  { value: "recent", label: "Recently active" },
+  { value: "acreage", label: "Largest area" },
+  { value: "recent", label: "Last activity" },
 ];
 
-const QUICK_VIEWS = [
-  { label: "All clients", preset: {} },
-  { label: "Largest active", preset: { status: "ACTIVE", sort: "acreage" } },
-  { label: "Inactive", preset: { status: "INACTIVE" } },
-  { label: "Suspended", preset: { status: "SUSPENDED" } },
+type QuickView = { id: string; label: string; status: string; sort: string };
+
+// Views are presets (status + sort), not filters.
+const QUICK_VIEWS: QuickView[] = [
+  { id: "all", label: "All clients", status: "ALL", sort: "name" },
+  { id: "active", label: "Active", status: "ACTIVE", sort: "name" },
+  { id: "inactive", label: "Inactive", status: "INACTIVE", sort: "name" },
+  { id: "suspended", label: "Suspended", status: "SUSPENDED", sort: "name" },
+  { id: "largest", label: "Largest active", status: "ACTIVE", sort: "acreage" },
 ];
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -80,6 +85,18 @@ function fullTime(iso: string): string {
   return Number.isFinite(d.getTime()) ? d.toLocaleString() : "—";
 }
 
+function paginationItems(current: number, totalPages: number): (number | "gap")[] {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const items: (number | "gap")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(totalPages - 1, current + 1);
+  if (start > 2) items.push("gap");
+  for (let p = start; p <= end; p += 1) items.push(p);
+  if (end < totalPages - 1) items.push("gap");
+  items.push(totalPages);
+  return items;
+}
+
 function StatusDot({ status }: { status: string }) {
   const meta = statusMeta(status);
   return (
@@ -87,21 +104,6 @@ function StatusDot({ status }: { status: string }) {
       <span className="dir-status-dot" style={{ background: meta.color }} />
       {meta.label}
     </span>
-  );
-}
-
-function ClientIdentity({ c }: { c: ClientRow }) {
-  const primary = c.companyName?.trim() || c.name;
-  return (
-    <div className="dir-identity">
-      <Link href={`/hq/clients/${c.id}`} className="dir-name" title={primary}>
-        {primary}
-      </Link>
-      {c.companyName && c.name && c.name !== c.companyName && (
-        <span className="dir-sub">{c.name}</span>
-      )}
-      <span className="dir-code">{c.code}</span>
-    </div>
   );
 }
 
@@ -135,7 +137,8 @@ export function ClientDirectory({
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [draftState, setDraftState] = useState("");
+  const [draftStatus, setDraftStatus] = useState("ALL");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -191,18 +194,34 @@ export function ClientDirectory({
     return () => clearTimeout(t);
   }, [load]);
 
-  const applyPreset = (
-    p: Partial<{ search: string; status: string; state: string; sort: string }>
-  ) => {
-    setSearch(p.search ?? "");
-    setStatusFilter(p.status ?? "ALL");
-    setStateFilter(p.state ?? "");
-    if (p.sort) setSortBy(p.sort);
+  const applyView = (v: QuickView) => {
+    setStatusFilter(v.status);
+    setSortBy(v.sort);
+    setPage(1);
+  };
+
+  const clearAll = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setStateFilter("");
+    setPage(1);
+  };
+
+  const openFilters = () => {
+    const next = !filtersOpen;
+    if (next) {
+      setDraftState(stateFilter);
+      setDraftStatus(statusFilter);
+    }
+    setFiltersOpen(next);
+  };
+
+  const applyFilters = () => {
+    setStateFilter(draftState);
+    setStatusFilter(draftStatus);
     setPage(1);
     setFiltersOpen(false);
   };
-
-  const clearAll = () => applyPreset({});
 
   const toggleOne = (id: string) =>
     setSelected((prev) => {
@@ -239,6 +258,7 @@ export function ClientDirectory({
           ? `Client set to ${status.toLowerCase()}.`
           : `Updated ${body.updated} client(s) to ${status}.`
       );
+      setSelected(new Set());
       load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Status update failed.");
@@ -251,6 +271,37 @@ export function ClientDirectory({
     const ids = Array.from(selected);
     if (ids.length === 0) return;
     await patchStatus(ids, status);
+  };
+
+  const exportSelected = () => {
+    const chosen = rows.filter((r) => selected.has(r.id));
+    if (chosen.length === 0) return;
+    const header = ["Code", "Client", "Business", "Phone", "District", "State", "Status", "Farms", "Acreage"];
+    const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [
+      header,
+      ...chosen.map((r) => [
+        r.code,
+        r.name,
+        r.companyName ?? "",
+        r.phone ?? "",
+        r.district ?? "",
+        r.state ?? "",
+        r.status,
+        r.farmCount,
+        r.totalAcreage.toFixed(1),
+      ]),
+    ]
+      .map((line) => line.map(escape).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "agaate-clients-export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${chosen.length} client(s) exported.`);
   };
 
   const copyCode = (code: string) => {
@@ -266,8 +317,16 @@ export function ClientDirectory({
   };
 
   const totalPages = Math.ceil(total / LIMIT) || 1;
+  // Search is a quick find; "filters" are the drawer axes (state + status).
   const filtersActive = !!search || statusFilter !== "ALL" || !!stateFilter;
+  const drawerFilterCount =
+    (statusFilter !== "ALL" ? 1 : 0) + (stateFilter.trim() ? 1 : 0);
   const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+
+  const activeView = useMemo(
+    () => QUICK_VIEWS.find((v) => v.status === statusFilter && v.sort === sortBy)?.id ?? null,
+    [statusFilter, sortBy]
+  );
 
   const activeChips = useMemo(() => {
     const chips: { key: string; label: string; onClear: () => void }[] = [];
@@ -281,6 +340,9 @@ export function ClientDirectory({
       });
     return chips;
   }, [stateFilter, statusFilter]);
+
+  const pageItems = useMemo(() => paginationItems(page, totalPages), [page, totalPages]);
+  const bulkMode = canWrite && selected.size > 0;
 
   return (
     <div className="dir-root">
@@ -304,75 +366,95 @@ export function ClientDirectory({
         )}
       </header>
 
-      {/* ── Toolbar ── */}
-      <div className="dir-toolbar">
-        <div className="dir-search">
-          <Icons.Search size={14} className="dir-search-icon" />
-          <input
-            className="input-field dir-search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search clients…"
-            aria-label="Search clients by name, phone, code or business"
-          />
-          {search && (
+      {/* ── Toolbar (or bulk toolbar when rows are selected) ── */}
+      {bulkMode ? (
+        <div className="dir-toolbar dir-bulkbar" role="toolbar" aria-label="Bulk actions">
+          <strong>{selected.size} selected</strong>
+          <span className="dir-bulk-max">max {BULK_MAX}</span>
+          <div className="dir-bulk-actions">
             <button
               type="button"
-              className="dir-search-clear"
-              onClick={() => setSearch("")}
-              aria-label="Clear search"
+              className="btn btn-primary btn-sm"
+              disabled={bulkBusy}
+              onClick={() => bulkStatus("ACTIVE")}
             >
-              <Icons.X size={13} />
+              <Icons.Check size={13} /> Activate
             </button>
-          )}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={bulkBusy}
+              onClick={() => bulkStatus("INACTIVE")}
+            >
+              <Icons.X size={13} /> Deactivate
+            </button>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={bulkBusy} onClick={exportSelected}>
+              <Icons.Upload size={13} /> Export
+            </button>
+            <button type="button" className="dir-chip-clear" onClick={() => setSelected(new Set())}>
+              Clear selection
+            </button>
+          </div>
         </div>
+      ) : (
+        <div className="dir-toolbar">
+          <div className="dir-search">
+            <Icons.Search size={14} className="dir-search-icon" />
+            <input
+              className="input-field dir-search-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search clients…"
+              aria-label="Search clients by name, phone, code or business"
+            />
+            {search && (
+              <button
+                type="button"
+                className="dir-search-clear"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+              >
+                <Icons.X size={13} />
+              </button>
+            )}
+          </div>
 
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm dir-filters-toggle"
-          onClick={() => setMobileFiltersOpen((v) => !v)}
-          aria-expanded={mobileFiltersOpen}
-        >
-          <Icons.SlidersHorizontal size={13} />
-          <span>Filters{activeChips.length ? ` (${activeChips.length})` : ""}</span>
-        </button>
-
-        <div className={`dir-controls collapsible ${mobileFiltersOpen ? "open" : ""}`}>
-          <input
-            className="input-field dir-select"
-            list="hq-dir-states"
-            value={stateFilter}
-            onChange={(e) => setStateFilter(e.target.value)}
-            placeholder="State"
-            aria-label="Filter by state"
-          />
-
-          <select
-            className="input-field dir-select"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Filter by status"
-          >
-            <option value="ALL">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="SUSPENDED">Suspended</option>
-          </select>
+          <div className="dir-controls dir-controls-primary">
+            <input
+              className="input-field dir-select"
+              list="hq-dir-states"
+              value={stateFilter}
+              onChange={(e) => setStateFilter(e.target.value)}
+              placeholder="State"
+              aria-label="Filter by state"
+            />
+            <select
+              className="input-field dir-select"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Filter by status"
+            >
+              <option value="ALL">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="SUSPENDED">Suspended</option>
+            </select>
+          </div>
 
           <div className="dir-popover-wrap">
             <button
               type="button"
               className={`btn btn-secondary btn-sm dir-more-btn ${filtersOpen ? "active" : ""}`}
-              onClick={() => setFiltersOpen((v) => !v)}
+              onClick={openFilters}
               aria-expanded={filtersOpen}
-              aria-haspopup="menu"
+              aria-haspopup="dialog"
             >
               <Icons.SlidersHorizontal size={13} />
-              <span>More filters</span>
-              <Icons.ChevronDown size={12} />
+              <span>Filters</span>
+              {drawerFilterCount > 0 && <span className="dir-filter-count">{drawerFilterCount}</span>}
             </button>
             {filtersOpen && (
               <>
@@ -383,69 +465,111 @@ export function ClientDirectory({
                   tabIndex={-1}
                   onClick={() => setFiltersOpen(false)}
                 />
-                <div role="menu" className="dir-popover" onKeyDown={(e) => e.key === "Escape" && setFiltersOpen(false)}>
-                  <div className="dir-popover-label">Quick views</div>
-                  {QUICK_VIEWS.map((v) => (
+                <div
+                  role="dialog"
+                  aria-label="Filters"
+                  className="dir-popover dir-filters-panel"
+                  onKeyDown={(e) => e.key === "Escape" && setFiltersOpen(false)}
+                >
+                  <div className="dir-filter-head">Filters</div>
+                  <div className="dir-filter-body">
+                    <div className="dir-filter-section">
+                      <div className="dir-filter-title">Location</div>
+                      <label className="dir-filter-field">
+                        State
+                        <input
+                          className="input-field"
+                          list="hq-dir-states"
+                          value={draftState}
+                          onChange={(e) => setDraftState(e.target.value)}
+                          placeholder="Select state"
+                        />
+                      </label>
+                    </div>
+                    <div className="dir-filter-section">
+                      <div className="dir-filter-title">Account</div>
+                      <label className="dir-filter-field">
+                        Status
+                        <select
+                          className="input-field"
+                          value={draftStatus}
+                          onChange={(e) => setDraftStatus(e.target.value)}
+                        >
+                          <option value="ALL">All statuses</option>
+                          <option value="ACTIVE">Active</option>
+                          <option value="INACTIVE">Inactive</option>
+                          <option value="SUSPENDED">Suspended</option>
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="dir-filter-footer">
                     <button
-                      key={v.label}
                       type="button"
-                      role="menuitem"
-                      className="dir-popover-item"
-                      onClick={() => applyPreset(v.preset)}
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        setDraftState("");
+                        setDraftStatus("ALL");
+                      }}
                     >
-                      {v.label}
+                      Clear all
                     </button>
-                  ))}
-                  {filtersActive && (
-                    <>
-                      <div className="dir-popover-divider" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="dir-popover-item danger"
-                        onClick={clearAll}
-                      >
-                        <Icons.X size={13} /> Reset all filters
-                      </button>
-                    </>
-                  )}
+                    <button type="button" className="btn btn-primary btn-sm" onClick={applyFilters}>
+                      Apply filters
+                    </button>
+                  </div>
                 </div>
               </>
             )}
           </div>
-        </div>
 
-        <div className="dir-sort">
-          <span className="dir-sort-label">Sort:</span>
-          <select
-            className="input-field dir-select"
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value);
-              setPage(1);
-            }}
-            aria-label="Sort clients"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          <div className="dir-sort">
+            <span className="dir-sort-label">Sort:</span>
+            <select
+              className="input-field dir-select"
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
+              aria-label="Sort clients"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* ── Active filter chips ── */}
+      {/* ── Quick views (presets — not filters) ── */}
+      {!bulkMode && (
+        <div className="dir-viewbar" role="tablist" aria-label="Quick views">
+          {QUICK_VIEWS.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              role="tab"
+              aria-selected={activeView === v.id}
+              className={`dir-view ${activeView === v.id ? "active" : ""}`}
+              onClick={() => applyView(v)}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Active filters ── */}
       {activeChips.length > 0 && (
         <div className="dir-chips">
+          <span className="dir-chips-label">Filters:</span>
           {activeChips.map((chip) => (
             <span key={chip.key} className="dir-chip">
               {chip.label}
-              <button
-                type="button"
-                onClick={chip.onClear}
-                aria-label={`Remove ${chip.label} filter`}
-              >
+              <button type="button" onClick={chip.onClear} aria-label={`Remove ${chip.label} filter`}>
                 <Icons.X size={11} />
               </button>
             </span>
@@ -456,39 +580,18 @@ export function ClientDirectory({
         </div>
       )}
 
-      {/* ── Bulk action bar ── */}
-      {canWrite && selected.size > 0 && (
-        <div className="dir-bulkbar">
-          <strong>{selected.size} selected</strong>
-          <span className="dir-bulk-max">max {BULK_MAX}</span>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
-            disabled={bulkBusy}
-            onClick={() => bulkStatus("ACTIVE")}
-          >
-            Set active
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            disabled={bulkBusy}
-            onClick={() => bulkStatus("INACTIVE")}
-          >
-            Set inactive
-          </button>
-          <button type="button" className="dir-chip-clear" onClick={() => setSelected(new Set())}>
-            Clear selection
-          </button>
-        </div>
-      )}
-
-      {/* ── Count caption ── */}
+      {/* ── Result summary ── */}
       {!loading && !error && (
-        <div className="dir-count">
-          <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""}
-          {filtersActive ? " matching filters" : ""}
-          {total > LIMIT ? ` · Page ${page} of ${totalPages}` : ""}
+        <div className="dir-summary">
+          <div className="dir-count">
+            <strong>{total.toLocaleString()}</strong> client{total !== 1 ? "s" : ""}
+            {filtersActive ? " matching your filters" : ""}
+          </div>
+          {totalPages > 1 && (
+            <div className="dir-count-sub">
+              Page {page} of {totalPages.toLocaleString()}
+            </div>
+          )}
         </div>
       )}
 
@@ -548,6 +651,7 @@ export function ClientDirectory({
                 rows.map((c, index) => {
                   const menuOpen = openMenuId === c.id;
                   const isUp = rows.length > 2 && index >= rows.length - 2;
+                  const business = c.companyName?.trim();
                   return (
                     <tr
                       key={c.id}
@@ -556,10 +660,7 @@ export function ClientDirectory({
                         if (!menuOpen) router.push(`/hq/clients/${c.id}`);
                       }}
                     >
-                      <td
-                        className="dir-check-col"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <td className="dir-check-col" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selected.has(c.id)}
@@ -570,18 +671,14 @@ export function ClientDirectory({
                       <td>
                         <div className="dir-client-cell">
                           <Link href={`/hq/clients/${c.id}`} className="dir-name">
-                            {c.companyName?.trim() || c.name}
+                            {business || c.name}
                           </Link>
-                          {c.companyName?.trim() && (
-                            <div className="dir-sub">{c.name}</div>
-                          )}
+                          {business && <div className="dir-sub">{c.name}</div>}
                           <div className="dir-code">{c.code}</div>
                         </div>
                       </td>
                       <td className="dir-contact-col">
-                        {c.companyName && c.name && (
-                          <span className="dir-contact-name">{c.name}</span>
-                        )}
+                        {business && <span className="dir-contact-name">{c.name}</span>}
                         {c.phone ? (
                           <a href={`tel:${c.phone}`} className="dir-phone" onClick={(e) => e.stopPropagation()}>
                             {c.phone}
@@ -592,8 +689,9 @@ export function ClientDirectory({
                       </td>
                       <td className="dir-loc-col">
                         {c.state || c.district ? (
-                          <span>
-                            {[c.district, c.state].filter(Boolean).join(", ")}
+                          <span className="dir-loc">
+                            {c.district && <span className="dir-loc-line">{c.district}</span>}
+                            {c.state && <span className="dir-muted">{c.state}</span>}
                           </span>
                         ) : (
                           <span className="dir-muted">—</span>
@@ -612,9 +710,7 @@ export function ClientDirectory({
                           </span>
                         </Link>
                         {c.totalAcreage > 0 && (
-                          <span className="dir-farms-acreage">
-                            {c.totalAcreage.toFixed(1)} ac
-                          </span>
+                          <span className="dir-farms-acreage">{c.totalAcreage.toFixed(1)} ac</span>
                         )}
                       </td>
                       <td>
@@ -649,30 +745,26 @@ export function ClientDirectory({
                                 className={`dir-popover dir-menu ${isUp ? "dir-popover-up" : ""}`}
                                 onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
                               >
-                                <Link
-                                  role="menuitem"
-                                  href={`/hq/clients/${c.id}`}
-                                  className="dir-popover-item"
-                                >
+                                <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
                                   <Icons.Eye size={13} /> View details
                                 </Link>
-                                {canOnboard && (
-                                  <>
-                                    <Link
-                                      role="menuitem"
-                                      href={`/hq/clients/${c.id}/edit`}
-                                      className="dir-popover-item"
-                                    >
-                                      <Icons.Edit size={13} /> Edit client
-                                    </Link>
-                                    <Link
-                                      role="menuitem"
-                                      href={`/hq/clients/${c.id}/farms/new`}
-                                      className="dir-popover-item"
-                                    >
-                                      <Icons.Plus size={13} /> Add farm
-                                    </Link>
-                                  </>
+                                {canEditClient && (
+                                  <Link
+                                    role="menuitem"
+                                    href={`/hq/clients/${c.id}/edit`}
+                                    className="dir-popover-item"
+                                  >
+                                    <Icons.Edit size={13} /> Edit client
+                                  </Link>
+                                )}
+                                {canCreateFarm && (
+                                  <Link
+                                    role="menuitem"
+                                    href={`/hq/clients/${c.id}/farms/new`}
+                                    className="dir-popover-item"
+                                  >
+                                    <Icons.Plus size={13} /> Add farm
+                                  </Link>
                                 )}
                                 <div className="dir-popover-divider" />
                                 <div className="dir-popover-label">More actions</div>
@@ -746,6 +838,7 @@ export function ClientDirectory({
           rows.map((c, index) => {
             const menuOpen = openMenuId === c.id;
             const isUp = rows.length > 2 && index >= rows.length - 2;
+            const business = c.companyName?.trim();
             return (
               <article key={c.id} className="dir-card">
                 <div className="dir-card-head">
@@ -756,12 +849,13 @@ export function ClientDirectory({
                     aria-label={`Select ${c.name}`}
                   />
                   <Link href={`/hq/clients/${c.id}`} className="dir-name">
-                    {c.companyName?.trim() || c.name}
+                    {business || c.name}
                   </Link>
                   <StatusDot status={c.status} />
                 </div>
                 <div className="dir-card-meta">
                   <span className="dir-code">{c.code}</span>
+                  {business && <span className="dir-muted">{c.name}</span>}
                   {(c.district || c.state) && (
                     <span className="dir-muted">
                       {[c.district, c.state].filter(Boolean).join(", ")}
@@ -771,11 +865,12 @@ export function ClientDirectory({
                 <div className="dir-card-grid">
                   <div>
                     <span className="dir-card-key">Contact</span>
-                    {c.companyName && <span className="dir-card-val">{c.name}</span>}
-                    {c.phone && (
+                    {c.phone ? (
                       <a href={`tel:${c.phone}`} className="dir-phone">
                         {c.phone}
                       </a>
+                    ) : (
+                      <span className="dir-muted">—</span>
                     )}
                   </div>
                   <div>
@@ -786,6 +881,9 @@ export function ClientDirectory({
                         {c.farmCount === 1 ? "farm" : "farms"}
                       </span>
                     </Link>
+                    {c.totalAcreage > 0 && (
+                      <span className="dir-farms-acreage">{c.totalAcreage.toFixed(1)} ac</span>
+                    )}
                   </div>
                 </div>
                 <div className="dir-card-foot">
@@ -820,23 +918,23 @@ export function ClientDirectory({
                           <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
                             <Icons.Eye size={13} /> View details
                           </Link>
-                          {canOnboard && (
-                            <>
-                              <Link
-                                role="menuitem"
-                                href={`/hq/clients/${c.id}/edit`}
-                                className="dir-popover-item"
-                              >
-                                <Icons.Edit size={13} /> Edit client
-                              </Link>
-                              <Link
-                                role="menuitem"
-                                href={`/hq/clients/${c.id}/farms/new`}
-                                className="dir-popover-item"
-                              >
-                                <Icons.Plus size={13} /> Add farm
-                              </Link>
-                            </>
+                          {canEditClient && (
+                            <Link
+                              role="menuitem"
+                              href={`/hq/clients/${c.id}/edit`}
+                              className="dir-popover-item"
+                            >
+                              <Icons.Edit size={13} /> Edit client
+                            </Link>
+                          )}
+                          {canCreateFarm && (
+                            <Link
+                              role="menuitem"
+                              href={`/hq/clients/${c.id}/farms/new`}
+                              className="dir-popover-item"
+                            >
+                              <Icons.Plus size={13} /> Add farm
+                            </Link>
                           )}
                           <div className="dir-popover-divider" />
                           <div className="dir-popover-label">More actions</div>
@@ -891,19 +989,40 @@ export function ClientDirectory({
           <div className="dir-pagination-actions">
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
+              className="dir-pager-arrow"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
+              aria-label="Previous page"
             >
-              <Icons.ChevronLeft size={13} /> Prev
+              <Icons.ChevronLeft size={14} /> Previous
             </button>
+            <div className="dir-pager">
+              {pageItems.map((item, i) =>
+                item === "gap" ? (
+                  <span key={`gap-${i}`} className="dir-pager-gap">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`dir-pager-btn ${item === page ? "active" : ""}`}
+                    aria-current={item === page ? "page" : undefined}
+                    onClick={() => setPage(item)}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+            </div>
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
+              className="dir-pager-arrow"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              aria-label="Next page"
             >
-              Next <Icons.ChevronRight size={13} />
+              Next <Icons.ChevronRight size={14} />
             </button>
           </div>
         </div>
