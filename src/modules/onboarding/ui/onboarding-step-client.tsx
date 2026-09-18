@@ -121,8 +121,8 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           <F label="Full Name" required error={errors["name"]}>
             <input className="input-field" value={value.name} maxLength={120} placeholder="e.g., Ramesh Patel" onChange={(e) => set({ name: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
-          <F label="Business Name" error={errors["companyName"]}>
-            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
+          <F label="Email ID" required error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
+            <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label={`Mobile Number${checking ? " — checking…" : ""}`} required error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
             <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ phone: e.target.value })} style={{ borderRadius: 8 }} />
@@ -130,34 +130,60 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
               <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>Whatsapp No</label>
-              <button
-                type="button"
-                onClick={() => set({ whatsappNo: value.phone ?? "" })}
-                disabled={!value.phone}
-                style={{
-                  background: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
-                  color: value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green, #15803d)" : "var(--ink)",
-                  border: `1px solid ${value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "var(--green, #86efac)" : "var(--hairline)"}`,
-                  borderRadius: 4,
-                  fontSize: 10.5,
-                  fontWeight: 600,
-                  padding: "1px 6px",
-                  cursor: value.phone ? "pointer" : "not-allowed",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 3,
-                  opacity: value.phone ? 1 : 0.5,
-                }}
-                title="Copy Mobile number to Whatsapp number"
-              >
-                <span>{value.whatsappNo && value.phone && value.whatsappNo === value.phone ? "✓ Same as Mob" : "Option to add same as Mob"}</span>
-              </button>
+              {(() => {
+                const isSame = Boolean(value.phone && value.whatsappNo === value.phone);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      set({ whatsappNo: isSame ? "" : (value.phone ?? "") });
+                    }}
+                    disabled={!value.phone}
+                    style={{
+                      background: isSame ? "var(--surface-strong)" : "transparent",
+                      color: isSame ? "var(--ink)" : "var(--muted)",
+                      border: `1px solid ${isSame ? "var(--hairline-strong)" : "var(--hairline)"}`,
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 500,
+                      padding: "2px 8px",
+                      cursor: value.phone ? "pointer" : "not-allowed",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      opacity: value.phone ? 1 : 0.5,
+                      transition: "all 0.15s ease",
+                      userSelect: "none",
+                    }}
+                    title={value.phone ? "Use mobile number as WhatsApp number" : "Enter mobile number first"}
+                  >
+                    <span
+                      style={{
+                        width: 13,
+                        height: 13,
+                        borderRadius: 3,
+                        border: isSame ? "1px solid var(--primary)" : "1px solid var(--muted-soft)",
+                        backgroundColor: isSame ? "var(--primary)" : "transparent",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--on-primary, #fff)",
+                        flexShrink: 0,
+                        transition: "all 0.12s ease",
+                      }}
+                    >
+                      {isSame && <Icons.Check size={9} strokeWidth={3} />}
+                    </span>
+                    <span>Same as mobile</span>
+                  </button>
+                );
+              })()}
             </div>
             <input className="input-field" value={value.whatsappNo ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ whatsappNo: e.target.value })} style={{ borderRadius: 8 }} />
             {errors["whatsappNo"] && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{errors["whatsappNo"]}</div>}
           </div>
-          <F label="Email ID" required error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
-            <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} style={{ borderRadius: 8 }} />
+          <F label="Business Name" error={errors["companyName"]}>
+            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
           </F>
           <F label="GST (GSTIN)" error={errors["gstin"]}>
             <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="e.g., 29ABCDE1234F1Z5 (Optional)" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
