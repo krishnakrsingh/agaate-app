@@ -4,18 +4,14 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
-  Building2,
-  Check,
-  Copy,
-  Download,
-  ExternalLink,
   Eye,
-  Mail,
-  MessageCircle,
   Pencil,
-  Phone,
   Plus,
+  Building2,
+  MessageCircle,
+  Check,
   X,
+  Trash2,
 } from "lucide-react";
 
 export interface ClientMenuTarget {
@@ -32,7 +28,7 @@ export interface ClientMenuTarget {
   farmCount: number;
 }
 
-const MENU_WIDTH = 300;
+const MENU_WIDTH = 260;
 
 function digitsOnly(v: string) {
   return v.replace(/[^\d]/g, "");
@@ -44,25 +40,22 @@ export function ClientActionsMenu({
   canCreateFarm = false,
   canViewFarms = false,
   canWrite = false,
-  onCopy,
   onStatusChange,
-  onExport,
+  onDelete,
 }: {
   client: ClientMenuTarget;
   canEditClient?: boolean;
   canCreateFarm?: boolean;
   canViewFarms?: boolean;
   canWrite?: boolean;
-  onCopy: (value: string, label: string) => void;
   onStatusChange: (status: "ACTIVE" | "INACTIVE") => void | Promise<void>;
-  onExport: (client: ClientMenuTarget) => void | Promise<void>;
+  onDelete: (id: string) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fixed-position placement so the table's overflow never clips the menu.
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
@@ -90,7 +83,6 @@ export function ClientActionsMenu({
     };
   }, [open]);
 
-  // Focus first item on open; keyboard navigation + Escape.
   useEffect(() => {
     if (!open) return;
     const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
@@ -123,11 +115,11 @@ export function ClientActionsMenu({
 
   const close = () => setOpen(false);
 
-  const item = (icon: ReactNode, label: string, onClick: () => void, quiet = false) => (
+  const item = (icon: ReactNode, label: string, onClick: () => void, quiet = false, danger = false) => (
     <button
       type="button"
       role="menuitem"
-      className={`ctx-menu-item ${quiet ? "quiet" : ""}`}
+      className={`ctx-menu-item ${quiet ? "quiet" : ""} ${danger ? "danger" : ""}`}
       onClick={() => {
         close();
         onClick();
@@ -138,12 +130,11 @@ export function ClientActionsMenu({
     </button>
   );
 
-  const linkItem = (icon: ReactNode, label: string, href: string, external = false) => (
+  const linkItem = (icon: ReactNode, label: string, href: string) => (
     <Link
       role="menuitem"
       href={href}
       className="ctx-menu-item"
-      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
       onClick={close}
     >
       {icon}
@@ -152,116 +143,8 @@ export function ClientActionsMenu({
   );
 
   const view = `/hq/clients/${client.id}`;
-  const hasCommunication = Boolean(client.phone || client.whatsappNo || client.email);
-
-  const sections: Array<{ label?: string; content: ReactNode }> = [
-    {
-      label: "View",
-      content: (
-        <>
-          {linkItem(<Eye size={18} />, "View details", view)}
-          <a
-            role="menuitem"
-            href={view}
-            target="_blank"
-            rel="noreferrer"
-            className="ctx-menu-item"
-            onClick={close}
-          >
-            <ExternalLink size={18} />
-            <span>Open in new tab</span>
-          </a>
-        </>
-      ),
-    },
-    {
-      label: "Manage",
-      content: (
-        <>
-          {canEditClient && linkItem(<Pencil size={18} />, "Edit client", `/hq/clients/${client.id}/edit`)}
-          {canCreateFarm &&
-            linkItem(<Plus size={18} />, "Add farm estate", `/hq/clients/${client.id}/farms/new`)}
-          {canViewFarms &&
-            client.farmCount > 0 &&
-            linkItem(<Building2 size={18} />, "Manage farms", `/hq/farms?clientId=${client.id}`)}
-        </>
-      ),
-    },
-    {
-      label: "Quick actions",
-      content: (
-        <>
-          {item(<Copy size={18} />, "Copy client code", () => onCopy(client.code, "Client code copied"), true)}
-          {client.phone &&
-            item(<Copy size={18} />, "Copy phone number", () => onCopy(client.phone!, "Phone number copied"), true)}
-          {client.email &&
-            item(<Copy size={18} />, "Copy email", () => onCopy(client.email!, "Email copied"), true)}
-        </>
-      ),
-    },
-  ];
-
-  if (hasCommunication) {
-    sections.push({
-      label: "Communication",
-      content: (
-        <>
-          {client.phone && (
-            <a role="menuitem" href={`tel:${client.phone}`} className="ctx-menu-item" onClick={close}>
-              <Phone size={18} />
-              <span>Call client</span>
-            </a>
-          )}
-          {client.whatsappNo && (
-            <a
-              role="menuitem"
-              href={`https://wa.me/${digitsOnly(client.whatsappNo)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="ctx-menu-item"
-              onClick={close}
-            >
-              <MessageCircle size={18} />
-              <span>WhatsApp client</span>
-            </a>
-          )}
-          {client.email && (
-            <a role="menuitem" href={`mailto:${client.email}`} className="ctx-menu-item" onClick={close}>
-              <Mail size={18} />
-              <span>Email client</span>
-            </a>
-          )}
-        </>
-      ),
-    });
-  }
-
-  sections.push({
-    label: "Data",
-    content: item(<Download size={18} />, "Export client", () => onExport(client)),
-  });
-
-  if (canWrite) {
-    sections.push({
-      label: "Status",
-      content: (
-        <>
-          {client.status !== "ACTIVE" &&
-            item(<Check size={18} />, "Set active", () => onStatusChange("ACTIVE"))}
-          {client.status !== "INACTIVE" &&
-            item(<X size={18} />, "Set inactive", () => {
-              if (
-                confirm(
-                  `Mark ${client.name} as inactive?\n\nThis will mark ${client.name} as inactive. Existing records and farm data will remain available.`
-                )
-              ) {
-                void onStatusChange("INACTIVE");
-              }
-            })}
-        </>
-      ),
-    });
-  }
+  const whatsappNumber = client.whatsappNo ?? client.phone;
+  const hasWhatsApp = Boolean(whatsappNumber);
 
   return (
     <span className="ctx-menu-wrap" onClick={(e) => e.stopPropagation()}>
@@ -303,12 +186,66 @@ export function ClientActionsMenu({
               className="ctx-menu"
               style={{ top: pos.top, left: pos.left, width: MENU_WIDTH }}
             >
-              {sections.map((section, i) => (
-                <div key={section.label ?? i} className="ctx-menu-section">
-                  {section.label && <div className="ctx-menu-label">{section.label}</div>}
-                  {section.content}
+              {/* VIEW */}
+              <div className="ctx-menu-section">
+                <div className="ctx-menu-label">View</div>
+                {linkItem(<Eye size={18} />, "View client", view)}
+              </div>
+
+              {/* MANAGE */}
+              <div className="ctx-menu-section">
+                <div className="ctx-menu-label">Manage</div>
+                {canEditClient && linkItem(<Pencil size={18} />, "Edit client", `/hq/clients/${client.id}/edit`)}
+                {canCreateFarm &&
+                  linkItem(<Plus size={18} />, "Add farm estate", `/hq/clients/${client.id}/farms/new`)}
+                {canViewFarms &&
+                  client.farmCount > 0 &&
+                  linkItem(<Building2 size={18} />, "Manage farms", `/hq/farms?clientId=${client.id}`)}
+              </div>
+
+              {/* COMMUNICATION */}
+              {hasWhatsApp && (
+                <div className="ctx-menu-section">
+                  <div className="ctx-menu-label">Communication</div>
+                  <a
+                    role="menuitem"
+                    href={`https://wa.me/${digitsOnly(whatsappNumber!)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ctx-menu-item"
+                    onClick={close}
+                  >
+                    <MessageCircle size={18} />
+                    <span>WhatsApp client</span>
+                  </a>
                 </div>
-              ))}
+              )}
+
+              {/* STATUS */}
+              {canWrite && (
+                <div className="ctx-menu-section">
+                  <div className="ctx-menu-label">Status</div>
+                  {client.status !== "ACTIVE" &&
+                    item(<Check size={18} />, "Set active", () => onStatusChange("ACTIVE"))}
+                  {client.status !== "INACTIVE" &&
+                    item(<X size={18} />, "Set inactive", () => {
+                      void onStatusChange("INACTIVE");
+                    })}
+                </div>
+              )}
+
+              {/* DELETE */}
+              <div className="ctx-menu-section destructive">
+                {item(
+                  <Trash2 size={18} />,
+                  "Delete client",
+                  () => {
+                    void onDelete(client.id);
+                  },
+                  false,
+                  true
+                )}
+              </div>
             </div>
           </>,
           document.body

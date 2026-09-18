@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/navigation/config";
 import { BrandLogo } from "@/components/navigation/brand-logo";
+import { AccountPopover } from "@/components/navigation/account-popover";
 
 interface NavLinkItem {
   href: string;
@@ -30,6 +31,11 @@ interface DesktopSidebarProps {
 export function DesktopSidebar({ role, userName, onOpenCommandPalette }: DesktopSidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  const toggleAccount = useCallback(() => setAccountOpen((v) => !v), []);
 
   useEffect(() => {
     try {
@@ -72,6 +78,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   }, []);
 
   const toggleCollapse = () => {
+    setAccountOpen(false);
     setCollapsed((prev) => {
       const next = !prev;
       try {
@@ -87,14 +94,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       return next;
     });
   };
-
-  async function handleSignOut() {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      window.location.href = "/login";
-    }
-  }
 
   // Build role-tailored grouped navigation sections
   const sections: NavSection[] = [];
@@ -310,6 +309,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
 
   return (
     <aside
+      ref={sidebarRef}
       className={`app-desktop-sidebar ${collapsed ? "collapsed" : ""}`}
       aria-label="Desktop Application Sidebar"
     >
@@ -387,37 +387,48 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       {/* 3. Footer */}
       <div className="sidebar-footer">
         {!collapsed ? (
-            <div className="sidebar-user-card">
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
-                <div className="sidebar-user-text">
-                  <span className="sidebar-user-name" title={userName ?? "Console User"}>
-                    {userName ?? "Console User"}
-                  </span>
-                  <span className="sidebar-user-role">{userRoleLabel}</span>
-                </div>
-              </div>
-
-              <div className="sidebar-user-actions">
-                <ThemeToggle variant="button" />
-                <button
-                  type="button"
-                  className="sidebar-logout-btn"
-                  onClick={handleSignOut}
-                  title="Sign Out of Session"
-                >
-                  <Icons.LogOut size={14} />
-                </button>
+          <div
+            className="sidebar-user-card"
+            ref={anchorRef}
+            onClick={toggleAccount}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAccount(); } }}
+          >
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
+              <div className="sidebar-user-text">
+                <span className="sidebar-user-name" title={userName ?? "Console User"}>
+                  {userName ?? "Console User"}
+                </span>
+                <span className="sidebar-user-role">{userRoleLabel}</span>
               </div>
             </div>
+            <div className="sidebar-user-actions">
+              <ThemeToggle variant="button" />
+              <span className="sidebar-expand-icon">
+                <Icons.ChevronRight size={14} />
+              </span>
+            </div>
+            <AccountPopover
+              open={accountOpen}
+              onToggle={toggleAccount}
+              userName={userName}
+              userRole={role}
+              anchorRef={anchorRef}
+            />
+          </div>
         ) : (
           <div className="sidebar-rail-stack">
-            {/* User Avatar with Tooltip */}
+            {/* User Avatar — Clickable to open account popover */}
             <div
-              className="sidebar-rail-btn"
-              style={{ cursor: "default" }}
+              className="sidebar-rail-btn sidebar-rail-avatar-btn"
+              ref={anchorRef}
               tabIndex={0}
-              aria-label={userName ?? "Console User"}
+              aria-label={`Account menu for ${userName ?? "Console User"}`}
+              role="button"
+              onClick={toggleAccount}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAccount(); } }}
             >
               <div className="sidebar-user-avatar" style={{ width: 34, height: 34 }}>
                 {initials}
@@ -425,6 +436,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
               <span className="sidebar-tooltip">
                 {userName ?? "Console User"} ({userRoleLabel})
               </span>
+              <AccountPopover
+                open={accountOpen}
+                onToggle={toggleAccount}
+                userName={userName}
+                userRole={role}
+                anchorRef={anchorRef}
+              />
             </div>
 
             {/* Theme Toggle Button with Tooltip */}
@@ -432,17 +450,6 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
               <ThemeToggle variant="button" />
               <span className="sidebar-tooltip">Toggle theme</span>
             </div>
-
-            {/* Sign Out Button with Tooltip */}
-            <button
-              type="button"
-              className="sidebar-rail-btn"
-              onClick={handleSignOut}
-              aria-label="Sign out"
-            >
-              <Icons.LogOut size={16} />
-              <span className="sidebar-tooltip">Sign Out</span>
-            </button>
 
             {/* Expand Rail Button with Tooltip */}
             <button

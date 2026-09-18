@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentActor, requirePermission } from "@modules/auth";
 import { prisma } from "@infrastructure/db";
 import { apiError, noStore } from "@infrastructure/http";
+import { audit } from "@infrastructure/audit";
 
 const FARM_PAGE_SIZE = 10;
 const PLOT_PAGE_SIZE = 10;
@@ -360,6 +361,28 @@ export async function GET(
       },
       { headers: noStore }
     );
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ clientId: string }> }
+) {
+  try {
+    const actor = await currentActor();
+    requirePermission(actor, "clients:write");
+    const { clientId } = await params;
+
+    const client = await prisma.client.findUnique({ where: { id: clientId } });
+    if (!client) {
+      return NextResponse.json({ error: "Client not found." }, { status: 404 });
+    }
+
+    await prisma.client.delete({ where: { id: clientId } });
+    await audit(actor.id, "DELETE", "Client", clientId, {});
+    return NextResponse.json({ deleted: true });
   } catch (error) {
     return apiError(error);
   }

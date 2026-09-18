@@ -767,6 +767,7 @@ a:hover { color: var(--ink); }
   gap: 8px;
   flex-shrink: 0;
   box-sizing: border-box;
+  position: relative;
 }
 
 .app-desktop-sidebar.collapsed .sidebar-footer {
@@ -876,6 +877,7 @@ a:hover { color: var(--ink); }
   align-items: center;
   gap: 8px;
   width: 100%;
+  position: relative;
 }
 
 .sidebar-rail-btn {
@@ -1013,6 +1015,183 @@ a:hover { color: var(--ink); }
   font-size: 15px; font-weight: 500; cursor: pointer; text-align: left;
 }
 .profile-signout-btn:hover { background-color: var(--red-light); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Account Popover (Sidebar user menu)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sidebar-user-card {
+  cursor: pointer;
+}
+.sidebar-user-card:hover {
+  border-color: var(--hairline-strong);
+}
+
+.sidebar-expand-icon {
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s ease;
+}
+.sidebar-user-card:hover .sidebar-expand-icon {
+  color: var(--ink);
+}
+
+.sidebar-rail-avatar-btn {
+  cursor: pointer;
+}
+
+.account-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  background-color: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow-elevated);
+  width: 296px;
+  overflow: hidden;
+  animation: account-popover-in 0.15s ease;
+}
+
+@keyframes account-popover-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.account-popover-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background-color: var(--canvas-soft);
+}
+
+.account-popover-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--on-primary);
+  font-size: 14px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.account-popover-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.account-popover-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-popover-role {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.account-popover-email {
+  font-size: 12px;
+  color: var(--muted-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.account-popover-divider {
+  height: 1px;
+  background-color: var(--hairline);
+}
+
+.account-popover-section-label {
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+  user-select: none;
+}
+
+.account-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  transition: background-color 0.1s ease;
+}
+
+.account-popover-item:hover {
+  background-color: var(--canvas-soft);
+}
+
+.account-popover-item:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.account-popover-item--disabled {
+  color: var(--muted-soft);
+  cursor: default;
+  pointer-events: none;
+}
+
+.account-popover-theme-row {
+  padding: 2px 0;
+}
+
+.account-popover-signout {
+  color: var(--semantic-error);
+}
+.account-popover-signout:hover {
+  background-color: var(--red-light);
+}
+.account-popover-signout:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.account-popover-spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.account-popover-error {
+  padding: 8px 16px 10px;
+  font-size: 12px;
+  color: var(--semantic-error);
+  background-color: var(--red-light);
+}
 
 /* Screen-reader only utility */
 .sr-only {
@@ -3962,14 +4141,33 @@ a.c360-contact-item:hover {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
   padding: 6px;
-  max-height: min(70vh, 520px);
-  overflow-y: auto;
+  width: 260px;
 }
 .ctx-menu-section { display: flex; flex-direction: column; }
 .ctx-menu-section + .ctx-menu-section {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px solid var(--hairline-soft);
+}
+.ctx-menu-section.destructive {
+  margin-top: 4px;
+}
+.ctx-menu-section.destructive > div {
+  border-top: 1px solid var(--hairline-soft);
+  padding-top: 5px;
+  margin-bottom: 5px;
+}
+.ctx-menu-item.danger {
+  color: var(--red);
+}
+.ctx-menu-item.danger svg {
+  color: var(--red);
+}
+.ctx-menu-item.danger:hover {
+  background: var(--red-light);
+}
+.ctx-menu-item.danger:hover svg {
+  color: var(--red);
 }
 .ctx-menu-label {
   font-size: 10.5px;

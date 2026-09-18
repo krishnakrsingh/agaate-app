@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
-import { ClientActionsMenu, type ClientMenuTarget } from "./client-actions-menu";
+import { ClientActionsMenu } from "./client-actions-menu";
 
 interface ClientRow {
   id: string;
@@ -110,6 +110,122 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
+function DeleteClientModal({
+  client,
+  onConfirm,
+  onClose,
+}: {
+  client: { id: string; name: string; farmCount: number; plotCount: number; totalAcreage: number };
+  onConfirm: (id: string) => void | Promise<void>;
+  onClose: () => void;
+}) {
+  const [input, setInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const confirmed = input === client.name;
+
+  useEffect(() => {
+    setInput("");
+    setError("");
+    setDeleting(false);
+  }, [client.id]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === overlayRef.current) onClose();
+  };
+
+  const handleDelete = async () => {
+    if (!confirmed || deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await onConfirm(client.id);
+      onClose();
+    } catch {
+      setError("Unable to delete client. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <Icons.Trash size={20} />
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Delete Client?</h3>
+        </div>
+        <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "0 0 16px" }}>
+          Type the client name below to confirm deletion.
+        </p>
+        <p style={{ fontSize: 15, fontWeight: 600, margin: "0 0 12px", color: "var(--ink)" }}>
+          {client.name}
+        </p>
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={(e) => { setInput(e.target.value); setError(""); }}
+          placeholder={client.name}
+          className="input-field"
+          style={{ width: "100%", marginBottom: 8 }}
+          disabled={deleting}
+          aria-label={`Type ${client.name} to confirm deletion`}
+        />
+        {error && (
+          <p style={{ fontSize: 13, color: "var(--red)", margin: "0 0 8px" }}>{error}</p>
+        )}
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 16px" }}>
+          <Icons.AlertTriangle size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />
+          This action cannot be undone.
+        </p>
+        <div style={{ padding: "12px 0", borderTop: "1px solid var(--hairline-soft)", marginBottom: 16 }}>
+          <div style={{ fontSize: 12, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Client records</div>
+          <div style={{ fontSize: 13.5, color: "var(--ink)" }}>
+            {client.farmCount} farm{client.farmCount !== 1 ? "s" : ""} · {client.plotCount} land plot{client.plotCount !== 1 ? "s" : ""} · {client.totalAcreage.toFixed(2)} ac
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onClose}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={handleDelete}
+            disabled={!confirmed || deleting}
+          >
+            {deleting ? "Deleting…" : "Delete Client"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ClientDirectory({
   canWrite = false,
   canOnboard = false,
@@ -140,6 +256,9 @@ export function ClientDirectory({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; farmCount: number; plotCount: number; totalAcreage: number } | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftState, setDraftState] = useState("");
@@ -308,67 +427,21 @@ export function ClientDirectory({
     toast.success(`${chosen.length} client(s) exported.`);
   };
 
-  const copyText = (value: string, label: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(value).then(
-        () => toast.success(label),
-        () => toast.error("Could not copy to clipboard.")
-      );
-    } else {
-      toast.error("Clipboard unavailable in this browser.");
-    }
+  const openDeleteModal = (id: string) => {
+    const row = rows.find((r) => r.id === id);
+    if (!row) return;
+    setDeleteTarget({ id, name: row.name, farmCount: row.farmCount, plotCount: row.plotCount, totalAcreage: row.totalAcreage });
+    setShowDeleteModal(true);
   };
 
-  const exportClient = async (c: ClientMenuTarget) => {
+  const handleDeleteConfirm = async (id: string) => {
     try {
-      const res = await fetch(`/api/hq/clients/${c.id}`);
-      if (!res.ok) throw new Error("Could not load client data for export.");
-      const b: any = await res.json();
-      const rows: unknown[][] = [];
-      rows.push(["Client", "Code", "Business", "Phone", "Email", "WhatsApp", "District", "State", "Status"]);
-      rows.push([
-        b?.client?.name ?? c.name,
-        b?.client?.code ?? c.code,
-        b?.client?.companyName ?? c.companyName ?? "",
-        c.phone ?? "",
-        c.email ?? "",
-        c.whatsappNo ?? "",
-        c.district ?? "",
-        c.state ?? "",
-        b?.client?.status ?? c.status,
-      ]);
-      rows.push([]);
-      rows.push(["Farms"]);
-      rows.push(["Farm", "Status", "Stage", "Total Area (ac)", "Cultivable (ac)", "Plots", "Boundary"]);
-      for (const f of b?.farms?.items ?? []) {
-        rows.push([
-          f.name,
-          f.status,
-          f.setupStage,
-          String(f.totalArea),
-          String(f.cultivableArea),
-          String(f.plotCount),
-          f.hasBoundary ? "Yes" : "No",
-        ]);
-      }
-      rows.push([]);
-      rows.push(["Plots"]);
-      rows.push(["Plot", "Farm", "Area (ac)", "Status"]);
-      for (const p of b?.plots?.items ?? []) {
-        rows.push([p.name, p.farmName, String(p.area), p.status]);
-      }
-      const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-      const csv = rows.map((line) => line.map(escape).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${c.code}-client-export.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Client exported.");
+      const res = await fetch(`/api/hq/clients/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Could not delete client.");
+      toast.success("Client deleted successfully.");
+      load();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Export failed.");
+      throw e;
     }
   };
 
@@ -778,9 +851,8 @@ export function ClientDirectory({
                           canCreateFarm={canCreateFarm}
                           canViewFarms={canViewFarms}
                           canWrite={canWrite}
-                          onCopy={copyText}
                           onStatusChange={(status) => patchStatus([c.id], status)}
-                          onExport={exportClient}
+                          onDelete={openDeleteModal}
                         />
                       </td>
                     </tr>
@@ -874,9 +946,8 @@ export function ClientDirectory({
                     canCreateFarm={canCreateFarm}
                     canViewFarms={canViewFarms}
                     canWrite={canWrite}
-                    onCopy={copyText}
                     onStatusChange={(status) => patchStatus([c.id], status)}
-                    onExport={exportClient}
+                    onDelete={openDeleteModal}
                   />
                 </div>
               </article>
@@ -932,6 +1003,13 @@ export function ClientDirectory({
             </button>
           </div>
         </div>
+      )}
+      {showDeleteModal && deleteTarget && (
+        <DeleteClientModal
+          client={deleteTarget}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setShowDeleteModal(false)}
+        />
       )}
     </div>
   );
