@@ -173,6 +173,8 @@ function formatRow(c: any, s: ClientStats) {
     name: c.name,
     companyName: c.companyName,
     phone: c.phone,
+    email: c.email,
+    whatsappNo: c.whatsappNo,
     state: c.state,
     district: c.district,
     status: c.status,

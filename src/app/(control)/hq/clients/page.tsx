@@ -25,6 +25,7 @@ export default async function HqClientsPage() {
   const canOnboard = hasPermission(session.permissions, "onboarding:manage");
   const canEditClient = session.role === "SUPER_ADMIN";
   const canCreateFarm = ["SUPER_ADMIN", "FARM_ADMIN"].includes(session.role);
+  const canViewFarms = hasPermission(session.permissions, "farms:read_all");
 
   return (
     <>
@@ -34,6 +35,9 @@ export default async function HqClientsPage() {
           <ClientDirectory
             canWrite={canWrite}
             canOnboard={canOnboard}
+            canEditClient={canEditClient}
+            canCreateFarm={canCreateFarm}
+            canViewFarms={canViewFarms}
           />
         </Suspense>
       </main>

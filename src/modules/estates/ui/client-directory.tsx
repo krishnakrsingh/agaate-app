@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
+import { ClientActionsMenu, type ClientMenuTarget } from "./client-actions-menu";
 
 interface ClientRow {
   id: string;
@@ -12,6 +13,8 @@ interface ClientRow {
   name: string;
   companyName: string | null;
   phone: string | null;
+  email: string | null;
+  whatsappNo: string | null;
   state: string | null;
   district: string | null;
   status: string;
@@ -112,11 +115,13 @@ export function ClientDirectory({
   canOnboard = false,
   canEditClient = false,
   canCreateFarm = false,
+  canViewFarms = false,
 }: {
   canWrite?: boolean;
   canOnboard?: boolean;
   canEditClient?: boolean;
   canCreateFarm?: boolean;
+  canViewFarms?: boolean;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -139,7 +144,6 @@ export function ClientDirectory({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftState, setDraftState] = useState("");
   const [draftStatus, setDraftStatus] = useState("ALL");
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -304,15 +308,67 @@ export function ClientDirectory({
     toast.success(`${chosen.length} client(s) exported.`);
   };
 
-  const copyCode = (code: string) => {
-    setOpenMenuId(null);
+  const copyText = (value: string, label: string) => {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(code).then(
-        () => toast.success("Client code copied."),
+      navigator.clipboard.writeText(value).then(
+        () => toast.success(label),
         () => toast.error("Could not copy to clipboard.")
       );
     } else {
       toast.error("Clipboard unavailable in this browser.");
+    }
+  };
+
+  const exportClient = async (c: ClientMenuTarget) => {
+    try {
+      const res = await fetch(`/api/hq/clients/${c.id}`);
+      if (!res.ok) throw new Error("Could not load client data for export.");
+      const b: any = await res.json();
+      const rows: unknown[][] = [];
+      rows.push(["Client", "Code", "Business", "Phone", "Email", "WhatsApp", "District", "State", "Status"]);
+      rows.push([
+        b?.client?.name ?? c.name,
+        b?.client?.code ?? c.code,
+        b?.client?.companyName ?? c.companyName ?? "",
+        c.phone ?? "",
+        c.email ?? "",
+        c.whatsappNo ?? "",
+        c.district ?? "",
+        c.state ?? "",
+        b?.client?.status ?? c.status,
+      ]);
+      rows.push([]);
+      rows.push(["Farms"]);
+      rows.push(["Farm", "Status", "Stage", "Total Area (ac)", "Cultivable (ac)", "Plots", "Boundary"]);
+      for (const f of b?.farms?.items ?? []) {
+        rows.push([
+          f.name,
+          f.status,
+          f.setupStage,
+          String(f.totalArea),
+          String(f.cultivableArea),
+          String(f.plotCount),
+          f.hasBoundary ? "Yes" : "No",
+        ]);
+      }
+      rows.push([]);
+      rows.push(["Plots"]);
+      rows.push(["Plot", "Farm", "Area (ac)", "Status"]);
+      for (const p of b?.plots?.items ?? []) {
+        rows.push([p.name, p.farmName, String(p.area), p.status]);
+      }
+      const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const csv = rows.map((line) => line.map(escape).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${c.code}-client-export.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Client exported.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed.");
     }
   };
 
@@ -648,17 +704,13 @@ export function ClientDirectory({
                   </td>
                 </tr>
               ) : (
-                rows.map((c, index) => {
-                  const menuOpen = openMenuId === c.id;
-                  const isUp = rows.length > 2 && index >= rows.length - 2;
+                rows.map((c) => {
                   const business = c.companyName?.trim();
                   return (
                     <tr
                       key={c.id}
                       className="dir-row"
-                      onClick={() => {
-                        if (!menuOpen) router.push(`/hq/clients/${c.id}`);
-                      }}
+                      onClick={() => router.push(`/hq/clients/${c.id}`)}
                     >
                       <td className="dir-check-col" onClick={(e) => e.stopPropagation()}>
                         <input
@@ -720,88 +772,16 @@ export function ClientDirectory({
                         <span title={fullTime(c.updatedAt)}>{relativeTime(c.updatedAt)}</span>
                       </td>
                       <td className="dir-actions-col" onClick={(e) => e.stopPropagation()}>
-                        <div className="dir-menu-wrap">
-                          <button
-                            type="button"
-                            className="dir-kebab"
-                            aria-haspopup="menu"
-                            aria-expanded={menuOpen}
-                            aria-label={`Actions for ${c.name}`}
-                            onClick={() => setOpenMenuId(menuOpen ? null : c.id)}
-                          >
-                            <Icons.MoreVertical size={16} />
-                          </button>
-                          {menuOpen && (
-                            <>
-                              <button
-                                type="button"
-                                className="dir-popover-backdrop"
-                                aria-hidden
-                                tabIndex={-1}
-                                onClick={() => setOpenMenuId(null)}
-                              />
-                              <div
-                                role="menu"
-                                className={`dir-popover dir-menu ${isUp ? "dir-popover-up" : ""}`}
-                                onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
-                              >
-                                <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
-                                  <Icons.Eye size={13} /> View details
-                                </Link>
-                                {canEditClient && (
-                                  <Link
-                                    role="menuitem"
-                                    href={`/hq/clients/${c.id}/edit`}
-                                    className="dir-popover-item"
-                                  >
-                                    <Icons.Edit size={13} /> Edit client
-                                  </Link>
-                                )}
-                                {canCreateFarm && (
-                                  <Link
-                                    role="menuitem"
-                                    href={`/hq/clients/${c.id}/farms/new`}
-                                    className="dir-popover-item"
-                                  >
-                                    <Icons.Plus size={13} /> Add farm
-                                  </Link>
-                                )}
-                                <div className="dir-popover-divider" />
-                                <div className="dir-popover-label">More actions</div>
-                                <button
-                                  type="button"
-                                  role="menuitem"
-                                  className="dir-popover-item"
-                                  onClick={() => copyCode(c.code)}
-                                >
-                                  <Icons.Copy size={13} /> Copy client code
-                                </button>
-                                {canWrite && (
-                                  <button
-                                    type="button"
-                                    role="menuitem"
-                                    className="dir-popover-item"
-                                    disabled={bulkBusy}
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      void patchStatus([c.id], c.status === "ACTIVE" ? "INACTIVE" : "ACTIVE");
-                                    }}
-                                  >
-                                    {c.status === "ACTIVE" ? (
-                                      <>
-                                        <Icons.X size={13} /> Set inactive
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Icons.Check size={13} /> Set active
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        <ClientActionsMenu
+                          client={c}
+                          canEditClient={canEditClient}
+                          canCreateFarm={canCreateFarm}
+                          canViewFarms={canViewFarms}
+                          canWrite={canWrite}
+                          onCopy={copyText}
+                          onStatusChange={(status) => patchStatus([c.id], status)}
+                          onExport={exportClient}
+                        />
                       </td>
                     </tr>
                   );
@@ -835,9 +815,7 @@ export function ClientDirectory({
             )}
           </div>
         ) : (
-          rows.map((c, index) => {
-            const menuOpen = openMenuId === c.id;
-            const isUp = rows.length > 2 && index >= rows.length - 2;
+          rows.map((c) => {
             const business = c.companyName?.trim();
             return (
               <article key={c.id} className="dir-card">
@@ -890,88 +868,16 @@ export function ClientDirectory({
                   <span className="dir-muted" title={fullTime(c.updatedAt)}>
                     Active {relativeTime(c.updatedAt)}
                   </span>
-                  <div className="dir-menu-wrap">
-                    <button
-                      type="button"
-                      className="dir-kebab"
-                      aria-haspopup="menu"
-                      aria-expanded={menuOpen}
-                      aria-label={`Actions for ${c.name}`}
-                      onClick={() => setOpenMenuId(menuOpen ? null : c.id)}
-                    >
-                      <Icons.MoreVertical size={16} />
-                    </button>
-                    {menuOpen && (
-                      <>
-                        <button
-                          type="button"
-                          className="dir-popover-backdrop"
-                          aria-hidden
-                          tabIndex={-1}
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        <div
-                          role="menu"
-                          className={`dir-popover dir-menu ${isUp ? "dir-popover-up" : ""}`}
-                          onKeyDown={(e) => e.key === "Escape" && setOpenMenuId(null)}
-                        >
-                          <Link role="menuitem" href={`/hq/clients/${c.id}`} className="dir-popover-item">
-                            <Icons.Eye size={13} /> View details
-                          </Link>
-                          {canEditClient && (
-                            <Link
-                              role="menuitem"
-                              href={`/hq/clients/${c.id}/edit`}
-                              className="dir-popover-item"
-                            >
-                              <Icons.Edit size={13} /> Edit client
-                            </Link>
-                          )}
-                          {canCreateFarm && (
-                            <Link
-                              role="menuitem"
-                              href={`/hq/clients/${c.id}/farms/new`}
-                              className="dir-popover-item"
-                            >
-                              <Icons.Plus size={13} /> Add farm
-                            </Link>
-                          )}
-                          <div className="dir-popover-divider" />
-                          <div className="dir-popover-label">More actions</div>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            className="dir-popover-item"
-                            onClick={() => copyCode(c.code)}
-                          >
-                            <Icons.Copy size={13} /> Copy client code
-                          </button>
-                          {canWrite && (
-                            <button
-                              type="button"
-                              role="menuitem"
-                              className="dir-popover-item"
-                              disabled={bulkBusy}
-                              onClick={() => {
-                                setOpenMenuId(null);
-                                void patchStatus([c.id], c.status === "ACTIVE" ? "INACTIVE" : "ACTIVE");
-                              }}
-                            >
-                              {c.status === "ACTIVE" ? (
-                                <>
-                                  <Icons.X size={13} /> Set inactive
-                                </>
-                              ) : (
-                                <>
-                                  <Icons.Check size={13} /> Set active
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <ClientActionsMenu
+                    client={c}
+                    canEditClient={canEditClient}
+                    canCreateFarm={canCreateFarm}
+                    canViewFarms={canViewFarms}
+                    canWrite={canWrite}
+                    onCopy={copyText}
+                    onStatusChange={(status) => patchStatus([c.id], status)}
+                    onExport={exportClient}
+                  />
                 </div>
               </article>
             );
