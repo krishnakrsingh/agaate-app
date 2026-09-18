@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { PUT as updateProfileHandler } from "@/app/api/me/route";
 import { PUT as updatePasswordHandler } from "@/app/api/me/password/route";
 import { prisma } from "@infrastructure/db";
-import { testSessionContext, signSessionToken } from "@modules/auth";
+import { testSessionContext, signSessionToken, buildActor } from "@modules/auth";
 import bcrypt from "bcryptjs";
 import { NextRequest } from "next/server";
 
@@ -28,14 +28,7 @@ describe("Profile & Settings API Tests", () => {
     testUserId = user.id;
 
     // Create session token for the user
-    sessionToken = await signSessionToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-      role: "SUPER_ADMIN",
-      permissions: [],
-      farmIds: [],
-    });
+    sessionToken = await signSessionToken(buildActor(user));
   });
 
   afterAll(async () => {
