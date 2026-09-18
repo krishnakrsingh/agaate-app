@@ -135,7 +135,7 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [asyncIssue, setAsyncIssue] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  const [online, setOnline] = useState(true);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -146,8 +146,12 @@ export function OnboardingWizard({ serverDraft, existingClientId }: { serverDraf
   const draftIdRef = useRef(draftId); draftIdRef.current = draftId;
 
   useEffect(() => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setOnline(false);
+      setNotice("Offline — saving on this device.");
+    }
     const applyLocal = (local: StoredDraft | null) => {
-      if (!local) { if (!navigator.onLine) setNotice("Offline — saving on this device."); return; }
+      if (!local) { if (typeof navigator !== "undefined" && !navigator.onLine) setNotice("Offline — saving on this device."); return; }
       const serverTime = serverDraft ? Date.parse(serverDraft.updatedAt) : 0;
       const localTime = Date.parse(local.updatedAt);
       if (!serverDraft || localTime > serverTime) {

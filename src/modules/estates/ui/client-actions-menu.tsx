@@ -207,7 +207,7 @@ export function ClientActionsMenu({
                     className="ctx-menu-item"
                     onClick={close}
                   >
-                    <Icons.Whatsapp size={18} style={{ color: "#25D366", flexShrink: 0 }} />
+                    <Icons.Whatsapp size={18} style={{ color: "var(--green, #22c55e)", flexShrink: 0 }} />
                     <span>Send Message</span>
                   </a>
                 </div>
