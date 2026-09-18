@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const session = await requireSession();
   if (session.role === "FARM_ADMIN") {
-    redirect("/owner/dashboard");
+    redirect("/owner/farms");
   }
   if (session.role === "FARM_OFFICER") {
     redirect("/officer/day");

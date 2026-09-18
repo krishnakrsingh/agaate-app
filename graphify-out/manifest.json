@@ -6,9 +6,9 @@
     "semantic_hash": "effa368837c2722432c83b5d28802f08"
   },
   "next-env.d.ts": {
-    "mtime": 1789725830.7117538,
-    "seen": 1789727744.9350667,
-    "ast_hash": "0e4a65e8b2b9aa3ed0f8957b9406bd41",
+    "mtime": 1789736462.17334,
+    "seen": 1789736695.7067316,
+    "ast_hash": "c7b887684e81cfa5830eeeb7286485f6",
     "semantic_hash": ""
   },
   "next.config.ts": {
@@ -18,9 +18,9 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1789189633.152123,
-    "seen": 1789672326.795675,
-    "ast_hash": "e82b9dc3f82a19e33c56c5c05b66525a",
+    "mtime": 1789736616.912452,
+    "seen": 1789736695.7067356,
+    "ast_hash": "fbc2d0b2dd3541fd454df6e431921750",
     "semantic_hash": ""
   },
   "prisma/seed.ts": {
@@ -606,8 +606,8 @@
     "semantic_hash": ""
   },
   "docs/index.html": {
-    "mtime": 1789727712.9434023,
-    "seen": 1789727744.935711,
+    "mtime": 1789736671.1947658,
+    "seen": 1789736695.7074013,
     "ast_hash": "8c4beee3afcac9614b09a518308a7fbb",
     "semantic_hash": ""
   },
@@ -2370,9 +2370,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-client.tsx": {
-    "mtime": 1789580124.201742,
-    "seen": 1789672326.7965481,
-    "ast_hash": "54481420126efbc159c0d99f889fed27",
+    "mtime": 1789727808.0360036,
+    "seen": 1789736695.7071772,
+    "ast_hash": "764545679925ad1d9169913014ab80e6",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-completion.tsx": {
@@ -2418,9 +2418,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-wizard.tsx": {
-    "mtime": 1789583063.4385805,
-    "seen": 1789672326.7965622,
-    "ast_hash": "3340a73e5837cd715bc024ffd56a6a79",
+    "mtime": 1789727808.0420024,
+    "seen": 1789736695.7071865,
+    "ast_hash": "09f7b28636c6de7e6958df6972010d27",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-workspace.tsx": {
@@ -3318,9 +3318,9 @@
     "semantic_hash": ""
   },
   "src/modules/estates/ui/client-actions-menu.tsx": {
-    "mtime": 1789725830.726166,
-    "seen": 1789727744.9354436,
-    "ast_hash": "cb5e6111334fa74777c63e38bbfe8fcb",
+    "mtime": 1789727808.0300076,
+    "seen": 1789736695.7071345,
+    "ast_hash": "7ca26f42e7907601c19ecf2201a6df16",
     "semantic_hash": ""
   },
   "src/modules/profile/ui/profile-settings-console.tsx": {
@@ -3330,9 +3330,15 @@
     "semantic_hash": ""
   },
   "docs/RUN_LOCALLY.md": {
-    "mtime": 1789727671.4507208,
-    "seen": 1789727744.9356835,
-    "ast_hash": "416a9e213b615754f778f0129c470f6c",
+    "mtime": 1789736663.1585574,
+    "seen": 1789736695.70737,
+    "ast_hash": "83a0356ebcdf8d0ed2919015763971b5",
+    "semantic_hash": ""
+  },
+  "scripts/ensure-db.mjs": {
+    "mtime": 1789736601.9763114,
+    "seen": 1789736695.7067668,
+    "ast_hash": "a6469ece4ddc64000c2115ca34c58265",
     "semantic_hash": ""
   }
 }

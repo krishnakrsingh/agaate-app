@@ -1,5 +1,7 @@
-import OwnerPeoplePage from "@/app/(estate)/owner/people/page";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default OwnerPeoplePage;
+export default function OwnerTeamPage() {
+  redirect("/owner/people");
+}

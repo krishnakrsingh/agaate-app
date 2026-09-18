@@ -39,7 +39,7 @@ export function LoginForm() {
       if (userRole === "SUPER_ADMIN" || userRole === "OPERATIONS_MANAGER") {
         targetUrl = "/hq/clients";
       } else if (userRole === "FARM_ADMIN") {
-        targetUrl = "/owner/dashboard";
+        targetUrl = "/owner/farms";
       } else if (userRole === "FARM_OFFICER") {
         targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {

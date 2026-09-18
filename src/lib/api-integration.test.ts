@@ -1512,7 +1512,7 @@ describe.sequential("HTTP API Integration Test Suite", () => {
       expect(presignData.mediaId).toBeDefined();
       expect(presignData.uploadUrl).toBeDefined();
 
-      // 2. PUT binary to MinIO / S3
+      // 2. PUT binary to R2 (presigned URL)
       const s3PutRes = await fetch(presignData.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": mimeType },

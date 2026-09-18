@@ -82,10 +82,11 @@ If you run your database inside WSL2:
 If using Docker Desktop:
 
 1. Ensure Docker Desktop is running.
-2. Start MySQL and MinIO:
+2. Start MySQL:
    ```bash
-   docker compose up -d mysql minio
+   docker compose up -d mysql
    ```
+   File uploads go straight to Cloudflare R2 in local dev too — set the `S3_*` variables in `.env` to your R2 bucket (see `.env.example`). No local object-store container needed.
 3. Check container status:
    ```bash
    docker compose ps
@@ -125,6 +126,9 @@ Run the development server:
 ```bash
 npm run dev
 ```
+
+> [!NOTE]
+> A `predev` guard (`scripts/ensure-db.mjs`) automatically tests port `3306` before Next.js boots. If you are using WSL2 and the Ubuntu VM was stopped, it starts the MariaDB service in the background automatically so you do not have to manually start it each time.
 
 The application will be available at:
 **[http://localhost:3000](http://localhost:3000)**

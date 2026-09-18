@@ -133,6 +133,27 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
       .catch(() => { /* badges are best-effort */ });
   }, [role]);
 
+  const [unread, setUnread] = useState<number>(0);
+  useEffect(() => {
+    if (role !== "AGRONOMIST" && role !== "FARM_OFFICER") return;
+    let alive = true;
+    const load = () => {
+      fetch("/api/notifications/unread-count")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (alive && typeof d?.count === "number") setUnread(d.count);
+        })
+        .catch(() => { /* badges are best-effort */ });
+    };
+    load();
+    const t = setInterval(load, 30000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [role]);
+  const chatBadge = unread > 0 ? (unread > 99 ? "99+" : String(unread)) : undefined;
+
   if (role === "SUPER_ADMIN") {
     sections.push(
       {
@@ -168,59 +189,66 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             icon: "Shield",
             isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people"),
           },
+          {
+            href: "/hq/agronomists",
+            label: "Agronomists",
+            icon: "Stethoscope",
+            isActive: (p) => p.startsWith("/hq/agronomists"),
+          },
         ],
       }
     );
   } else if (role === "FARM_ADMIN") {
     sections.push(
       {
-        title: "ESTATE",
+        title: "PORTFOLIO & LAND",
         items: [
           {
-            href: "/owner/dashboard",
-            label: "Home / Cockpit",
+            href: "/owner/farms",
+            label: "Farm Estates",
             icon: "Farm",
-            isActive: (p) => p === "/owner/dashboard" || p === "/dashboard",
+            isActive: (p) => p.startsWith("/owner/farms") || p === "/owner/farm",
           },
           {
-            href: "/owner/farm",
-            label: "My Farm",
+            href: "/owner/plots",
+            label: "Plots & Demarcation",
             icon: "Plot",
-            isActive: (p) => p.startsWith("/owner/farm"),
+            isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/owner/land"),
           },
           {
-            href: "/owner/land",
-            label: "Land & Plots",
+            href: "/owner/crops",
+            label: "Crop Cycles",
             icon: "TrendingUp",
-            isActive: (p) => p.startsWith("/owner/land") || p.startsWith("/owner/plots") || p.startsWith("/plots"),
+            isActive: (p) => p.startsWith("/owner/crops"),
           },
         ],
       },
       {
-        title: "EXECUTION",
+        title: "OPERATIONS & COMMS",
         items: [
           {
             href: "/owner/operations",
-            label: "Operations",
+            label: "Operations & Tasks",
             icon: "ClipboardList",
-            isActive: (p) => p.startsWith("/owner/operations") || p.startsWith("/tasks"),
+            isActive: (p) => p.startsWith("/owner/operations") || p.startsWith("/owner/calendar") || p.startsWith("/tasks"),
           },
           {
-            href: "/owner/people",
-            label: "People & Labor",
+            href: "/owner/chat",
+            label: "Agronomy & Team Chat",
             icon: "Users",
-            isActive: (p) => p.startsWith("/owner/people") || p.startsWith("/owner/team") || p.startsWith("/admin/attendance"),
+            badge: chatBadge,
+            isActive: (p) => p.startsWith("/owner/chat"),
           },
           {
             href: "/owner/records",
-            label: "Logistics & Records",
+            label: "Commercial Records",
             icon: "Truck",
             isActive: (p) => p.startsWith("/owner/records") || p.startsWith("/owner/harvest") || p.startsWith("/owner/inventory") || p.startsWith("/owner/financials"),
           },
         ],
       },
       {
-        title: "SETTINGS & CONFIG",
+        title: "ACCOUNT",
         items: [
           {
             href: "/owner/settings",
@@ -247,6 +275,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             label: "Rx Directives",
             icon: "FileText",
             isActive: (p) => p.startsWith("/agronomy/prescriptions"),
+          },
+          {
+            href: "/agronomy/chat",
+            label: "Field Messages",
+            icon: "Users",
+            badge: chatBadge,
+            isActive: (p) => p.startsWith("/agronomy/chat"),
           },
           {
             href: "/agronomy/protocols",
@@ -285,6 +320,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           isActive: (p) => p.startsWith("/officer/day"),
         },
         {
+          href: "/officer/chat",
+          label: "Ask Agronomist",
+          icon: "Users",
+          badge: chatBadge,
+          isActive: (p) => p.startsWith("/officer/chat"),
+        },
+        {
           href: "/tasks",
           label: "Tasks Ledger",
           icon: "ClipboardList",
@@ -306,6 +348,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           href: "/agronomy/planning",
           label: "Weekly Plan",
           icon: "Calendar",
+        },
+        {
+          href: "/agronomy/chat",
+          label: "Field Messages",
+          icon: "Users",
+          badge: chatBadge,
+          isActive: (p) => p.startsWith("/agronomy/chat"),
         },
         {
           href: "/agronomy/diagnostics",

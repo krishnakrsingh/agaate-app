@@ -1,6 +1,6 @@
 "use client";
 
-import "@/lib/leaflet-safe";
+import "./leaflet-safe";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import * as L from "leaflet";

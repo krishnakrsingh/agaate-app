@@ -86,7 +86,7 @@ export default function AuthSectionOne() {
       const userRole = body.user?.role;
       let targetUrl = "/dashboard";
       if (userRole === "FARM_ADMIN") {
-        targetUrl = "/owner/dashboard";
+        targetUrl = "/owner/farms";
       } else if (userRole === "FARM_OFFICER") {
         targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {

@@ -14,7 +14,6 @@ const client = () => {
   if (cached) return cached;
   const endpoint = env("S3_ENDPOINT");
   // R2 requires region "auto" and virtual-hosted style (forcePathStyle=false).
-  // MinIO local dev uses us-east-1 + forcePathStyle=true (set explicitly in .env).
   const region = process.env.S3_REGION || (endpoint.includes("r2.cloudflarestorage.com") ? "auto" : "us-east-1");
   const forcePathStyle =
     process.env.S3_FORCE_PATH_STYLE === "true"
@@ -72,7 +71,7 @@ export async function downloadUrl(key: string) {
   }
   const s3Endpoint = process.env.S3_ENDPOINT;
   const isDevPlaceholder =
-    !s3Endpoint || process.env.S3_ACCESS_KEY_ID === "change-me" || s3Endpoint.includes("localhost:9000");
+    !s3Endpoint || process.env.S3_ACCESS_KEY_ID === "change-me";
   if (isDevPlaceholder) {
     return `/uploads/${key}`;
   }

@@ -11,7 +11,7 @@ src/architecture, src/infrastructure, src/modules, src/shared).
 | `components/` (2 re-export shims → `@/components`) | tracked, ZERO importers | DELETE |
 | `cookies.txt`, `server.log` | tracked, unreferenced dev leftovers | DELETE + gitignore |
 | `public/*.sql` (init_migration, migrations_upgrade, schema_full), `public/erd.html` | tracked, ZERO code refs | DELETE public copies (keep `prisma/migrations_upgrade.sql` beside schema) |
-| `public/uploads/evidence/*.jpg` (2 files) | tracked, ZERO refs (seed match is farm-id string, not file) | DELETE (S3/MinIO is the evidence store; `/uploads/` is dev fallback) |
+| `public/uploads/evidence/*.jpg` (2 files) | tracked, ZERO refs (seed match is farm-id string, not file) | DELETE (R2 is the evidence store; `/uploads/` is dev fallback) |
 | `public/` icons + logos | runtime assets | KEEP |
 | `scripts/` (4 files, flat) | backfills + doc/tailwind builders; no subdirs needed for 4 files | KEEP, documented |
 | `prisma/seed-roles.ts`, `seed-scale.ts` | beside schema = right home; wiring TBD by owner | KEEP (no move) |

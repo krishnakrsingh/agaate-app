@@ -388,7 +388,9 @@ async function main() {
   // -------------------------------------------------------------------------
   console.log("\n[4/7] Seeding land plots with multi-irrigation systems...");
 
-  // Greenfield Plots
+  // Greenfield Plots — boundaries subdivide the surveyed farm fence so the
+  // demarcation map draws on first load (west half split N/S, east strip).
+  const gfPlotGeo = (ring: [number, number][]) => JSON.stringify({ type: "Polygon", coordinates: [ring] });
   const plotGf1 = await prisma.plot.create({
     data: {
       id: "plot-gf-01",
@@ -399,6 +401,7 @@ async function main() {
       longitude: 77.8343,
       soilType: "Red Sandy Loam (pH 6.4, EC 0.38 dS/m)",
       status: PlotStatus.ACTIVE,
+      boundaryGeoJson: gfPlotGeo([[77.833, 12.5284], [77.8344, 12.5284], [77.8344, 12.5295], [77.833, 12.5295], [77.833, 12.5284]]),
       irrigation: {
         create: [
           { type: "Drip Automation (2.2 LPH PC Drippers)", details: "Pressure compensating automated lateral lines" },
@@ -418,6 +421,7 @@ async function main() {
       longitude: 77.8338,
       soilType: "Clay Loam with High Organic Carbon (1.4%)",
       status: PlotStatus.ACTIVE,
+      boundaryGeoJson: gfPlotGeo([[77.833, 12.5273], [77.8344, 12.5273], [77.8344, 12.5284], [77.833, 12.5284], [77.833, 12.5273]]),
       irrigation: {
         create: [
           { type: "In-line Drip Fertigation", details: "Dual lateral per 90cm raised bed" },
@@ -436,6 +440,7 @@ async function main() {
       longitude: 77.8352,
       soilType: "Alluvial Red Soil with Drip Bedding",
       status: PlotStatus.ACTIVE,
+      boundaryGeoJson: gfPlotGeo([[77.8344, 12.5273], [77.8352, 12.5273], [77.8352, 12.5295], [77.8344, 12.5295], [77.8344, 12.5273]]),
       irrigation: {
         create: [
           { type: "Sub-Surface Drip Irrigation", details: "16mm drip tube buried at 15cm depth" },

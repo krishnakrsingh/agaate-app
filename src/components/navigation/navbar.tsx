@@ -9,6 +9,7 @@ import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CommandPalette } from "@/components/navigation/command-palette";
 import { DesktopSidebar } from "@/components/navigation/desktop-sidebar";
+import { NotificationBell } from "@/components/navigation/notification-bell";
 import { BrandLogo } from "@/components/navigation/brand-logo";
 
 type Role = "SUPER_ADMIN" | "OPERATIONS_MANAGER" | "FARM_ADMIN" | "AGRONOMIST" | "FARM_OFFICER";
@@ -122,6 +123,9 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
               {ROLE_LABELS[role] ?? role.replaceAll("_", " ")}
             </div>
 
+            {/* Message Notifications (chat roles only) */}
+            <NotificationBell role={role} />
+
             {/* Quick 1-Click Theme Toggle */}
             <ThemeToggle variant="button" />
 
@@ -142,7 +146,7 @@ export function Navbar({ role, userName }: { role: string; userName?: string }) 
           {mobile.map((item) => {
             const active = isActiveItem(pathname, item);
             const Icon = iconMap[item.icon] ?? Icons.Layers;
-            const label = item.label === "Internal Team" ? "Team" : item.label === "Onboarding" ? "Onboard" : item.label;
+            const label = item.label === "Internal Team" ? "Team" : item.label === "Onboarding" ? "Onboard" : item.label === "Agronomists" ? "Agros" : item.label === "Agronomist" ? "Agro" : item.label;
             return (
               <Link
                 key={item.href}

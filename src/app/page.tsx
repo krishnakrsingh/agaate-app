@@ -21,7 +21,7 @@ export default async function Home() {
   }
 
   if (user.role === "FARM_ADMIN") {
-    redirect("/owner/dashboard");
+    redirect("/owner/farms");
   }
 
   if (user.role === "FARM_OFFICER") {

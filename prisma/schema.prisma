@@ -290,6 +290,7 @@ model Farm {
   expenseLogs            ExpenseLog[]
   crewMusters            DailyCrewMuster[]
   prescriptions          AgronomyPrescription[]
+  conversations          Conversation[]
 
   @@index([status])
   @@index([setupStage])
@@ -706,6 +707,7 @@ model MediaAsset {
   execution    TaskExecution?  @relation(fields: [executionId], references: [id], onDelete: Cascade)
   monitoring   CropMonitoring? @relation(fields: [monitoringId], references: [id], onDelete: Cascade)
   incident     Incident?       @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  chatAttachment ChatAttachment?
 
   @@index([farmId])
   @@index([executionId])
@@ -871,4 +873,87 @@ model OnboardingDraft {
 
   @@index([createdById, updatedAt])
   @@index([status, updatedAt])
+}
+
+/**
+ * Agronomist ↔ Farm Officer contextual chat (Phase 1: HTTP + polling).
+ * User IDs are plain strings with no FK by design: messages, membership
+ * and notifications must survive account deactivation (same rationale as
+ * OnboardingDraft / BoundaryVersion). Farm scoping is enforced in app code
+ * via requireFarmAccess + ConversationParticipant membership on every route.
+ */
+model Conversation {
+  id            String   @id @default(cuid())
+  farmId        String
+  farm          Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  plotId        String?
+  cropCycleId   String?
+  subject       String?
+  status        String   @default("OPEN")
+  lastMessageAt DateTime @default(now())
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  @@index([farmId, lastMessageAt(sort: Desc)])
+  @@index([farmId, status])
+  @@index([createdById])
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  joinedAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId, conversationId])
+}
+
+model ChatMessage {
+  id              String    @id @default(cuid())
+  conversationId  String
+  senderId        String
+  body            String    @db.Text
+  clientMessageId String    @unique
+  createdAt       DateTime  @default(now())
+  editedAt        DateTime?
+  deletedAt       DateTime?
+
+  @@index([conversationId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([senderId])
+}
+
+model ChatMessageRef {
+  id         String  @id @default(cuid())
+  messageId  String
+  entityType String
+  entityId   String
+  label      String?
+
+  @@index([messageId])
+  @@index([entityType, entityId])
+}
+
+model ChatAttachment {
+  messageId    String
+  mediaAssetId String     @unique
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, mediaAssetId])
+  @@index([messageId])
+}
+
+model ChatNotification {
+  id             String    @id @default(cuid())
+  userId         String
+  conversationId String
+  messageId      String
+  title          String
+  deepLink       String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([userId, messageId])
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([conversationId])
 }

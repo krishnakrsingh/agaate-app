@@ -23,7 +23,7 @@ For detailed instructions, troubleshooting, and WSL2 configurations, see **[`doc
 1. Copy `.env.example` to `.env` and set `DATABASE_URL` (use `127.0.0.1:3306` on Windows to prevent IPv6 loopback issues).
 2. Start the database:
    - **WSL2 MariaDB**: `wsl -u root -d Ubuntu service mariadb start`
-   - **Docker**: `docker compose up -d mysql minio`
+    - **Docker**: `docker compose up -d mysql`
 3. Install dependencies: `npm install`.
 4. Synchronize database schema and seed test accounts:
    ```bash
