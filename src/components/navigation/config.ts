@@ -165,24 +165,10 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/hq/profile",
-    label: "My Profile",
-    icon: "User",
-    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
-    isActive: (p) => p.startsWith("/hq/profile"),
-  },
-  {
-    href: "/hq/settings",
-    label: "Settings",
+    label: "Profile & Settings",
     icon: "Settings",
     roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
-    isActive: (p) => p.startsWith("/hq/settings"),
-  },
-  {
-    href: "/hq/security",
-    label: "Security",
-    icon: "Key",
-    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
-    isActive: (p) => p.startsWith("/hq/security"),
+    isActive: (p) => p.startsWith("/hq/profile") || p.startsWith("/hq/settings") || p.startsWith("/hq/security"),
   },
 ];
 

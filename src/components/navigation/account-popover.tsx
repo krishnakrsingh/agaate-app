@@ -1,6 +1,6 @@
 "use client";
+
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "../theme-toggle";
@@ -26,31 +26,16 @@ function getInitials(name: string | undefined): string {
   return parts[0].charAt(0).toUpperCase();
 }
 
-function getProfileHref(role: string): string | null {
+function getProfileHref(role: string): string {
   switch (role) {
     case "FARM_ADMIN":
       return "/owner/profile";
     case "FARM_OFFICER":
       return "/officer/profile";
     case "SUPER_ADMIN":
-      return "/hq/profile";
     case "OPERATIONS_MANAGER":
-      return "/hq/profile";
     default:
       return "/hq/profile";
-  }
-}
-
-function getSettingsHref(role: string): string | null {
-  switch (role) {
-    case "FARM_ADMIN":
-      return "/owner/settings";
-    case "SUPER_ADMIN":
-      return "/hq/settings";
-    case "OPERATIONS_MANAGER":
-      return "/hq/settings";
-    default:
-      return null;
   }
 }
 
@@ -73,7 +58,6 @@ export function AccountPopover({
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   const loadUserInfo = useCallback(async () => {
     try {
@@ -117,6 +101,26 @@ export function AccountPopover({
     }
   }, [open, userInfo, loadUserInfo]);
 
+  // Listen for real-time user profile updates
+  useEffect(() => {
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ name?: string; phone?: string | null }>;
+      if (customEvent.detail) {
+        setUserInfo((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            name: customEvent.detail.name ?? prev.name,
+            phone: customEvent.detail.phone !== undefined ? customEvent.detail.phone : prev.phone,
+          };
+        });
+      }
+    };
+
+    window.addEventListener("user-profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("user-profile-updated", handleProfileUpdate);
+  }, []);
+
   const handleSignOut = async () => {
     if (signingOut) return;
     setSigningOut(true);
@@ -124,7 +128,8 @@ export function AccountPopover({
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (!res.ok) throw new Error("Logout failed.");
-      router.replace("/login");
+      // Full hard navigation ensures session cookie removal and cache reset
+      window.location.href = "/login";
     } catch {
       setSignOutError("Unable to sign out. Please try again.");
       setSigningOut(false);
@@ -135,57 +140,51 @@ export function AccountPopover({
   const displayRole = userInfo?.roleLabel ?? ROLE_LABELS[userRole] ?? userRole.replaceAll("_", " ");
   const initials = getInitials(displayName);
   const profileHref = getProfileHref(userRole);
-  const settingsHref = getSettingsHref(userRole);
-  const hasSettings = Boolean(settingsHref);
 
   return (
     <>
       {open && (
-        <div className={`account-popover ${isRail ? "account-popover--rail" : ""}`} ref={popoverRef} role="menu">
-          {/* Header */}
+        <div
+          className={`account-popover ${isRail ? "account-popover--rail" : ""}`}
+          ref={popoverRef}
+          role="menu"
+          aria-label="User Account Menu"
+        >
+          {/* USER HEADER */}
           <div className="account-popover-header">
-            <div className="account-popover-avatar">{initials}</div>
+            <div className="account-popover-avatar" aria-hidden="true">{initials}</div>
             <div className="account-popover-user-info">
-              <span className="account-popover-name">{displayName}</span>
+              <span className="account-popover-name" title={displayName}>{displayName}</span>
               <span className="account-popover-role">{displayRole}</span>
               {userInfo?.email && (
-                <span className="account-popover-email">{userInfo.email}</span>
+                <span className="account-popover-email" title={userInfo.email}>{userInfo.email}</span>
               )}
             </div>
           </div>
 
           <div className="account-popover-divider" />
 
-          {/* Primary Actions */}
-          {profileHref && (
-            <Link href={profileHref} className="account-popover-item" onClick={onToggle} role="menuitem">
-              <Icons.User size={16} />
-              <span>My Profile</span>
-            </Link>
-          )}
-
-          {hasSettings && (
-              <Link href={settingsHref!} className="account-popover-item" onClick={onToggle} role="menuitem">
-                <Icons.Settings size={16} />
-                <span>Account Settings</span>
-              </Link>
-            )}
-
-          <Link href="/hq/security" className="account-popover-item" onClick={onToggle} role="menuitem">
-            <Icons.Key size={16} />
-            <span>Security</span>
+          {/* SINGLE PROFILE & SETTINGS DESTINATION */}
+          <Link
+            href={profileHref}
+            className="account-popover-item"
+            onClick={onToggle}
+            role="menuitem"
+          >
+            <Icons.Settings size={16} />
+            <span>Profile &amp; Settings</span>
           </Link>
 
           <div className="account-popover-divider" />
 
-          {/* Theme */}
+          {/* THEME */}
           <div className="account-popover-theme-row">
             <ThemeToggle variant="menu-item" />
           </div>
 
           <div className="account-popover-divider" />
 
-          {/* Sign Out */}
+          {/* SIGN OUT */}
           <button
             type="button"
             className="account-popover-item account-popover-signout"
@@ -195,7 +194,7 @@ export function AccountPopover({
           >
             {signingOut ? (
               <>
-                <Icons.Spinner size={16} className="account-popover-spinner" />
+                <Icons.Spinner size={16} className="account-popover-spinner spin" />
                 <span>Signing out…</span>
               </>
             ) : (

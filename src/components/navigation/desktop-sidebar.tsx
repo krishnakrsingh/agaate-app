@@ -39,8 +39,24 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(userName ?? "Console User");
   const sidebarRef = useRef<HTMLElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (userName) setDisplayName(userName);
+  }, [userName]);
+
+  useEffect(() => {
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ name?: string }>;
+      if (customEvent.detail?.name) {
+        setDisplayName(customEvent.detail.name);
+      }
+    };
+    window.addEventListener("user-profile-updated", handleProfileUpdate);
+    return () => window.removeEventListener("user-profile-updated", handleProfileUpdate);
+  }, []);
 
   const toggleAccount = useCallback(() => setAccountOpen((v) => !v), []);
 
@@ -310,7 +326,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
     });
   }
 
-  const initials = userName ? getInitials(userName) : "U";
+  const initials = displayName ? getInitials(displayName) : "U";
   const userRoleLabel = ROLE_LABELS[role] ?? role.replaceAll("_", " ");
   const homeHref = ROLE_HOME_URLS[role] ?? "/";
 
@@ -405,8 +421,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             <div className="sidebar-user-info">
               <div className="sidebar-user-avatar" aria-hidden>{initials}</div>
               <div className="sidebar-user-text">
-                <span className="sidebar-user-name" title={userName ?? "Console User"}>
-                  {userName ?? "Console User"}
+                <span className="sidebar-user-name" title={displayName}>
+                  {displayName}
                 </span>
                 <span className="sidebar-user-role">{userRoleLabel}</span>
               </div>
@@ -425,7 +441,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             <AccountPopover
               open={accountOpen}
               onToggle={toggleAccount}
-              userName={userName}
+              userName={displayName}
               userRole={role}
               anchorRef={anchorRef}
             />
@@ -437,7 +453,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
               className="sidebar-rail-btn sidebar-rail-avatar-btn"
               ref={anchorRef}
               tabIndex={0}
-              aria-label={`Account menu for ${userName ?? "Console User"}`}
+              aria-label={`Account menu for ${displayName}`}
               role="button"
               onClick={toggleAccount}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAccount(); } }}
@@ -446,12 +462,12 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
                 {initials}
               </div>
               <span className="sidebar-tooltip">
-                {userName ?? "Console User"} ({userRoleLabel})
+                {displayName} ({userRoleLabel})
               </span>
               <AccountPopover
                 open={accountOpen}
                 onToggle={toggleAccount}
-                userName={userName}
+                userName={displayName}
                 userRole={role}
                 anchorRef={anchorRef}
                 isRail={true}
