@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { SYSTEM_ROLE_DEFINITIONS } from "../src/lib/role-definitions-seed";
+import { SYSTEM_ROLE_DEFINITIONS } from "../src/modules/auth/domain/rolePolicy";
 
 export async function seedRoleDefinitions(prisma: PrismaClient) {
   const bySlug = new Map<string, string>();
