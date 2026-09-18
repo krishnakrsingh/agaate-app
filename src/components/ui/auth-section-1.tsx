@@ -297,7 +297,7 @@ export default function AuthSectionOne() {
         {/* Right Showcase Card: The Beautiful GrainGradient Agronomy Panel */}
         <section
           aria-label="Precision Agronomy Matrix"
-          className="relative flex flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl bg-black p-6 sm:p-8 md:p-10 xl:p-12 text-white shadow-2xl border border-white/10 min-h-[600px]"
+          className="hidden md:flex relative flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl bg-black p-6 sm:p-8 md:p-10 xl:p-12 text-white shadow-2xl border border-white/10 min-h-[600px]"
         >
           {/* The signature orange/amber GrainGradient shader */}
           <GrainGradient

@@ -8162,7 +8162,7 @@
       "file_type": "code",
       "norm_label": "assertsafestoragekey()",
       "source_file": "src/infrastructure/security/request-security.ts",
-      "source_location": "L135"
+      "source_location": "L117"
     },
     {
       "id": "src_infrastructure_security_request_security_assertsameorigin",
@@ -15482,7 +15482,7 @@
       "file_type": "code",
       "norm_label": "middleware()",
       "source_file": "middleware.ts",
-      "source_location": "L125"
+      "source_location": "L107"
     },
     {
       "id": "middleware_originallowed",
@@ -30165,7 +30165,7 @@
       "file_type": "code",
       "norm_label": "config",
       "source_file": "middleware.ts",
-      "source_location": "L141"
+      "source_location": "L123"
     },
     {
       "id": "src_modules_estates_ui_farm_registry",
@@ -30772,7 +30772,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "middleware.ts",
-      "source_location": "L127",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -30784,7 +30784,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "middleware.ts",
-      "source_location": "L127",
+      "source_location": "L109",
       "weight": 1.0
     },
     {
@@ -94930,7 +94930,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "middleware.ts",
-      "source_location": "L125",
+      "source_location": "L107",
       "weight": 1.0
     },
     {
@@ -94941,7 +94941,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "middleware.ts",
-      "source_location": "L141",
+      "source_location": "L123",
       "weight": 1.0
     },
     {
@@ -101310,7 +101310,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/infrastructure/security/request-security.ts",
-      "source_location": "L135",
+      "source_location": "L117",
       "weight": 1.0
     },
     {
@@ -115232,5 +115232,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "98947bd1d1192200be2c77c5e06ae373faf5315f"
+  "built_at_commit": "69a15beee76d7e3286e78d1bb4fe4052bede47e2"
 }

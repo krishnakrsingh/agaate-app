@@ -4,8 +4,17 @@ import { GrainGradient } from "@paper-design/shaders-react";
 
 export function AgronomyShowcasePanel() {
   return (
-    <div
-      className="agaate-showcase-panel"
+    <>
+      <style>{`
+        @media (max-width: 1024px) {
+          .agaate-showcase-panel,
+          .agaate-login-right {
+            display: none !important;
+          }
+        }
+      `}</style>
+      <div
+        className="agaate-showcase-panel"
       style={{
         position: "relative",
         display: "flex",
@@ -132,6 +141,7 @@ export function AgronomyShowcasePanel() {
         </p>
       </div>
     </div>
+    </>
   );
 }
 

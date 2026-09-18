@@ -1637,6 +1637,10 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   .app-header-inner { padding: 0 20px; gap: 12px; }
   .farm-switcher-menu { min-width: 240px; max-width: calc(100vw - 20px); }
   .header-telemetry { display: none; }
+  .agaate-login-right,
+  .agaate-showcase-panel {
+    display: none !important;
+  }
 }
 @media (max-width: 640px) {
   .app-header-inner { padding: 0 10px; height: 54px; gap: 8px; }
