@@ -100,10 +100,16 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error("[Auth Login] Database lookup error:", dbError);
+      const isDebug = process.env.DEBUG_AUTH === "true" || process.env.NODE_ENV !== "production";
+      const detail = dbError?.message ? `: ${dbError.message}` : "";
       return NextResponse.json(
-        { error: "Authentication service temporarily unavailable. Please try again in a few moments." },
+        {
+          error: isDebug
+            ? `Authentication service temporarily unavailable (Database error${detail})`
+            : "Authentication service temporarily unavailable. Please try again in a few moments.",
+        },
         { status: 500 }
       );
     }
