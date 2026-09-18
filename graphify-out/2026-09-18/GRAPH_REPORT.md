@@ -1,7 +1,7 @@
 # Graph Report - agaateapp  (2026-09-18)
 
 ## Corpus Check
-- 533 files · ~415,883 words
+- 533 files · ~415,888 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `69a15bee`
+- Built from commit: `98947bd1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

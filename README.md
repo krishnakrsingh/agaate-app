@@ -13,15 +13,25 @@ Comprehensive architecture, specifications, design briefs, and user flows are or
 - **[05. Data Model Reference](file:///c:/Users/krish/Downloads/agaateapp/docs/05_DATA_MODEL.md)** — Prisma schema, 20 models, 14 enums, ER diagram, and DB constraints.
 - **[06. Engineering & Ops Plan](file:///c:/Users/krish/Downloads/agaateapp/docs/06_ENGINEERING_PLAN.md)** — Implementation audit, tech debt, production checklist, and AI roadmap.
 - **[07. Master System Architecture (v2.0 Redesign)](file:///c:/Users/krish/Downloads/agaateapp/docs/07_MASTER_SYSTEM_ARCHITECTURE.md)** — Canonical system blueprint: 4 real authorities, 24-screen UI matrix, 12 modules, 20 edge cases, and harvest/inventory schema.
+- **[Local Development & Setup Guide](file:///c:/Users/krish/Downloads/agaateapp/docs/RUN_LOCALLY.md)** — Step-by-step local machine setup, WSL2 / Docker configurations, credentials, and troubleshooting guide.
 - **[Interactive HTML Documentation Portal](file:///c:/Users/krish/Downloads/agaateapp/docs/index.html)** — Standalone HTML web portal containing all documents with live search, theme toggle, and rendered diagrams. Regenerate anytime with `npm run build:docs`.
 
 ## Run locally
 
-1. Copy `.env.example` to `.env` and replace every `change-me` value. Add `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` (12+ characters), and optionally `INITIAL_ADMIN_NAME`.
-2. Start the development infrastructure: `docker compose up -d mysql minio`.
-3. Create the S3/MinIO bucket named by `S3_BUCKET`, grant the configured credentials access to it, and allow browser `PUT` requests for the app origin with `Content-Type` exposed. The upload flow uses short-lived signed URLs and verifies each object server-side.
-4. Install dependencies with `npm install`, then run `npm run db:generate`, `npm run db:migrate`, and `npm run db:seed`.
-5. Start the app: `npm run dev`.
+For detailed instructions, troubleshooting, and WSL2 configurations, see **[`docs/RUN_LOCALLY.md`](file:///c:/Users/krish/Downloads/agaateapp/docs/RUN_LOCALLY.md)**.
+
+1. Copy `.env.example` to `.env` and set `DATABASE_URL` (use `127.0.0.1:3306` on Windows to prevent IPv6 loopback issues).
+2. Start the database:
+   - **WSL2 MariaDB**: `wsl -u root -d Ubuntu service mariadb start`
+   - **Docker**: `docker compose up -d mysql minio`
+3. Install dependencies: `npm install`.
+4. Synchronize database schema and seed test accounts:
+   ```bash
+   npm run db:generate
+   npx prisma db push
+   npm run db:seed
+   ```
+5. Start dev server: `npm run dev` and open [http://localhost:3000](http://localhost:3000). Test accounts are listed in [`docs/RUN_LOCALLY.md`](file:///c:/Users/krish/Downloads/agaateapp/docs/RUN_LOCALLY.md).
 
 For production, set managed MySQL 8 and S3 credentials in the deployment environment, run `npm run db:migrate` as a release step, then run `npm run build` and `npm start`. Do not use the development Docker passwords or default session secret in production.
 

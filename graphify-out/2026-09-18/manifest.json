@@ -246,9 +246,9 @@
     "semantic_hash": ""
   },
   "src/app/login/page.tsx": {
-    "mtime": 1789672510.2904685,
-    "seen": 1789672588.2787373,
-    "ast_hash": "d3ae6472329837613081163898d236b2",
+    "mtime": 1789673668.378752,
+    "seen": 1789673772.9685023,
+    "ast_hash": "da7ff072f582672cf8ba993bea5b16ea",
     "semantic_hash": ""
   },
   "src/app/not-found.tsx": {
@@ -780,9 +780,9 @@
     "semantic_hash": ""
   },
   "middleware.ts": {
-    "mtime": 1789672071.2798438,
-    "seen": 1789672326.7956634,
-    "ast_hash": "3fc72c5052ddcdec17a3dc604e24dd99",
+    "mtime": 1789673591.0179455,
+    "seen": 1789673772.9680362,
+    "ast_hash": "f805b2149e674c63d9c3b51034779aef",
     "semantic_hash": ""
   },
   "public/apple-icon.png": {
@@ -1758,9 +1758,9 @@
     "semantic_hash": ""
   },
   "src/infrastructure/security/request-security.ts": {
-    "mtime": 1789672080.9109843,
-    "seen": 1789672326.7962563,
-    "ast_hash": "6fdc3189e4c6f7923e545b82b876458e",
+    "mtime": 1789673608.59433,
+    "seen": 1789673772.9686272,
+    "ast_hash": "02134afc2ccfad8d0a936620d597cc02",
     "semantic_hash": ""
   },
   "src/infrastructure/storage/index.ts": {
@@ -1782,9 +1782,9 @@
     "semantic_hash": ""
   },
   "src/lib/origin-security.test.ts": {
-    "mtime": 1789672215.1823404,
-    "seen": 1789672326.7963064,
-    "ast_hash": "8f618c621ab5c05be0a05c3eb2c30132",
+    "mtime": 1789673619.3137972,
+    "seen": 1789673772.9686744,
+    "ast_hash": "a8a4b96070eb3c4ecf993ef3c35ea4dc",
     "semantic_hash": ""
   },
   "src/lib/rbac.test.ts": {
@@ -1794,9 +1794,9 @@
     "semantic_hash": ""
   },
   "src/modules/agronomy/ui/agronomy-showcase-panel.tsx": {
-    "mtime": 1789661855.1382284,
-    "seen": 1789672326.7963152,
-    "ast_hash": "b085723290621da98fdcb7347b3acf92",
+    "mtime": 1789673658.306209,
+    "seen": 1789673772.9686844,
+    "ast_hash": "cd2e93277beec2ecd54d6b832c1a4042",
     "semantic_hash": ""
   },
   "src/modules/agronomy/ui/crop-radar.tsx": {
@@ -2340,8 +2340,8 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/login-form.tsx": {
-    "mtime": 1789584664.8508217,
-    "seen": 1789672326.7965388,
+    "mtime": 1789672846.1359966,
+    "seen": 1789673772.968939,
     "ast_hash": "a4f9acd75f57d0a0e20cbfa789d4bd76",
     "semantic_hash": ""
   },
