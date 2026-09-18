@@ -9,6 +9,13 @@ import { ROLE_LABELS, ROLE_HOME_URLS } from "@/components/navigation/config";
 import { BrandLogo } from "@/components/navigation/brand-logo";
 import { AccountPopover } from "@/components/navigation/account-popover";
 
+function getInitials(name: string | undefined): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0].charAt(0).toUpperCase();
+}
+
 interface NavLinkItem {
   href: string;
   label: string;
@@ -303,7 +310,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
     });
   }
 
-  const initials = userName ? userName.trim().charAt(0).toUpperCase() : "U";
+  const initials = userName ? getInitials(userName) : "U";
   const userRoleLabel = ROLE_LABELS[role] ?? role.replaceAll("_", " ");
   const homeHref = ROLE_HOME_URLS[role] ?? "/";
 
@@ -405,9 +412,14 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
               </div>
             </div>
             <div className="sidebar-user-actions">
-              <ThemeToggle variant="button" />
               <span className="sidebar-expand-icon">
-                <Icons.ChevronRight size={14} />
+                <Icons.ChevronUp
+                  size={14}
+                  style={{
+                    transform: accountOpen ? "rotate(0deg)" : "rotate(180deg)",
+                    transition: "transform 0.15s ease",
+                  }}
+                />
               </span>
             </div>
             <AccountPopover
@@ -442,6 +454,7 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
                 userName={userName}
                 userRole={role}
                 anchorRef={anchorRef}
+                isRail={true}
               />
             </div>
 

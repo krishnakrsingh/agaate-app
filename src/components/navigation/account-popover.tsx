@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "../theme-toggle";
@@ -16,17 +17,6 @@ type UserInfo = {
   createdAt: string;
 };
 
-function getProfileHref(role: string): string | null {
-  switch (role) {
-    case "FARM_ADMIN":
-      return "/owner/profile";
-    case "FARM_OFFICER":
-      return "/officer/profile";
-    default:
-      return null;
-  }
-}
-
 function getInitials(name: string | undefined): string {
   if (!name) return "U";
   const parts = name.trim().split(/\s+/);
@@ -36,23 +26,54 @@ function getInitials(name: string | undefined): string {
   return parts[0].charAt(0).toUpperCase();
 }
 
+function getProfileHref(role: string): string | null {
+  switch (role) {
+    case "FARM_ADMIN":
+      return "/owner/profile";
+    case "FARM_OFFICER":
+      return "/officer/profile";
+    case "SUPER_ADMIN":
+      return "/hq/profile";
+    case "OPERATIONS_MANAGER":
+      return "/hq/profile";
+    default:
+      return "/hq/profile";
+  }
+}
+
+function getSettingsHref(role: string): string | null {
+  switch (role) {
+    case "FARM_ADMIN":
+      return "/owner/settings";
+    case "SUPER_ADMIN":
+      return "/hq/settings";
+    case "OPERATIONS_MANAGER":
+      return "/hq/settings";
+    default:
+      return null;
+  }
+}
+
 export function AccountPopover({
   open,
   onToggle,
   userName,
   userRole,
   anchorRef,
+  isRail = false,
 }: {
   open: boolean;
   onToggle: () => void;
   userName?: string;
   userRole: string;
   anchorRef: React.RefObject<HTMLDivElement | null>;
+  isRail?: boolean;
 }) {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const loadUserInfo = useCallback(async () => {
     try {
@@ -102,12 +123,8 @@ export function AccountPopover({
     setSignOutError(null);
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (!res.ok) {
-        setSignOutError("Unable to sign out. Please try again.");
-        setSigningOut(false);
-        return;
-      }
-      window.location.href = "/login";
+      if (!res.ok) throw new Error("Logout failed.");
+      router.replace("/login");
     } catch {
       setSignOutError("Unable to sign out. Please try again.");
       setSigningOut(false);
@@ -118,12 +135,14 @@ export function AccountPopover({
   const displayRole = userInfo?.roleLabel ?? ROLE_LABELS[userRole] ?? userRole.replaceAll("_", " ");
   const initials = getInitials(displayName);
   const profileHref = getProfileHref(userRole);
+  const settingsHref = getSettingsHref(userRole);
+  const hasSettings = Boolean(settingsHref);
 
   return (
     <>
       {open && (
-        <div className="account-popover" ref={popoverRef} role="menu">
-          {/* Profile Card Header */}
+        <div className={`account-popover ${isRail ? "account-popover--rail" : ""}`} ref={popoverRef} role="menu">
+          {/* Header */}
           <div className="account-popover-header">
             <div className="account-popover-avatar">{initials}</div>
             <div className="account-popover-user-info">
@@ -137,63 +156,51 @@ export function AccountPopover({
 
           <div className="account-popover-divider" />
 
-          {/* VIEW Section */}
-          <div className="account-popover-section-label">VIEW</div>
-          {profileHref ? (
-            <Link
-              href={profileHref}
-              className="account-popover-item"
-              onClick={onToggle}
-            >
-              <Icons.User size={15} />
+          {/* Primary Actions */}
+          {profileHref && (
+            <Link href={profileHref} className="account-popover-item" onClick={onToggle} role="menuitem">
+              <Icons.User size={16} />
               <span>My Profile</span>
             </Link>
-          ) : (
-            <div className="account-popover-item account-popover-item--disabled">
-              <Icons.User size={15} />
-              <span>My Profile</span>
-            </div>
           )}
 
-          <div className="account-popover-divider" />
+          {hasSettings && (
+              <Link href={settingsHref!} className="account-popover-item" onClick={onToggle} role="menuitem">
+                <Icons.Settings size={16} />
+                <span>Account Settings</span>
+              </Link>
+            )}
 
-          {/* ACCOUNT Section */}
-          <div className="account-popover-section-label">ACCOUNT</div>
-          <div className="account-popover-item account-popover-item--disabled">
-            <Icons.Settings size={15} />
-            <span>Account Settings</span>
-          </div>
-          <div className="account-popover-item account-popover-item--disabled">
-            <Icons.Key size={15} />
+          <Link href="/hq/security" className="account-popover-item" onClick={onToggle} role="menuitem">
+            <Icons.Key size={16} />
             <span>Security</span>
-          </div>
+          </Link>
 
           <div className="account-popover-divider" />
 
-          {/* PREFERENCES Section */}
-          <div className="account-popover-section-label">PREFERENCES</div>
+          {/* Theme */}
           <div className="account-popover-theme-row">
             <ThemeToggle variant="menu-item" />
           </div>
 
           <div className="account-popover-divider" />
 
-          {/* SESSION Section */}
-          <div className="account-popover-section-label">SESSION</div>
+          {/* Sign Out */}
           <button
             type="button"
             className="account-popover-item account-popover-signout"
             onClick={handleSignOut}
             disabled={signingOut}
+            role="menuitem"
           >
             {signingOut ? (
               <>
-                <Icons.Spinner size={15} className="account-popover-spinner" />
-                <span>Signing out...</span>
+                <Icons.Spinner size={16} className="account-popover-spinner" />
+                <span>Signing out…</span>
               </>
             ) : (
               <>
-                <Icons.LogOut size={15} />
+                <Icons.LogOut size={16} />
                 <span>Sign out</span>
               </>
             )}

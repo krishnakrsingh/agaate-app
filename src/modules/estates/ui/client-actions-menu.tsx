@@ -3,16 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import {
-  Eye,
-  Pencil,
-  Plus,
-  Building2,
-  MessageCircle,
-  Check,
-  X,
-  Trash2,
-} from "lucide-react";
+import { Eye, Pencil, Plus, Building2, Check, X, Trash2 } from "lucide-react";
+import { Icons } from "@/components/icons";
 
 export interface ClientMenuTarget {
   id: string;
@@ -215,8 +207,8 @@ export function ClientActionsMenu({
                     className="ctx-menu-item"
                     onClick={close}
                   >
-                    <MessageCircle size={18} />
-                    <span>WhatsApp client</span>
+                    <Icons.Whatsapp size={18} style={{ color: "#25D366", flexShrink: 0 }} />
+                    <span>Send Message</span>
                   </a>
                 </div>
               )}

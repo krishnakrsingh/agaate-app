@@ -115,7 +115,13 @@ function DeleteClientModal({
   onConfirm,
   onClose,
 }: {
-  client: { id: string; name: string; farmCount: number; plotCount: number; totalAcreage: number };
+  client: {
+    id: string;
+    name: string;
+    code?: string;
+    district?: string | null;
+    state?: string | null;
+  };
   onConfirm: (id: string) => void | Promise<void>;
   onClose: () => void;
 }) {
@@ -125,7 +131,7 @@ function DeleteClientModal({
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const confirmed = input === client.name;
+  const confirmed = input.trim() === client.name.trim();
 
   useEffect(() => {
     setInput("");
@@ -166,59 +172,243 @@ function DeleteClientModal({
     }
   };
 
+  const initials = client.name
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  const location = [client.district, client.state].filter(Boolean).join(", ");
+
   return (
-    <div className="modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440, padding: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-          <Icons.Trash size={20} />
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Delete Client?</h3>
+    <div
+      className="modal-overlay"
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      style={{
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        backgroundColor: "rgba(12, 10, 9, 0.55)",
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: 470,
+          padding: "20px 24px",
+          borderRadius: 16,
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: "var(--red-light)",
+                display: "grid",
+                placeItems: "center",
+                flexShrink: 0,
+                color: "var(--red)",
+              }}
+            >
+              <Icons.Trash size={18} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.01em" }}>
+                Delete Client?
+              </h3>
+              <p style={{ margin: "1px 0 0", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.4 }}>
+                This will permanently delete this client and its associated data.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--muted)",
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              cursor: "pointer",
+              display: "grid",
+              placeItems: "center",
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--surface-strong)";
+              e.currentTarget.style.color = "var(--ink)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--muted)";
+            }}
+            aria-label="Close"
+          >
+            <Icons.X size={16} />
+          </button>
         </div>
-        <p style={{ fontSize: 13.5, color: "var(--muted)", margin: "0 0 16px" }}>
-          Type the client name below to confirm deletion.
-        </p>
-        <p style={{ fontSize: 15, fontWeight: 600, margin: "0 0 12px", color: "var(--ink)" }}>
-          {client.name}
-        </p>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => { setInput(e.target.value); setError(""); }}
-          placeholder={client.name}
-          className="input-field"
-          style={{ width: "100%", marginBottom: 8 }}
-          disabled={deleting}
-          aria-label={`Type ${client.name} to confirm deletion`}
-        />
-        {error && (
-          <p style={{ fontSize: 13, color: "var(--red)", margin: "0 0 8px" }}>{error}</p>
-        )}
-        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 16px" }}>
-          <Icons.AlertTriangle size={12} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />
-          This action cannot be undone.
-        </p>
-        <div style={{ padding: "12px 0", borderTop: "1px solid var(--hairline-soft)", marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: "var(--muted-soft)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Client records</div>
-          <div style={{ fontSize: 13.5, color: "var(--ink)" }}>
-            {client.farmCount} farm{client.farmCount !== 1 ? "s" : ""} · {client.plotCount} land plot{client.plotCount !== 1 ? "s" : ""} · {client.totalAcreage.toFixed(2)} ac
+
+        {/* Client Identity Row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 12px",
+            backgroundColor: "var(--canvas-soft)",
+            border: "1px solid var(--hairline)",
+            borderRadius: 10,
+            marginBottom: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              backgroundColor: "var(--primary)",
+              color: "var(--on-primary)",
+              fontSize: 12,
+              fontWeight: 600,
+              display: "grid",
+              placeItems: "center",
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {client.name}
+              </span>
+              {client.code && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 5px", borderRadius: 3, background: "var(--surface-strong)", color: "var(--muted)", fontFamily: "monospace", flexShrink: 0 }}>
+                  {client.code}
+                </span>
+              )}
+            </div>
+            {location && (
+              <div style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {location}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Confirmation Instruction */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: "block", fontSize: 12.5, color: "var(--body-strong)", marginBottom: 6, lineHeight: 1.4 }}>
+            Type <span style={{ color: "var(--red)", fontWeight: 600 }}>{client.name}</span> to confirm.
+          </label>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setError("");
+            }}
+            placeholder={`Type ${client.name} to confirm`}
+            className="input-field"
+            style={{
+              width: "100%",
+              borderRadius: 8,
+              padding: "8px 12px",
+              fontSize: 13.5,
+              borderColor: confirmed ? "var(--red)" : "var(--hairline-strong)",
+              boxShadow: confirmed ? "0 0 0 1px var(--red)" : "none",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+            }}
+            disabled={deleting}
+            aria-label={`Type ${client.name} to confirm deletion`}
+          />
+          {error && (
+            <p style={{ fontSize: 12, color: "var(--red)", margin: "5px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+              <Icons.AlertTriangle size={13} />
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Compact Warning */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 10px",
+            borderRadius: 8,
+            backgroundColor: "var(--red-light)",
+            border: "1px solid rgba(166, 59, 50, 0.12)",
+            fontSize: 12,
+            color: "var(--red)",
+            marginBottom: 16,
+          }}
+        >
+          <Icons.AlertTriangle size={13} style={{ flexShrink: 0 }} />
+          <span>This action cannot be undone.</span>
+        </div>
+
+        {/* Footer */}
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button
             type="button"
-            className="btn btn-secondary"
             onClick={onClose}
             disabled={deleting}
+            style={{
+              borderRadius: 8,
+              padding: "7px 14px",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: deleting ? "not-allowed" : "pointer",
+              border: "1px solid var(--hairline)",
+              backgroundColor: "var(--surface-card)",
+              color: "var(--body-strong)",
+              opacity: deleting ? 0.5 : 1,
+            }}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="btn btn-danger"
             onClick={handleDelete}
             disabled={!confirmed || deleting}
+            style={{
+              borderRadius: 8,
+              padding: "7px 14px",
+              fontSize: 13,
+              fontWeight: 600,
+              backgroundColor: confirmed ? "var(--semantic-error)" : "var(--surface-strong)",
+              color: confirmed ? "#ffffff" : "var(--muted-soft)",
+              border: confirmed ? "1px solid var(--semantic-error)" : "1px solid var(--hairline)",
+              cursor: !confirmed || deleting ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              opacity: deleting ? 0.7 : 1,
+            }}
           >
-            {deleting ? "Deleting…" : "Delete Client"}
+            {deleting ? (
+              <>
+                <Icons.Spinner size={14} className="spin" />
+                Deleting…
+              </>
+            ) : (
+              <>
+                <Icons.Trash size={14} />
+                Delete Client
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -258,7 +448,13 @@ export function ClientDirectory({
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; farmCount: number; plotCount: number; totalAcreage: number } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+    code?: string;
+    district?: string | null;
+    state?: string | null;
+  } | null>(null);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftState, setDraftState] = useState("");
@@ -430,7 +626,13 @@ export function ClientDirectory({
   const openDeleteModal = (id: string) => {
     const row = rows.find((r) => r.id === id);
     if (!row) return;
-    setDeleteTarget({ id, name: row.name, farmCount: row.farmCount, plotCount: row.plotCount, totalAcreage: row.totalAcreage });
+    setDeleteTarget({
+      id,
+      name: row.name,
+      code: row.code,
+      district: row.district,
+      state: row.state,
+    });
     setShowDeleteModal(true);
   };
 

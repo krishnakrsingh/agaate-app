@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { ThemeToggle } from "../theme-toggle";
+
+function getInitials(name: string | undefined): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0].charAt(0).toUpperCase();
+}
 
 export function ProfileMenu({
   role,
@@ -13,8 +21,9 @@ export function ProfileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
-  const initials = userName ? userName.trim().charAt(0).toUpperCase() : "U";
+  const initials = userName ? getInitials(userName) : "U";
   const roleLabel = role.replaceAll("_", " ");
 
   useEffect(() => {
@@ -35,7 +44,7 @@ export function ProfileMenu({
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login";
+    router.replace("/login");
   }
 
   return (

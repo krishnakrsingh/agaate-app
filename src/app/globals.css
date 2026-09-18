@@ -1044,37 +1044,40 @@ a:hover { color: var(--ink); }
 .account-popover {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: 0;
-  z-index: 200;
+  left: -6px;
+  z-index: 9999;
   background-color: var(--surface-card);
   border: 1px solid var(--hairline);
   border-radius: 12px;
-  box-shadow: var(--shadow-elevated);
-  width: 296px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+  width: 280px;
+  max-width: calc(100vw - 32px);
   overflow: hidden;
-  animation: account-popover-in 0.15s ease;
+  animation: account-popover-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes account-popover-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+.account-popover--rail {
+  bottom: -4px;
+  left: calc(100% + 12px);
+  width: 280px;
 }
 
 .account-popover-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background-color: var(--canvas-soft);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .account-popover-avatar {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background-color: var(--primary);
   color: var(--on-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   display: grid;
   place-items: center;
@@ -1085,27 +1088,30 @@ a:hover { color: var(--ink); }
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .account-popover-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ink);
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .account-popover-role {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
+  margin-top: 1px;
 }
 
 .account-popover-email {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted-soft);
   white-space: nowrap;
   overflow: hidden;
@@ -1116,23 +1122,16 @@ a:hover { color: var(--ink); }
 .account-popover-divider {
   height: 1px;
   background-color: var(--hairline);
-}
-
-.account-popover-section-label {
-  padding: 8px 16px 4px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted-soft);
-  user-select: none;
+  margin: 2px 0;
 }
 
 .account-popover-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 16px;
+  padding: 8px 12px;
+  margin: 0 4px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
@@ -1140,38 +1139,80 @@ a:hover { color: var(--ink); }
   cursor: pointer;
   background: none;
   border: none;
-  width: 100%;
+  width: calc(100% - 8px);
   text-align: left;
   font-family: inherit;
-  transition: background-color 0.1s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+.account-popover-item svg {
+  flex-shrink: 0;
+  color: var(--muted);
 }
 
 .account-popover-item:hover {
-  background-color: var(--canvas-soft);
+  background-color: var(--surface-hover, var(--canvas-soft));
+  color: var(--ink);
+}
+
+.account-popover-item:hover svg {
+  color: var(--ink);
 }
 
 .account-popover-item:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .account-popover-item--disabled {
   color: var(--muted-soft);
   cursor: default;
   pointer-events: none;
+  opacity: 0.7;
 }
 
 .account-popover-theme-row {
-  padding: 2px 0;
+  padding: 2px 4px;
 }
 
 .account-popover-signout {
-  color: var(--semantic-error);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin: 0 4px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--semantic-error, #dc2626);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: calc(100% - 8px);
+  text-align: left;
+  font-family: inherit;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  box-sizing: border-box;
 }
+
+.account-popover-signout svg {
+  flex-shrink: 0;
+  color: var(--semantic-error, #dc2626);
+}
+
 .account-popover-signout:hover {
-  background-color: var(--red-light);
+  background-color: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
 }
+
+.account-popover-signout:hover svg {
+  color: #dc2626;
+}
+
 .account-popover-signout:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -1191,6 +1232,10 @@ a:hover { color: var(--ink); }
   font-size: 12px;
   color: var(--semantic-error);
   background-color: var(--red-light);
+}
+
+.account-popover-section-label {
+  display: none;
 }
 
 /* Screen-reader only utility */
@@ -1689,13 +1734,24 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 
 /* --- 15. Dialogs --- */
 .modal-overlay {
-  position: fixed; inset: 0; background-color: rgba(12, 10, 9, 0.42); z-index: 90;
+  position: fixed; inset: 0; background-color: rgba(12, 10, 9, 0.55); z-index: 90;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center; padding: 24px;
+  animation: modalOverlayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal-content {
   background-color: var(--surface-card); border: 1px solid var(--hairline);
-  border-radius: var(--radius-xl); box-shadow: var(--shadow-modal);
+  border-radius: var(--radius-xl); box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.18), 0 8px 12px -6px rgba(0, 0, 0, 0.08);
   width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px;
+  animation: modalContentScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modalContentScaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 @media (max-width: 640px) {
   .modal-overlay { align-items: flex-end; padding: 0; }

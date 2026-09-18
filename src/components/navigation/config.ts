@@ -3,7 +3,7 @@ import type { Role } from "@prisma/client";
 export type NavItem = {
   href: string;
   label: string;
-  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap" | "User" | "AlertTriangle" | "Plot" | "Settings" | "Navigation";
+  icon: "Farm" | "Sun" | "Calendar" | "ClipboardList" | "FileText" | "Shield" | "Users" | "Camera" | "Activity" | "Package" | "Coins" | "Truck" | "Stethoscope" | "TrendingUp" | "Zap" | "User" | "AlertTriangle" | "Plot" | "Settings" | "Navigation" | "Key";
   roles: Role[];
   isActive?: (pathname: string) => boolean;
 };
@@ -162,6 +162,27 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "Shield",
     roles: ["SUPER_ADMIN"],
     isActive: (p) => p.startsWith("/hq/people") || p.startsWith("/people"),
+  },
+  {
+    href: "/hq/profile",
+    label: "My Profile",
+    icon: "User",
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
+    isActive: (p) => p.startsWith("/hq/profile"),
+  },
+  {
+    href: "/hq/settings",
+    label: "Settings",
+    icon: "Settings",
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
+    isActive: (p) => p.startsWith("/hq/settings"),
+  },
+  {
+    href: "/hq/security",
+    label: "Security",
+    icon: "Key",
+    roles: ["SUPER_ADMIN", "OPERATIONS_MANAGER"],
+    isActive: (p) => p.startsWith("/hq/security"),
   },
 ];
 
