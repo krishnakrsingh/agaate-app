@@ -2160,9 +2160,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-completion.tsx": {
-    "mtime": 1789577447.3571744,
-    "seen": 1789672326.79655,
-    "ast_hash": "1717ca56a226bc472a5a4c944d699712",
+    "mtime": 1789781044.8323436,
+    "seen": 1789781151.3098748,
+    "ast_hash": "339ae2aabe1e2f28b808b859eb0cd3e5",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-contacts.tsx": {
@@ -2202,9 +2202,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-wizard.tsx": {
-    "mtime": 1789780452.304946,
-    "seen": 1789780528.315614,
-    "ast_hash": "454dd3b86b374839df044eb72bfeb51c",
+    "mtime": 1789781055.2797422,
+    "seen": 1789781151.3099072,
+    "ast_hash": "26f9c0cb4d5781c370af996331925f95",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-workspace.tsx": {

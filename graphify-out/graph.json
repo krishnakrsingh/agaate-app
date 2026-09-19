@@ -833,7 +833,7 @@
       "file_type": "code",
       "norm_label": "onboardingstepcompletionprops",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L8"
+      "source_location": "L9"
     },
     {
       "id": "src_modules_onboarding_ui_onboarding_step_review_activationresult",
@@ -6895,7 +6895,7 @@
       "file_type": "code",
       "norm_label": "onboardingstepcompletion()",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L14"
+      "source_location": "L15"
     },
     {
       "id": "src_modules_onboarding_ui_onboarding_step_contacts_onboardingstepcontacts",
@@ -48668,7 +48668,7 @@
     },
     {
       "source": "src_modules_onboarding_ui_onboarding_step_completion_onboardingstepcompletionprops",
-      "target": "src_modules_onboarding_ui_onboarding_step_review_activationresult",
+      "target": "src_modules_onboarding_ui_onboarding_schema_wizarddata",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -48680,14 +48680,14 @@
     },
     {
       "source": "src_modules_onboarding_ui_onboarding_step_completion_onboardingstepcompletionprops",
-      "target": "src_modules_onboarding_ui_onboarding_schema_wizarddata",
+      "target": "src_modules_onboarding_ui_onboarding_step_review_activationresult",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L9",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -69010,7 +69010,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -69022,7 +69022,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0
     },
     {
@@ -69034,7 +69034,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0
     },
     {
@@ -88118,7 +88118,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -88130,7 +88130,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "type_only": true,
       "weight": 1.0
     },
@@ -88143,7 +88143,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "type_only": true,
       "weight": 1.0
     },
@@ -109951,7 +109951,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0
     },
     {
@@ -109962,7 +109962,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/modules/onboarding/ui/onboarding-step-completion.tsx",
-      "source_location": "L8",
+      "source_location": "L9",
       "weight": 1.0
     },
     {

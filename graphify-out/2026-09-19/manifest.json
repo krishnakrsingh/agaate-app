@@ -2148,15 +2148,15 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-schema.ts": {
-    "mtime": 1789780607.1619565,
-    "seen": 1789780701.816206,
-    "ast_hash": "24320f35d9b68004ba3bc011c5b36b23",
+    "mtime": 1789780785.5476737,
+    "seen": 1789780879.4890082,
+    "ast_hash": "9cee904570e67f0d8d31cdacf19953cb",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-client.tsx": {
-    "mtime": 1789780310.8515599,
-    "seen": 1789780416.2258554,
-    "ast_hash": "4efe0516a7be0887dd165fd3f93fc1c0",
+    "mtime": 1789780777.9777968,
+    "seen": 1789780879.4890187,
+    "ast_hash": "5dc12f737b40f98b45ba517d9edcb735",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-completion.tsx": {
