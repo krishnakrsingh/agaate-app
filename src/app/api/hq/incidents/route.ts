@@ -116,10 +116,10 @@ export async function GET(request: NextRequest) {
         ...(where.AND || []),
         {
           OR: [
-            { id: { contains: search } },
-            { type: { contains: search } },
-            { description: { contains: search } },
-            { reporter: { name: { contains: search } } },
+            { id: { contains: search, mode: "insensitive" } },
+            { type: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { reporter: { name: { contains: search, mode: "insensitive" } } },
           ],
         },
       ];

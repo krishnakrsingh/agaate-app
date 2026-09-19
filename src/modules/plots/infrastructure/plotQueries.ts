@@ -31,9 +31,9 @@ export function buildPlotWhere(
   if (filters.search) {
     const search = filters.search;
     where.OR = [
-      { name: { contains: search } },
-      { soilType: { contains: search } },
-      { farm: { name: { contains: search } } },
+      { name: { contains: search, mode: "insensitive" } },
+      { soilType: { contains: search, mode: "insensitive" } },
+      { farm: { name: { contains: search, mode: "insensitive" } } },
     ];
   }
 

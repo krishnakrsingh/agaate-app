@@ -81,10 +81,10 @@ export async function GET(request: NextRequest) {
         ...(where.AND || []),
         {
           OR: [
-            { name: { contains: search } },
-            { email: { contains: search } },
-            { phone: { contains: search } },
-            { client: { name: { contains: search } } },
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            { phone: { contains: search, mode: "insensitive" } },
+            { client: { name: { contains: search, mode: "insensitive" } } },
           ],
         },
       ];

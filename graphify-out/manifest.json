@@ -54,15 +54,15 @@
     "semantic_hash": ""
   },
   "src/app/api/audit-logs/route.ts": {
-    "mtime": 1789599846.1818228,
-    "seen": 1789672326.7959034,
-    "ast_hash": "6544c09766295cd4baed898d34d36d51",
+    "mtime": 1789817222.4046757,
+    "seen": 1789817535.166308,
+    "ast_hash": "3644e615277faaf148d32183957645fa",
     "semantic_hash": ""
   },
   "src/app/api/auth/login/route.ts": {
-    "mtime": 1789725830.7171683,
-    "seen": 1789727744.935185,
-    "ast_hash": "dc0a81c23d15474ea1eb0db017c35597",
+    "mtime": 1789817281.0101633,
+    "seen": 1789817535.16631,
+    "ast_hash": "14213091c3ada64c6b6d52844ff81f8f",
     "semantic_hash": ""
   },
   "src/app/api/auth/logout/route.ts": {
@@ -1104,9 +1104,9 @@
     "semantic_hash": ""
   },
   "src/app/api/hq/history/route.ts": {
-    "mtime": 1789599846.2841957,
-    "seen": 1789672326.795973,
-    "ast_hash": "0ca653d057170ea6e5aaf8ba18fb1603",
+    "mtime": 1789817228.8918555,
+    "seen": 1789817535.1664195,
+    "ast_hash": "fc1d412f076701ab189fc2055d24a656",
     "semantic_hash": ""
   },
   "src/app/api/hq/incidents/route.ts": {
@@ -1170,15 +1170,15 @@
     "semantic_hash": ""
   },
   "src/app/api/hq/tasks/route.ts": {
-    "mtime": 1789599846.3020775,
-    "seen": 1789672326.7960112,
-    "ast_hash": "077cd70d8bf8f5bfd9bd2718997e582e",
+    "mtime": 1789816986.251396,
+    "seen": 1789817535.1664777,
+    "ast_hash": "1b456938764996c670d91d87016f6717",
     "semantic_hash": ""
   },
   "src/app/api/hq/tasks/workload/route.ts": {
-    "mtime": 1789599846.3039737,
-    "seen": 1789672326.7960143,
-    "ast_hash": "6db4a3b2102a63702be9bbc5c9e3f62f",
+    "mtime": 1789816998.1648483,
+    "seen": 1789817535.1664813,
+    "ast_hash": "b5c7e29653cad10acdec2fb98547eff9",
     "semantic_hash": ""
   },
   "src/app/attendance/page.tsx": {
@@ -1908,9 +1908,9 @@
     "semantic_hash": ""
   },
   "src/modules/estates/infrastructure/estateQueries.ts": {
-    "mtime": 1789812049.1389909,
-    "seen": 1789812678.1110344,
-    "ast_hash": "9700e176c4a1eaadfd0e00aeb5d52267",
+    "mtime": 1789816954.1626325,
+    "seen": 1789817535.167059,
+    "ast_hash": "7029d74b3a89fc1f45a97d16b2eb379d",
     "semantic_hash": ""
   },
   "src/modules/estates/schemas/estate.ts": {
@@ -2526,9 +2526,9 @@
     "semantic_hash": ""
   },
   "src/modules/plots/infrastructure/plotQueries.ts": {
-    "mtime": 1789811849.9077005,
-    "seen": 1789812678.1116226,
-    "ast_hash": "05bb16ee04535a1da27c4883f651819e",
+    "mtime": 1789816945.5014815,
+    "seen": 1789817535.1673992,
+    "ast_hash": "a5cbea6e099c06d0d1ede5a75a45ffd4",
     "semantic_hash": ""
   },
   "src/modules/plots/schemas/plot.ts": {
@@ -2598,9 +2598,9 @@
     "semantic_hash": ""
   },
   "src/modules/spatial/application/geo-versions.ts": {
-    "mtime": 1789582953.669866,
-    "seen": 1789672326.7967348,
-    "ast_hash": "a947f2eaacc126aa6611351b3207b1a4",
+    "mtime": 1789817273.6525772,
+    "seen": 1789817535.167482,
+    "ast_hash": "42451070853ce94ac7198b5d253a98eb",
     "semantic_hash": ""
   },
   "src/modules/spatial/application/plot-geo.test.ts": {
@@ -2868,9 +2868,9 @@
     "semantic_hash": ""
   },
   "scripts/ensure-db.mjs": {
-    "mtime": 1789736601.9763114,
-    "seen": 1789736695.7067668,
-    "ast_hash": "a6469ece4ddc64000c2115ca34c58265",
+    "mtime": 1789816861.5272305,
+    "seen": 1789817535.1661317,
+    "ast_hash": "22d4734700ea1a2faab332cc36398b92",
     "semantic_hash": ""
   },
   "prisma/migrations/20260918000000_chat_phase1/migration.sql": {
@@ -3126,9 +3126,21 @@
     "semantic_hash": ""
   },
   "src/modules/chat/infrastructure/chatBroadcaster.ts": {
-    "mtime": 1789814989.5154655,
-    "seen": 1789815498.132017,
-    "ast_hash": "2d6cd5de395803b9535a7bca5087d223",
+    "mtime": 1789815877.1575973,
+    "seen": 1789817535.1669765,
+    "ast_hash": "305b8dbdadb70c634b7528e83b1d88de",
+    "semantic_hash": ""
+  },
+  "scripts/setup-postgres.sh": {
+    "mtime": 1789816839.418131,
+    "seen": 1789817535.1661394,
+    "ast_hash": "7e40ef36a3ac5e11b9f17fbd1e97f8bd",
+    "semantic_hash": ""
+  },
+  "report.md": {
+    "mtime": 1789816234.4928052,
+    "seen": 1789817535.1677077,
+    "ast_hash": "8e510e3548840cecc715246158761ccd",
     "semantic_hash": ""
   }
 }

@@ -16,11 +16,11 @@ function buildWhere(search?: string, status?: string, state?: string) {
   if (state && state !== "ALL") where.state = state;
   if (search) {
     where.OR = [
-      { id: { contains: search } },
-      { name: { contains: search } },
-      { code: { contains: search } },
-      { phone: { contains: search } },
-      { companyName: { contains: search } },
+      { id: { contains: search, mode: "insensitive" } },
+      { name: { contains: search, mode: "insensitive" } },
+      { code: { contains: search, mode: "insensitive" } },
+      { phone: { contains: search, mode: "insensitive" } },
+      { companyName: { contains: search, mode: "insensitive" } },
     ];
   }
   return where;

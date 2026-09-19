@@ -93,7 +93,11 @@ export async function listTasks(opts: {
   }
   if (q) {
     and.push({
-      OR: [{ title: { contains: q } }, { description: { contains: q } }, { farm: { name: { contains: q } } }],
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { farm: { name: { contains: q, mode: "insensitive" } } },
+      ],
     });
   }
   if (and.length) where = { AND: [where, ...and] };

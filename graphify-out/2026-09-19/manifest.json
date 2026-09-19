@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "src/app/api/admin/onboard-client/route.ts": {
-    "mtime": 1789599846.1718116,
-    "seen": 1789672326.795879,
-    "ast_hash": "2811cb9f53a09c1ca899fabbfe509ec4",
+    "mtime": 1789815223.2683632,
+    "seen": 1789815498.1314433,
+    "ast_hash": "5c2fd36571dbc4437a2ec262c6d88606",
     "semantic_hash": ""
   },
   "src/lib/export.test.ts": {
@@ -1146,9 +1146,9 @@
     "semantic_hash": ""
   },
   "src/app/api/hq/onboarding/submit/route.ts": {
-    "mtime": 1789812012.4935377,
-    "seen": 1789812678.1101158,
-    "ast_hash": "6de86b54fa7872ea7bd1c888beffe502",
+    "mtime": 1789815212.6541371,
+    "seen": 1789815498.1315932,
+    "ast_hash": "c8829991ef285b840edbb0f742798c45",
     "semantic_hash": ""
   },
   "src/app/api/hq/people/labour/route.ts": {
@@ -2934,9 +2934,9 @@
     "semantic_hash": ""
   },
   "src/app/api/conversations/[conversationId]/messages/route.ts": {
-    "mtime": 1789812908.345538,
-    "seen": 1789813174.1754785,
-    "ast_hash": "808c18813d9efd2efce7624ad838f19f",
+    "mtime": 1789815081.2500708,
+    "seen": 1789815498.1314902,
+    "ast_hash": "ab77de96ce946a00115311904b400c74",
     "semantic_hash": ""
   },
   "src/app/api/conversations/[conversationId]/participants/route.ts": {
@@ -2958,15 +2958,15 @@
     "semantic_hash": ""
   },
   "src/app/api/conversations/roster/route.ts": {
-    "mtime": 1789742328.3136883,
-    "seen": 1789773835.8698134,
-    "ast_hash": "d624f95228e465b1f5c8a39c32faa31f",
+    "mtime": 1789815091.5118113,
+    "seen": 1789815498.1315057,
+    "ast_hash": "b560fc562bae0e0013f8d85d113f61b7",
     "semantic_hash": ""
   },
   "src/app/api/conversations/route.ts": {
-    "mtime": 1789742228.2828765,
-    "seen": 1789773835.8698156,
-    "ast_hash": "fe224377a46292a3d20fccf83dd76d4c",
+    "mtime": 1789815059.519936,
+    "seen": 1789815498.1315086,
+    "ast_hash": "babf9bd2b5d35609320a7957e8e36302",
     "semantic_hash": ""
   },
   "src/app/api/farms/[farmId]/dossier/route.ts": {
@@ -3006,15 +3006,15 @@
     "semantic_hash": ""
   },
   "src/modules/agronomy/ui/agronomy-chat.tsx": {
-    "mtime": 1789813053.9059527,
-    "seen": 1789813174.1761296,
-    "ast_hash": "852a73af053cf5e88559103189a29c06",
+    "mtime": 1789815184.3705642,
+    "seen": 1789815498.1319337,
+    "ast_hash": "4d39870dd6419b4d1fdcb9fa4aa260df",
     "semantic_hash": ""
   },
   "src/modules/chat/access.ts": {
-    "mtime": 1789742209.5942082,
-    "seen": 1789773835.870361,
-    "ast_hash": "8dd2d59ab06ae046c9d5378485ce3e3a",
+    "mtime": 1789815024.7705662,
+    "seen": 1789815498.1320124,
+    "ast_hash": "33eb5d1d58b994b103be43c560a9f5a3",
     "semantic_hash": ""
   },
   "src/modules/chat/dossier.ts": {
@@ -3030,15 +3030,15 @@
     "semantic_hash": ""
   },
   "src/modules/chat/ui/chat-thread.tsx": {
-    "mtime": 1789813027.169849,
-    "seen": 1789813174.1762426,
-    "ast_hash": "938b2c48f19a11507b2e245ed4d7a31e",
+    "mtime": 1789815142.9684923,
+    "seen": 1789815498.1320224,
+    "ast_hash": "7b3411b13c1304203399be3cdeb91e33",
     "semantic_hash": ""
   },
   "src/modules/chat/ui/owner-chat.tsx": {
-    "mtime": 1789813009.242856,
-    "seen": 1789813174.1762457,
-    "ast_hash": "883674cc8b217acc282800b82448045b",
+    "mtime": 1789815193.5514188,
+    "seen": 1789815498.1320245,
+    "ast_hash": "cf2ebd8be932f472a738280e53df982b",
     "semantic_hash": ""
   },
   "src/modules/crops/ui/crop-cycle-wizard.tsx": {
@@ -3111,6 +3111,24 @@
     "mtime": 1789780103.2100778,
     "seen": 1789780217.3946276,
     "ast_hash": "676f5abd22c800e7281bbe7c8ef0c18a",
+    "semantic_hash": ""
+  },
+  "src/app/api/conversations/[conversationId]/stream/route.ts": {
+    "mtime": 1789814996.7072463,
+    "seen": 1789815498.1315022,
+    "ast_hash": "b3e2cb677947c12467269e402223711f",
+    "semantic_hash": ""
+  },
+  "src/app/api/conversations/stream/route.ts": {
+    "mtime": 1789815003.6083744,
+    "seen": 1789815498.131511,
+    "ast_hash": "9095e5567d1c040beff9c72782f11da3",
+    "semantic_hash": ""
+  },
+  "src/modules/chat/infrastructure/chatBroadcaster.ts": {
+    "mtime": 1789814989.5154655,
+    "seen": 1789815498.132017,
+    "ast_hash": "2d6cd5de395803b9535a7bca5087d223",
     "semantic_hash": ""
   }
 }

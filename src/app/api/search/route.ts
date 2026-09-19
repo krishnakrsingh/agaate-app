@@ -22,7 +22,14 @@ export async function GET(request: NextRequest) {
     const [clients, farms, plots, users, tasks, incidents] = await Promise.all([
       actor.role === "SUPER_ADMIN" || actor.role === "OPERATIONS_MANAGER"
         ? prisma.client.findMany({
-            where: { OR: [{ name: { contains: q } }, { code: { contains: q } }, { phone: { contains: q } }, { companyName: { contains: q } }] },
+            where: {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { code: { contains: q, mode: "insensitive" } },
+                { phone: { contains: q, mode: "insensitive" } },
+                { companyName: { contains: q, mode: "insensitive" } },
+              ],
+            },
             select: { id: true, name: true, code: true, phone: true, state: true, district: true },
             take: per,
           })
@@ -31,18 +38,18 @@ export async function GET(request: NextRequest) {
         where: {
           ...farmScope,
           OR: [
-            { id: { contains: q } },
-            { name: { contains: q } },
-            { location: { contains: q } },
-            { village: { contains: q } },
-            { taluk: { contains: q } },
-            { district: { contains: q } },
-            { state: { contains: q } },
-            { pincode: { contains: q } },
-            { ownerName: { contains: q } },
-            { surveyNumber: { contains: q } },
-            { client: { name: { contains: q } } },
-            { client: { code: { contains: q } } },
+            { id: { contains: q, mode: "insensitive" } },
+            { name: { contains: q, mode: "insensitive" } },
+            { location: { contains: q, mode: "insensitive" } },
+            { village: { contains: q, mode: "insensitive" } },
+            { taluk: { contains: q, mode: "insensitive" } },
+            { district: { contains: q, mode: "insensitive" } },
+            { state: { contains: q, mode: "insensitive" } },
+            { pincode: { contains: q, mode: "insensitive" } },
+            { ownerName: { contains: q, mode: "insensitive" } },
+            { surveyNumber: { contains: q, mode: "insensitive" } },
+            { client: { name: { contains: q, mode: "insensitive" } } },
+            { client: { code: { contains: q, mode: "insensitive" } } },
           ],
         },
         select: { id: true, name: true, location: true, status: true, setupStage: true, district: true, state: true, client: { select: { name: true } } },
@@ -53,7 +60,10 @@ export async function GET(request: NextRequest) {
         where: {
           farm: farmScope,
           deletedAt: null,
-          OR: [{ name: { contains: q } }, { soilType: { contains: q } }],
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { soilType: { contains: q, mode: "insensitive" } },
+          ],
         },
         select: {
           id: true,
@@ -68,7 +78,11 @@ export async function GET(request: NextRequest) {
         ? prisma.user.findMany({
             where: {
               role: { in: ["SUPER_ADMIN", "OPERATIONS_MANAGER", "AGRONOMIST"] },
-              OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }],
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+                { phone: { contains: q, mode: "insensitive" } },
+              ],
             },
             select: { id: true, name: true, email: true, role: true, active: true },
             take: per,
@@ -77,7 +91,11 @@ export async function GET(request: NextRequest) {
         ? prisma.user.findMany({
             where: {
               farmAccess: { some: { farm: farmScope } },
-              OR: [{ name: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }],
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+                { phone: { contains: q, mode: "insensitive" } },
+              ],
             },
             select: { id: true, name: true, email: true, role: true, active: true },
             take: per,
@@ -86,14 +104,23 @@ export async function GET(request: NextRequest) {
       prisma.task.findMany({
         where: {
           ...(isPlatform ? {} : actor.role === "FARM_OFFICER" ? { assignedOfficerId: actor.id } : { farm: { access: { some: { userId: actor.id } } } }),
-          OR: [{ title: { contains: q } }, { description: { contains: q } }],
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
         },
         select: { id: true, title: true, status: true, dueDate: true, farm: { select: { id: true, name: true } } },
         orderBy: { dueDate: "asc" },
         take: per,
       }),
       prisma.incident.findMany({
-        where: { farm: farmScope, OR: [{ type: { contains: q } }, { description: { contains: q } }] },
+        where: {
+          farm: farmScope,
+          OR: [
+            { type: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        },
         select: { id: true, type: true, status: true, severity: true, createdAt: true, farm: { select: { id: true, name: true } } },
         orderBy: { createdAt: "desc" },
         take: per,

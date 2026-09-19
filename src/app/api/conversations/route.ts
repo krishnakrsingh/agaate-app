@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
     if (status === "OPEN" || status === "CLOSED") where.status = status;
     if (q) {
       where.OR = [
-        { subject: { contains: q } },
-        { farm: { name: { contains: q } } },
+        { subject: { contains: q, mode: "insensitive" } },
+        { farm: { name: { contains: q, mode: "insensitive" } } },
       ];
     }
 
