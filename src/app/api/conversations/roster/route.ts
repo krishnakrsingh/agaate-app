@@ -33,25 +33,59 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
+    const isSupervisory = actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST";
+
     const mine = await prisma.conversation.findMany({
       where: {
         farmId,
         status: "OPEN",
-        id: { in: (await prisma.conversationParticipant.findMany({ where: { userId: actor.id }, select: { conversationId: true } })).map((p) => p.conversationId) },
+        ...(isSupervisory
+          ? {}
+          : {
+              id: {
+                in: (
+                  await prisma.conversationParticipant.findMany({
+                    where: { userId: actor.id },
+                    select: { conversationId: true },
+                  })
+                ).map((p) => p.conversationId),
+              },
+            }),
       },
       select: { id: true, subject: true, plotId: true, lastMessageAt: true },
       orderBy: { lastMessageAt: "desc" },
       take: 20,
     });
 
+    const people = access.map((a) => ({
+      userId: a.user.id,
+      name: a.user.name,
+      role: a.user.role,
+      lead: a.canManage,
+    }));
+
+    // If no agronomist is explicitly assigned to this farm, include active central agronomists
+    // so owners and officers can always consult agronomic staff.
+    const hasAgronomist = people.some((p) => p.role === "AGRONOMIST");
+    if (!hasAgronomist && actor.role !== "AGRONOMIST") {
+      const centralAgronomists = await prisma.user.findMany({
+        where: { role: "AGRONOMIST", active: true, id: { not: actor.id } },
+        select: { id: true, name: true, role: true },
+        take: 3,
+      });
+      for (const ag of centralAgronomists) {
+        people.push({
+          userId: ag.id,
+          name: ag.name,
+          role: ag.role,
+          lead: false,
+        });
+      }
+    }
+
     return NextResponse.json({
       farm,
-      people: access.map((a) => ({
-        userId: a.user.id,
-        name: a.user.name,
-        role: a.user.role,
-        lead: a.canManage,
-      })),
+      people,
       myConversations: mine,
     });
   } catch (error) {

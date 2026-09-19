@@ -1,16 +1,16 @@
 # Graph Report - agaateapp  (2026-09-19)
 
 ## Corpus Check
-- 511 files · ~374,928 words
+- 511 files · ~377,498 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2583 nodes · 7431 edges · 152 communities (125 shown, 27 thin omitted)
+- 2586 nodes · 7445 edges · 148 communities (122 shown, 26 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 9 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4c10f8c5`
+- Built from commit: `e28d20a6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,7 +25,7 @@
 - plots/index.ts
 - dependencies
 - devDependencies
-- Navbar
+- requireSession
 - onboarding-schema.ts
 - scripts
 - Rate Limiting in FastAPI
@@ -34,12 +34,12 @@
 - React Countdown Timer Component
 - Ponytail
 - package.json
-- HttpError
+- accessibleFarmWhere
 - examples/README.md
 - Email Validation Function
 - Ponytail Help
 - adversarial.test.ts
-- icons.tsx
+- toast.tsx
 - farm-hub-client.tsx
 - Debounce Search Input
 - auth/index.ts
@@ -66,7 +66,7 @@
 - Number Formatting
 - URL Parameters
 - boundary-walk.tsx
-- session.ts
+- client-360.tsx
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
 - react-countdown.md
@@ -79,69 +79,66 @@
 - workflows/graphify.md
 - next.config.ts
 - next-env.d.ts
-- people-directory.tsx
-- incident-report-form.tsx
+- attendance-geo-route.test.ts
+- weekly-planner.tsx
 - calendar-platform.tsx
 - 20260830181349_init_mysql/migration.sql
-- security/index.ts
+- navbar.tsx
 - crew/page.tsx
 - No AI slop
 - downloadUrl
 - parseBoundaryToRing
 - client-farms-map.tsx
-- task-form.tsx
-- requireRole
+- hq/incidents/route.ts
+- security/index.ts
 - incidents-command.tsx
-- db.ts
-- LoginForm
-- roles/route.ts
-- navbar.tsx
+- boundaries.test.ts
+- hq/tasks/route.ts
+- owner-chat.tsx
+- desktop-sidebar.tsx
 - operations-triage-console.tsx
 - No AI slop eval
-- officer-day.tsx
+- farm-command-center.tsx
 - plot-geo.test.ts
 - client-directory.tsx
 - attendance-geo.ts
 - No AI Slop — Human Writing & Anti-Slop Guidelines
-- profile-settings-console.tsx
+- farm-demarcation-map.tsx
 - getSession
 - design-guard.test.ts
 - LngLat
 - middleware.ts
-- weekly-planner.tsx
-- requireSession
+- agronomy-chat.tsx
+- reports/page.tsx
 - hq/system/page.tsx
-- officer/profile/page.tsx
+- icons.tsx
 - AdminConsole
 - Local Development & Setup Guide
 - owner/farms/page.tsx
-- sync/route.ts
-- hq/clients/route.ts
-- hq/incidents/route.ts
+- walk-sync.test.ts
+- currentActor
+- officer-chat.tsx
 - audit
-- daily/page.tsx
+- [cycleId]/edit/page.tsx
 - owner/people/page.tsx
 - estates/index.ts
-- requireFarmAccess
+- prisma
 - 20260910170000_boundary_versions/migration.sql
-- cn
-- reports/page.tsx
-- UnifiedDirectory
+- farm-registry.tsx
+- onboarding-workspace.tsx
+- crop-cycle-form.tsx
 - eslint
 - @radix-ui/react-label
 - geo-write-paths.test.ts
 - layout.tsx
 - react-dom
 - components.json
-- [cycleId]/edit/page.tsx
-- ProfileMenu
+- notification-bell.tsx
+- app/operations/page.tsx
 - crops/page.tsx
-- hq/people/page.tsx
-- OnboardingWorkspace
-- app/farms/new/page.tsx
-- boundary/page.tsx
+- hasPermission
+- FarmForm
 - reverse/route.ts
-- attendance-geo-route.test.ts
 - validation.ts
 - backfill-boundary-versions.ts
 - backfill-role-definitions.mjs
@@ -152,7 +149,6 @@
 - ensure-db.mjs
 - @prisma/client
 - owner/operations/page.tsx
-- farm-registry.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `apiError()` - 235 edges
@@ -167,37 +163,37 @@
 10. `Navbar()` - 52 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `AgronomyChatPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/(control)/agronomy/chat/page.tsx → src/modules/auth/infrastructure/session.ts
-- `HqAnalyticsPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/(control)/hq/analytics/page.tsx → src/modules/auth/infrastructure/session.ts
-- `EditClientPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/(control)/hq/clients/[clientId]/edit/page.tsx → src/modules/auth/infrastructure/session.ts
-- `AddClientFarmPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/(control)/hq/clients/[clientId]/farms/new/page.tsx → src/modules/auth/infrastructure/session.ts
-- `HqIncidentsPage()` --calls--> `requireSession()`  [EXTRACTED]
-  src/app/(control)/hq/incidents/page.tsx → src/modules/auth/infrastructure/session.ts
+- `HqProfilePage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/(control)/hq/profile/page.tsx → src/modules/auth/infrastructure/session.ts
+- `OfficerChatPage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/(field)/officer/chat/page.tsx → src/modules/auth/infrastructure/session.ts
+- `OfficerDayPage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/(field)/officer/day/page.tsx → src/modules/auth/infrastructure/session.ts
+- `OfficerReportsPage()` --calls--> `requireSession()`  [EXTRACTED]
+  src/app/(field)/officer/reports/page.tsx → src/modules/auth/infrastructure/session.ts
+- `GET()` --indirect_call--> `serializeBoundaryVersion()`  [INFERRED]
+  src/app/api/farms/[farmId]/boundary-versions/route.ts → src/modules/spatial/application/geo-versions.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (152 total, 27 thin omitted)
+## Communities (148 total, 26 thin omitted)
 
 ### Community 0 - "useToast"
-Cohesion: 0.05
-Nodes (44): RFC-4180, useToast(), PrintableTask, Farm, MobileCrewMuster(), MusterRecord, WorkforceAttendanceConsole(), ClientEditForm() (+36 more)
+Cohesion: 0.07
+Nodes (35): RFC-4180, useToast(), Farm, MobileCrewMuster(), MusterRecord, FarmSettingsConsole(), FarmSettingsData, Expense (+27 more)
 
 ### Community 1 - "operations/index.ts"
 Cohesion: 0.06
-Nodes (61): completeTask(), Db, persistCompletion(), ADR-0006, Tx, Db, listTasks(), Db (+53 more)
+Nodes (63): completeTask(), Db, persistCompletion(), ADR-0006, Tx, Db, listTasks(), Db (+55 more)
 
 ### Community 2 - "apiError"
-Cohesion: 0.12
-Nodes (45): GET(), GET(), GET(), GET(), GET(), GET(), GET(), GET() (+37 more)
+Cohesion: 0.10
+Nodes (42): GET(), GET(), GET(), GET(), musterSchema, POST(), createSchema, GET() (+34 more)
 
 ### Community 3 - "geo-map.tsx"
 Cohesion: 0.04
-Nodes (66): Farm360, Farm360Incident, Farm360Plot, Farm360Task, GeoMap, HqFarm360(), saveBoundary(), SETUP_STAGES (+58 more)
+Nodes (54): Farm360, Farm360Incident, Farm360Plot, Farm360Task, GeoMap, HqFarm360(), saveBoundary(), SETUP_STAGES (+46 more)
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.06
@@ -223,13 +219,13 @@ Nodes (29): @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, bcryptjs, class-v
 Cohesion: 0.06
 Nodes (31): autoprefixer, eslint-config-next, devDependencies, autoprefixer, eslint-config-next, @playwright/test, postcss, prisma (+23 more)
 
-### Community 10 - "Navbar"
+### Community 10 - "requireSession"
 Cohesion: 0.06
-Nodes (37): AttendancePage(), dynamic, AgronomyChatPage(), dynamic, dynamic, HqAgronomistsPage(), dynamic, HqAnalyticsPage() (+29 more)
+Nodes (40): AttendancePage(), dynamic, ClientDetailPage(), dynamic, AgronomyChatPage(), dynamic, dynamic, HqAnalyticsPage() (+32 more)
 
 ### Community 11 - "onboarding-schema.ts"
 Cohesion: 0.05
-Nodes (64): dynamic, HqOnboardingNewPage(), Props, clearLocal(), emptyCrop(), emptyFarm(), emptyPlot(), emptyWizard() (+56 more)
+Nodes (65): dynamic, HqOnboardingNewPage(), Props, clearLocal(), emptyCrop(), emptyFarm(), emptyPlot(), emptyWizard() (+57 more)
 
 ### Community 12 - "scripts"
 Cohesion: 0.15
@@ -240,8 +236,8 @@ Cohesion: 0.20
 Nodes (10): 1. **Using `slowapi` (Recommended - Easiest)**, 2. **Using `limits` Library (More Control)**, 3. **Custom Middleware (Full Control)**, 4. **Per-User Rate Limiting (With Authentication)**, 5. **Redis-Based Rate Limiting (Production)**, 6. **Complete Example with Multiple Endpoints**, Comparison Table, Rate Limiting in FastAPI (+2 more)
 
 ### Community 14 - "tasks-ledger.tsx"
-Cohesion: 0.13
-Nodes (24): AssignControl(), assignmentText(), DetailTask, HistoryEntry, TaskDetailDrawer(), BULK_STATUSES, HqTask, HqTasksLedger() (+16 more)
+Cohesion: 0.05
+Nodes (42): AssignControl(), assignmentText(), DetailTask, HistoryEntry, TaskDetailDrawer(), BULK_STATUSES, HqTask, HqTasksLedger() (+34 more)
 
 ### Community 15 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -259,9 +255,9 @@ Nodes (8): Boundaries, Intensity, Output, Persistence, Ponytail, Rules, The ladd
 Cohesion: 0.33
 Nodes (5): name, prisma, seed, private, version
 
-### Community 19 - "HttpError"
-Cohesion: 0.11
-Nodes (25): DayBucket, dayKey(), dynamic, emptyTotals(), GET(), parseDay(), dynamic, GET() (+17 more)
+### Community 19 - "accessibleFarmWhere"
+Cohesion: 0.10
+Nodes (26): GET(), DayBucket, dayKey(), dynamic, emptyTotals(), GET(), parseDay(), dynamic (+18 more)
 
 ### Community 20 - "examples/README.md"
 Cohesion: 0.25
@@ -276,32 +272,32 @@ Cohesion: 0.25
 Nodes (7): Configure Default Mode, Deactivate, Levels, More, Ponytail Help, Skills, Update
 
 ### Community 23 - "adversarial.test.ts"
-Cohesion: 0.08
-Nodes (28): GET(), POST(), POST(), POST(), GET(), PATCH(), GET(), POST() (+20 more)
+Cohesion: 0.07
+Nodes (35): PATCH(), GET(), POST(), POST(), POST(), GET(), POST(), secret (+27 more)
 
-### Community 24 - "icons.tsx"
-Cohesion: 0.05
-Nodes (29): IconProps, Icons, ThemeToggle(), ToastContext, ToastContextType, ToastMessage, ToastType, AttendanceRecord (+21 more)
+### Community 24 - "toast.tsx"
+Cohesion: 0.07
+Nodes (23): StepWizard(), StepWizardProps, WizardStep, ToastContext, ToastContextType, ToastMessage, ToastType, CropCycleWizard() (+15 more)
 
 ### Community 25 - "farm-hub-client.tsx"
-Cohesion: 0.06
-Nodes (26): Weather, WeatherCard(), AccessResponse, FarmAccessManager(), Person, FarmSetupStageKey, GeoMap, SETUP_STAGES (+18 more)
+Cohesion: 0.05
+Nodes (24): Weather, WeatherCard(), ActivateFarmButton(), AccessResponse, FarmAccessManager(), Person, Farm, FarmEditForm() (+16 more)
 
 ### Community 26 - "Debounce Search Input"
 Cohesion: 0.29
 Nodes (7): Advanced: Debounce with Cancel & Immediate Options, Basic Debounce Function, Debounce Search Input, Enhanced Version with Loading State, HTML Example, Key Benefits, With Ponytail, 10 lines of code
 
 ### Community 27 - "auth/index.ts"
-Cohesion: 0.19
-Nodes (26): actorHasPermission(), buildActor(), parseRoleDefinition(), RoleDefinitionView, RoleDefRow, AccessLevelLabel, AccessScope, ALL_PERMISSIONS (+18 more)
+Cohesion: 0.10
+Nodes (48): platformReadRoles, Actor, actorHasPermission(), buildActor(), parseRoleDefinition(), RoleDefinitionView, RoleDefRow, AccessLevelLabel (+40 more)
 
 ### Community 28 - "tasks-queue.tsx"
-Cohesion: 0.10
-Nodes (19): Column, ServerTable(), ServerTableProps, ServerListState, useServerList(), Client, ClientsDirectory(), Farm (+11 more)
+Cohesion: 0.08
+Nodes (21): dynamic, ServerTable(), ServerListState, useServerList(), Client, ClientsDirectory(), Farm, FarmsDirectory() (+13 more)
 
 ### Community 29 - "cropping/index.ts"
-Cohesion: 0.06
-Nodes (56): DELETE(), GET(), PATCH(), CropCycleDetailPage(), dynamic, NewCropCyclePage(), BANNED_APP_DIRS, BANNED_COMPONENT_DIRS (+48 more)
+Cohesion: 0.11
+Nodes (38): DELETE(), GET(), PATCH(), CropCycleDetailPage(), createCropCycle(), deleteCropCycle(), getCropCycleDetail(), getCropCycleDetailPageData() (+30 more)
 
 ### Community 30 - "graphify reference: query, path, explain"
 Cohesion: 0.33
@@ -312,12 +308,12 @@ Cohesion: 0.33
 Nodes (5): Alternative methods:, CSV Sum, Python code to read sales.csv and sum the 'amount' column, With Ponytail, 3 lines of code, Without Ponytail, 20 lines of code
 
 ### Community 32 - "chat-thread.tsx"
-Cohesion: 0.08
-Nodes (45): CHAT_ROLES, Item, NotificationBell(), AgronomyChat(), daysInGround(), FarmDemarcationMap, FarmDossier, FarmOption (+37 more)
+Cohesion: 0.23
+Nodes (16): ChatAttachment, ChatMessage, ChatRef, enqueueOutbox(), loadOutbox(), markOutboxStatus(), OutboxItem, outboxKey() (+8 more)
 
 ### Community 33 - "spatial/index.ts"
-Cohesion: 0.15
-Nodes (27): BBox, DEFAULT_GEOFENCE_RADIUS_METERS, distanceMeters(), GridCell, pathPerimeterM(), radians(), AREA_CHANGE_FLAG_THRESHOLD, areaChangeText() (+19 more)
+Cohesion: 0.19
+Nodes (23): distanceMeters(), pathPerimeterM(), AREA_CHANGE_FLAG_THRESHOLD, areaChangeText(), assessTrack(), CleanedTrack, cleanSamples(), closureGapM() (+15 more)
 
 ### Community 34 - "ponytail-audit/SKILL.md"
 Cohesion: 0.40
@@ -384,28 +380,28 @@ Cohesion: 0.50
 Nodes (3): URL Parameters, With Ponytail, Without Ponytail
 
 ### Community 50 - "boundary-walk.tsx"
-Cohesion: 0.14
-Nodes (26): GpsSample, FarmOpt, PlotOpt, BoundaryWalk(), fmtElapsed(), INDIA_CENTER, QueueList(), ringAcresSafe() (+18 more)
+Cohesion: 0.13
+Nodes (27): GpsSample, BoundaryTargetPicker(), FarmOpt, PlotOpt, BoundaryWalk(), fmtElapsed(), INDIA_CENTER, QueueList() (+19 more)
 
-### Community 51 - "session.ts"
-Cohesion: 0.18
-Nodes (15): platformReadRoles, Actor, loadActiveUser(), Session, LEGACY_ROLES, requireSecret(), secret, signSessionToken() (+7 more)
+### Community 51 - "client-360.tsx"
+Cohesion: 0.24
+Nodes (8): Skeleton(), Bundle, Client360(), FarmItem, formatPhone(), GeoMap, initials(), TeamMember
 
 ### Community 55 - "seed-scale.ts"
 Cohesion: 0.21
 Nodes (11): main(), prisma, backfillUserRoleDefinitions(), seedRoleDefinitions(), BIZ_SUFFIXES, chunkedInsert(), ENTITY_TYPES, FIRST_NAMES (+3 more)
 
 ### Community 57 - "geo-core.ts"
-Cohesion: 0.14
-Nodes (35): irrigationItem, POST(), schema, normalizeToGeoJson(), ringAcres(), throwFirst(), bboxOfRing(), clipPolygonToRect() (+27 more)
+Cohesion: 0.11
+Nodes (42): irrigationItem, POST(), schema, normalizeToGeoJson(), ringAcres(), throwFirst(), BBox, bboxOfRing() (+34 more)
 
-### Community 64 - "people-directory.tsx"
-Cohesion: 0.09
-Nodes (18): describeUserAccess(), roleUsesFarmAccess(), formatDate(), getInitials(), parseNameAndTitle(), PeopleDirectory(), SORT_LABELS, SortOption (+10 more)
+### Community 64 - "attendance-geo-route.test.ts"
+Cohesion: 0.18
+Nodes (9): FARM_GEOJSON, FARM_RING, PLOT_RING, secret, selfie(), AttendanceForm(), basisText(), handleClockIn() (+1 more)
 
-### Community 65 - "incident-report-form.tsx"
-Cohesion: 0.13
-Nodes (18): PhotoItem, cropStages, Cycle, Farm, FieldReports(), submitMonitoring(), Plot, ALL_TYPES (+10 more)
+### Community 65 - "weekly-planner.tsx"
+Cohesion: 0.06
+Nodes (42): PhotoItem, PhotoUploadZone(), PhotoUploadZoneProps, uploadEvidencePhotos(), PrintableSpraySheet(), PrintableTask, Farm, Officer (+34 more)
 
 ### Community 66 - "calendar-platform.tsx"
 Cohesion: 0.13
@@ -415,57 +411,57 @@ Nodes (25): OfficerRow, HistoryItem, HistoryKind, addDays(), CalendarPayload, Da
 Cohesion: 0.11
 Nodes (40): `AgronomyPlan`, `Attendance`, `AttendanceException`, `AuditLog`, `CropCycle`, `CropMonitoring`, `CropVariety`, `Farm` (+32 more)
 
-### Community 69 - "security/index.ts"
-Cohesion: 0.18
-Nodes (14): normalizePhone(), POST(), createItemSchema, POST(), transactionSchema, acquireRateLimitSlot(), clearRateLimitStore(), RateLimitRecord (+6 more)
+### Community 69 - "navbar.tsx"
+Cohesion: 0.06
+Nodes (34): AgronomyPlanningPage(), dynamic, dynamic, HqProfilePage(), dynamic, OwnerChatPage(), dynamic, FarmsPage() (+26 more)
 
 ### Community 70 - "crew/page.tsx"
-Cohesion: 0.21
-Nodes (8): dynamic, OfficerCrewPage(), dynamic, OfficerHarvestPage(), dynamic, OfficerQuickLogPage(), MobileOfficerHeader(), MobileOfficerHeaderProps
+Cohesion: 0.14
+Nodes (13): dynamic, OfficerCrewPage(), dynamic, OfficerHarvestPage(), dynamic, OfficerQuickLogPage(), CATEGORIES, Farm (+5 more)
 
 ### Community 73 - "No AI slop"
 Cohesion: 0.25
 Nodes (7): Editing principles, No AI slop, Patterns to cut, Two jobs, What to ask for, Words to cut, Workflow
 
 ### Community 74 - "downloadUrl"
-Cohesion: 0.17
-Nodes (20): canViewFarmMedia(), dynamic, GET(), dynamic, GET(), PATCH(), schema, GET() (+12 more)
+Cohesion: 0.21
+Nodes (10): canViewFarmMedia(), dynamic, GET(), dynamic, GET(), PATCH(), schema, GET() (+2 more)
 
 ### Community 75 - "parseBoundaryToRing"
-Cohesion: 0.17
-Nodes (15): POST(), BoundaryWrite, commitBoundary(), CommittedVersion, flagForChange(), plotsOutsideRing(), NOTE: under the entity-row lock above, P2002 here is near-impossible;, serializeBoundaryVersion() (+7 more)
+Cohesion: 0.11
+Nodes (27): POST(), centroid(), POST(), reconcileCaptureTrack(), recordWalkEvidence(), sameRing(), sampleSchema, schema (+19 more)
 
 ### Community 76 - "client-farms-map.tsx"
 Cohesion: 0.29
 Nodes (4): buildClusters(), ClientFarmsMap(), ClientMapPin, Cluster
 
-### Community 77 - "task-form.tsx"
-Cohesion: 0.16
-Nodes (14): PhotoUploadZone(), PhotoUploadZoneProps, uploadEvidencePhotos(), CreateTaskModal(), Farm, Plot, PRESETS, Access (+6 more)
+### Community 77 - "hq/incidents/route.ts"
+Cohesion: 0.31
+Nodes (8): ageLabel(), dynamic, GET(), HQ_INCIDENT_PAGE_SIZE, P0_SLA_HOURS, pClassOf(), severityFilter(), STATUSES
 
-### Community 78 - "requireRole"
-Cohesion: 0.09
-Nodes (36): GET(), POST(), GET(), GET(), DELETE(), ENTITY_TYPES, GET(), POST() (+28 more)
+### Community 78 - "security/index.ts"
+Cohesion: 0.08
+Nodes (38): normalizePhone(), POST(), DELETE(), ENTITY_TYPES, GET(), POST(), sendSchema, ShapedMessage (+30 more)
 
 ### Community 79 - "incidents-command.tsx"
 Cohesion: 0.11
 Nodes (17): AuditEntry, Detail, DrawerChanged, errMsg(), FollowUp, IncidentDrawer(), changeStatus(), load() (+9 more)
 
-### Community 80 - "db.ts"
-Cohesion: 0.14
-Nodes (12): dynamic, createClientSchema, dynamic, dynamic, GET(), num(), dynamic, asNum() (+4 more)
+### Community 80 - "boundaries.test.ts"
+Cohesion: 0.16
+Nodes (17): BANNED_APP_DIRS, BANNED_COMPONENT_DIRS, BANNED_IN_PURE, COMPONENT_PRISMA_GRANDFATHER, DELETED_PATHS, PURE_FILES, ROOT, SRC (+9 more)
 
-### Community 81 - "LoginForm"
-Cohesion: 0.83
-Nodes (4): LoginForm(), performLogin(), quickLogin(), submit()
+### Community 81 - "hq/tasks/route.ts"
+Cohesion: 0.31
+Nodes (8): asIso(), asNum(), escapeLike(), GET(), LedgerDbRow, PRIORITIES, SORTS, TASK_STATUSES
 
-### Community 82 - "roles/route.ts"
-Cohesion: 0.26
-Nodes (9): createSchema, GET(), POST(), secret, isValidPermission(), normalizePermissions(), legacyRoleForDefinition(), slugifyRoleName() (+1 more)
+### Community 82 - "owner-chat.tsx"
+Cohesion: 0.28
+Nodes (8): RefPlot, displayName(), FarmOption, OwnerChat(), OwnerChatProps, roleLabel(), RosterConversation, RosterPerson
 
-### Community 83 - "navbar.tsx"
-Cohesion: 0.08
-Nodes (26): AccountPopover(), getInitials(), getProfileHref(), UserInfo, BrandLogo(), BrandLogoProps, CommandPalette(), CommandPaletteProps (+18 more)
+### Community 83 - "desktop-sidebar.tsx"
+Cohesion: 0.13
+Nodes (13): AccountPopover(), getInitials(), getProfileHref(), UserInfo, BrandLogo(), BrandLogoProps, ROLE_HOME_URLS, DesktopSidebar() (+5 more)
 
 ### Community 84 - "operations-triage-console.tsx"
 Cohesion: 0.20
@@ -475,17 +471,17 @@ Nodes (6): loadClaimed(), OperationsTriageConsole(), QueueItem, QueueKind, sever
 Cohesion: 0.33
 Nodes (5): Editing principles, Final read, No AI slop eval, Patterns to cut, Words to cut
 
-### Community 86 - "officer-day.tsx"
-Cohesion: 0.04
-Nodes (52): dynamic, OfficerDayPage(), dynamic, PriorityBadge(), RoleBadge(), StatusBadge(), EmptyState(), CardSkeleton() (+44 more)
+### Community 86 - "farm-command-center.tsx"
+Cohesion: 0.05
+Nodes (46): dynamic, Column, ServerTableProps, PriorityBadge(), RoleBadge(), StatusBadge(), EmptyState(), CardSkeleton() (+38 more)
 
 ### Community 87 - "plot-geo.test.ts"
 Cohesion: 0.17
 Nodes (7): FARM_GEOJSON, FARM_RING, INSIDE, OUTSIDE, secret, STRADDLE, TOUCHING
 
 ### Community 88 - "client-directory.tsx"
-Cohesion: 0.16
-Nodes (15): ClientActionsMenu(), ClientMenuTarget, digitsOnly(), ClientDirectory(), ClientRow, fullTime(), paginationItems(), QUICK_VIEWS (+7 more)
+Cohesion: 0.13
+Nodes (17): dynamic, HqClientsPage(), ClientActionsMenu(), ClientMenuTarget, digitsOnly(), ClientDirectory(), ClientRow, fullTime() (+9 more)
 
 ### Community 89 - "attendance-geo.ts"
 Cohesion: 0.12
@@ -495,65 +491,65 @@ Nodes (16): attendanceDisplayVerdict(), AttendanceLocationErr, AttendanceLocatio
 Cohesion: 0.40
 Nodes (4): Banned Words & Cliches, Core Rules, No AI Slop — Human Writing & Anti-Slop Guidelines, Two Modes (Skill `/no-ai-slop`)
 
-### Community 92 - "profile-settings-console.tsx"
-Cohesion: 0.36
-Nodes (6): dynamic, HqProfilePage(), formatDate(), getInitials(), ProfileSettingsConsole(), ProfileUser
+### Community 92 - "farm-demarcation-map.tsx"
+Cohesion: 0.20
+Nodes (7): FarmDemarcationMap, DemarcationFarm, DemarcationPlot, FarmDemarcationMap(), FarmDemarcationMapProps, PLOT_COLOR_PALETTE, toLeafletCoords()
 
 ### Community 93 - "getSession"
 Cohesion: 0.11
-Nodes (17): POST(), dynamic, GET(), secret, passwordSchema, PUT(), PUT(), schema (+9 more)
+Nodes (19): POST(), dynamic, GET(), passwordSchema, PUT(), PUT(), schema, dynamic (+11 more)
 
 ### Community 95 - "LngLat"
-Cohesion: 0.11
-Nodes (19): GET(), GET(), FARM_RING, PLOT_RING, secret, ValidatedPlotGeometry, getPlotVisits(), PlotVisitData (+11 more)
+Cohesion: 0.16
+Nodes (15): GET(), ValidatedPlotGeometry, getPlotVisits(), PlotVisitData, LngLat, fences, visits, computePlotVisits() (+7 more)
 
 ### Community 96 - "middleware.ts"
 Cohesion: 0.60
 Nodes (4): config, isApiMutation(), middleware(), originAllowed()
 
-### Community 97 - "weekly-planner.tsx"
-Cohesion: 0.20
-Nodes (9): AgronomyPlanningPage(), dynamic, PrintableSpraySheet(), Farm, Officer, Plot, RECIPE_PRESETS, ScheduledTask (+1 more)
+### Community 97 - "agronomy-chat.tsx"
+Cohesion: 0.33
+Nodes (8): AgronomyChat(), daysInGround(), FarmDossier, FarmOption, humanize(), RosterPerson, seasonProgress(), newClientMessageId()
 
-### Community 98 - "requireSession"
-Cohesion: 0.09
-Nodes (22): ClientDetailPage(), dynamic, dynamic, HqClientDetailPage(), dynamic, HqClientsPage(), dynamic, HqFarmsPage() (+14 more)
+### Community 98 - "reports/page.tsx"
+Cohesion: 0.33
+Nodes (3): dynamic, OfficerReportsPage(), LocationRequestForm()
 
 ### Community 99 - "hq/system/page.tsx"
-Cohesion: 0.14
-Nodes (13): dynamic, HqSystemPage(), loadDataQuality(), dynamic, SystemPage(), AuditConsole(), SystemAuditExplorer(), DataQualityCounts (+5 more)
+Cohesion: 0.20
+Nodes (10): dynamic, HqSystemPage(), loadDataQuality(), SystemAuditExplorer(), DataQualityCounts, METRICS, SystemDataQuality(), POLICIES (+2 more)
 
-### Community 100 - "officer/profile/page.tsx"
-Cohesion: 0.24
-Nodes (9): dynamic, OfficerProfilePage(), getCategoryEmoji(), getCategoryShortLabel(), IncidentRecord, OfficerProfileProps, OfficerProfileView(), ShiftRecord (+1 more)
+### Community 100 - "icons.tsx"
+Cohesion: 0.05
+Nodes (30): IconProps, Icons, getInitials(), ProfileMenu(), ThemeToggle(), cn(), Label, labelVariants (+22 more)
 
 ### Community 102 - "Local Development & Setup Guide"
 Cohesion: 0.13
 Nodes (14): 1. Prerequisites, 2. Environment Configuration, 3. Database Setup, 4. Dependencies & Schema Synchronization, 5. Starting the Application, 6. Preconfigured Test Accounts, 7. Troubleshooting, Issue 1: `Can't reach database server at localhost:3306` (+6 more)
 
 ### Community 103 - "owner/farms/page.tsx"
-Cohesion: 0.38
-Nodes (5): dynamic, OwnerFarmsPage(), OwnerFarmData, OwnerFarmsView(), OwnerFarmsViewProps
+Cohesion: 0.32
+Nodes (6): dynamic, OwnerFarmsPage(), FarmCreateWizard(), OwnerFarmData, OwnerFarmsView(), OwnerFarmsViewProps
 
-### Community 104 - "sync/route.ts"
-Cohesion: 0.15
-Nodes (17): centroid(), POST(), reconcileCaptureTrack(), recordWalkEvidence(), sameRing(), sampleSchema, schema, ActivationSummary (+9 more)
+### Community 104 - "walk-sync.test.ts"
+Cohesion: 0.32
+Nodes (5): FARM_RING, mLat(), mLng(), secret, squareWalk()
 
-### Community 105 - "hq/clients/route.ts"
-Cohesion: 0.36
-Nodes (8): buildWhere(), bulkStatusSchema, ClientStats, emptyStats(), enrichPage(), formatRow(), GET(), SortKey
+### Community 105 - "currentActor"
+Cohesion: 0.10
+Nodes (33): GET(), GET(), DELETE(), GET(), buildWhere(), bulkStatusSchema, ClientStats, emptyStats() (+25 more)
 
-### Community 106 - "hq/incidents/route.ts"
-Cohesion: 0.31
-Nodes (8): ageLabel(), dynamic, GET(), HQ_INCIDENT_PAGE_SIZE, P0_SLA_HOURS, pClassOf(), severityFilter(), STATUSES
+### Community 106 - "officer-chat.tsx"
+Cohesion: 0.19
+Nodes (10): chatApi(), ChatConversation, FarmOption, OfficerChat(), RosterConversation, RosterPerson, Agronomist, AgronomistConsole() (+2 more)
 
 ### Community 107 - "audit"
-Cohesion: 0.10
-Nodes (22): GET(), PATCH(), updateClientSchema, POST(), onboardSchema, POST(), GET(), PATCH() (+14 more)
+Cohesion: 0.08
+Nodes (34): GET(), PATCH(), updateClientSchema, createClientSchema, GET(), POST(), POST(), onboardSchema (+26 more)
 
-### Community 108 - "daily/page.tsx"
-Cohesion: 0.33
-Nodes (3): DailyReportPage(), dynamic, DailyReport()
+### Community 108 - "[cycleId]/edit/page.tsx"
+Cohesion: 0.27
+Nodes (6): dynamic, EditCropCyclePage(), getEditCropCyclePageData(), CropCycleEditForm(), Cycle, dateVal()
 
 ### Community 109 - "owner/people/page.tsx"
 Cohesion: 0.32
@@ -561,23 +557,23 @@ Nodes (6): dynamic, OwnerPeoplePage(), Props, FarmWorker, WorkersConsole(), Work
 
 ### Community 110 - "estates/index.ts"
 Cohesion: 0.07
-Nodes (60): DELETE(), GET(), POST(), GET(), dynamic, FarmDetailPage(), parseSort(), activateEstate() (+52 more)
+Nodes (58): DELETE(), GET(), POST(), GET(), dynamic, FarmDetailPage(), activateEstate(), createEstate() (+50 more)
 
-### Community 111 - "requireFarmAccess"
-Cohesion: 0.09
-Nodes (34): musterSchema, POST(), GET(), createSchema, GET(), POST(), createSchema, POST() (+26 more)
+### Community 111 - "prisma"
+Cohesion: 0.11
+Nodes (22): dynamic, GET(), GET(), dynamic, GET(), GET(), dynamic, GET() (+14 more)
 
-### Community 113 - "cn"
-Cohesion: 0.52
-Nodes (4): cn(), Label, labelVariants, Switch
+### Community 113 - "farm-registry.tsx"
+Cohesion: 0.25
+Nodes (7): FarmRow, GeoMap, HqFarmRegistry(), slaRisks(), STAGE_LABELS, STAGE_OPTIONS, STATUS_OPTIONS
 
-### Community 114 - "reports/page.tsx"
-Cohesion: 0.33
-Nodes (3): dynamic, OfficerReportsPage(), LocationRequestForm()
+### Community 114 - "onboarding-workspace.tsx"
+Cohesion: 0.25
+Nodes (4): OnboardingWorkspace(), PipelineFarm, STAGE_META, StageCounts
 
-### Community 115 - "UnifiedDirectory"
-Cohesion: 0.40
-Nodes (3): UnifiedDirectory(), downloadCsv(), exportSelectionCsv()
+### Community 115 - "crop-cycle-form.tsx"
+Cohesion: 0.53
+Nodes (5): CropCycleForm(), addPresetSupport(), submit(), validate(), iso()
 
 ### Community 119 - "layout.tsx"
 Cohesion: 0.33
@@ -587,29 +583,21 @@ Nodes (4): metadata, viewport, ThemeInitializer(), ToastProvider()
 Cohesion: 0.12
 Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
-### Community 129 - "[cycleId]/edit/page.tsx"
-Cohesion: 0.24
-Nodes (7): dynamic, EditCropCyclePage(), getEditCropCyclePageData(), findPlotForEditCropCyclePage(), CropCycleEditForm(), Cycle, dateVal()
+### Community 129 - "notification-bell.tsx"
+Cohesion: 0.50
+Nodes (4): CHAT_ROLES, Item, NotificationBell(), formatChatTime()
+
+### Community 130 - "app/operations/page.tsx"
+Cohesion: 0.40
+Nodes (4): DashboardPage(), dynamic, dynamic, OperationsPage()
 
 ### Community 131 - "crops/page.tsx"
-Cohesion: 0.12
-Nodes (20): dynamic, OwnerCropsPage(), StepWizard(), StepWizardProps, WizardStep, CropCycleTargetPlot, CropCycleWizard(), CropCycleWizardProps (+12 more)
+Cohesion: 0.23
+Nodes (10): dynamic, OwnerCropsPage(), CropCycleTargetPlot, FarmDemarcationMap, MilestoneItem, OwnerCropsView(), OwnerCropsViewProps, PrescriptionItem (+2 more)
 
-### Community 132 - "hq/people/page.tsx"
-Cohesion: 0.29
-Nodes (5): dynamic, HqPeoplePage(), InternalTeamConsole(), Tab, RolesAdmin()
-
-### Community 134 - "app/farms/new/page.tsx"
-Cohesion: 0.33
-Nodes (3): dynamic, NewFarmPage(), FarmForm()
-
-### Community 135 - "boundary/page.tsx"
-Cohesion: 0.50
-Nodes (3): BoundaryWalkPage(), dynamic, BoundaryTargetPicker()
-
-### Community 139 - "attendance-geo-route.test.ts"
-Cohesion: 0.18
-Nodes (9): FARM_GEOJSON, FARM_RING, PLOT_RING, secret, selfie(), AttendanceForm(), basisText(), handleClockIn() (+1 more)
+### Community 132 - "hasPermission"
+Cohesion: 0.10
+Nodes (18): dynamic, HqAgronomistsPage(), dynamic, HqClientDetailPage(), dynamic, EditFarmPage(), dynamic, HqFarmDetailPage() (+10 more)
 
 ### Community 140 - "validation.ts"
 Cohesion: 0.50
@@ -623,29 +611,25 @@ Nodes (3): checkPort(), main(), startWslDatabase()
 Cohesion: 0.20
 Nodes (12): dynamic, OwnerOperationsPage(), Props, CalendarEventsData, CalendarHarvest, CalendarIncident, CalendarTask, FarmOption (+4 more)
 
-### Community 185 - "farm-registry.tsx"
-Cohesion: 0.25
-Nodes (7): FarmRow, GeoMap, HqFarmRegistry(), slaRisks(), STAGE_LABELS, STAGE_OPTIONS, STATUS_OPTIONS
-
 ## Knowledge Gaps
 - **769 isolated node(s):** `$schema`, `style`, `rsc`, `tsx`, `config` (+764 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **26 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Icons` connect `icons.tsx` to `useToast`, `[cycleId]/edit/page.tsx`, `crops/page.tsx`, `geo-map.tsx`, `Navbar`, `onboarding-schema.ts`, `tasks-ledger.tsx`, `farm-hub-client.tsx`, `tasks-queue.tsx`, `chat-thread.tsx`, `boundary-walk.tsx`, `owner/operations/page.tsx`, `farm-registry.tsx`, `people-directory.tsx`, `incident-report-form.tsx`, `crew/page.tsx`, `task-form.tsx`, `incidents-command.tsx`, `navbar.tsx`, `operations-triage-console.tsx`, `officer-day.tsx`, `client-directory.tsx`, `profile-settings-console.tsx`, `weekly-planner.tsx`, `requireSession`, `officer/profile/page.tsx`, `owner/farms/page.tsx`, `owner/people/page.tsx`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
-- **Why does `prisma` connect `db.ts` to `operations/index.ts`, `apiError`, `crops/page.tsx`, `app/farms/new/page.tsx`, `plots/index.ts`, `Navbar`, `onboarding-schema.ts`, `attendance-geo-route.test.ts`, `HttpError`, `adversarial.test.ts`, `auth/index.ts`, `cropping/index.ts`, `endAttendance.ts`, `session.ts`, `owner/operations/page.tsx`, `geo-core.ts`, `security/index.ts`, `crew/page.tsx`, `downloadUrl`, `parseBoundaryToRing`, `requireRole`, `roles/route.ts`, `plot-geo.test.ts`, `profile-settings-console.tsx`, `getSession`, `LngLat`, `weekly-planner.tsx`, `requireSession`, `hq/system/page.tsx`, `officer/profile/page.tsx`, `owner/farms/page.tsx`, `sync/route.ts`, `hq/clients/route.ts`, `hq/incidents/route.ts`, `audit`, `owner/people/page.tsx`, `estates/index.ts`, `requireFarmAccess`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
-- **Why does `useToast()` connect `useToast` to `crops/page.tsx`, `geo-map.tsx`, `OnboardingWorkspace`, `attendance-geo-route.test.ts`, `onboarding-schema.ts`, `tasks-ledger.tsx`, `icons.tsx`, `farm-hub-client.tsx`, `tasks-queue.tsx`, `cropping/index.ts`, `chat-thread.tsx`, `owner/operations/page.tsx`, `farm-registry.tsx`, `incident-report-form.tsx`, `task-form.tsx`, `operations-triage-console.tsx`, `officer-day.tsx`, `client-directory.tsx`, `profile-settings-console.tsx`, `weekly-planner.tsx`, `owner/people/page.tsx`, `UnifiedDirectory`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `Icons` connect `icons.tsx` to `useToast`, `notification-bell.tsx`, `crops/page.tsx`, `hasPermission`, `geo-map.tsx`, `requireSession`, `onboarding-schema.ts`, `tasks-ledger.tsx`, `toast.tsx`, `farm-hub-client.tsx`, `tasks-queue.tsx`, `chat-thread.tsx`, `boundary-walk.tsx`, `client-360.tsx`, `owner/operations/page.tsx`, `weekly-planner.tsx`, `navbar.tsx`, `crew/page.tsx`, `incidents-command.tsx`, `owner-chat.tsx`, `desktop-sidebar.tsx`, `operations-triage-console.tsx`, `farm-command-center.tsx`, `client-directory.tsx`, `farm-demarcation-map.tsx`, `agronomy-chat.tsx`, `owner/farms/page.tsx`, `officer-chat.tsx`, `[cycleId]/edit/page.tsx`, `owner/people/page.tsx`, `farm-registry.tsx`, `onboarding-workspace.tsx`, `crop-cycle-form.tsx`?**
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+- **Why does `prisma` connect `prisma` to `operations/index.ts`, `apiError`, `crops/page.tsx`, `hasPermission`, `app/operations/page.tsx`, `plots/index.ts`, `requireSession`, `onboarding-schema.ts`, `accessibleFarmWhere`, `adversarial.test.ts`, `auth/index.ts`, `cropping/index.ts`, `endAttendance.ts`, `owner/operations/page.tsx`, `geo-core.ts`, `attendance-geo-route.test.ts`, `navbar.tsx`, `crew/page.tsx`, `downloadUrl`, `parseBoundaryToRing`, `hq/incidents/route.ts`, `security/index.ts`, `hq/tasks/route.ts`, `plot-geo.test.ts`, `getSession`, `LngLat`, `hq/system/page.tsx`, `owner/farms/page.tsx`, `walk-sync.test.ts`, `currentActor`, `audit`, `owner/people/page.tsx`, `estates/index.ts`?**
+  _High betweenness centrality (0.057) - this node is a cross-community bridge._
+- **Why does `requireSession()` connect `requireSession` to `app/operations/page.tsx`, `crops/page.tsx`, `hasPermission`, `onboarding-schema.ts`, `auth/index.ts`, `tasks-queue.tsx`, `cropping/index.ts`, `owner/operations/page.tsx`, `navbar.tsx`, `crew/page.tsx`, `farm-command-center.tsx`, `client-directory.tsx`, `getSession`, `reports/page.tsx`, `hq/system/page.tsx`, `owner/farms/page.tsx`, `[cycleId]/edit/page.tsx`, `owner/people/page.tsx`, `estates/index.ts`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **What connects `$schema`, `style`, `rsc` to the rest of the system?**
   _769 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `useToast` be split into smaller, more focused modules?**
-  _Cohesion score 0.050724637681159424 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07390648567119155 - nodes in this community are weakly interconnected._
 - **Should `operations/index.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06295715778474399 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.059841047218326324 - nodes in this community are weakly interconnected._
 - **Should `apiError` be split into smaller, more focused modules?**
-  _Cohesion score 0.11842105263157894 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09575012800819252 - nodes in this community are weakly interconnected._

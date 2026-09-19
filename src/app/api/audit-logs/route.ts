@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
     const and: any[] = [];
     if (farmId) {
       await requireFarmAccess(farmId);
-      and.push({ metadata: { path: "$.farmId", equals: farmId } });
+      and.push({ metadata: { path: ["farmId"], equals: farmId } });
     } else if (actor.role !== "SUPER_ADMIN") {
       const farms = await prisma.farm.findMany({ where: { access: { some: { userId: actor.id } } }, select: { id: true } });
       if (!farms.length) return paginatedJson([], 0);
-      and.push({ OR: farms.map((f) => ({ metadata: { path: "$.farmId", equals: f.id } })) });
+      and.push({ OR: farms.map((f) => ({ metadata: { path: ["farmId"], equals: f.id } })) });
     }
     if (action && action !== "ALL") and.push({ action });
     if (entityType && entityType !== "ALL") and.push({ entityType });

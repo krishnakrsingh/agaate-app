@@ -1,8 +1,26 @@
 import net from "node:net";
 import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 
-const PORT = 3306;
+let dbUrl = process.env.DATABASE_URL || "";
+if (!dbUrl) {
+  try {
+    const envContent = fs.readFileSync(path.resolve(process.cwd(), ".env"), "utf8");
+    const match = envContent.match(/DATABASE_URL=["']?([^"'\r\n]+)["']?/);
+    if (match) dbUrl = match[1];
+  } catch {
+    // ignore
+  }
+}
+
+const isPostgres = dbUrl.startsWith("postgres");
+const PORT = isPostgres ? 5432 : 3306;
 const HOST = "127.0.0.1";
+const DB_NAME = isPostgres ? "PostgreSQL" : "MariaDB";
+const SERVICE_CMD = isPostgres
+  ? "service postgresql start && sleep infinity"
+  : "service mariadb start && sleep infinity";
 
 function checkPort(port, host, timeoutMs = 800) {
   return new Promise((resolve) => {
@@ -25,11 +43,11 @@ function checkPort(port, host, timeoutMs = 800) {
 }
 
 async function startWslDatabase() {
-  console.log("[db-guard] Port 3306 is not open. Starting WSL MariaDB service...");
+  console.log(`[db-guard] Port ${PORT} is not open. Starting WSL ${DB_NAME} service...`);
   try {
     const child = spawn(
       "wsl",
-      ["-u", "root", "-d", "Ubuntu", "-e", "/bin/bash", "-c", "service mariadb start && sleep infinity"],
+      ["-u", "root", "-d", "Ubuntu", "-e", "/bin/bash", "-c", SERVICE_CMD],
       {
         detached: true,
         stdio: "ignore",
@@ -38,7 +56,7 @@ async function startWslDatabase() {
     );
     child.unref();
   } catch (err) {
-    console.warn("[db-guard] Could not auto-launch WSL MariaDB:", err.message);
+    console.warn(`[db-guard] Could not auto-launch WSL ${DB_NAME}:`, err.message);
   }
 }
 
@@ -55,16 +73,15 @@ async function main() {
     await new Promise((r) => setTimeout(r, 500));
     const isUp = await checkPort(PORT, HOST, 500);
     if (isUp) {
-      console.log("[db-guard] MariaDB is ready on 127.0.0.1:3306.");
+      console.log(`[db-guard] ${DB_NAME} is ready on ${HOST}:${PORT}.`);
       return;
     }
   }
 
   console.warn(
-    "[db-guard] Warning: Database on 127.0.0.1:3306 was not ready within 8 seconds.\n" +
-      "If Next.js encounters a database connection error, ensure MariaDB or Docker is running:\n" +
-      "  wsl -u root -d Ubuntu service mariadb start\n" +
-      "  docker compose up -d mysql\n"
+    `[db-guard] Warning: Database on ${HOST}:${PORT} was not ready within 8 seconds.\n` +
+      `If Next.js encounters a database connection error, ensure ${DB_NAME} is running:\n` +
+      `  wsl -u root -d Ubuntu service ${isPostgres ? "postgresql" : "mariadb"} start\n`
   );
 }
 

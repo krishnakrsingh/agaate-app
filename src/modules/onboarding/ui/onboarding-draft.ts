@@ -35,6 +35,9 @@ export function emptyWizard(idempotencyKey?: string): WizardData {
       pincode: "",
       financeConnect: "",
       purchaserConnect: "",
+      localConnectName: "",
+      localConnectPhone: "",
+      localConnectSameAsClient: false,
     },
     contacts: {
       financeContact: null,

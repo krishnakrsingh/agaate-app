@@ -296,7 +296,7 @@ export async function updateEstateWithBoundaryTransaction(
   const { estateId, updateData, boundaryIntent, cultivableArea, actor } = args;
 
   const { result: farm } = await prismaClient.$transaction(async (tx) => {
-    await tx.$queryRawUnsafe("SELECT id FROM `Farm` WHERE id = ? FOR UPDATE", estateId);
+    await tx.$queryRawUnsafe('SELECT id FROM "Farm" WHERE id = $1 FOR UPDATE', estateId);
     const allocated = await tx.plot.aggregate({
       where: { farmId: estateId, deletedAt: null },
       _sum: { area: true },
@@ -382,12 +382,23 @@ export async function findEstateAccessList(db: Db, estateId: string) {
     }),
     prismaDb.user.findMany({
       where: { role: "FARM_OFFICER", active: true },
-      select: { id: true, name: true, email: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        farmAccess: { select: { farmId: true } },
+      },
       orderBy: { name: "asc" },
     }),
   ]);
 
-  return { access, users };
+  // A Farm Officer can only be assigned to 1 farm. Only show officers not bound to other farms.
+  const availableUsers = users
+    .filter((u) => u.farmAccess.length === 0 || u.farmAccess.some((fa) => fa.farmId === estateId))
+    .map(({ farmAccess: _, ...rest }) => rest);
+
+  return { access, users: availableUsers };
 }
 
 export async function findUserForOfficerAssignment(db: Db, userId: string) {
@@ -404,10 +415,22 @@ export async function assignEstateOfficerTransaction(
 ) {
   const { estateId, userId, canManage = false } = args;
   return prismaClient.$transaction(async (tx) => {
+    // 1 Farm Officer = Exactly 1 Farm:
+    // Remove any previous farm access records for this officer so they belong exclusively to estateId.
+    await tx.farmAccess.deleteMany({
+      where: { userId, farmId: { not: estateId } },
+    });
+
     const access = await tx.farmAccess.upsert({
       where: { userId_farmId: { userId, farmId: estateId } },
       update: { canManage },
       create: { userId, farmId: estateId, canManage },
+    });
+
+    // Mark as active Field Supervisor / Farm Officer
+    await tx.user.update({
+      where: { id: userId },
+      data: { isSupervisor: true },
     });
 
     await tx.task.updateMany({
@@ -421,8 +444,18 @@ export async function assignEstateOfficerTransaction(
 
 export async function unassignEstateOfficerRecord(db: Db, estateId: string, userId: string) {
   const prismaDb = db as unknown as PrismaClient;
-  return prismaDb.farmAccess.delete({
-    where: { userId_farmId: { userId, farmId: estateId } },
+  return prismaDb.$transaction(async (tx) => {
+    await tx.farmAccess.deleteMany({
+      where: { userId, farmId: estateId },
+    });
+
+    const remaining = await tx.farmAccess.count({ where: { userId } });
+    if (remaining === 0) {
+      await tx.user.update({
+        where: { id: userId },
+        data: { isSupervisor: false },
+      });
+    }
   });
 }
 

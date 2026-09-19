@@ -5,6 +5,7 @@ import { prisma } from "@infrastructure/db";
 import { audit } from "@infrastructure/audit";
 import { apiError, paginatedJson } from "@infrastructure/http";
 import { assertChattableRole, participantConversationIds } from "@modules/chat/access";
+import { chatBroadcaster } from "@modules/chat/infrastructure/chatBroadcaster";
 
 const createConversationSchema = z.object({
   farmId: z.string().min(1),
@@ -27,10 +28,6 @@ export async function GET(request: NextRequest) {
     if (farmId) await requireFarmAccess(farmId);
 
     const where: any = {};
-    if (actor.role === "SUPER_ADMIN" && !farmId && !userId) {
-      // HQ inspect view is farm- or user-scoped; without either there is no bound.
-      return paginatedJson([], 0);
-    }
     if (actor.role === "SUPER_ADMIN") {
       if (farmId) where.farmId = farmId;
       if (userId) {
@@ -39,6 +36,16 @@ export async function GET(request: NextRequest) {
           select: { conversationId: true },
         });
         where.id = { in: parts.map((p) => p.conversationId) };
+      }
+    } else if (actor.role === "AGRONOMIST") {
+      if (farmId) {
+        where.farmId = farmId;
+      } else {
+        const myParts = await participantConversationIds(actor);
+        where.OR = [
+          { id: { in: myParts } },
+          { farm: { access: { some: { userId: actor.id } } } },
+        ];
       }
     } else {
       where.id = { in: await participantConversationIds(actor) };
@@ -193,11 +200,18 @@ export async function POST(request: NextRequest) {
     for (const m of members) {
       if (!m.active) throw new Error("One or more selected people are no longer active.");
       assertChattableRole(m.role);
-      if (m.role !== "SUPER_ADMIN") {
+      if (m.role !== "SUPER_ADMIN" && m.role !== "AGRONOMIST") {
         const access = await prisma.farmAccess.findUnique({
           where: { userId_farmId: { userId: m.id, farmId: input.farmId } },
         });
         if (!access) throw new Error("One or more selected people do not have access to this farm.");
+      }
+      if (m.role === "AGRONOMIST") {
+        await prisma.farmAccess.upsert({
+          where: { userId_farmId: { userId: m.id, farmId: input.farmId } },
+          update: {},
+          create: { userId: m.id, farmId: input.farmId, canManage: false },
+        });
       }
     }
 
@@ -232,6 +246,7 @@ export async function POST(request: NextRequest) {
         const have = byConv.get(c.id) ?? new Set<string>();
         if (have.size === wanted.size && [...wanted].every((id) => have.has(id))) {
           const existing = await prisma.conversation.findUniqueOrThrow({ where: { id: c.id } });
+          chatBroadcaster.broadcastConversationUpdate(input.farmId, existing);
           return NextResponse.json({ ...existing, reused: true });
         }
       }
@@ -254,6 +269,7 @@ export async function POST(request: NextRequest) {
     });
 
     await audit(actor.id, "CONVERSATION_CREATE", "Conversation", conversation.id, { farmId: input.farmId });
+    chatBroadcaster.broadcastConversationUpdate(input.farmId, conversation);
     return NextResponse.json(conversation, { status: 201 });
   } catch (error) {
     return apiError(error);

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { ChatThread } from "@modules/chat/ui/chat-thread";
-import { ChatConversation, RefPlot, chatApi } from "@modules/chat/ui/chat-client";
+import { ChatConversation, RefPlot, chatApi, newClientMessageId } from "@modules/chat/ui/chat-client";
 
 interface FarmOption {
   id: string;
@@ -30,6 +30,18 @@ interface RosterConversation {
 interface OwnerChatProps {
   currentUserId: string;
   initialFarms?: FarmOption[];
+}
+
+/** "Arjun Singhania (Global Operations Director)" → "Arjun Singhania". */
+function displayName(raw: string): string {
+  return raw.replace(/\s*\(.*?\)\s*/g, " ").replace(/\s+/g, " ").trim() || raw;
+}
+
+function roleLabel(p: RosterPerson): string {
+  if (p.role === "AGRONOMIST") return "Agronomist";
+  if (p.role === "SUPER_ADMIN") return "HQ Admin";
+  if (p.role === "FARM_ADMIN") return "Farm Owner";
+  return p.lead ? "Lead Officer" : "Field Officer";
 }
 
 export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
@@ -121,12 +133,12 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
         if (ctx && "plots" in ctx && Array.isArray(ctx.plots)) {
           setPlots(ctx.plots);
         } else {
-          // Fallback fetch plots
+          // Fallback fetch plots (list API now includes active cycles)
           fetch(`/api/plots?farmId=${fid}&limit=50`)
             .then((r) => (r.ok ? r.json() : []))
             .then((plotData) => {
               if (Array.isArray(plotData)) {
-                setPlots(plotData.map((p) => ({ id: p.id, name: p.name, cycles: [] })));
+                setPlots(plotData.map((p: { id: string; name: string; cycles?: { id: string; cropName: string }[] }) => ({ id: p.id, name: p.name, cycles: p.cycles ?? [] })));
               }
             })
             .catch(() => setPlots([]));
@@ -148,7 +160,33 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
     } catch {
       // ignore
     }
-    loadFarmChat(farmId);
+    const t = setTimeout(() => loadFarmChat(farmId), 0);
+    return () => clearTimeout(t);
+  }, [farmId, loadFarmChat]);
+
+  // Real-time conversation updates stream
+  useEffect(() => {
+    if (!farmId || typeof window === "undefined") return;
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`/api/conversations/stream?farmId=${farmId}`);
+      es.addEventListener("update", () => {
+        loadFarmChat(farmId, { silent: true });
+      });
+    } catch {
+      // fallback
+    }
+
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) {
+        loadFarmChat(farmId, { silent: true });
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(pollInterval);
+      es?.close();
+    };
   }, [farmId, loadFarmChat]);
 
   const selectedConversation = useMemo(
@@ -169,30 +207,57 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
   const handleStartConversation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!farmId) return;
-    if (!newSubject.trim()) {
-      toast.show("Please enter a subject topic", "error");
+
+    const messageText = newFirstMessage.trim();
+    if (!messageText) {
+      toast.show("Please enter a message to start the chat", "error");
       return;
     }
-    if (!newParticipantId) {
-      toast.show("Please select an Agronomist or Field Officer to consult", "error");
+
+    const targetRecipientId =
+      newParticipantId || (people.length > 0 ? people[0].userId : "");
+
+    if (!targetRecipientId) {
+      toast.show("Please select someone to chat with", "error");
       return;
     }
 
     setIsCreating(true);
     try {
-      const created = await chatApi<{ id: string }>("/api/conversations", {
+      const selectedPlotObj = plots.find((p) => p.id === newPlotId);
+      const targetPerson = people.find((p) => p.userId === targetRecipientId);
+
+      const autoSubject =
+        newSubject.trim() ||
+        (selectedPlotObj ? `Plot: ${selectedPlotObj.name}` : "") ||
+        (targetPerson ? `Chat with ${displayName(targetPerson.name)}` : "") ||
+        (messageText.length <= 40 ? messageText : `${messageText.slice(0, 37)}...`);
+
+      const created = await chatApi<{ id: string; reused?: boolean }>("/api/conversations", {
         method: "POST",
         body: JSON.stringify({
           farmId,
-          subject: newSubject.trim(),
-          participantUserIds: [newParticipantId],
+          subject: autoSubject,
+          participantIds: [targetRecipientId],
           plotId: newPlotId || undefined,
-          cropCycleId: newCropCycleId || undefined,
-          initialMessage: newFirstMessage.trim() || undefined,
         }),
       });
 
-      toast.show("Consultation thread started", "success");
+      const refs = newPlotId
+        ? [{ entityType: "PLOT" as const, entityId: newPlotId, label: `Plot · ${selectedPlotObj?.name || "Plot"}` }]
+        : [];
+
+      await chatApi(`/api/conversations/${created.id}/messages`, {
+        method: "POST",
+        body: JSON.stringify({
+          clientMessageId: newClientMessageId(),
+          body: messageText,
+          refs,
+          attachmentMediaIds: [],
+        }),
+      });
+
+      toast.show(created.reused ? "Resumed chat thread." : "Chat started!", "success");
       setIsModalOpen(false);
       setNewSubject("");
       setNewFirstMessage("");
@@ -203,7 +268,7 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
       await loadFarmChat(farmId);
       setSelectedId(created.id);
     } catch (err) {
-      toast.show(err instanceof Error ? err.message : "Could not create thread", "error");
+      toast.show(err instanceof Error ? err.message : "Could not start chat", "error");
     } finally {
       setIsCreating(false);
     }
@@ -269,10 +334,10 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
                 setIsModalOpen(true);
               }}
               style={{ padding: "6px 12px", fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}
-              title="Start a new advisory consultation thread"
+              title="Start a new chat"
             >
               <Icons.Plus size={14} />
-              <span>New Thread</span>
+              <span>Start Chat</span>
             </button>
           </div>
 
@@ -316,13 +381,14 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {people.map((p) => {
                 const isAgronomist = p.role === "AGRONOMIST";
+                const clean = displayName(p.name);
                 return (
                   <button
                     key={p.userId}
                     type="button"
                     onClick={() => {
                       setNewParticipantId(p.userId);
-                      setNewSubject(`Consultation: ${p.name.split(" ")[0]}`);
+                      setNewSubject(`Consultation: ${clean.split(" ")[0]}`);
                       setIsModalOpen(true);
                     }}
                     style={{
@@ -349,9 +415,9 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
                         background: isAgronomist ? "var(--green-ink)" : "var(--blue)",
                       }}
                     />
-                    <span>{p.name}</span>
+                    <span>{clean}</span>
                     <span style={{ fontSize: 9, opacity: 0.7 }}>
-                      {isAgronomist ? "Agronomist" : p.lead ? "Lead Officer" : "Officer"}
+                      {roleLabel(p)}
                     </span>
                   </button>
                 );
@@ -410,7 +476,7 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
           ) : (
             filteredConversations.map((c) => {
               const isSelected = c.id === selectedId;
-              const hasUnread = c.unreadCount && c.unreadCount > 0;
+              const hasUnread = (c.unreadCount ?? 0) > 0;
               return (
                 <div
                   key={c.id}
@@ -686,7 +752,7 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
             >
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "var(--ink)" }}>
-                  Start Consultation Thread
+                  Start Chat
                 </h3>
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
                   Farm: {farms.find((f) => f.id === farmId)?.name || "Current Farm"}
@@ -703,27 +769,11 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
               </button>
             </div>
 
-            {/* Modal Form Body - Zero scroll, compact grid */}
+            {/* Modal Form Body - Simple, focused: Recipient, Optional Plot, Message */}
             <form onSubmit={handleStartConversation} style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                  Consultation Topic / Subject *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Pest control advisory for Plot 2, Irrigation rate check"
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                  className="input"
-                  style={{ width: "100%", fontSize: 13 }}
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                  Recipient Specialist *
+                  Chat with *
                 </label>
                 <select
                   required
@@ -732,70 +782,66 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
                   className="input"
                   style={{ width: "100%", fontSize: 13 }}
                 >
-                  <option value="">-- Choose Agronomist or Officer --</option>
+                  <option value="">-- Choose Agronomist or Field Officer --</option>
                   {people.map((p) => (
                     <option key={p.userId} value={p.userId}>
-                      {p.name} ({p.role === "AGRONOMIST" ? "Agronomist" : p.lead ? "Lead Officer" : "Field Officer"})
+                      {displayName(p.name)} ({roleLabel(p)})
+                    </option>
+                  ))}
+                </select>
+                {people.length === 0 && (
+                  <p className="muted" style={{ fontSize: 12, margin: "4px 0 0" }}>
+                    No agronomists or officers assigned to this estate yet — ask HQ to assign someone first.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
+                  Add Plot for Reference (Optional)
+                </label>
+                <select
+                  value={newPlotId}
+                  onChange={(e) => setNewPlotId(e.target.value)}
+                  className="input"
+                  style={{ width: "100%", fontSize: 13 }}
+                >
+                  <option value="">-- No specific plot (General Farm) --</option>
+                  {plots.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      Plot: {p.name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                    Link Plot (Optional)
-                  </label>
-                  <select
-                    value={newPlotId}
-                    onChange={(e) => {
-                      setNewPlotId(e.target.value);
-                      setNewCropCycleId("");
-                    }}
-                    className="input"
-                    style={{ width: "100%", fontSize: 13 }}
-                  >
-                    <option value="">-- Entire Farm --</option>
-                    {plots.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                    Crop Cycle (Optional)
-                  </label>
-                  <select
-                    value={newCropCycleId}
-                    onChange={(e) => setNewCropCycleId(e.target.value)}
-                    disabled={!selectedPlotObj || selectedPlotObj.cycles.length === 0}
-                    className="input"
-                    style={{ width: "100%", fontSize: 13 }}
-                  >
-                    <option value="">-- Any Cycle --</option>
-                    {selectedPlotObj?.cycles.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.cropName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                  Initial Message (Optional)
+                  Message *
                 </label>
                 <textarea
-                  rows={3}
-                  placeholder="Describe your question or observation for the team..."
+                  required
+                  rows={4}
+                  placeholder="Type your message, question, or field observation here..."
                   value={newFirstMessage}
                   onChange={(e) => setNewFirstMessage(e.target.value)}
                   className="input"
                   style={{ width: "100%", fontSize: 13, resize: "none" }}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 500, color: "var(--muted)", marginBottom: 4 }}>
+                  Topic / Subject (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Irrigation rate, Pest scouting (optional)"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  className="input"
+                  style={{ width: "100%", fontSize: 12 }}
                 />
               </div>
 
@@ -823,18 +869,18 @@ export function OwnerChat({ currentUserId, initialFarms }: OwnerChatProps) {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={isCreating || !newSubject.trim() || !newParticipantId}
+                  disabled={isCreating || !newFirstMessage.trim() || (!newParticipantId && people.length > 0)}
                   style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
                 >
                   {isCreating ? (
                     <>
                       <Icons.Loader size={14} className="animate-spin" />
-                      <span>Creating...</span>
+                      <span>Sending...</span>
                     </>
                   ) : (
                     <>
                       <Icons.Send size={14} />
-                      <span>Start Consultation</span>
+                      <span>Start Chat</span>
                     </>
                   )}
                 </button>

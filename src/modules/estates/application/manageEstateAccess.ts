@@ -48,9 +48,9 @@ export async function assignEstateOfficer(args: {
   }
 
   const farm = await findEstateForPatch(prisma, estateId);
-  if (farm.status !== "ACTIVE") {
+  if (farm.status !== "ACTIVE" && farm.status !== "SETUP") {
     throw new EstateFault(400, {
-      error: "Farm officers can only be assigned after farm activation.",
+      error: "Farm officers can only be assigned to active or setup estates.",
     });
   }
 

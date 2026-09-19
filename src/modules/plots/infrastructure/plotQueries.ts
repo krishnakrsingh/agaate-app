@@ -84,6 +84,7 @@ export async function findPlotsPage(
     farmLocation: p.farm.location,
     irrigationTypes: p.irrigation.map((ir) => ir.type).join(", ") || "None",
     activeCrops: p.cropCycles.map((c) => c.cropName).join(", ") || "Fallow",
+    cycles: p.cropCycles.map((c) => ({ id: c.id, cropName: c.cropName })),
   }));
 
   return { plots: formatted, total };
@@ -209,7 +210,7 @@ export async function createPlotWithBoundaryTransaction(
   });
 
   const { result: plot } = await prismaClient.$transaction(async (tx) => {
-    await tx.$queryRawUnsafe("SELECT id FROM `Farm` WHERE id = ? FOR UPDATE", farmId);
+    await tx.$queryRawUnsafe('SELECT id FROM "Farm" WHERE id = $1 FOR UPDATE', farmId);
     const farm = await tx.farm.findUniqueOrThrow({
       where: { id: farmId },
       select: { cultivableArea: true },
@@ -282,7 +283,7 @@ export async function updatePlotWithBoundaryTransaction(
   const { plotId, existing, input, area, geoJson, measured, actor } = args;
 
   return prismaClient.$transaction(async (tx) => {
-    await tx.$queryRawUnsafe("SELECT id FROM `Farm` WHERE id = ? FOR UPDATE", existing.farmId);
+    await tx.$queryRawUnsafe('SELECT id FROM "Farm" WHERE id = $1 FOR UPDATE', existing.farmId);
     const fresh = await tx.plot.aggregate({
       where: { farmId: existing.farmId, deletedAt: null, id: { not: plotId } },
       _sum: { area: true },

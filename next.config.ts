@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["@prisma/client", "@aws-sdk/client-s3", "@aws-sdk/s3-request-presigner"],
   allowedDevOrigins: [
+    "*.ngrok-free.dev",
+    "*.ngrok.app",
+    "unbeholden-irremeable-brantlee.ngrok-free.dev",
     "10.18.27.172",
     "10.18.27.172:3000",
     "172.31.112.1",

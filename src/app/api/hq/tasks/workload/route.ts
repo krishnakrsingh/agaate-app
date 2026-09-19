@@ -26,18 +26,18 @@ export async function GET(request: NextRequest) {
     const today = new Date().toISOString().slice(0, 10);
 
     const scope: Prisma.Sql[] = [];
-    if (farmId) scope.push(Prisma.sql`\`t\`.\`farmId\` = ${farmId}`);
-    if (clientId) scope.push(Prisma.sql`\`f\`.\`clientId\` = ${clientId}`);
+    if (farmId) scope.push(Prisma.sql`"t"."farmId" = ${farmId}`);
+    if (clientId) scope.push(Prisma.sql`"f"."clientId" = ${clientId}`);
     const scopeExpr = scope.length ? Prisma.sql`AND ${Prisma.join(scope, " AND ")}` : Prisma.empty;
-    const joins = Prisma.sql`LEFT JOIN \`User\` \`u\` ON \`u\`.\`id\` = \`t\`.\`assignedOfficerId\` LEFT JOIN \`Farm\` \`f\` ON \`f\`.\`id\` = \`t\`.\`farmId\``;
+    const joins = Prisma.sql`LEFT JOIN "User" "u" ON "u"."id" = "t"."assignedOfficerId" LEFT JOIN "Farm" "f" ON "f"."id" = "t"."farmId"`;
 
     type WorkloadRow = { officerId: string; officerName: string | null; openCount: unknown; overdueCount: unknown };
     const [officerRows, unassignedRows] = await Promise.all([
       prisma.$queryRaw<WorkloadRow[]>(
-        Prisma.sql`SELECT \`t\`.\`assignedOfficerId\` AS \`officerId\`, \`u\`.\`name\` AS \`officerName\`, COUNT(*) AS \`openCount\`, SUM(CASE WHEN \`t\`.\`dueDate\` < ${today} THEN 1 ELSE 0 END) AS \`overdueCount\` FROM \`Task\` \`t\` ${joins} WHERE \`t\`.\`assignedOfficerId\` IS NOT NULL AND \`t\`.\`status\` NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr} GROUP BY \`t\`.\`assignedOfficerId\`, \`u\`.\`name\` ORDER BY \`overdueCount\` DESC, \`openCount\` DESC LIMIT 50`
+        Prisma.sql`SELECT "t"."assignedOfficerId" AS "officerId", "u"."name" AS "officerName", COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today} THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NOT NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr} GROUP BY "t"."assignedOfficerId", "u"."name" ORDER BY "overdueCount" DESC, "openCount" DESC LIMIT 50`
       ),
       prisma.$queryRaw<{ openCount: unknown; overdueCount: unknown }[]>(
-        Prisma.sql`SELECT COUNT(*) AS \`openCount\`, SUM(CASE WHEN \`t\`.\`dueDate\` < ${today} THEN 1 ELSE 0 END) AS \`overdueCount\` FROM \`Task\` \`t\` ${joins} WHERE \`t\`.\`assignedOfficerId\` IS NULL AND \`t\`.\`status\` NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr}`
+        Prisma.sql`SELECT COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today} THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr}`
       ),
     ]);
 

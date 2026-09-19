@@ -29,9 +29,13 @@ export default async function HqOnboardingNewPage({ searchParams }: Props) {
       where: {
         OR: [{ id: clientId }, { code: clientId }],
       },
+      include: {
+        contacts: true,
+      },
     });
 
     if (client) {
+      const localContact = client.contacts?.find((c) => c.role === "LOCAL");
       serverDraft = {
         id: "",
         idempotencyKey: newIdempotencyKey(),
@@ -53,6 +57,9 @@ export default async function HqOnboardingNewPage({ searchParams }: Props) {
             pincode: client.pincode ?? "",
             financeConnect: client.financeConnect ?? "",
             purchaserConnect: client.purchaserConnect ?? "",
+            localConnectName: localContact?.name ?? "",
+            localConnectPhone: localContact?.phone ?? "",
+            localConnectSameAsClient: false,
           },
         },
       };

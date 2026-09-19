@@ -157,6 +157,25 @@ export function OnboardingStepClient({
     }
   };
 
+  const isSameAsClient = Boolean(
+    value.name &&
+    value.phone &&
+    value.localConnectName === value.name &&
+    value.localConnectPhone === value.phone
+  );
+
+  const toggleSameAsClient = () => {
+    if (isSameAsClient) {
+      set({ localConnectName: "", localConnectPhone: "", localConnectSameAsClient: false });
+    } else {
+      set({
+        localConnectName: value.name || "",
+        localConnectPhone: value.phone || "",
+        localConnectSameAsClient: true,
+      });
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* Existing Client Alert Banner if prefilled */}
@@ -624,6 +643,147 @@ export function OnboardingStepClient({
               </div>
             </Field>
           </div>
+        </div>
+
+        {/* ── CARD 3: ON-GROUND LOCAL CONNECT (PRIMARY FIELD OPERATIONS CONTACT) ── */}
+        <div
+          style={{
+            gridColumn: "1 / -1",
+            background: "#ffffff",
+            border: "1px solid #d5e4d8",
+            borderRadius: 14,
+            padding: "18px 20px",
+            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingBottom: 10,
+              borderBottom: "1px solid #eef5ef",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  backgroundColor: "#eaf5ec",
+                  color: "#15803d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icons.Users size={16} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                  On-Ground Local Connect
+                </h3>
+                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
+                  Primary field representative for farm surveys, boundaries, and plot demarcation (prevents client disturbance)
+                </p>
+              </div>
+            </div>
+
+            <span
+              style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: "#15803d",
+                background: "#f0fdf4",
+                padding: "3px 8px",
+                borderRadius: 5,
+                border: "1px solid #bbf7d0",
+              }}
+            >
+              Field Ops &amp; Demarcation
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr auto",
+              gap: 12,
+              alignItems: "flex-end",
+            }}
+          >
+            {/* Local Connect Name */}
+            <Field label="Local Connect Full Name" error={errors["localConnectName"] || errors["client.localConnectName"]}>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Ramesh Patel (Field Coordinator)"
+                value={value.localConnectName || ""}
+                onChange={(e) => set({ localConnectName: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+
+            {/* Local Connect Mobile */}
+            <Field label="Mobile Number" error={errors["localConnectPhone"] || errors["client.localConnectPhone"]}>
+              <input
+                type="tel"
+                className="input"
+                placeholder="e.g., 9876543210"
+                value={value.localConnectPhone || ""}
+                onChange={(e) => set({ localConnectPhone: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+
+            {/* Same as Client Toggle */}
+            <button
+              type="button"
+              onClick={toggleSameAsClient}
+              disabled={!value.name || !value.phone}
+              style={{
+                height: 38,
+                padding: "0 14px",
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                border: isSameAsClient ? "1px solid #0f172a" : "1px solid #d5ded7",
+                backgroundColor: isSameAsClient ? "#0f172a" : "#f8fafc",
+                color: isSameAsClient ? "#ffffff" : "#475569",
+                cursor: value.name && value.phone ? "pointer" : "not-allowed",
+                transition: "all 0.15s ease",
+                whiteSpace: "nowrap",
+              }}
+              title="Copy primary client contact as local connect"
+            >
+              <div
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 3,
+                  border: isSameAsClient ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
+                  backgroundColor: isSameAsClient ? "#0f172a" : "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isSameAsClient && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
+              </div>
+              <span>Same as Client</span>
+            </button>
+          </div>
+
+          <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>
+            This local contact will be reachable for on-site plot operations and will appear as <strong>Labor</strong> in the Farm Admin&apos;s team roster, where they can be assigned as a dedicated <strong>Farm Officer</strong> to any estate.
+          </p>
         </div>
       </div>
     </div>

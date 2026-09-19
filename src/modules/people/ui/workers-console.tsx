@@ -12,25 +12,34 @@ export type FarmWorker = {
   isSupervisor: boolean;
   active: boolean;
   createdAt: string;
+  assignedFarm?: { id: string; name: string } | null;
 };
 
 interface WorkersConsoleProps {
   farmId: string;
   farmName: string;
+  allFarms?: Array<{ id: string; name: string; location?: string }>;
   initialWorkers: FarmWorker[];
 }
 
-export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersConsoleProps) {
+export function WorkersConsole({
+  farmId,
+  farmName,
+  allFarms = [],
+  initialWorkers,
+}: WorkersConsoleProps) {
   const toast = useToast();
   const [workers, setWorkers] = useState<FarmWorker[]>(initialWorkers);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"ALL" | "SUPERVISOR" | "LABORER">("ALL");
+  const [estateFilter, setEstateFilter] = useState<string>("ALL");
   const [activeOnly, setActiveOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // New worker form
+  const [createFarmId, setCreateFarmId] = useState(farmId);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +52,13 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
     phone: string;
     password: string;
     isSupervisor: boolean;
+    farmName: string;
   } | null>(null);
+
+  // Assign / Reassign Farm Officer modal state (Strict 1:1 rule)
+  const [assignModalWorker, setAssignModalWorker] = useState<FarmWorker | null>(null);
+  const [selectedAssignFarmId, setSelectedAssignFarmId] = useState<string>(farmId);
+  const [assignPending, setAssignPending] = useState(false);
 
   const generateSimplePassword = () => {
     const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
@@ -62,6 +77,10 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
       return;
     }
 
+    const chosenFarmId = createFarmId || farmId;
+    const chosenFarmObj =
+      allFarms.find((f) => f.id === chosenFarmId) || { id: chosenFarmId, name: farmName };
+
     setPending(true);
     try {
       const res = await fetch("/api/users", {
@@ -73,8 +92,8 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
           password: password.trim(),
           role: "FARM_OFFICER",
           isSupervisor,
-          farmId,
-          farmIds: [farmId],
+          farmId: chosenFarmId,
+          farmIds: [chosenFarmId],
         }),
       });
 
@@ -89,9 +108,10 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
         email: data.email,
         phone: data.phone || phone.trim(),
         role: data.role,
-        isSupervisor: data.isSupervisor || isSupervisor,
+        isSupervisor: data.isSupervisor ?? isSupervisor,
         active: data.active,
         createdAt: data.createdAt,
+        assignedFarm: { id: chosenFarmObj.id, name: chosenFarmObj.name },
       };
 
       setWorkers([newWorker, ...workers]);
@@ -100,6 +120,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
         phone: phone.trim(),
         password: password.trim(),
         isSupervisor,
+        farmName: chosenFarmObj.name,
       });
 
       toast.show("Worker account provisioned successfully!", "success");
@@ -115,10 +136,104 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
     }
   };
 
+  const handleAssignOfficer = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!assignModalWorker || !selectedAssignFarmId) return;
+
+    setAssignPending(true);
+    try {
+      const res = await fetch(`/api/farms/${selectedAssignFarmId}/access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: assignModalWorker.id, canManage: true }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to assign farm officer");
+      }
+
+      const assignedFarmObj = allFarms.find((f) => f.id === selectedAssignFarmId) || {
+        id: selectedAssignFarmId,
+        name: farmName,
+      };
+
+      setWorkers((prev) =>
+        prev.map((w) =>
+          w.id === assignModalWorker.id
+            ? {
+                ...w,
+                isSupervisor: true,
+                assignedFarm: { id: assignedFarmObj.id, name: assignedFarmObj.name },
+              }
+            : w
+        )
+      );
+
+      toast.show(
+        `${assignModalWorker.name} is now Farm Officer of ${assignedFarmObj.name}!`,
+        "success"
+      );
+      setAssignModalWorker(null);
+    } catch (err: any) {
+      toast.show(err.message || "Failed to assign farm officer", "error");
+    } finally {
+      setAssignPending(false);
+    }
+  };
+
+  const handleRevertToLabor = async (worker: FarmWorker) => {
+    if (!worker.assignedFarm) {
+      setWorkers((prev) =>
+        prev.map((w) => (w.id === worker.id ? { ...w, isSupervisor: false } : w))
+      );
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Revert ${worker.name} from Farm Officer back to Labor? They will no longer manage ${worker.assignedFarm.name}.`
+      )
+    ) {
+      return;
+    }
+
+    setPending(true);
+    try {
+      const res = await fetch(`/api/farms/${worker.assignedFarm.id}/access`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: worker.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to revert worker to labor");
+      }
+
+      setWorkers((prev) =>
+        prev.map((w) =>
+          w.id === worker.id
+            ? {
+                ...w,
+                isSupervisor: false,
+                assignedFarm: null,
+              }
+            : w
+        )
+      );
+      toast.show(`${worker.name} reverted to Farm Laborer.`, "success");
+    } catch (err: any) {
+      toast.show(err.message || "Failed to revert officer", "error");
+    } finally {
+      setPending(false);
+    }
+  };
+
   const copyWorkerCredentials = (w: { name: string; phone?: string | null; password?: string }) => {
     const phoneDisplay = w.phone || "No phone registered";
     const text =
-      "🌾 *Agaate Farm Laborer Credentials*\n\n" +
+      "🌾 *Agaate Farm Team Credentials*\n\n" +
       "Farm: " + farmName + "\n" +
       "Name: " + w.name + "\n" +
       "Login Phone: " + phoneDisplay + "\n" +
@@ -155,7 +270,8 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
         !q ||
         w.name.toLowerCase().includes(q) ||
         (w.phone && w.phone.includes(q)) ||
-        w.email.toLowerCase().includes(q);
+        w.email.toLowerCase().includes(q) ||
+        (w.assignedFarm && w.assignedFarm.name.toLowerCase().includes(q));
 
       const matchesRole =
         roleFilter === "ALL" ||
@@ -164,9 +280,14 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
 
       const matchesActive = !activeOnly || w.active;
 
-      return matchesSearch && matchesRole && matchesActive;
+      const matchesEstate =
+        estateFilter === "ALL" ||
+        (estateFilter === "UNASSIGNED" && !w.assignedFarm) ||
+        (w.assignedFarm?.id === estateFilter);
+
+      return matchesSearch && matchesRole && matchesActive && matchesEstate;
     });
-  }, [workers, searchTerm, roleFilter, activeOnly]);
+  }, [workers, searchTerm, roleFilter, estateFilter, activeOnly]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -187,13 +308,15 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
           <div>
             <div className="eyebrow" style={{ marginBottom: 4 }}>
               <span className="eyebrow-dot" />
-              <span>ESTATE WORKFORCE MANAGEMENT • {farmName}</span>
+              <span>
+                ESTATE WORKFORCE • {allFarms.length > 1 ? `${allFarms.length} ESTATES MANAGED` : farmName}
+              </span>
             </div>
             <h1 className="page-title" style={{ margin: 0, fontSize: "22px" }}>
-              Farm Workers &amp; Laborers Roster
+              Farm Workers &amp; On-Site Team
             </h1>
             <p className="muted" style={{ margin: "4px 0 0", fontSize: "13px" }}>
-              Provision, manage, and credential on-site farm workers with mobile phone login and daily muster assignment.
+              Manage field personnel, assign farm officers (1 farm per officer), and credential on-ground labor.
             </p>
           </div>
 
@@ -201,6 +324,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
             type="button"
             onClick={() => {
               generateSimplePassword();
+              setCreateFarmId(farmId);
               setShowAddModal(true);
             }}
             className="btn btn-green"
@@ -219,15 +343,15 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
           </div>
 
           <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
-            <div className="mono-label" style={{ fontSize: "11px", color: "var(--green)" }}>FIELD SUPERVISORS</div>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--green)" }}>FARM OFFICERS</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--green)", marginTop: 2 }}>{supervisorsCount}</div>
-            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Task &amp; muster dispatch</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Dedicated 1 per estate</div>
           </div>
 
           <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
-            <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>FARM LABORERS</div>
+            <div className="mono-label" style={{ fontSize: "11px", color: "var(--muted)" }}>FARM LABOR</div>
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>{laborersCount}</div>
-            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Field operation hands</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Field hands &amp; local connects</div>
           </div>
 
           <div style={{ padding: 14, borderRadius: "var(--radius-sm)", background: "var(--stone)", border: "1px solid var(--stone)" }}>
@@ -235,7 +359,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
             <div style={{ fontSize: "22px", fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
               {workers.filter((w) => w.active).length} / {workers.length}
             </div>
-            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Ready for field work</div>
+            <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>Ready for field tasks</div>
           </div>
         </div>
       </div>
@@ -267,7 +391,8 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
               </div>
               <div>
                 <strong style={{ fontSize: "14px", color: "var(--ink)" }}>
-                  Newly Provisioned: {recentWorker.name} {recentWorker.isSupervisor && "(Supervisor)"}
+                  Newly Provisioned: {recentWorker.name}{" "}
+                  {recentWorker.isSupervisor ? `(Farm Officer - ${recentWorker.farmName})` : "(Labor)"}
                 </strong>
                 <div style={{ fontSize: "12px", color: "var(--muted)", fontFamily: "monospace", marginTop: 2 }}>
                   Login Mobile: <strong style={{ color: "var(--ink)" }}>{recentWorker.phone}</strong> &bull; Temporary Password: <strong style={{ color: "var(--ink)" }}>{recentWorker.password}</strong>
@@ -339,7 +464,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                 padding: "4px 10px",
               }}
             >
-              Supervisors ({supervisorsCount})
+              Farm Officers ({supervisorsCount})
             </button>
             <button
               type="button"
@@ -354,12 +479,32 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                 padding: "4px 10px",
               }}
             >
-              Laborers ({laborersCount})
+              Labor ({laborersCount})
             </button>
           </div>
 
-          {/* Search & Active Only Toggle */}
+          {/* Secondary Controls: Estate filter, Search & Active Only */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {allFarms.length > 1 && (
+              <select
+                value={estateFilter}
+                onChange={(e) => {
+                  setEstateFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="input-field"
+                style={{ fontSize: "12px", height: 34, minWidth: 160 }}
+              >
+                <option value="ALL">All Estates</option>
+                <option value="UNASSIGNED">Unassigned Labor</option>
+                {allFarms.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "12px", cursor: "pointer" }}>
               <input
                 type="checkbox"
@@ -372,7 +517,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
             <div style={{ width: 240, position: "relative" }}>
               <input
                 type="text"
-                placeholder="Search by name, mobile, email…"
+                placeholder="Search name, mobile, estate…"
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className="input-field"
@@ -410,7 +555,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
               <tr>
                 <th>Worker Name</th>
                 <th>Mobile Number</th>
-                <th>Authority Tier</th>
+                <th>Authority &amp; Estate Assignment</th>
                 <th>Status</th>
                 <th>Date Added</th>
                 <th style={{ textAlign: "right" }}>Actions</th>
@@ -430,33 +575,52 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                   </td>
                   <td>
                     {w.isSupervisor ? (
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          color: "var(--green-dark)",
-                          background: "var(--green-light)",
-                          border: "1px solid rgba(36, 84, 58, 0.2)",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-pill)",
-                        }}
-                      >
-                        Field Supervisor
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: "var(--green)",
+                            background: "var(--stone)",
+                            border: "1px solid var(--stone)",
+                            padding: "2px 8px",
+                            borderRadius: "var(--radius-pill)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            width: "fit-content",
+                          }}
+                        >
+                          <Icons.Shield size={11} />
+                          <span>Farm Officer</span>
+                        </span>
+                        <span className="muted" style={{ fontSize: "11px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <span>📍</span>
+                          <strong style={{ color: "var(--ink)" }}>{w.assignedFarm?.name || farmName}</strong>
+                        </span>
+                      </div>
                     ) : (
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          color: "var(--muted)",
-                          background: "var(--stone)",
-                          border: "1px solid var(--stone)",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-pill)",
-                        }}
-                      >
-                        Farm Laborer
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color: "var(--muted)",
+                            background: "var(--stone)",
+                            border: "1px solid var(--stone)",
+                            padding: "2px 8px",
+                            borderRadius: "var(--radius-pill)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            width: "fit-content",
+                          }}
+                        >
+                          Labor
+                        </span>
+                        <span className="muted" style={{ fontSize: "11px" }}>
+                          {w.assignedFarm ? `📍 ${w.assignedFarm.name}` : "Unassigned field hand / local connect"}
+                        </span>
+                      </div>
                     )}
                   </td>
                   <td>
@@ -473,7 +637,58 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                     {new Date(w.createdAt).toLocaleDateString()}
                   </td>
                   <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: 6 }}>
+                    <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                      {!w.isSupervisor ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAssignModalWorker(w);
+                            setSelectedAssignFarmId(allFarms[0]?.id || farmId);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            fontSize: "11px",
+                            padding: "3px 8px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            color: "var(--green)",
+                            fontWeight: 600,
+                          }}
+                          title="Assign this laborer as a Farm Officer for an estate (1 farm per officer)"
+                        >
+                          <Icons.Shield size={12} />
+                          <span>Assign as Farm Officer</span>
+                        </button>
+                      ) : (
+                        <div style={{ display: "inline-flex", gap: 4 }}>
+                          {allFarms.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAssignModalWorker(w);
+                                const other = allFarms.find((f) => f.id !== w.assignedFarm?.id);
+                                setSelectedAssignFarmId(other?.id || allFarms[0].id);
+                              }}
+                              className="btn btn-secondary btn-sm"
+                              style={{ fontSize: "11px", padding: "3px 8px" }}
+                              title="Reassign to another farm (1 farm maximum)"
+                            >
+                              Reassign Farm
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRevertToLabor(w)}
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: "11px", padding: "3px 8px", color: "var(--muted)" }}
+                            title="Revert officer back to Farm Laborer"
+                          >
+                            Revert to Labor
+                          </button>
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => copyWorkerCredentials({ name: w.name, phone: w.phone || w.email })}
@@ -507,7 +722,7 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                       <Icons.Users size={24} style={{ color: "var(--muted)" }} />
                       <strong style={{ color: "var(--ink)" }}>No personnel found</strong>
-                      <span style={{ fontSize: "12px" }}>Try adjusting your search query or filters.</span>
+                      <span style={{ fontSize: "12px" }}>Try adjusting your search query, estate filter, or role tabs.</span>
                     </div>
                   </td>
                 </tr>
@@ -611,6 +826,31 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
             </div>
 
             <form onSubmit={handleCreateWorker} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {allFarms.length > 1 && (
+                <div>
+                  <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>
+                    Assigned Estate *
+                  </label>
+                  <select
+                    value={createFarmId}
+                    onChange={(e) => setCreateFarmId(e.target.value)}
+                    className="input-field"
+                    style={{ width: "100%", height: 38 }}
+                  >
+                    {allFarms.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name} {f.location ? `(${f.location})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="muted" style={{ fontSize: "11px", marginTop: 2, display: "block" }}>
+                    {isSupervisor
+                      ? "Farm Officers can be assigned to exactly 1 estate (1:1 rule)."
+                      : "Primary estate for field muster and task assignment."}
+                  </span>
+                </div>
+              )}
+
               <div>
                 <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>
                   Worker Full Name *
@@ -683,9 +923,9 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                   style={{ marginTop: 3 }}
                 />
                 <label htmlFor="supervisor-checkbox" style={{ fontSize: "12px", cursor: "pointer", color: "var(--ink)" }}>
-                  <strong>Field Supervisor Authority</strong>
+                  <strong>Field Supervisor / Farm Officer Authority</strong>
                   <div className="muted" style={{ fontSize: "11px", marginTop: 2 }}>
-                    Permits officer to review daily tasks, muster daily labor, and submit end-of-shift reports.
+                    Assigns worker as Farm Officer for this estate (1 farm per officer). Permits reviewing daily tasks, labor muster, and shift reports.
                   </div>
                 </label>
               </div>
@@ -704,6 +944,100 @@ export function WorkersConsole({ farmId, farmName, initialWorkers }: WorkersCons
                   className="btn btn-green"
                 >
                   {pending ? "Provisioning..." : "Confirm & Hire Worker"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. ASSIGN / REASSIGN AS FARM OFFICER MODAL (STRICT 1:1 RULE) ── */}
+      {assignModalWorker && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 1000,
+          }}
+        >
+          <div className="compact-card" style={{ width: "100%", maxWidth: 480, padding: 24, gap: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <span className="mono-label" style={{ color: "var(--green)" }}>
+                  {assignModalWorker.isSupervisor ? "REASSIGN ESTATE" : "PROMOTE TO FARM OFFICER"}
+                </span>
+                <h3 style={{ fontSize: "18px", margin: "2px 0 0", color: "var(--ink)" }}>
+                  {assignModalWorker.isSupervisor
+                    ? `Reassign ${assignModalWorker.name}`
+                    : `Assign ${assignModalWorker.name} as Farm Officer`}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssignModalWorker(null)}
+                style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "var(--muted)" }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: 12,
+                borderRadius: "var(--radius-sm)",
+                background: "var(--stone)",
+                border: "1px solid var(--stone)",
+                fontSize: "12px",
+                color: "var(--ink)",
+                lineHeight: "1.5",
+              }}
+            >
+              <strong>Strict 1:1 Estate Assignment Rule:</strong>
+              <div className="muted" style={{ fontSize: "11px", marginTop: 4 }}>
+                Each Farm Officer is assigned to <strong>exactly 1 farm</strong>. Assigning this worker will grant them Field Supervisor authority exclusively over the chosen estate and replace any prior estate assignments.
+              </div>
+            </div>
+
+            <form onSubmit={handleAssignOfficer} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label className="mono-label" style={{ display: "block", marginBottom: 4 }}>
+                  Select Estate *
+                </label>
+                <select
+                  required
+                  value={selectedAssignFarmId}
+                  onChange={(e) => setSelectedAssignFarmId(e.target.value)}
+                  className="input-field"
+                  style={{ width: "100%", height: 38 }}
+                >
+                  {(allFarms.length > 0 ? allFarms : [{ id: farmId, name: farmName }]).map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} {f.location ? `— ${f.location}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setAssignModalWorker(null)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={assignPending}
+                  className="btn btn-green"
+                >
+                  {assignPending ? "Updating Assignment..." : "Confirm Assignment"}
                 </button>
               </div>
             </form>

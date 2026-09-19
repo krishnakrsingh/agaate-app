@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
         : Promise.resolve([]),
       kinds.has("audit")
         ? prisma.auditLog.findMany({
-            where: { AND: [{ createdAt: { gte: from, lte: to } }, { metadata: { path: "$.farmId", equals: farmId } }] },
+            where: { AND: [{ createdAt: { gte: from, lte: to } }, { metadata: { path: ["farmId"], equals: farmId } }] },
             select: { id: true, action: true, entityType: true, createdAt: true, actor: { select: { name: true } } },
             orderBy: { createdAt: "desc" },
             take: PER_SOURCE_TAKE,

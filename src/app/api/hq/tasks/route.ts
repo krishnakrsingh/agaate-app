@@ -76,33 +76,33 @@ export async function GET(request: NextRequest) {
     const conds: Prisma.Sql[] = [];
     if (q) {
       const pattern = `%${escapeLike(q)}%`;
-      conds.push(Prisma.sql`(\`t\`.\`title\` LIKE ${pattern} OR \`t\`.\`description\` LIKE ${pattern})`);
+      conds.push(Prisma.sql`("t"."title" ILIKE ${pattern} OR "t"."description" ILIKE ${pattern})`);
     }
-    if (status !== "ALL") conds.push(Prisma.sql`\`t\`.\`status\` = ${status}`);
-    if (priority !== "ALL") conds.push(Prisma.sql`\`t\`.\`priority\` = ${priority}`);
-    if (farmId) conds.push(Prisma.sql`\`t\`.\`farmId\` = ${farmId}`);
-    if (clientId) conds.push(Prisma.sql`\`f\`.\`clientId\` = ${clientId}`);
-    if (officerId === "UNASSIGNED") conds.push(Prisma.sql`\`t\`.\`assignedOfficerId\` IS NULL`);
-    else if (officerId) conds.push(Prisma.sql`\`t\`.\`assignedOfficerId\` = ${officerId}`);
-    if (overdueOnly) conds.push(Prisma.sql`(\`t\`.\`dueDate\` < ${today} AND \`t\`.\`status\` NOT IN ('COMPLETED', 'CANCELLED'))`);
-    if (dateFrom) conds.push(Prisma.sql`\`t\`.\`dueDate\` >= ${dateFrom}`);
-    if (dateTo) conds.push(Prisma.sql`\`t\`.\`dueDate\` <= ${dateTo}`);
+    if (status !== "ALL") conds.push(Prisma.sql`"t"."status" = ${status}`);
+    if (priority !== "ALL") conds.push(Prisma.sql`"t"."priority" = ${priority}`);
+    if (farmId) conds.push(Prisma.sql`"t"."farmId" = ${farmId}`);
+    if (clientId) conds.push(Prisma.sql`"f"."clientId" = ${clientId}`);
+    if (officerId === "UNASSIGNED") conds.push(Prisma.sql`"t"."assignedOfficerId" IS NULL`);
+    else if (officerId) conds.push(Prisma.sql`"t"."assignedOfficerId" = ${officerId}`);
+    if (overdueOnly) conds.push(Prisma.sql`("t"."dueDate" < ${today} AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED'))`);
+    if (dateFrom) conds.push(Prisma.sql`"t"."dueDate" >= ${dateFrom}`);
+    if (dateTo) conds.push(Prisma.sql`"t"."dueDate" <= ${dateTo}`);
 
     const whereExpr = conds.length ? Prisma.join(conds, " AND ") : Prisma.sql`1 = 1`;
-    const joins = Prisma.sql`LEFT JOIN \`Farm\` \`f\` ON \`f\`.\`id\` = \`t\`.\`farmId\` LEFT JOIN \`Client\` \`c\` ON \`c\`.\`id\` = \`f\`.\`clientId\` LEFT JOIN \`Plot\` \`p\` ON \`p\`.\`id\` = \`t\`.\`plotId\` LEFT JOIN \`User\` \`u\` ON \`u\`.\`id\` = \`t\`.\`assignedOfficerId\``;
+    const joins = Prisma.sql`LEFT JOIN "Farm" "f" ON "f"."id" = "t"."farmId" LEFT JOIN "Client" "c" ON "c"."id" = "f"."clientId" LEFT JOIN "Plot" "p" ON "p"."id" = "t"."plotId" LEFT JOIN "User" "u" ON "u"."id" = "t"."assignedOfficerId"`;
     const orderBy =
       sort === "priority"
-        ? Prisma.sql`CASE \`t\`.\`priority\` WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END, \`t\`.\`dueDate\` ASC, \`t\`.\`createdAt\` DESC`
+        ? Prisma.sql`CASE "t"."priority" WHEN 'URGENT' THEN 0 WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END, "t"."dueDate" ASC, "t"."createdAt" DESC`
         : sort === "recent"
-          ? Prisma.sql`\`t\`.\`createdAt\` DESC`
-          : Prisma.sql`\`t\`.\`dueDate\` ASC, \`t\`.\`createdAt\` DESC`;
+          ? Prisma.sql`"t"."createdAt" DESC`
+          : Prisma.sql`"t"."dueDate" ASC, "t"."createdAt" DESC`;
 
     const [countRows, rows] = await Promise.all([
       prisma.$queryRaw<{ total: unknown }[]>(
-        Prisma.sql`SELECT COUNT(*) AS \`total\` FROM \`Task\` \`t\` ${joins} WHERE ${whereExpr}`
+        Prisma.sql`SELECT COUNT(*) AS "total" FROM "Task" "t" ${joins} WHERE ${whereExpr}`
       ),
       prisma.$queryRaw<LedgerDbRow[]>(
-        Prisma.sql`SELECT \`t\`.\`id\`, \`t\`.\`title\`, \`t\`.\`farmId\`, \`t\`.\`plotId\`, \`t\`.\`status\`, \`t\`.\`priority\`, \`t\`.\`dueDate\`, \`t\`.\`origin\`, \`t\`.\`createdAt\`, \`t\`.\`assignedOfficerId\`, \`f\`.\`name\` AS \`farmName\`, \`c\`.\`name\` AS \`clientName\`, \`p\`.\`name\` AS \`plotName\`, \`u\`.\`name\` AS \`officerName\` FROM \`Task\` \`t\` ${joins} WHERE ${whereExpr} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`
+        Prisma.sql`SELECT "t"."id", "t"."title", "t"."farmId", "t"."plotId", "t"."status", "t"."priority", "t"."dueDate", "t"."origin", "t"."createdAt", "t"."assignedOfficerId", "f"."name" AS "farmName", "c"."name" AS "clientName", "p"."name" AS "plotName", "u"."name" AS "officerName" FROM "Task" "t" ${joins} WHERE ${whereExpr} ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`
       ),
     ]);
     const total = countRows.length ? asNum(countRows[0].total) : 0;

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import { ChatThread } from "@modules/chat/ui/chat-thread";
-import { ChatConversation, RefPlot, chatApi } from "@modules/chat/ui/chat-client";
+import { ChatConversation, RefPlot, chatApi, newClientMessageId } from "@modules/chat/ui/chat-client";
 import { formatDate } from "@shared/format";
 import { PlotDemarcateWizard } from "@modules/plots/ui/plot-demarcate-wizard";
 
@@ -207,8 +207,8 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
         const paramFarm = searchParams.get("farmId");
         const liveliest = openThreads.find((c) => list.some((f) => f.id === c.farmId))?.farmId ?? null;
         if (paramFarm && list.some((f) => f.id === paramFarm)) setFarmId(paramFarm);
-        else if (saved && list.some((f) => f.id === saved)) setFarmId(saved);
         else if (liveliest) setFarmId(liveliest);
+        else if (saved && list.some((f) => f.id === saved)) setFarmId(saved);
         else if (list.length > 0) setFarmId(list[0].id);
       }).finally(() => setLoading(false));
     }, 0);
@@ -246,6 +246,32 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
   );
 
   const silentRefresh = useCallback((fid: string) => loadEstate(fid, { silent: true }), [loadEstate]);
+
+  // Real-time SSE listener for conversation changes on this farm
+  useEffect(() => {
+    if (!farmId || typeof window === "undefined") return;
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`/api/conversations/stream?farmId=${farmId}`);
+      es.addEventListener("update", () => {
+        silentRefresh(farmId);
+      });
+    } catch {
+      // fallback
+    }
+
+    // Adaptive background refresh every 3 seconds while active
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) {
+        silentRefresh(farmId);
+      }
+    }, 3000);
+
+    return () => {
+      clearInterval(pollInterval);
+      es?.close();
+    };
+  }, [farmId, silentRefresh]);
 
   useEffect(() => {
     if (!farmId) return;
@@ -299,6 +325,10 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
   );
 
   const officers = useMemo(() => people.filter((p) => p.role === "FARM_OFFICER"), [people]);
+  const consultableRecipients = useMemo(
+    () => (people.length > 0 ? people.filter((p) => p.userId !== currentUserId) : []),
+    [people, currentUserId]
+  );
 
   const activeFarm = farms.find((f) => f.id === farmId);
 
@@ -403,7 +433,7 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
         await chatApi(`/api/conversations/${created.id}/messages`, {
           method: "POST",
           body: JSON.stringify({
-            clientMessageId: crypto.randomUUID(),
+            clientMessageId: newClientMessageId(),
             body: newFirstMessage.trim(),
             refs: [],
             attachmentMediaIds: [],
@@ -1617,7 +1647,7 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
 
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink)", marginBottom: 4 }}>
-                  Field Officer *
+                  Consult with *
                 </label>
                 <select
                   required
@@ -1626,10 +1656,10 @@ export function AgronomyChat({ currentUserId }: { currentUserId: string }) {
                   className="input"
                   style={{ width: "100%", fontSize: 13 }}
                 >
-                  <option value="">-- Choose on-site officer --</option>
-                  {officers.map((p) => (
+                  <option value="">-- Choose recipient (Owner or Field Officer) --</option>
+                  {(consultableRecipients.length > 0 ? consultableRecipients : officers).map((p) => (
                     <option key={p.userId} value={p.userId}>
-                      {p.name} {p.lead ? "(Lead Officer)" : "(Field Officer)"}
+                      {p.name} ({p.role === "FARM_ADMIN" ? "Farm Owner" : p.role === "SUPER_ADMIN" ? "HQ Operations" : p.lead ? "Lead Officer" : "Field Officer"})
                     </option>
                   ))}
                 </select>

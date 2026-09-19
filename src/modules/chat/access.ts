@@ -37,16 +37,25 @@ export async function gateConversation(
   const isParticipant = !!participant;
 
   if (!isParticipant) {
-    // SUPER_ADMIN inspect-only bypass for reads.
-    if (actor.role === "SUPER_ADMIN" && !opts.requireWrite) {
+    // SUPER_ADMIN and AGRONOMIST can inspect conversations on farms they oversee.
+    if (actor.role === "SUPER_ADMIN" || actor.role === "AGRONOMIST") {
+      if (opts.requireWrite) {
+        // Auto-join supervisory staff when they write a directive or advice
+        await prisma.conversationParticipant.upsert({
+          where: { conversationId_userId: { conversationId, userId: actor.id } },
+          update: {},
+          create: { conversationId, userId: actor.id },
+        });
+        return { conversation, isParticipant: true };
+      }
       return { conversation, isParticipant: false };
     }
     throw new HttpError(403, "You do not have access to this conversation.");
   }
+
   // Stale membership is not access: unassigned users lose the farm the
-  // moment their FarmAccess row disappears (SUPER_ADMIN bypasses — HQ owns
-  // the platform, and inspect already bypassed above).
-  if (actor.role !== "SUPER_ADMIN") {
+  // moment their FarmAccess row disappears (SUPER_ADMIN and AGRONOMIST bypass — HQ & Agronomists oversee the platform).
+  if (actor.role !== "SUPER_ADMIN" && actor.role !== "AGRONOMIST") {
     const access = await prisma.farmAccess.findUnique({
       where: { userId_farmId: { userId: actor.id, farmId: conversation.farmId } },
     });

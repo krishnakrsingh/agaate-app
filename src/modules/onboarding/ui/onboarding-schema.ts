@@ -129,6 +129,9 @@ export const clientSchema = z
     pincode: z.string().trim().min(1, "PIN code is required.").max(20),
     financeConnect: optionalText(150),
     purchaserConnect: optionalText(150),
+    localConnectName: optionalText(120),
+    localConnectPhone: optionalText(20),
+    localConnectSameAsClient: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     const phone = normalizePhone(data.phone ?? null);
@@ -138,6 +141,9 @@ export const clientSchema = z
     }
     if (data.whatsappNo?.trim() && !normalizePhone(data.whatsappNo)) {
       ctx.addIssue({ code: "custom", path: ["whatsappNo"], message: "WhatsApp number must hold 10-15 digits." });
+    }
+    if (data.localConnectPhone?.trim() && !normalizePhone(data.localConnectPhone)) {
+      ctx.addIssue({ code: "custom", path: ["localConnectPhone"], message: "Local connect phone must hold 10-15 digits." });
     }
     if (!email) {
       ctx.addIssue({ code: "custom", path: ["email"], message: "Please enter a valid email address." });

@@ -171,9 +171,9 @@ export async function commitBoundary<T extends { id: string }>(
   let prev: { version: number; measuredAcres: unknown } | null = null;
   if (entity.id) {
     const table = entity.type === "FARM" ? "Farm" : "Plot";
-    await tx.$queryRawUnsafe(`SELECT id FROM \`${table}\` WHERE id = ? FOR UPDATE`, entity.id);
+    await tx.$queryRawUnsafe(`SELECT id FROM "${table}" WHERE id = $1 FOR UPDATE`, entity.id);
     const latest = await tx.$queryRawUnsafe<{ version: number; measuredAcres: unknown }[]>(
-      "SELECT version, measuredAcres FROM `BoundaryVersion` WHERE entityType = ? AND entityId = ? ORDER BY version DESC LIMIT 1 FOR UPDATE",
+      'SELECT version, "measuredAcres" FROM "BoundaryVersion" WHERE "entityType"::text = $1 AND "entityId" = $2 ORDER BY version DESC LIMIT 1 FOR UPDATE',
       entity.type,
       entity.id
     );
@@ -186,7 +186,7 @@ export async function commitBoundary<T extends { id: string }>(
   let flagBase = prevAcres;
   if (flagBase === null && boundary.acres !== null && entity.id) {
     const lastKnown = await tx.$queryRawUnsafe<{ a: unknown }[]>(
-      "SELECT measuredAcres AS a FROM `BoundaryVersion` WHERE entityType = ? AND entityId = ? AND measuredAcres IS NOT NULL ORDER BY version DESC LIMIT 1",
+      'SELECT "measuredAcres" AS a FROM "BoundaryVersion" WHERE "entityType"::text = $1 AND "entityId" = $2 AND "measuredAcres" IS NOT NULL ORDER BY version DESC LIMIT 1',
       entity.type,
       entity.id
     );
@@ -244,7 +244,7 @@ export async function commitBoundary<T extends { id: string }>(
       const code = (e as { code?: string }).code;
       if (code === "P2002" && attempt < 4) {
         const relatest = await tx.$queryRawUnsafe<{ version: number }[]>(
-          "SELECT version FROM `BoundaryVersion` WHERE entityType = ? AND entityId = ? ORDER BY version DESC LIMIT 1 FOR UPDATE",
+          'SELECT version FROM "BoundaryVersion" WHERE "entityType"::text = $1 AND "entityId" = $2 ORDER BY version DESC LIMIT 1 FOR UPDATE',
           entity.type,
           entity.id ?? ""
         );

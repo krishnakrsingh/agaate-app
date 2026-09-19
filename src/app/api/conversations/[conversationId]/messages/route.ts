@@ -5,11 +5,12 @@ import { prisma } from "@infrastructure/db";
 import { audit } from "@infrastructure/audit";
 import { apiError } from "@infrastructure/http";
 import { gateConversation } from "@modules/chat/access";
+import { chatBroadcaster } from "@modules/chat/infrastructure/chatBroadcaster";
 
 const ENTITY_TYPES = ["PLOT", "CROP_CYCLE", "TASK", "PRESCRIPTION", "INCIDENT", "MONITORING"] as const;
 
 const sendSchema = z.object({
-  clientMessageId: z.string().uuid(),
+  clientMessageId: z.string().min(1).max(128),
   body: z.string().trim().min(1).max(2000),
   refs: z
     .array(
@@ -258,6 +259,13 @@ export async function POST(
 
     await audit(actor.id, "MESSAGE_SEND", "ChatMessage", message.id, { conversationId: conversation.id });
     const [shaped] = await shapeMessages([message]);
+    chatBroadcaster.broadcastMessage(conversation.id, shaped);
+    chatBroadcaster.broadcastConversationUpdate(conversation.farmId, {
+      id: conversation.id,
+      status: conversation.status,
+      subject: (await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { subject: true } }))?.subject,
+      lastMessageAt: message.createdAt,
+    });
     return NextResponse.json(shaped, { status: 201 });
   } catch (error) {
     return apiError(error);

@@ -86,6 +86,10 @@ export async function PATCH(
     const manage = resolveManageFarmIds(effectiveRole, input.managesFarmIds ?? [], scope as any);
     const all = [...new Set([...ids, ...manage])];
 
+    if (effectiveRole === "FARM_OFFICER" && all.length > 1) {
+      throw new Error("Validation failed: a Farm Officer can only be assigned to at most one farm.");
+    }
+
     if (input.farmIds || input.managesFarmIds) {
       if (all.length !== await prisma.farm.count({ where: { id: { in: all } } })) {
         throw new Error("A selected farm no longer exists.");

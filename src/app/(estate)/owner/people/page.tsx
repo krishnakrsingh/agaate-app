@@ -42,11 +42,37 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
     );
   }
 
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, clientId: true },
+  });
+
+  const farmIds = farms.map((f) => f.id);
+  const selectedFarmId = resolvedParams.farmId;
+  const isFilteringSpecificFarm =
+    Boolean(selectedFarmId) &&
+    selectedFarmId !== "all" &&
+    farmIds.includes(selectedFarmId!);
+
+  const targetFarm = isFilteringSpecificFarm
+    ? farms.find((f) => f.id === selectedFarmId)!
+    : activeFarm;
+
+  // Query strictly field personnel (FARM_OFFICER), never farm admins or super admins.
+  // Includes personnel assigned to any owned farm or unassigned laborers registered to the client.
   const workers = await prisma.user.findMany({
-    where: {
-      farmAccess: { some: { farmId: activeFarm.id } },
-      role: { in: ["FARM_OFFICER", "FARM_ADMIN", "AGRONOMIST"] },
-    },
+    where: isFilteringSpecificFarm
+      ? {
+          role: "FARM_OFFICER",
+          farmAccess: { some: { farmId: targetFarm.id } },
+        }
+      : {
+          role: "FARM_OFFICER",
+          OR: [
+            { farmAccess: { some: { farmId: { in: farmIds } } } },
+            ...(currentUser?.clientId ? [{ clientId: currentUser.clientId }] : []),
+          ],
+        },
     select: {
       id: true,
       name: true,
@@ -56,6 +82,14 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
       isSupervisor: true,
       active: true,
       createdAt: true,
+      farmAccess: {
+        select: {
+          farmId: true,
+          farm: {
+            select: { id: true, name: true, location: true },
+          },
+        },
+      },
     },
     orderBy: [{ isSupervisor: "desc" }, { createdAt: "desc" }],
   });
@@ -69,6 +103,18 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
     isSupervisor: w.isSupervisor,
     active: w.active,
     createdAt: w.createdAt.toISOString(),
+    assignedFarm: w.farmAccess[0]?.farm
+      ? {
+          id: w.farmAccess[0].farm.id,
+          name: w.farmAccess[0].farm.name,
+        }
+      : null,
+  }));
+
+  const allFarmsSummary = farms.map((f) => ({
+    id: f.id,
+    name: f.name,
+    location: f.location,
   }));
 
   return (
@@ -82,14 +128,15 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
         {farms.length > 1 && (
           <form action="/owner/people" method="get" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
             <label htmlFor="team-farm" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--muted)" }}>
-              Estate:
+              Filter by Estate:
             </label>
             <select
               id="team-farm"
               name="farmId"
-              defaultValue={activeFarm.id}
-              style={{ height: 36, fontSize: 13, minWidth: 240 }}
+              defaultValue={isFilteringSpecificFarm ? targetFarm.id : "all"}
+              style={{ height: 36, fontSize: 13, minWidth: 260 }}
             >
+              <option value="all">All Estates &amp; Unassigned Labor ({farms.length} Estates)</option>
               {farms.map((farm) => (
                 <option key={farm.id} value={farm.id}>{farm.name} — {farm.location}</option>
               ))}
@@ -99,8 +146,9 @@ export default async function OwnerPeoplePage({ searchParams }: Props) {
         )}
 
         <WorkersConsole
-          farmId={activeFarm.id}
-          farmName={activeFarm.name}
+          farmId={targetFarm.id}
+          farmName={targetFarm.name}
+          allFarms={allFarmsSummary}
           initialWorkers={serializedWorkers}
         />
       </main>

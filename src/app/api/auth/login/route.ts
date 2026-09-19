@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
 
     try {
       if (isEmail) {
-        user = await prisma.user.findUnique({
-          where: { email: normalizedIdentifier },
+        user = await prisma.user.findFirst({
+          where: { email: { equals: normalizedIdentifier, mode: "insensitive" } },
           select: baselineUserSelect,
         });
       } else {

@@ -292,29 +292,32 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 4. Assign Dedicated Central Agronomist if selected
+      // 4. Assign Dedicated Central Agronomist if selected or default chief agronomist
       let assignedAgronomist: any = null;
       if (input.agronomistId) {
         assignedAgronomist = await tx.user.findUnique({
           where: { id: input.agronomistId },
           select: { id: true, name: true, email: true, role: true, active: true },
         });
-        if (input.agronomistId && !assignedAgronomist) {
-          throw new Error("The selected agronomist no longer exists.");
-        }
-        if (assignedAgronomist && (assignedAgronomist.role !== "AGRONOMIST" || !assignedAgronomist.active)) {
+        if (!assignedAgronomist || assignedAgronomist.role !== "AGRONOMIST" || !assignedAgronomist.active) {
           throw new Error("The selected agronomist is not available.");
         }
+      }
+      if (!assignedAgronomist) {
+        assignedAgronomist = await tx.user.findFirst({
+          where: { role: "AGRONOMIST", active: true },
+          select: { id: true, name: true, email: true, role: true, active: true },
+        });
+      }
 
-        if (assignedAgronomist) {
-          await tx.farmAccess.create({
-            data: {
-              userId: assignedAgronomist.id,
-              farmId: farm.id,
-              canManage: false,
-            },
-          });
-        }
+      if (assignedAgronomist) {
+        await tx.farmAccess.create({
+          data: {
+            userId: assignedAgronomist.id,
+            farmId: farm.id,
+            canManage: false,
+          },
+        });
       }
 
       // 5. Demarcate Initial Plot if specified

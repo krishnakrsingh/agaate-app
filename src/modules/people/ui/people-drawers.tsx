@@ -170,19 +170,25 @@ function FarmAssigner({
   setAssigned,
   clientId,
   scope,
+  singleFarm = false,
 }: {
   assigned: AssignedFarm[];
   setAssigned: React.Dispatch<React.SetStateAction<AssignedFarm[]>>;
   clientId?: string | null;
   scope: AccessScope;
+  singleFarm?: boolean;
 }) {
   const { query, setQuery, results, clear } = useFarmSearch(clientId);
   const manageLabel = scope === "assigned" ? "LEAD" : "ADMIN";
   const observeLabel = scope === "assigned" ? "ASSIGNED" : "VIEW";
 
   function add(farmId: string, farmName: string) {
-    if (assigned.some((a) => a.farmId === farmId)) return;
-    setAssigned((prev) => [...prev, { farmId, farmName, canManage: false }]);
+    if (singleFarm) {
+      setAssigned([{ farmId, farmName, canManage: false }]);
+    } else {
+      if (assigned.some((a) => a.farmId === farmId)) return;
+      setAssigned((prev) => [...prev, { farmId, farmName, canManage: false }]);
+    }
     clear();
   }
 
@@ -355,7 +361,12 @@ export function CreateAccountDrawer({ onClose, onCreated }: { onClose: () => voi
         {showEstates && (
           <div className="form-group" style={{ margin: 0 }}>
             <label>Assign Estates ({assigned.length})</label>
-            <FarmAssigner assigned={assigned} setAssigned={setAssigned} scope={scope} />
+            <FarmAssigner
+              assigned={assigned}
+              setAssigned={setAssigned}
+              scope={scope}
+              singleFarm={selected?.slug === "FARM_OFFICER"}
+            />
           </div>
         )}
 
@@ -469,7 +480,13 @@ export function EditAccessDrawer({
         {showEstates && (
           <div className="form-group" style={{ margin: 0 }}>
             <label>Assigned Estates ({assigned.length})</label>
-            <FarmAssigner assigned={assigned} setAssigned={setAssigned} clientId={user.clientId} scope={scope} />
+            <FarmAssigner
+              assigned={assigned}
+              setAssigned={setAssigned}
+              clientId={user.clientId}
+              scope={scope}
+              singleFarm={roles.find((r) => r.id === roleDefinitionId)?.slug === "FARM_OFFICER"}
+            />
           </div>
         )}
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--line)", paddingTop: 14 }}>

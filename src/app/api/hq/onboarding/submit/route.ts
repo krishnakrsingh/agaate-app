@@ -225,6 +225,52 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // On-Ground Local Connect: create ClientContact and User (Laborer)
+      const localConnectName = input.client.localConnectName?.trim();
+      const localConnectPhone = normalizePhone(input.client.localConnectPhone ?? null);
+
+      if (localConnectName && localConnectPhone) {
+        await tx.clientContact.create({
+          data: {
+            clientId: client.id,
+            name: localConnectName,
+            phone: localConnectPhone,
+            role: "LOCAL",
+            isPrimary: false,
+          },
+        });
+
+        const existingLocalUser = await tx.user.findFirst({
+          where: {
+            OR: [
+              { phone: localConnectPhone },
+              { email: `${localConnectPhone.replace(/[^\d]/g, "")}@worker.agaate.ag` },
+            ],
+          },
+          select: { id: true },
+        });
+
+        if (!existingLocalUser) {
+          const digits = localConnectPhone.replace(/[^\d]/g, "");
+          const workerEmail = `${digits}@worker.agaate.ag`;
+          const initialWorkerPassword = `Ag@${Math.random().toString(36).slice(-8)}123`;
+          const workerPasswordHash = await bcrypt.hash(initialWorkerPassword, 12);
+
+          await tx.user.create({
+            data: {
+              name: localConnectName,
+              email: workerEmail,
+              phone: localConnectPhone,
+              passwordHash: workerPasswordHash,
+              role: "FARM_OFFICER",
+              isSupervisor: false, // Laborer tier in owner team roster
+              clientId: client.id,
+              active: true,
+            },
+          });
+        }
+      }
+
       // Farms: sequential so any failure names its row (single tx = all-or-nothing).
       const farms: { id: string; name: string }[] = [];
       const farmGeoJsonByRow = new Map<string, string | null>();
@@ -243,6 +289,8 @@ export async function POST(request: NextRequest) {
           ? `${input.client.name} (${input.client.phone})`
           : f.localContactName
           ? `${f.localContactName}${f.localContactPhone ? ` (${f.localContactPhone})` : ""}`
+          : input.client.localConnectName
+          ? `${input.client.localConnectName}${input.client.localConnectPhone ? ` (${input.client.localConnectPhone})` : ""}`
           : f.localConnect || null;
 
         const effectiveTotalArea = Number(f.area) || Number(f.totalArea);
@@ -303,10 +351,15 @@ export async function POST(request: NextRequest) {
       if (owner) {
         farms.forEach((f) => accessRecords.push({ userId: owner.id, farmId: f.id, canManage: true }));
       }
-      if (input.team.agronomistId) {
-        farms.forEach((f) => accessRecords.push({ userId: input.team.agronomistId!, farmId: f.id, canManage: true }));
+      let effectiveAgronomistId = input.team.agronomistId;
+      if (!effectiveAgronomistId) {
+        const defaultAgro = await tx.user.findFirst({ where: { role: "AGRONOMIST", active: true }, select: { id: true } });
+        effectiveAgronomistId = defaultAgro?.id ?? null;
       }
-      if (input.team.fieldOfficerId && input.team.fieldOfficerId !== input.team.agronomistId) {
+      if (effectiveAgronomistId) {
+        farms.forEach((f) => accessRecords.push({ userId: effectiveAgronomistId!, farmId: f.id, canManage: false }));
+      }
+      if (input.team.fieldOfficerId && input.team.fieldOfficerId !== effectiveAgronomistId) {
         farms.forEach((f) => accessRecords.push({ userId: input.team.fieldOfficerId!, farmId: f.id, canManage: false }));
       }
       if (accessRecords.length > 0) {

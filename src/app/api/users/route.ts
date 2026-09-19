@@ -211,6 +211,10 @@ export async function POST(request: NextRequest) {
       throw new Error("Role or roleDefinitionId is required.");
     }
 
+    if (assignedRole === "FARM_OFFICER" && farmIds.length > 1) {
+      throw new Error("Validation failed: a Farm Officer can only be assigned to at most one farm.");
+    }
+
     const user = await prisma.$transaction(async (tx) =>
       tx.user.create({
         data: {

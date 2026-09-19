@@ -102,7 +102,9 @@ export function assertSameOrigin(request: Request): void {
       candHostname.endsWith(".sahilraj.com") ||
       candHostname.endsWith(".agaate.com") ||
       candHostname.endsWith(".agaate.ag") ||
-      candHostname.endsWith(".krishnakr.com")
+      candHostname.endsWith(".krishnakr.com") ||
+      candHostname.endsWith(".ngrok-free.dev") ||
+      candHostname.endsWith(".ngrok.app")
     ) {
       return;
     }
