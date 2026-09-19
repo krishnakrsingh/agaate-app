@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (input.mediaIds && input.mediaIds.length > 0) {
-          await tx.mediaAsset.updateMany({
+          const linked = await tx.mediaAsset.updateMany({
             where: {
               id: { in: input.mediaIds },
               uploadedById: actor.id,
@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
               farmId: input.farmId,
             },
           });
+          if (linked.count !== input.mediaIds.length) {
+            throw new Error("One or more activity evidence files are unavailable or unverified.");
+          }
         }
       }
 

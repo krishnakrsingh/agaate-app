@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       where.level = levelParam;
     }
     if (q) {
-      where.AND = [...(where.AND || []), { OR: [{ type: { contains: q } }, { description: { contains: q } }] }];
+      where.AND = [...(where.AND || []), { OR: [{ type: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] }];
     }
 
     const [incidents, total] = await Promise.all([

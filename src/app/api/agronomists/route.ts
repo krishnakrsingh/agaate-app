@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     else if (activeParam === "false") where.active = false;
     if (search) {
       where.AND = [
-        { OR: [{ name: { contains: search } }, { email: { contains: search } }, { phone: { contains: search } }] },
+        { OR: [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }, { phone: { contains: search, mode: "insensitive" } }] },
       ];
     }
 

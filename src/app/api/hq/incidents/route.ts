@@ -44,7 +44,7 @@ function ageLabel(createdAt: Date, now: number): { days: number; hours: number; 
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN", "FARM_ADMIN", "AGRONOMIST"]);
+    requireRole(actor.role, ["SUPER_ADMIN", "OPERATIONS_MANAGER", "FARM_ADMIN", "AGRONOMIST"]);
     const farmScope = await accessibleFarmWhere();
 
     const sp = request.nextUrl.searchParams;
@@ -89,9 +89,9 @@ export async function GET(request: NextRequest) {
     if (farmQuery) {
       farmAnd.push({
         OR: [
-          { name: { contains: farmQuery } },
-          { location: { contains: farmQuery } },
-          { client: { name: { contains: farmQuery } } },
+          { name: { contains: farmQuery, mode: "insensitive" } },
+          { location: { contains: farmQuery, mode: "insensitive" } },
+          { client: { name: { contains: farmQuery, mode: "insensitive" } } },
         ],
       });
     }
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       where.status = statusParam;
     }
     if (typeParam) {
-      where.AND = [...(where.AND || []), { type: { contains: typeParam } }];
+      where.AND = [...(where.AND || []), { type: { contains: typeParam, mode: "insensitive" } }];
     }
     if (search) {
       where.AND = [

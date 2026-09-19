@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       where.farm = { access: { some: { userId: actor.id } } };
     }
     if (category && category !== "ALL") where.category = category;
-    if (q) where.name = { contains: q };
+    if (q) where.name = { contains: q, mode: "insensitive" };
 
     const [items, total] = await Promise.all([
       prisma.inventoryItem.findMany({

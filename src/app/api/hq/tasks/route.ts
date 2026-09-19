@@ -45,7 +45,7 @@ type LedgerDbRow = {
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requireRole(actor.role, ["SUPER_ADMIN", "OPERATIONS_MANAGER"]);
 
     const sp = request.nextUrl.searchParams;
     const rawLimit = sp.get("limit");
@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
     if (clientId) conds.push(Prisma.sql`"f"."clientId" = ${clientId}`);
     if (officerId === "UNASSIGNED") conds.push(Prisma.sql`"t"."assignedOfficerId" IS NULL`);
     else if (officerId) conds.push(Prisma.sql`"t"."assignedOfficerId" = ${officerId}`);
-    if (overdueOnly) conds.push(Prisma.sql`("t"."dueDate" < ${today} AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED'))`);
-    if (dateFrom) conds.push(Prisma.sql`"t"."dueDate" >= ${dateFrom}`);
-    if (dateTo) conds.push(Prisma.sql`"t"."dueDate" <= ${dateTo}`);
+    if (overdueOnly) conds.push(Prisma.sql`("t"."dueDate" < ${today}::date AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED'))`);
+    if (dateFrom) conds.push(Prisma.sql`"t"."dueDate" >= ${dateFrom}::date`);
+    if (dateTo) conds.push(Prisma.sql`"t"."dueDate" <= ${dateTo}::date`);
 
     const whereExpr = conds.length ? Prisma.join(conds, " AND ") : Prisma.sql`1 = 1`;
     const joins = Prisma.sql`LEFT JOIN "Farm" "f" ON "f"."id" = "t"."farmId" LEFT JOIN "Client" "c" ON "c"."id" = "f"."clientId" LEFT JOIN "Plot" "p" ON "p"."id" = "t"."plotId" LEFT JOIN "User" "u" ON "u"."id" = "t"."assignedOfficerId"`;

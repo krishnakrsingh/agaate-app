@@ -18,7 +18,7 @@ const patchSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requireRole(actor.role, ["SUPER_ADMIN", "OPERATIONS_MANAGER"]);
     const { taskId } = await params;
 
     const task = await prisma.task.findUniqueOrThrow({

@@ -64,7 +64,7 @@ export function buildEstateWhere(
     where.state = filters.state;
   }
   if (filters.district) {
-    where.district = { contains: filters.district };
+    where.district = { contains: filters.district, mode: "insensitive" };
   }
   if (filters.hasBoundary === "YES") {
     where.boundaryGeoJson = { not: null };

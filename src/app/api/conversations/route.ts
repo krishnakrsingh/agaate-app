@@ -53,10 +53,14 @@ export async function GET(request: NextRequest) {
     }
     if (status === "OPEN" || status === "CLOSED") where.status = status;
     if (q) {
-      where.OR = [
-        { subject: { contains: q, mode: "insensitive" } },
-        { farm: { name: { contains: q, mode: "insensitive" } } },
-      ];
+      const qFilter = {
+        OR: [
+          { subject: { contains: q, mode: "insensitive" } },
+          { farm: { name: { contains: q, mode: "insensitive" } } },
+        ],
+      };
+      where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), ...(where.OR ? [{ OR: where.OR }] : []), qFilter];
+      delete where.OR;
     }
 
     const [total, conversations] = await Promise.all([
@@ -264,6 +268,7 @@ export async function POST(request: NextRequest) {
       });
       await tx.conversationParticipant.createMany({
         data: memberIds.map((userId) => ({ conversationId: created.id, userId })),
+        skipDuplicates: true,
       });
       return created;
     });

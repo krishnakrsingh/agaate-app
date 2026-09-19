@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
-    if (q) where.OR = [{ contractorName: { contains: q } }, { notes: { contains: q } }];
+    if (q) where.OR = [{ contractorName: { contains: q, mode: "insensitive" } }, { notes: { contains: q, mode: "insensitive" } }];
 
     const [musters, total] = await Promise.all([
       prisma.dailyCrewMuster.findMany({
@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
     // farm access suffices (upsert is date-scoped, actor recorded below).
     await requireFarmAccess(input.farmId);
 
-    const date = parseUtcDate(input.musterDate);
+    const date = parseUtcDate(input.musterDate.slice(0, 10));
+    if (isNaN(date.getTime())) throw new Error("Validation failed");
     const totalWageCost = input.dailyWageRate
       ? Math.round(input.totalLabourers * input.dailyWageRate * 100) / 100
       : null;

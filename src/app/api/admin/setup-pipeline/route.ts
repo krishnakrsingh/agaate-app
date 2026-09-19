@@ -51,19 +51,19 @@ export async function GET(request: NextRequest) {
     const searchCondition: Prisma.FarmWhereInput = search
       ? {
           OR: [
-            { name: { contains: search } },
-            { surveyNumber: { contains: search } },
-            { location: { contains: search } },
-            { district: { contains: search } },
-            { village: { contains: search } },
-            { ownerName: { contains: search } },
-            { clientPhone: { contains: search } },
+            { name: { contains: search, mode: "insensitive" } },
+            { surveyNumber: { contains: search, mode: "insensitive" } },
+            { location: { contains: search, mode: "insensitive" } },
+            { district: { contains: search, mode: "insensitive" } },
+            { village: { contains: search, mode: "insensitive" } },
+            { ownerName: { contains: search, mode: "insensitive" } },
+            { clientPhone: { contains: search, mode: "insensitive" } },
             {
               client: {
                 OR: [
-                  { name: { contains: search } },
-                  { code: { contains: search } },
-                  { phone: { contains: search } },
+                  { name: { contains: search, mode: "insensitive" } },
+                  { code: { contains: search, mode: "insensitive" } },
+                  { phone: { contains: search, mode: "insensitive" } },
                 ],
               },
             },
@@ -75,12 +75,12 @@ export async function GET(request: NextRequest) {
     const geoCondition: Prisma.FarmWhereInput = {};
     if (stateParam) {
       geoCondition.OR = [
-        { state: { contains: stateParam } },
-        { location: { contains: stateParam } },
+        { state: { contains: stateParam, mode: "insensitive" } },
+        { location: { contains: stateParam, mode: "insensitive" } },
       ];
     }
     if (districtParam) {
-      geoCondition.district = { contains: districtParam };
+      geoCondition.district = { contains: districtParam, mode: "insensitive" };
     }
 
     // 4. SLA filter condition (based on days since last stage update)

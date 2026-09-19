@@ -18,7 +18,7 @@ const asNum = (v: unknown): number => {
 export async function GET(request: NextRequest) {
   try {
     const actor = await currentActor();
-    requireRole(actor.role, ["SUPER_ADMIN"]);
+    requireRole(actor.role, ["SUPER_ADMIN", "OPERATIONS_MANAGER"]);
 
     const sp = request.nextUrl.searchParams;
     const farmId = sp.get("farmId")?.trim() || null;
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
     type WorkloadRow = { officerId: string; officerName: string | null; openCount: unknown; overdueCount: unknown };
     const [officerRows, unassignedRows] = await Promise.all([
       prisma.$queryRaw<WorkloadRow[]>(
-        Prisma.sql`SELECT "t"."assignedOfficerId" AS "officerId", "u"."name" AS "officerName", COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today} THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NOT NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr} GROUP BY "t"."assignedOfficerId", "u"."name" ORDER BY "overdueCount" DESC, "openCount" DESC LIMIT 50`
+        Prisma.sql`SELECT "t"."assignedOfficerId" AS "officerId", "u"."name" AS "officerName", COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today}::date THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NOT NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr} GROUP BY "t"."assignedOfficerId", "u"."name" ORDER BY "overdueCount" DESC, "openCount" DESC LIMIT 50`
       ),
       prisma.$queryRaw<{ openCount: unknown; overdueCount: unknown }[]>(
-        Prisma.sql`SELECT COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today} THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr}`
+        Prisma.sql`SELECT COUNT(*) AS "openCount", SUM(CASE WHEN "t"."dueDate" < ${today}::date THEN 1 ELSE 0 END) AS "overdueCount" FROM "Task" "t" ${joins} WHERE "t"."assignedOfficerId" IS NULL AND "t"."status" NOT IN ('COMPLETED', 'CANCELLED') ${scopeExpr}`
       ),
     ]);
 

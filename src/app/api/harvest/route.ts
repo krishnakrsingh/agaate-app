@@ -40,11 +40,15 @@ export async function GET(request: NextRequest) {
       where.farm = { access: { some: { userId: actor.id } } };
     }
     if (grade && grade !== "ALL") where.grade = grade;
-    if (q) where.OR = [{ buyerOrMarket: { contains: q } }, { notes: { contains: q } }, { vehicleNumber: { contains: q } }];
+    if (q) where.OR = [{ buyerOrMarket: { contains: q, mode: "insensitive" } }, { notes: { contains: q, mode: "insensitive" } }, { vehicleNumber: { contains: q, mode: "insensitive" } }];
     if (from || to) {
       const range: any = {};
-      if (from) range.gte = parseUtcDate(from);
-      if (to) range.lte = parseUtcDate(to);
+      if (from) range.gte = parseUtcDate(from.slice(0, 10));
+      if (to) {
+        const end = parseUtcDate(to.slice(0, 10));
+        end.setUTCDate(end.getUTCDate() + 1);
+        range.lt = end;
+      }
       where.harvestDate = range;
     }
 

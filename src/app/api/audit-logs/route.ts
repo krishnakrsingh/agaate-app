@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
     if (q)
       and.push({
         OR: [
-          { action: { contains: q } },
-          { entityType: { contains: q } },
-          { entityId: { contains: q } },
-          { actor: { name: { contains: q } } },
-          { actor: { email: { contains: q } } },
+          { action: { contains: q, mode: "insensitive" } },
+          { entityType: { contains: q, mode: "insensitive" } },
+          { entityId: { contains: q, mode: "insensitive" } },
+          { actor: { name: { contains: q, mode: "insensitive" } } },
+          { actor: { email: { contains: q, mode: "insensitive" } } },
         ],
       });
     if (from || to) {

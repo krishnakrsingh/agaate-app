@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { currentActor, requireFarmAccess } from "@modules/auth";
 import { prisma } from "@infrastructure/db";
 import { apiError } from "@infrastructure/http";
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest) {
         });
         generated.push(task.id);
       } catch (e) {
-        // If duplicate due to race, ignore
+        // If duplicate due to race, ignore (P2002 on deterministic id)
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") continue;
         if (e instanceof Error && e.message.includes("Unique constraint")) continue;
         throw e;
       }

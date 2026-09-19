@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     } else if (actor.role === "FARM_ADMIN" || actor.role === "FARM_OFFICER") {
       where.farm = { access: { some: { userId: actor.id } } };
     }
-    if (q) where.OR = [{ targetIssue: { contains: q } }, { instructions: { contains: q } }];
+    if (q) where.OR = [{ targetIssue: { contains: q, mode: "insensitive" } }, { instructions: { contains: q, mode: "insensitive" } }];
 
     const [prescriptions, total] = await Promise.all([
       prisma.agronomyPrescription.findMany({
