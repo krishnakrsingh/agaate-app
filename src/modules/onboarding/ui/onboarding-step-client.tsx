@@ -21,7 +21,7 @@ function Field({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: 5,
         gridColumn: span ? "1 / -1" : undefined,
       }}
     >
@@ -29,15 +29,15 @@ function Field({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 4,
+          gap: 3,
           fontSize: 12,
           fontWeight: 600,
-          color: "#1e293b",
+          color: "var(--ink, #0f172a)",
           letterSpacing: "-0.01em",
         }}
       >
         <span>{label}</span>
-        {required && <span style={{ color: "#dc2626", fontWeight: 700 }}>*</span>}
+        {required && <span style={{ color: "var(--semantic-error, #dc2626)", fontWeight: 700 }}>*</span>}
       </label>
       {children}
       {error && (
@@ -46,7 +46,7 @@ function Field({
           style={{
             fontSize: 11,
             fontWeight: 600,
-            color: "#dc2626",
+            color: "var(--semantic-error, #dc2626)",
             marginTop: 2,
             display: "flex",
             alignItems: "center",
@@ -60,20 +60,6 @@ function Field({
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  height: 38,
-  fontSize: 13,
-  fontWeight: 500,
-  color: "#0f172a",
-  backgroundColor: "#ffffff",
-  border: "1px solid #d5ded7",
-  borderRadius: 8,
-  padding: "0 11px",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-  outline: "none",
-  width: "100%",
-};
 
 export function OnboardingStepClient({
   value,
@@ -182,25 +168,25 @@ export function OnboardingStepClient({
       {existingClientId && (
         <div
           style={{
-            background: "#ffffff",
-            border: "1px solid #d5e4d8",
-            borderLeft: "4px solid #15803d",
-            borderRadius: 10,
+            background: "var(--surface-card, #ffffff)",
+            border: "1px solid var(--hairline, #e8ede9)",
+            borderLeft: "4px solid var(--primary, #15803d)",
+            borderRadius: "var(--radius-lg, 12px)",
             padding: "10px 16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: 12.5,
-            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04)",
+            boxShadow: "var(--shadow-subtle)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Icons.User size={15} style={{ color: "#15803d" }} />
-            <span style={{ color: "#0f172a" }}>
+            <Icons.User size={15} style={{ color: "var(--primary, #15803d)" }} />
+            <span style={{ color: "var(--ink, #0f172a)" }}>
               Onboarding existing client: <strong>{value.name || existingClientId}</strong>
             </span>
           </div>
-          <span style={{ fontSize: 11, color: "#64748b" }}>Profile synced</span>
+          <span style={{ fontSize: 11, color: "var(--muted, #64748b)" }}>Profile synced</span>
         </div>
       )}
 
@@ -211,7 +197,7 @@ export function OnboardingStepClient({
           style={{
             background: "#fef2f2",
             border: "1px solid #fecaca",
-            borderRadius: 10,
+            borderRadius: "var(--radius-lg, 12px)",
             padding: "10px 14px",
             display: "flex",
             alignItems: "center",
@@ -226,95 +212,89 @@ export function OnboardingStepClient({
         </div>
       )}
 
-      {/* ── 2-COLUMN UNIFIED SPLIT (ZERO-SCROLL) ───────────────────────── */}
+      {/* ── UNIFIED CARD: STYLED AFTER CLIENT DIRECTORY TABLE AESTHETIC ── */}
       <div
         style={{
+          background: "var(--surface-card, #ffffff)",
+          border: "1px solid var(--hairline, #e8ede9)",
+          borderRadius: "var(--radius-xl, 16px)",
+          boxShadow: "var(--shadow-subtle, 0 1px 3px rgba(12, 10, 9, 0.03))",
           display: "grid",
           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 14,
-          alignItems: "stretch",
+          gap: 32,
+          padding: "24px 28px",
         }}
       >
-        {/* ── LEFT CARD: CLIENT IDENTITY & PRIMARY CONTACT ───────────── */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #d5e4d8",
-            borderRadius: 14,
-            padding: "18px 20px",
-            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
+        {/* ── LEFT COLUMN: CLIENT IDENTITY & PRIMARY CONTACT ───────────── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Column Header */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               paddingBottom: 10,
-              borderBottom: "1px solid #eef5ef",
+              borderBottom: "1px solid var(--hairline-soft, #f2f5f2)",
+              marginBottom: 4,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  backgroundColor: "#eaf5ec",
-                  color: "#15803d",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: "var(--primary, #15803d)",
+                  flexShrink: 0,
+                }}
+              />
+              <h3
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--ink, #0f172a)",
+                  margin: 0,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
                 }}
               >
-                <Icons.User size={16} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                  Client Profile & Contact
-                </h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
-                  Legal owner and primary representative
-                </p>
-              </div>
+                Client Profile &amp; Contact
+              </h3>
             </div>
 
-            <div
+            <span
               style={{
                 fontSize: 11,
                 fontFamily: "var(--font-mono, monospace)",
                 fontWeight: 600,
-                color: "#64748b",
-                background: "#f1f5f9",
+                color: "var(--muted, #64748b)",
+                background: "var(--canvas-floor, #fafbfa)",
                 padding: "3px 8px",
-                borderRadius: 5,
-                border: "1px solid #e2e8f0",
+                borderRadius: 6,
+                border: "1px solid var(--hairline, #e8ede9)",
+                letterSpacing: "0.02em",
               }}
             >
               ID: {previewClientCode(idempotencyKey)}
-            </div>
+            </span>
           </div>
 
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: 10,
+              gap: 12,
             }}
           >
             {/* Full Name */}
             <Field label="Full Name" error={errors["name"] || errors["client.name"]} required span>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., Krishna Kumar Singh"
                 value={value.name}
                 onChange={(e) => set({ name: e.target.value })}
                 autoFocus
-                style={inputStyle}
               />
             </Field>
 
@@ -323,17 +303,16 @@ export function OnboardingStepClient({
               <div style={{ position: "relative" }}>
                 <input
                   type="email"
-                  className="input"
+                  className="onboarding-form-input"
                   placeholder="e.g., krishna@agaate.farm"
                   value={value.email}
                   onChange={(e) => set({ email: e.target.value })}
                   style={{
-                    ...inputStyle,
-                    paddingRight: checking ? 32 : 11,
+                    paddingRight: checking ? 36 : 12,
                   }}
                 />
                 {checking && (
-                  <div style={{ position: "absolute", right: 10, top: 11, color: "#64748b" }}>
+                  <div style={{ position: "absolute", right: 12, top: 11, color: "var(--muted, #64748b)" }}>
                     <Icons.Refresh size={14} className="spin" />
                   </div>
                 )}
@@ -344,7 +323,7 @@ export function OnboardingStepClient({
             <Field label="Mobile Number" error={errors["phone"] || errors["client.phone"]} required>
               <input
                 type="tel"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., 9876543210"
                 value={value.phone}
                 onChange={(e) => {
@@ -354,7 +333,6 @@ export function OnboardingStepClient({
                     ...(isSameAsMobile ? { whatsappNo: val } : {}),
                   });
                 }}
-                style={inputStyle}
               />
             </Field>
 
@@ -363,15 +341,13 @@ export function OnboardingStepClient({
               <div style={{ position: "relative" }}>
                 <input
                   type="tel"
-                  className="input"
+                  className="onboarding-form-input"
                   placeholder="e.g., 9876543210"
                   value={value.whatsappNo || ""}
                   onChange={(e) => set({ whatsappNo: e.target.value })}
                   disabled={isSameAsMobile}
                   style={{
-                    ...inputStyle,
-                    backgroundColor: isSameAsMobile ? "#f8fafc" : "#ffffff",
-                    paddingRight: 125,
+                    paddingRight: 118,
                   }}
                 />
                 <button
@@ -385,14 +361,20 @@ export function OnboardingStepClient({
                     height: 28,
                     padding: "0 9px",
                     fontSize: 11,
-                    fontWeight: 600,
+                    fontWeight: isSameAsMobile ? 600 : 500,
                     borderRadius: 6,
                     display: "flex",
                     alignItems: "center",
                     gap: 5,
-                    border: isSameAsMobile ? "1px solid #0f172a" : "1px solid #e2e8f0",
-                    backgroundColor: isSameAsMobile ? "#0f172a" : "#f8fafc",
-                    color: isSameAsMobile ? "#ffffff" : "#64748b",
+                    border: isSameAsMobile
+                      ? "1px solid rgba(21, 128, 61, 0.28)"
+                      : "1px solid var(--hairline, #e8ede9)",
+                    backgroundColor: isSameAsMobile
+                      ? "var(--green-tint, #eaf5ec)"
+                      : "var(--canvas-floor, #fafbfa)",
+                    color: isSameAsMobile
+                      ? "var(--green-ink, #14532d)"
+                      : "var(--muted, #64748b)",
                     cursor: value.phone?.trim() ? "pointer" : "not-allowed",
                     transition: "all 0.15s ease",
                   }}
@@ -400,17 +382,20 @@ export function OnboardingStepClient({
                 >
                   <div
                     style={{
-                      width: 13,
-                      height: 13,
+                      width: 12,
+                      height: 12,
                       borderRadius: 3,
-                      border: isSameAsMobile ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
-                      backgroundColor: isSameAsMobile ? "#0f172a" : "#ffffff",
+                      border: isSameAsMobile
+                        ? "1px solid var(--primary, #15803d)"
+                        : "1.5px solid var(--hairline-strong, #d2ded4)",
+                      backgroundColor: isSameAsMobile ? "var(--primary, #15803d)" : "#ffffff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    {isSameAsMobile && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
+                    {isSameAsMobile && <Icons.Check size={8} strokeWidth={3} style={{ color: "#ffffff" }} />}
                   </div>
                   <span>Same as mob</span>
                 </button>
@@ -421,11 +406,10 @@ export function OnboardingStepClient({
             <Field label="Business Name" error={errors["companyName"] || errors["client.companyName"]}>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)"
                 value={value.companyName || ""}
                 onChange={(e) => set({ companyName: e.target.value })}
-                style={inputStyle}
               />
             </Field>
 
@@ -433,12 +417,11 @@ export function OnboardingStepClient({
             <Field label="GST (GSTIN)" error={errors["gstin"] || errors["client.gstin"]}>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., 29ABCDE1234F1Z5 (Optional)"
                 value={value.gstin || ""}
                 onChange={(e) => set({ gstin: e.target.value.toUpperCase() })}
                 style={{
-                  ...inputStyle,
                   fontFamily: "var(--font-mono, monospace)",
                 }}
               />
@@ -446,65 +429,64 @@ export function OnboardingStepClient({
           </div>
         </div>
 
-        {/* ── RIGHT CARD: ADDRESS, BILLING & FINANCIAL CONNECT ───────── */}
+        {/* ── RIGHT COLUMN: ADDRESS, BILLING & FIELD OPS ──────────────── */}
         <div
           style={{
-            background: "#ffffff",
-            border: "1px solid #d5e4d8",
-            borderRadius: 14,
-            padding: "18px 20px",
-            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
             display: "flex",
             flexDirection: "column",
             gap: 12,
+            borderLeft: "1px solid var(--hairline, #e8ede9)",
+            paddingLeft: 32,
           }}
         >
+          {/* Column Header */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               paddingBottom: 10,
-              borderBottom: "1px solid #eef5ef",
+              borderBottom: "1px solid var(--hairline-soft, #f2f5f2)",
+              marginBottom: 4,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  backgroundColor: "#eaf5ec",
-                  color: "#15803d",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  backgroundColor: "var(--blue, #315f86)",
+                  flexShrink: 0,
+                }}
+              />
+              <h3
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--ink, #0f172a)",
+                  margin: 0,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
                 }}
               >
-                <Icons.MapPin size={16} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                  Address, Billing & Financials
-                </h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
-                  Physical location, invoicing, and accounting contacts
-                </p>
-              </div>
+                Address, Billing &amp; Field Ops
+              </h3>
             </div>
 
             <span
               style={{
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 600,
-                color: "#15803d",
-                background: "#f0fdf4",
+                color: "var(--blue, #315f86)",
+                background: "var(--blue-light, #eaf0f5)",
                 padding: "3px 8px",
-                borderRadius: 5,
-                border: "1px solid #bbf7d0",
+                borderRadius: 6,
+                border: "1px solid rgba(49, 95, 134, 0.16)",
+                letterSpacing: "0.02em",
               }}
             >
-              Tax & Invoicing
+              Tax &amp; Invoicing
             </span>
           </div>
 
@@ -512,21 +494,20 @@ export function OnboardingStepClient({
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: 8,
+              gap: 10,
             }}
           >
             {/* Village */}
             <Field label="Village / Street" error={errors["village"] || errors["client.village"]} required>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., Solur"
                 value={value.village || ""}
                 onChange={(e) => set({ village: e.target.value })}
                 style={{
-                  ...inputStyle,
                   fontSize: 12.5,
-                  padding: "0 8px",
+                  padding: "0 10px",
                 }}
               />
             </Field>
@@ -535,14 +516,13 @@ export function OnboardingStepClient({
             <Field label="City / Taluk" error={errors["city"] || errors["client.city"]} required>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., Magadi"
                 value={value.city || ""}
                 onChange={(e) => set({ city: e.target.value })}
                 style={{
-                  ...inputStyle,
                   fontSize: 12.5,
-                  padding: "0 8px",
+                  padding: "0 10px",
                 }}
               />
             </Field>
@@ -551,14 +531,13 @@ export function OnboardingStepClient({
             <Field label="State" error={errors["state"] || errors["client.state"]} required>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., Karnataka"
                 value={value.state || ""}
                 onChange={(e) => set({ state: e.target.value })}
                 style={{
-                  ...inputStyle,
                   fontSize: 12.5,
-                  padding: "0 8px",
+                  padding: "0 10px",
                 }}
               />
             </Field>
@@ -567,16 +546,15 @@ export function OnboardingStepClient({
             <Field label="PIN Code" error={errors["pincode"] || errors["client.pincode"]} required>
               <input
                 type="text"
-                className="input"
+                className="onboarding-form-input"
                 placeholder="e.g., 562127"
                 maxLength={6}
                 value={value.pincode || ""}
                 onChange={(e) => set({ pincode: e.target.value.replace(/\D/g, "") })}
                 style={{
-                  ...inputStyle,
                   fontSize: 12.5,
                   fontFamily: "var(--font-mono, monospace)",
-                  padding: "0 8px",
+                  padding: "0 10px",
                 }}
               />
             </Field>
@@ -591,13 +569,12 @@ export function OnboardingStepClient({
               <div style={{ position: "relative" }}>
                 <input
                   type="text"
-                  className="input"
+                  className="onboarding-form-input"
                   placeholder="e.g., 45 Greenfield Agri Tech Park, Hoskote, Bengaluru Rural"
                   value={value.billingAddress || ""}
                   onChange={(e) => set({ billingAddress: e.target.value })}
                   style={{
-                    ...inputStyle,
-                    paddingRight: 145,
+                    paddingRight: 142,
                   }}
                 />
                 <button
@@ -611,14 +588,20 @@ export function OnboardingStepClient({
                     height: 28,
                     padding: "0 9px",
                     fontSize: 11,
-                    fontWeight: 600,
+                    fontWeight: isSameAsAddress ? 600 : 500,
                     borderRadius: 6,
                     display: "flex",
                     alignItems: "center",
                     gap: 5,
-                    border: isSameAsAddress ? "1px solid #0f172a" : "1px solid #e2e8f0",
-                    backgroundColor: isSameAsAddress ? "#0f172a" : "#f8fafc",
-                    color: isSameAsAddress ? "#ffffff" : "#64748b",
+                    border: isSameAsAddress
+                      ? "1px solid rgba(21, 128, 61, 0.28)"
+                      : "1px solid var(--hairline, #e8ede9)",
+                    backgroundColor: isSameAsAddress
+                      ? "var(--green-tint, #eaf5ec)"
+                      : "var(--canvas-floor, #fafbfa)",
+                    color: isSameAsAddress
+                      ? "var(--green-ink, #14532d)"
+                      : "var(--muted, #64748b)",
                     cursor: addressSummary ? "pointer" : "not-allowed",
                     transition: "all 0.15s ease",
                   }}
@@ -626,166 +609,154 @@ export function OnboardingStepClient({
                 >
                   <div
                     style={{
-                      width: 13,
-                      height: 13,
+                      width: 12,
+                      height: 12,
                       borderRadius: 3,
-                      border: isSameAsAddress ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
-                      backgroundColor: isSameAsAddress ? "#0f172a" : "#ffffff",
+                      border: isSameAsAddress
+                        ? "1px solid var(--primary, #15803d)"
+                        : "1.5px solid var(--hairline-strong, #d2ded4)",
+                      backgroundColor: isSameAsAddress ? "var(--primary, #15803d)" : "#ffffff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    {isSameAsAddress && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
+                    {isSameAsAddress && <Icons.Check size={8} strokeWidth={3} style={{ color: "#ffffff" }} />}
                   </div>
                   <span>Same as address</span>
                 </button>
               </div>
             </Field>
-          </div>
-        </div>
 
-        {/* ── CARD 3: ON-GROUND LOCAL CONNECT (PRIMARY FIELD OPERATIONS CONTACT) ── */}
-        <div
-          style={{
-            gridColumn: "1 / -1",
-            background: "#ffffff",
-            border: "1px solid #d5e4d8",
-            borderRadius: 14,
-            padding: "18px 20px",
-            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingBottom: 10,
-              borderBottom: "1px solid #eef5ef",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  backgroundColor: "#eaf5ec",
-                  color: "#15803d",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Icons.Users size={16} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
-                  On-Ground Local Connect
-                </h3>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
-                  Primary field representative for farm surveys, boundaries, and plot demarcation (prevents client disturbance)
-                </p>
-              </div>
-            </div>
-
-            <span
+            {/* ── SUBSECTION: ON-GROUND LOCAL CONNECT ── */}
+            <div
               style={{
-                fontSize: 10.5,
-                fontWeight: 600,
-                color: "#15803d",
-                background: "#f0fdf4",
-                padding: "3px 8px",
-                borderRadius: 5,
-                border: "1px solid #bbf7d0",
-              }}
-            >
-              Field Ops &amp; Demarcation
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr auto",
-              gap: 12,
-              alignItems: "flex-end",
-            }}
-          >
-            {/* Local Connect Name */}
-            <Field label="Local Connect Full Name" error={errors["localConnectName"] || errors["client.localConnectName"]}>
-              <input
-                type="text"
-                className="input"
-                placeholder="e.g., Ramesh Patel (Field Coordinator)"
-                value={value.localConnectName || ""}
-                onChange={(e) => set({ localConnectName: e.target.value })}
-                style={inputStyle}
-              />
-            </Field>
-
-            {/* Local Connect Mobile */}
-            <Field label="Mobile Number" error={errors["localConnectPhone"] || errors["client.localConnectPhone"]}>
-              <input
-                type="tel"
-                className="input"
-                placeholder="e.g., 9876543210"
-                value={value.localConnectPhone || ""}
-                onChange={(e) => set({ localConnectPhone: e.target.value })}
-                style={inputStyle}
-              />
-            </Field>
-
-            {/* Same as Client Toggle */}
-            <button
-              type="button"
-              onClick={toggleSameAsClient}
-              disabled={!value.name || !value.phone}
-              style={{
-                height: 38,
-                padding: "0 14px",
-                fontSize: 12,
-                fontWeight: 600,
-                borderRadius: 8,
+                gridColumn: "1 / -1",
+                paddingTop: 10,
+                marginTop: 2,
+                borderTop: "1px solid var(--hairline-soft, #f2f5f2)",
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                border: isSameAsClient ? "1px solid #0f172a" : "1px solid #d5ded7",
-                backgroundColor: isSameAsClient ? "#0f172a" : "#f8fafc",
-                color: isSameAsClient ? "#ffffff" : "#475569",
-                cursor: value.name && value.phone ? "pointer" : "not-allowed",
-                transition: "all 0.15s ease",
-                whiteSpace: "nowrap",
+                justifyContent: "space-between",
               }}
-              title="Copy primary client contact as local connect"
             >
-              <div
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    backgroundColor: "var(--green-tint, #eaf5ec)",
+                    color: "var(--primary, #15803d)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Icons.Users size={12} />
+                </div>
+                <div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink, #0f172a)" }}>
+                    On-Ground Local Connect
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--muted, #64748b)", marginLeft: 6 }}>
+                    (Field Ops &amp; Demarcation)
+                  </span>
+                </div>
+              </div>
+
+              {/* Same as Client Toggle */}
+              <button
+                type="button"
+                onClick={toggleSameAsClient}
+                disabled={!value.name || !value.phone}
                 style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 3,
-                  border: isSameAsClient ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
-                  backgroundColor: isSameAsClient ? "#0f172a" : "#ffffff",
+                  height: 26,
+                  padding: "0 8px",
+                  fontSize: 11,
+                  fontWeight: isSameAsClient ? 600 : 500,
+                  borderRadius: 6,
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  gap: 5,
+                  border: isSameAsClient
+                    ? "1px solid rgba(21, 128, 61, 0.28)"
+                    : "1px solid var(--hairline, #e8ede9)",
+                  backgroundColor: isSameAsClient
+                    ? "var(--green-tint, #eaf5ec)"
+                    : "var(--canvas-floor, #fafbfa)",
+                  color: isSameAsClient
+                    ? "var(--green-ink, #14532d)"
+                    : "var(--muted, #64748b)",
+                  cursor: value.name && value.phone ? "pointer" : "not-allowed",
+                  transition: "all 0.15s ease",
+                  whiteSpace: "nowrap",
                 }}
+                title="Copy primary client contact as local connect"
               >
-                {isSameAsClient && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
-              </div>
-              <span>Same as Client</span>
-            </button>
-          </div>
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    border: isSameAsClient
+                      ? "1px solid var(--primary, #15803d)"
+                      : "1.5px solid var(--hairline-strong, #d2ded4)",
+                    backgroundColor: isSameAsClient ? "var(--primary, #15803d)" : "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {isSameAsClient && <Icons.Check size={8} strokeWidth={3} style={{ color: "#ffffff" }} />}
+                </div>
+                <span>Same as client</span>
+              </button>
+            </div>
 
-          <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>
-            This local contact will be reachable for on-site plot operations and will appear as <strong>Labor</strong> in the Farm Admin&apos;s team roster, where they can be assigned as a dedicated <strong>Farm Officer</strong> to any estate.
-          </p>
+            {/* Local Connect Name (span 2 of 4) */}
+            <div style={{ gridColumn: "span 2" }}>
+              <Field label="Local Connect Full Name" error={errors["localConnectName"] || errors["client.localConnectName"]}>
+                <input
+                  type="text"
+                  className="onboarding-form-input"
+                  placeholder="e.g., Ramesh Patel"
+                  value={value.localConnectName || ""}
+                  onChange={(e) => set({ localConnectName: e.target.value })}
+                  style={{
+                    fontSize: 12.5,
+                    padding: "0 10px",
+                  }}
+                />
+              </Field>
+            </div>
+
+            {/* Local Connect Mobile (span 2 of 4) */}
+            <div style={{ gridColumn: "span 2" }}>
+              <Field label="Mobile Number" error={errors["localConnectPhone"] || errors["client.localConnectPhone"]}>
+                <input
+                  type="tel"
+                  className="onboarding-form-input"
+                  placeholder="e.g., 9876543210"
+                  value={value.localConnectPhone || ""}
+                  onChange={(e) => set({ localConnectPhone: e.target.value })}
+                  style={{
+                    fontSize: 12.5,
+                    padding: "0 10px",
+                  }}
+                />
+              </Field>
+            </div>
+
+            <p style={{ gridColumn: "1 / -1", fontSize: 11, color: "var(--muted, #64748b)", margin: 0 }}>
+              Primary field representative for farm surveys, boundaries, and plot demarcation (appears in team roster).
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

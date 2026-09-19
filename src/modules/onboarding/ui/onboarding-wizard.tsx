@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -75,9 +76,13 @@ function validateStep(step: number, data: WizardData): Record<string, string> {
 export function OnboardingWizard({
   serverDraft,
   existingClientId,
+  title,
+  backHref = "/hq/onboarding",
 }: {
   serverDraft: ServerDraftProp;
   existingClientId?: string;
+  title?: string;
+  backHref?: string;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -277,110 +282,119 @@ export function OnboardingWizard({
     : "";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", maxWidth: 1140, margin: "0 auto" }}>
-      {/* ── TOP HORIZONTAL STEPPER RIBBON (NO LEFT SIDEBAR) ─────────────── */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        width: "100%",
+        maxWidth: 1140,
+        margin: "0 auto",
+        flex: 1,
+        paddingBottom: 80,
+      }}
+    >
+      {/* ── COMPLETE PILL-BASED FLOATING HEADER & STEPPER BAR ── */}
       <div
         style={{
           background: "#ffffff",
-          border: "1px solid #d5e4d8",
-          borderRadius: 14,
-          padding: "14px 18px",
-          boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
+          border: "1px solid #cbd5e1",
+          borderRadius: 9999,
+          padding: "2px 4px 2px 18px",
+          minHeight: 44,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           display: "flex",
-          flexDirection: "column",
-          gap: 12,
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 14,
         }}
       >
-        {/* Top Header: Step Status, Auto-Save Status, and Discard */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {/* Left: Return text + Longer Divider + Title */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flexShrink: 0 }}>
+          {backHref && (
+            <Link
+              href={backHref}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#64748b",
+                textDecoration: "none",
+                background: "transparent",
+                border: "none",
+                padding: "4px 0",
+                cursor: "pointer",
+                transition: "color 0.15s ease",
+                fontFamily: "var(--font-body)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#0f172a")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#64748b")}
+              title="Return to list"
+            >
+              <Icons.ArrowLeft size={14} />
+              <span>Return</span>
+            </Link>
+          )}
+
+          {backHref && (
+            <div
+              style={{
+                width: 1.5,
+                height: 24,
+                background: "#cbd5e1",
+                flexShrink: 0,
+                borderRadius: 1,
+              }}
+            />
+          )}
+
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily: "'Plus Jakarta Sans', var(--font-body), sans-serif",
+              color: "#1e293b",
+              letterSpacing: "-0.015em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {title || (existingClientId && serverDraft?.payload?.client?.name ? `Onboard Estate for ${serverDraft.payload.client.name}` : "New Client Onboarding")}
+          </h1>
+
+          {existingClientId && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: 700,
-                background: "#f1f5f9",
-                color: "#0f172a",
-                border: "1px solid #e2e8f0",
-                padding: "3px 9px",
-                borderRadius: 6,
+                color: "#15803d",
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                padding: "2px 8px",
+                borderRadius: 9999,
                 letterSpacing: "0.02em",
               }}
             >
-              {result ? "Complete" : `Step ${step} of ${STEPS.length}`}
+              HQ • {existingClientId.toUpperCase()}
             </span>
-            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#0f172a" }}>
-              {result ? "Estate Activated" : STEPS[step - 1].label}
-            </h2>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {result ? (
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  color: "#15803d",
-                  background: "#f0fdf4",
-                  padding: "4px 10px",
-                  borderRadius: 6,
-                  border: "1px solid #bbf7d0",
-                }}
-              >
-                <Icons.Check size={13} strokeWidth={3} />
-                <span>Account Activated</span>
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "#64748b",
-                  background: "#f8fafc",
-                  padding: "4px 10px",
-                  borderRadius: 6,
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: saveState === "saving" ? "#d97706" : online ? "#15803d" : "#94a3b8",
-                  }}
-                />
-                <span>{saveLabel || "Draft Auto-Saved"}</span>
-              </div>
-            )}
-
-            {!result && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                style={{ color: "#64748b", fontSize: 11.5, height: 26, padding: "2px 8px" }}
-                onClick={discard}
-                disabled={discarding}
-              >
-                <Icons.Trash size={12} />
-                <span style={{ marginLeft: 4 }}>{discarding ? "Discarding…" : "Discard"}</span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* 3 Step Indicator Pills */}
+        {/* Center: Sleek Stepper (Increased size to fill pill with 2px offset) */}
         {!result && (
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${STEPS.length}, minmax(0, 1fr))`,
-              gap: 8,
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#f1f5f9",
+              padding: 3,
+              borderRadius: 9999,
+              border: "1px solid #e2e8f0",
+              gap: 4,
+              height: 38,
             }}
           >
             {STEPS.map((s, i) => {
@@ -396,64 +410,115 @@ export function OnboardingWizard({
                   onClick={() => !locked && goStep(n)}
                   disabled={locked}
                   style={{
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
-                    gap: 8,
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                    border: active
-                      ? "1px solid #0f172a"
-                      : done
-                      ? "1px solid #cbd5e1"
-                      : "1px solid #e2e8f0",
-                    background: active
-                      ? "#0f172a"
-                      : done
-                      ? "#f8fafc"
-                      : "#ffffff",
+                    gap: 7,
+                    height: 32,
+                    padding: "0 14px",
+                    borderRadius: 9999,
+                    border: "none",
+                    background: active ? "#0f172a" : done ? "#ffffff" : "transparent",
                     color: active ? "#ffffff" : done ? "#0f172a" : "#64748b",
-                    boxShadow: active ? "0 2px 8px rgba(15, 23, 42, 0.2)" : "0 1px 2px rgba(0,0,0,0.02)",
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 500,
+                    fontFamily: "var(--font-body)",
+                    boxShadow: active
+                      ? "0 2px 6px rgba(15, 23, 42, 0.22)"
+                      : done
+                      ? "0 1px 2px rgba(0, 0, 0, 0.04)"
+                      : "none",
                     cursor: locked ? "not-allowed" : "pointer",
-                    opacity: locked ? 0.5 : 1,
+                    opacity: locked ? 0.45 : 1,
                     transition: "all 0.15s ease",
-                    textAlign: "left",
-                    minWidth: 0,
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 10.5,
-                      fontWeight: 700,
-                      flexShrink: 0,
-                      background: active ? "#ffffff" : done ? "#0f172a" : "#f1f5f9",
-                      color: active ? "#0f172a" : done ? "#ffffff" : "#64748b",
-                    }}
-                  >
-                    {done ? <Icons.Check size={11} strokeWidth={3} /> : n}
-                  </div>
                   <span
                     style={{
-                      fontSize: 12,
-                      fontWeight: active ? 700 : 600,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      background: active ? "#ffffff" : done ? "#0f172a" : "#cbd5e1",
+                      color: active ? "#0f172a" : done ? "#ffffff" : "#475569",
                     }}
                   >
-                    {s.label}
+                    {done ? <Icons.Check size={10} strokeWidth={3.5} /> : n}
                   </span>
+                  <span>{s.label}</span>
                 </button>
               );
             })}
           </div>
         )}
+
+        {/* Right: Red Discard Pill Button (38px height with 2px gap) */}
+        <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+          {result ? (
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#15803d",
+                background: "#f0fdf4",
+                padding: "0 14px",
+                height: 38,
+                borderRadius: 9999,
+                border: "1px solid #bbf7d0",
+              }}
+            >
+              <Icons.Check size={13} strokeWidth={3} />
+              <span>Activated</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={discard}
+              disabled={discarding}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 38,
+                padding: "0 16px",
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: "#dc2626",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: 9999,
+                cursor: discarding ? "not-allowed" : "pointer",
+                transition: "all 0.15s ease",
+                fontFamily: "var(--font-body)",
+              }}
+              onMouseEnter={(e) => {
+                if (!discarding) {
+                  e.currentTarget.style.background = "#fee2e2";
+                  e.currentTarget.style.borderColor = "#f87171";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!discarding) {
+                  e.currentTarget.style.background = "#fef2f2";
+                  e.currentTarget.style.borderColor = "#fecaca";
+                }
+              }}
+              title="Discard draft"
+            >
+              <Icons.Trash size={13} style={{ color: "#dc2626" }} />
+              <span>{discarding ? "Discarding…" : "Discard"}</span>
+            </button>
+          )}
+        </div>
       </div>
+
 
       {/* Alerts */}
       {(notice || Object.keys(errors).length > 0 || submitError) && (
@@ -533,7 +598,7 @@ export function OnboardingWizard({
       )}
 
       {/* ── STEP CONTENT ─────────────────────────────────────────────── */}
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column" }}>
         {result ? (
           <OnboardingStepCompletion data={data} result={result} />
         ) : (
@@ -571,88 +636,97 @@ export function OnboardingWizard({
         )}
       </div>
 
-      {/* ── BOTTOM ACTION BAR (ZERO SCROLL COUPLING) ─────────────────── */}
+      {/* ── STUCK BOTTOM ACTION BAR (FIXED 60PX HEIGHT) ─────────────── */}
       {!result && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "12px 18px",
-            background: "#ffffff",
-            border: "1px solid #d5e4d8",
-            borderRadius: 14,
-            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04)",
-          }}
-        >
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => goStep(step - 1)}
-            disabled={step === 1}
+        <div className="onboarding-docked-footer">
+          <div
             style={{
-              padding: "8px 18px",
-              height: 38,
-              fontWeight: 600,
-              fontSize: 12.5,
-              gap: 6,
-              border: "1px solid #d5ded7",
-              color: "#334155",
-              backgroundColor: "#ffffff",
-              borderRadius: 8,
+              width: "100%",
+              maxWidth: 1140,
+              margin: "0 auto",
+              padding: "0 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            <Icons.ArrowLeft size={13} />
-            <span>Back</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => goStep(step - 1)}
+              disabled={step === 1}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 18px",
+                height: 38,
+                fontWeight: 600,
+                fontSize: 13,
+                borderRadius: 9999,
+                border: "1px solid #cbd5e1",
+                color: step === 1 ? "#94a3b8" : "#334155",
+                backgroundColor: step === 1 ? "#f8fafc" : "#ffffff",
+                cursor: step === 1 ? "not-allowed" : "pointer",
+                opacity: step === 1 ? 0.45 : 1,
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Icons.ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {step < 3 ? (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => goStep(step + 1)}
-                style={{
-                  padding: "8px 24px",
-                  height: 38,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  gap: 8,
-                  background: "#0f172a",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: 8,
-                  boxShadow: "0 2px 6px rgba(15, 23, 42, 0.2)",
-                  cursor: "pointer",
-                }}
-              >
-                <span>Continue to {STEPS[step]?.label}</span>
-                <Icons.ArrowRight size={13} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={activate}
-                disabled={submitting}
-                style={{
-                  padding: "8px 26px",
-                  height: 38,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  gap: 8,
-                  background: "#0f172a",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: 8,
-                  boxShadow: "0 2px 8px rgba(15, 23, 42, 0.25)",
-                  cursor: submitting ? "not-allowed" : "pointer",
-                }}
-              >
-                <span>{submitting ? "Activating Estate…" : "Activate Client & Farm Admin"}</span>
-                <Icons.Zap size={14} />
-              </button>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {step < 3 ? (
+                <button
+                  type="button"
+                  onClick={() => goStep(step + 1)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 24px",
+                    height: 38,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    background: "#0f172a",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: 9999,
+                    boxShadow: "0 2px 6px rgba(15, 23, 42, 0.2)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <span>Continue to {STEPS[step]?.label}</span>
+                  <Icons.ArrowRight size={14} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={activate}
+                  disabled={submitting}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 26px",
+                    height: 38,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    background: "#15803d",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: 9999,
+                    boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)",
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <span>{submitting ? "Activating Estate…" : "Activate Client & Farm Admin"}</span>
+                  <Icons.Zap size={14} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

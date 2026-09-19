@@ -42,17 +42,9 @@ export default async function HqOnboardingDraftPage({ params }: { params: Promis
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
-      <main className="shell">
-        <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: draft.clientName || "Draft" }]} />
-        <div className="page-header" style={{ paddingBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-            <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>
-              {draft.clientName ? draft.clientName : "Client Onboarding Draft"}
-            </h1>
-            <span style={{ fontSize: 12, color: "var(--muted)" }}>
-              Saved {new Date(draft.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          </div>
+      <main className="shell" style={{ maxWidth: 1180, margin: "0 auto", padding: "16px 24px 40px", display: "flex", flexDirection: "column" }}>
+        <div style={{ marginBottom: 12 }}>
+          <Breadcrumbs items={[{ label: "Dashboard", href: "/hq" }, { label: "Onboarding", href: "/hq/onboarding" }, { label: "New Client Intake" }]} />
         </div>
         <OnboardingWizard
           serverDraft={{
@@ -61,6 +53,8 @@ export default async function HqOnboardingDraftPage({ params }: { params: Promis
             payload: (draft.payload ?? {}) as Partial<WizardData>,
             updatedAt: draft.updatedAt.toISOString(),
           }}
+          title="New Client Onboarding"
+          backHref="/hq/onboarding"
         />
       </main>
     </>
