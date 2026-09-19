@@ -43,7 +43,7 @@ export function LoginForm() {
       } else if (userRole === "FARM_OFFICER") {
         targetUrl = "/officer/day";
       } else if (userRole === "AGRONOMIST") {
-        targetUrl = "/agronomy/radar";
+        targetUrl = "/agronomy/chat";
       }
       window.location.replace(targetUrl);
     } catch {

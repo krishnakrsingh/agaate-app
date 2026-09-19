@@ -9,21 +9,13 @@ export type NavItem = {
 };
 
 export const NAV_ITEMS: NavItem[] = [
-  // ── 1. FARM OWNER (FARM_ADMIN) — Their Land, Their People, Their Estate ──
-
+  // ── 1. FARM OWNER (FARM_ADMIN) ──
   {
     href: "/owner/farms",
     label: "Farms",
     icon: "Farm",
     roles: ["FARM_ADMIN"],
-    isActive: (p) => p.startsWith("/owner/farms"),
-  },
-  {
-    href: "/owner/plots",
-    label: "Plots",
-    icon: "Plot",
-    roles: ["FARM_ADMIN"],
-    isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/owner/land"),
+    isActive: (p) => p.startsWith("/owner/farms") || p === "/owner/farm",
   },
   {
     href: "/owner/crops",
@@ -47,25 +39,11 @@ export const NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.startsWith("/owner/chat"),
   },
   {
-    href: "/owner/records",
-    label: "Records",
-    icon: "Truck",
-    roles: ["FARM_ADMIN"],
-    isActive: (p) => p.startsWith("/owner/records") || p.startsWith("/owner/harvest") || p.startsWith("/owner/inventory") || p.startsWith("/owner/financials"),
-  },
-  {
     href: "/owner/people",
     label: "Team",
     icon: "Shield",
     roles: ["FARM_ADMIN"],
     isActive: (p) => p.startsWith("/owner/people") || p.startsWith("/owner/team"),
-  },
-  {
-    href: "/owner/settings",
-    label: "Settings",
-    icon: "Settings",
-    roles: ["FARM_ADMIN"],
-    isActive: (p) => p.startsWith("/owner/settings"),
   },
 
   // ── 2. ON-SITE FARM MANAGER (FARM_OFFICER) ──
@@ -107,32 +85,11 @@ export const NAV_ITEMS: NavItem[] = [
 
   // ── 3. CENTRAL AGRONOMIST ──
   {
-    href: "/agronomy/radar",
-    label: "Crop Radar",
-    icon: "TrendingUp",
-    roles: ["AGRONOMIST"],
-    isActive: (p) => p.startsWith("/agronomy/radar") || p === "/dashboard",
-  },
-  {
-    href: "/agronomy/planning",
-    label: "Weekly Plan",
-    icon: "Calendar",
-    roles: ["AGRONOMIST"],
-    isActive: (p) => p.startsWith("/agronomy/planning"),
-  },
-  {
     href: "/agronomy/chat",
-    label: "Messages",
+    label: "Field Messages",
     icon: "Users",
     roles: ["AGRONOMIST"],
-    isActive: (p) => p.startsWith("/agronomy/chat"),
-  },
-  {
-    href: "/agronomy/diagnostics",
-    label: "Diagnostics",
-    icon: "Stethoscope",
-    roles: ["AGRONOMIST"],
-    isActive: (p) => p.startsWith("/agronomy/diagnostics"),
+    isActive: (p) => p.startsWith("/agronomy/chat") || p.startsWith("/agronomy"),
   },
   {
     href: "/tasks",
@@ -140,13 +97,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "ClipboardList",
     roles: ["AGRONOMIST"],
     isActive: (p) => p.startsWith("/tasks"),
-  },
-  {
-    href: "/reports/daily",
-    label: "Field Reports",
-    icon: "FileText",
-    roles: ["AGRONOMIST"],
-    isActive: (p) => p.startsWith("/reports"),
   },
 
   // ── 4. HQ STAFF (SUPER ADMIN + OPERATIONS MANAGER) ──
@@ -208,13 +158,13 @@ export function getMobileNavForRole(role: Role): NavItem[] {
     return all.filter((i) => ["/hq/clients", "/hq/farms", "/hq/onboarding"].includes(i.href));
   }
   if (role === "FARM_ADMIN") {
-    return all.filter((i) => ["/owner/farms", "/owner/plots", "/owner/crops", "/owner/operations", "/owner/chat"].includes(i.href));
+    return all.filter((i) => ["/owner/farms", "/owner/crops", "/owner/operations", "/owner/chat", "/owner/people"].includes(i.href));
   }
   if (role === "FARM_OFFICER") {
     return all.filter((i) => ["/officer/day", "/officer/chat", "/officer/reports", "/officer/boundary", "/officer/profile"].includes(i.href));
   }
   if (role === "AGRONOMIST") {
-    return all.filter((i) => ["/agronomy/radar", "/agronomy/planning", "/agronomy/chat", "/agronomy/diagnostics", "/tasks"].includes(i.href));
+    return all.filter((i) => ["/agronomy/chat", "/tasks"].includes(i.href));
   }
   return all.slice(0, 5);
 }
@@ -236,6 +186,6 @@ export const ROLE_HOME_URLS: Record<string, string> = {
   SUPER_ADMIN: "/hq/clients",
   OPERATIONS_MANAGER: "/hq/clients",
   FARM_ADMIN: "/owner/farms",
-  AGRONOMIST: "/agronomy/radar",
+  AGRONOMIST: "/agronomy/chat",
   FARM_OFFICER: "/officer/day",
 };

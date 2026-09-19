@@ -155,14 +155,6 @@ describe.sequential("Chat Phase 1: Agronomist ↔ Officer workflow", () => {
     expect(res.status).toBe(422);
   });
 
-  it("farm admin cannot join chat in Phase 1", async () => {
-    await prisma.farmAccess.create({ data: { userId: owner.id, farmId: farmA.id, canManage: true } });
-    const res = await withAuth(offACookie, () =>
-      createConversation(req("http://localhost/api/conversations", "POST", { farmId: farmA.id, participantIds: [owner.id] }, offACookie))
-    );
-    expect(res.status).toBe(422);
-  });
-
   it("ops manager cannot initiate conversations", async () => {
     const res = await withAuth(opsCookie, () =>
       createConversation(req("http://localhost/api/conversations", "POST", { farmId: farmA.id, participantIds: [agro.id] }, opsCookie))

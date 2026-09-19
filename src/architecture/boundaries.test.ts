@@ -124,22 +124,14 @@ const BANNED_APP_DIRS = [
   "src/app/officer",
 ];
 
-// Server pages with direct Prisma reads (checkpoint-4 audit: 35; checkpoint-8 estates/plots: 32; phase E cropping: 29). May only
-// shrink as reporting/estates/operations/cropping slices introduce query modules.
+// Server pages with direct Prisma reads. May only shrink as reporting/estates/operations/cropping slices introduce query modules.
 // Exact-count pin: fails loudly on growth AND on unrecorded shrinkage.
-const PAGE_PRISMA_COUNT = 29;
+const PAGE_PRISMA_COUNT = 26;
 
 // UI components with direct Prisma access (checkpoint-3 audit, paths updated
 // checkpoint 4). NOT allowed to grow: offenders must stay a subset of this
 // list. Shrink it by migrating queries into modules, then delete the row.
 const COMPONENT_PRISMA_GRANDFATHER = [
-  "src/modules/reporting/ui/dashboard-client.tsx",
-  "src/modules/reporting/ui/overview-activity.tsx",
-  "src/modules/reporting/ui/overview-alerts.tsx",
-  "src/modules/reporting/ui/overview-farms.tsx",
-  "src/modules/reporting/ui/overview-funnel.tsx",
-  "src/modules/reporting/ui/overview-kpis.tsx",
-  "src/modules/reporting/ui/overview-triage.tsx",
   "src/components/navigation/config.ts",
 ];
 
@@ -401,7 +393,7 @@ describe("architecture boundaries", () => {
       expect(estates[key], `modules/estates missing ${key}`).toBeDefined();
     }
     const plots = (await import("@/modules/plots")) as Record<string, unknown>;
-    for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "getOwnerLandData", "createPlot", "updatePlot", "archivePlot", "assertPlotAreaWithinRemaining"]) {
+    for (const key of ["listPlots", "getPlotDetail", "getPlotPageData", "createPlot", "updatePlot", "archivePlot", "assertPlotAreaWithinRemaining"]) {
       expect(plots[key], `modules/plots missing ${key}`).toBeDefined();
     }
     const cropping = (await import("@/modules/cropping")) as Record<string, unknown>;

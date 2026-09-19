@@ -349,7 +349,7 @@ function DeleteClientModal({
             padding: "7px 10px",
             borderRadius: 8,
             backgroundColor: "var(--red-light)",
-            border: "1px solid rgba(166, 59, 50, 0.12)",
+            border: "1px solid var(--line)",
             fontSize: 12,
             color: "var(--red)",
             marginBottom: 16,

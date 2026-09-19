@@ -65,6 +65,53 @@ const numField = (label: string, min: number, max: number) =>
     z.coerce.number({ invalid_type_error: `${label} must be a number.` }).min(min, `${label} is out of range.`).max(max, `${label} is out of range.`)
   );
 
+export const clientProfileSchema = z
+  .object({
+    name: z.string().trim().min(2, "Client name is required.").max(120),
+    companyName: optionalText(180),
+    phone: z.string().trim().min(1, "Mobile number is required.").max(20),
+    whatsappNo: optionalText(20),
+    email: z.string().trim().min(1, "Email address is required.").max(254),
+    panNumber: optionalText(20),
+    gstin: optionalText(25),
+  })
+  .superRefine((data, ctx) => {
+    const phone = normalizePhone(data.phone ?? null);
+    const email = normalizeEmail(data.email ?? null);
+    if (!phone) {
+      ctx.addIssue({ code: "custom", path: ["phone"], message: "Please enter a valid 10-digit mobile number." });
+    }
+    if (data.whatsappNo?.trim() && !normalizePhone(data.whatsappNo)) {
+      ctx.addIssue({ code: "custom", path: ["whatsappNo"], message: "WhatsApp number must hold 10-15 digits." });
+    }
+    if (!email) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "Please enter a valid email address." });
+    }
+    if (data.panNumber && !PAN_RE.test(data.panNumber.toUpperCase())) {
+      ctx.addIssue({ code: "custom", path: ["panNumber"], message: "PAN must look like ABCDE1234F." });
+    }
+    if (data.gstin && !GSTIN_RE.test(data.gstin.toUpperCase())) {
+      ctx.addIssue({ code: "custom", path: ["gstin"], message: "GSTIN must be a 15-character tax ID." });
+    }
+  });
+
+export const clientAddressSchema = z
+  .object({
+    village: z.string().trim().min(1, "Village is required.").max(100),
+    city: z.string().trim().min(1, "City is required.").max(100),
+    state: z.string().trim().min(1, "State is required.").max(100),
+    district: optionalText(100),
+    pincode: z.string().trim().min(1, "PIN code is required.").max(20),
+    billingAddress: z.string().trim().min(2, "Billing location / address is required.").max(500),
+    financeConnect: optionalText(150),
+    purchaserConnect: optionalText(150),
+  })
+  .superRefine((data, ctx) => {
+    if (data.pincode && !/^[1-9][0-9]{5}$/.test(data.pincode.replace(/\s+/g, ""))) {
+      ctx.addIssue({ code: "custom", path: ["pincode"], message: "PIN Code must be a 6-digit Indian postal code." });
+    }
+  });
+
 export const clientSchema = z
   .object({
     name: z.string().trim().min(2, "Client name is required.").max(120),
@@ -114,20 +161,11 @@ export const contactItemSchema = z.object({
   role: z.enum(["FINANCE", "PURCHASER", "LOCAL", "OTHER"]),
 });
 
-export const contactsSchema = z
-  .object({
-    financeContact: contactItemSchema.optional().nullable(),
-    purchaserContact: contactItemSchema.optional().nullable(),
-    additionalContacts: z.array(contactItemSchema).default([]),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.financeContact || !data.financeContact.name?.trim() || !data.financeContact.phone?.trim()) {
-      ctx.addIssue({ code: "custom", path: ["financeContact"], message: "Finance Connect contact is required." });
-    }
-    if (!data.purchaserContact || !data.purchaserContact.name?.trim() || !data.purchaserContact.phone?.trim()) {
-      ctx.addIssue({ code: "custom", path: ["purchaserContact"], message: "Purchaser Connect contact is required." });
-    }
-  });
+export const contactsSchema = z.object({
+  financeContact: contactItemSchema.optional().nullable(),
+  purchaserContact: contactItemSchema.optional().nullable(),
+  additionalContacts: z.array(contactItemSchema).default([]),
+});
 
 /** Drawn boundary ring in [lng,lat] order (GeoMap shape). Null = pin only. */
 const boundaryRingField = z
@@ -144,7 +182,7 @@ export const farmSchema = z
     areaUnit: z.enum(["Acre", "Hectare", "Gunta"]).default("Acre"),
     totalArea: numField("Total area", 0.01, 100000).optional(),
     cultivableArea: numField("Cultivable area", 0.01, 100000).optional(),
-    localConnect: z.string().trim().min(2, "Local Connect is required.").max(150),
+    localConnect: optionalText(150),
     localContactId: optionalText(100),
     localContactName: optionalText(120),
     localContactPhone: optionalText(20),
@@ -203,28 +241,53 @@ export const cropSchema = z.object({
   keyDates: optionalText(300),
 });
 
+export const farmAdminCredentialsSchema = z
+  .object({
+    mode: z.enum(["create", "later"]).default("create"),
+    name: z.string().trim().min(2, "Admin name is required.").max(100),
+    email: z.string().trim().min(1, "Admin email is required.").max(254),
+    phone: optionalText(20),
+    password: z.string().min(8, "Password must be at least 8 characters.").max(128),
+    confirmPassword: z.string().max(128),
+    agronomistId: optionalText(100),
+    agronomistName: optionalText(120),
+    fieldOfficerId: optionalText(100),
+    fieldOfficerName: optionalText(120),
+    createFirstTask: z.boolean().default(false),
+    firstTaskTitle: optionalText(200),
+    sendInvite: z.boolean().default(true),
+  })
+  .superRefine((data, ctx) => {
+    if (!normalizeEmail(data.email)) {
+      ctx.addIssue({ code: "custom", path: ["email"], message: "A valid login email is required." });
+    }
+    if (data.phone && !normalizePhone(data.phone)) {
+      ctx.addIssue({ code: "custom", path: ["phone"], message: "Phone must hold 10-15 digits." });
+    }
+    if (!data.password || data.password.length < 8) {
+      ctx.addIssue({ code: "custom", path: ["password"], message: "Password must be at least 8 characters." });
+    }
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: "Passwords do not match." });
+    }
+  });
+
 export const teamSchema = z
   .object({
-    mode: z.enum(["create", "later"]).default("later"),
+    mode: z.enum(["create", "later"]).default("create"),
     name: z.string().trim().max(100).optional().nullable(),
     email: z.string().trim().max(254).optional().nullable(),
     phone: z.string().trim().max(20).optional().nullable(),
     password: z.string().max(128).optional().nullable(),
     confirmPassword: z.string().max(128).optional().nullable(),
-    agronomistId: z.string().trim().max(100).optional().nullable(),
+    agronomistId: optionalText(100),
     agronomistName: optionalText(120),
-    fieldOfficerId: z.string().trim().max(100).optional().nullable(),
+    fieldOfficerId: optionalText(100),
     fieldOfficerName: optionalText(120),
-    createFirstTask: z.boolean().default(true),
-    firstTaskTitle: z.string().trim().min(2).default("Initial Demarcation & Soil Testing"),
+    createFirstTask: z.boolean().default(false),
+    firstTaskTitle: optionalText(200),
   })
   .superRefine((data, ctx) => {
-    if (!data.agronomistId || !data.agronomistId.trim()) {
-      ctx.addIssue({ code: "custom", path: ["agronomistId"], message: "Please assign an Agronomist." });
-    }
-    if (!data.fieldOfficerId || !data.fieldOfficerId.trim()) {
-      ctx.addIssue({ code: "custom", path: ["fieldOfficerId"], message: "Please assign a Field Officer." });
-    }
     if (data.mode === "later") return;
     if (!data.name?.trim() || data.name.trim().length < 2) {
       ctx.addIssue({ code: "custom", path: ["name"], message: "Admin name is required." });
@@ -235,8 +298,8 @@ export const teamSchema = z
     if (data.phone?.trim() && !normalizePhone(data.phone)) {
       ctx.addIssue({ code: "custom", path: ["phone"], message: "Phone must hold 10-15 digits." });
     }
-    if (!data.password || data.password.length < MIN_PASSWORD_LENGTH) {
-      ctx.addIssue({ code: "custom", path: ["password"], message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
+    if (!data.password || data.password.length < 8) {
+      ctx.addIssue({ code: "custom", path: ["password"], message: "Password must be at least 8 characters." });
     }
     if (data.password !== data.confirmPassword) {
       ctx.addIssue({ code: "custom", path: ["confirmPassword"], message: "Passwords do not match." });
@@ -249,7 +312,7 @@ export const submitSchema = z
     client: clientSchema,
     contacts: contactsSchema.default({ additionalContacts: [] }),
     farms: z.array(farmSchema).min(1, "Please add at least one farm.").max(MAX_FARMS, `Farm cap is ${MAX_FARMS} per onboarding.`),
-    plots: z.array(plotSchema).max(MAX_PLOTS),
+    plots: z.array(plotSchema).max(MAX_PLOTS).default([]),
     crops: z.array(cropSchema).default([]),
     team: teamSchema,
   })

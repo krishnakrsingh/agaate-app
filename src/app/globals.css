@@ -21,7 +21,7 @@
    success/error semantics.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=EB+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700&display=swap');
 @import "tailwindcss";
 
@@ -31,26 +31,26 @@
   color-scheme: light;
 
   /* Brand & ink */
-  --primary: #292524;
-  --primary-active: #0c0a09;
-  --ink: #0c0a09;
-  --body: #4e4e4e;
-  --body-strong: #292524;
-  --muted: #777169;
-  --muted-soft: #a8a29e;
+  --primary: #15803d;
+  --primary-active: #166534;
+  --ink: #0f172a;
+  --body: #334155;
+  --body-strong: #0f172a;
+  --muted: #64748b;
+  --muted-soft: #94a3b8;
 
   /* Hairlines */
-  --hairline: #e7e5e4;
-  --hairline-soft: #f0efed;
-  --hairline-strong: #d6d3d1;
+  --hairline: #e8ede9;
+  --hairline-soft: #f2f5f2;
+  --hairline-strong: #d2ded4;
 
   /* Surfaces */
   --canvas: #ffffff;          /* legacy card-white compat (see header) */
-  --canvas-floor: #f5f5f5;    /* ElevenLabs {colors.canvas} page floor */
-  --canvas-soft: #fafafa;
+  --canvas-floor: #fafbfa;    /* Delicate clean white floor */
+  --canvas-soft: #fcfdfc;
   --canvas-deep: #0c0a09;
   --surface-card: #ffffff;
-  --surface-strong: #f0efed;
+  --surface-strong: #f3f6f3;
   --surface-dark: #0c0a09;
   --surface-dark-elevated: #1c1917;
   --on-primary: #ffffff;
@@ -66,7 +66,7 @@
 
   /* Semantic */
   --semantic-error: #dc2626;
-  --semantic-success: #16a34a;
+  --semantic-success: #15803d;
 
   /* Operational status extensions (farm ops; always paired with text) */
   --amber: #9a6818;
@@ -75,15 +75,15 @@
   --red-light: #f8eae7;
   --blue: #315f86;
   --blue-light: #eaf0f5;
-  --green-ink: #24543a;
-  --green-tint: #eaf1ea;
-  --focus: #315f86;
+  --green-ink: #14532d;
+  --green-tint: #eaf5ec;
+  --focus: #15803d;
 
   /* --- Legacy alias layer (compat; keep in sync) --- */
   --ink-soft: var(--body-strong);
-  --green: var(--primary);
-  --green-dark: var(--primary-active);
-  --green-light: var(--surface-strong);
+  --green: #15803d;
+  --green-dark: #166534;
+  --green-light: #eaf5ec;
   --paper: var(--canvas-floor);
   --stone: var(--surface-strong);
   --line: var(--hairline);
@@ -138,9 +138,9 @@
   --announcement-blue-tint: var(--blue-light);
 
   /* Typography */
-  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Inter', ui-sans-serif, system-ui, monospace;
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Spacing (4px base; section rhythm 96px) */
   --space-xxs: 4px;

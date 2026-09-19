@@ -20,7 +20,7 @@ describe("Profile & Settings API Tests", () => {
       data: {
         name: "Arjun Singhania",
         email: testEmail,
-        phone: "+919876543210",
+        phone: `+91987${Math.floor(1000000 + Math.random() * 9000000)}`,
         passwordHash,
         role: "SUPER_ADMIN",
       },

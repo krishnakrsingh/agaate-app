@@ -3,24 +3,93 @@ import { useEffect, useRef, useState } from "react";
 import { previewClientCode, type ClientInput } from "./onboarding-schema";
 import { Icons } from "@/components/icons";
 
-/* inp retired: global .input-field */
-
-function F({ label, error, span, required, children }: { label: string; error?: string; span?: boolean; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  required,
+  span,
+  children,
+}: {
+  label: string;
+  error?: string;
+  required?: boolean;
+  span?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <div style={{ gridColumn: span ? "1 / -1" : undefined }}>
-      <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em", marginBottom: 5 }}>
-        {label}
-        {required && <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        gridColumn: span ? "1 / -1" : undefined,
+      }}
+    >
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          fontSize: 12,
+          fontWeight: 600,
+          color: "#1e293b",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        <span>{label}</span>
+        {required && <span style={{ color: "#dc2626", fontWeight: 700 }}>*</span>}
       </label>
       {children}
-      {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#dc2626",
+            marginTop: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <Icons.AlertTriangle size={11} />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 }
 
-export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, asyncIssue, onAsyncIssue, existingClientId }: {
-  value: ClientInput; onChange: (v: ClientInput) => void; errors: Record<string, string>;
-  idempotencyKey: string; asyncIssue: string | null; onAsyncIssue: (msg: string | null) => void;
+const inputStyle: React.CSSProperties = {
+  height: 38,
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#0f172a",
+  backgroundColor: "#ffffff",
+  border: "1px solid #d5ded7",
+  borderRadius: 8,
+  padding: "0 11px",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+  outline: "none",
+  width: "100%",
+};
+
+export function OnboardingStepClient({
+  value,
+  onChange,
+  errors,
+  idempotencyKey,
+  asyncIssue,
+  onAsyncIssue,
+  existingClientId,
+}: {
+  value: ClientInput;
+  onChange: (v: ClientInput) => void;
+  errors: Record<string, string>;
+  idempotencyKey: string;
+  asyncIssue: string | null;
+  onAsyncIssue: (msg: string | null) => void;
   existingClientId?: string;
 }) {
   const set = (p: Partial<ClientInput>) => onChange({ ...value, ...p });
@@ -28,9 +97,14 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
   const lastQ = useRef("");
 
   useEffect(() => {
-    const phone = (value.phone ?? "").trim(), email = (value.email ?? "").trim();
-    if (!phone && !email) { onAsyncIssue(null); return; }
-    const q = `${phone}::${email}::${existingClientId ?? ""}`; lastQ.current = q;
+    const phone = (value.phone ?? "").trim();
+    const email = (value.email ?? "").trim();
+    if (!phone && !email) {
+      onAsyncIssue(null);
+      return;
+    }
+    const q = `${phone}::${email}::${existingClientId ?? ""}`;
+    lastQ.current = q;
     const t = setTimeout(async () => {
       if (q === lastQ.current) setChecking(true);
       try {
@@ -53,175 +127,503 @@ export function OnboardingStepClient({ value, onChange, errors, idempotencyKey, 
           issues.push(`Email ${body.emailHolder ? `already in use by ${body.emailHolder}` : "already in use"}.`);
         }
         onAsyncIssue(issues.length ? issues.join(" ") : null);
-      } catch { if (q === lastQ.current) onAsyncIssue(null); }
-      finally { if (q === lastQ.current) setChecking(false); }
+      } catch {
+        if (q === lastQ.current) onAsyncIssue(null);
+      } finally {
+        if (q === lastQ.current) setChecking(false);
+      }
     }, 400);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.phone, value.email, existingClientId]);
+  }, [value.phone, value.email, existingClientId, onAsyncIssue]);
+
+  const isSameAsMobile = Boolean(value.phone && value.whatsappNo === value.phone);
+
+  const toggleSameAsMobile = () => {
+    if (isSameAsMobile) {
+      set({ whatsappNo: "" });
+    } else {
+      set({ whatsappNo: value.phone ?? "" });
+    }
+  };
+
+  const addressSummary = [value.village, value.city, value.state, value.pincode].filter(Boolean).join(", ");
+  const isSameAsAddress = Boolean(value.billingAddress && addressSummary && value.billingAddress === addressSummary);
+
+  const toggleSameAsAddress = () => {
+    if (isSameAsAddress) {
+      set({ billingAddress: "" });
+    } else {
+      set({ billingAddress: addressSummary || [value.city, value.state].filter(Boolean).join(", ") });
+    }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Existing Client Alert Banner */}
+      {/* Existing Client Alert Banner if prefilled */}
       {existingClientId && (
-        <div style={{
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderLeft: "3.5px solid var(--green, #15803d)",
-          borderRadius: 12,
-          padding: "12px 16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--green, #15803d)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>
-              ✓
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}>
-                Onboarding Estate for {value.name || "Existing Client"}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>
-                Client profile pre-filled from HQ Directory (<span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{existingClientId}</span>)
-              </div>
-            </div>
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #d5e4d8",
+            borderLeft: "4px solid #15803d",
+            borderRadius: 10,
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: 12.5,
+            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Icons.User size={15} style={{ color: "#15803d" }} />
+            <span style={{ color: "#0f172a" }}>
+              Onboarding existing client: <strong>{value.name || existingClientId}</strong>
+            </span>
           </div>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--green-ink, #166534)", background: "var(--green-light, #dcfce7)", padding: "3px 8px", borderRadius: 6 }}>
-            Verified
-          </span>
+          <span style={{ fontSize: 11, color: "#64748b" }}>Profile synced</span>
         </div>
       )}
 
-      {/* Identity Card */}
-      <div style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-md)",
-        padding: "18px 20px",
-        boxShadow: "var(--shadow-card)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
-            <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-              Identity & Primary Contact
+      {/* Real-time Uniqueness Conflict Warning */}
+      {asyncIssue && (
+        <div
+          role="alert"
+          style={{
+            background: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: 10,
+            padding: "10px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
+            color: "#b91c1c",
+            fontWeight: 600,
+          }}
+        >
+          <Icons.AlertCircle size={15} style={{ flexShrink: 0 }} />
+          <span>{asyncIssue}</span>
+        </div>
+      )}
+
+      {/* ── 2-COLUMN UNIFIED SPLIT (ZERO-SCROLL) ───────────────────────── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 14,
+          alignItems: "stretch",
+        }}
+      >
+        {/* ── LEFT CARD: CLIENT IDENTITY & PRIMARY CONTACT ───────────── */}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #d5e4d8",
+            borderRadius: 14,
+            padding: "18px 20px",
+            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingBottom: 10,
+              borderBottom: "1px solid #eef5ef",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  backgroundColor: "#eaf5ec",
+                  color: "#15803d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icons.User size={16} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                  Client Profile & Contact
+                </h3>
+                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
+                  Legal owner and primary representative
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: "var(--font-mono, monospace)",
+                fontWeight: 600,
+                color: "#64748b",
+                background: "#f1f5f9",
+                padding: "3px 8px",
+                borderRadius: 5,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              ID: {previewClientCode(idempotencyKey)}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 10,
+            }}
+          >
+            {/* Full Name */}
+            <Field label="Full Name" error={errors["name"] || errors["client.name"]} required span>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Krishna Kumar Singh"
+                value={value.name}
+                onChange={(e) => set({ name: e.target.value })}
+                autoFocus
+                style={inputStyle}
+              />
+            </Field>
+
+            {/* Email Address */}
+            <Field label="Email Address" error={errors["email"] || errors["client.email"]} required span>
+              <div style={{ position: "relative" }}>
+                <input
+                  type="email"
+                  className="input"
+                  placeholder="e.g., krishna@agaate.farm"
+                  value={value.email}
+                  onChange={(e) => set({ email: e.target.value })}
+                  style={{
+                    ...inputStyle,
+                    paddingRight: checking ? 32 : 11,
+                  }}
+                />
+                {checking && (
+                  <div style={{ position: "absolute", right: 10, top: 11, color: "#64748b" }}>
+                    <Icons.Refresh size={14} className="spin" />
+                  </div>
+                )}
+              </div>
+            </Field>
+
+            {/* Mobile Number */}
+            <Field label="Mobile Number" error={errors["phone"] || errors["client.phone"]} required>
+              <input
+                type="tel"
+                className="input"
+                placeholder="e.g., 9876543210"
+                value={value.phone}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  set({
+                    phone: val,
+                    ...(isSameAsMobile ? { whatsappNo: val } : {}),
+                  });
+                }}
+                style={inputStyle}
+              />
+            </Field>
+
+            {/* WhatsApp Number with [✓] Same as mobile toggle */}
+            <Field label="WhatsApp Number" error={errors["whatsappNo"] || errors["client.whatsappNo"]}>
+              <div style={{ position: "relative" }}>
+                <input
+                  type="tel"
+                  className="input"
+                  placeholder="e.g., 9876543210"
+                  value={value.whatsappNo || ""}
+                  onChange={(e) => set({ whatsappNo: e.target.value })}
+                  disabled={isSameAsMobile}
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: isSameAsMobile ? "#f8fafc" : "#ffffff",
+                    paddingRight: 125,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={toggleSameAsMobile}
+                  disabled={!value.phone?.trim()}
+                  style={{
+                    position: "absolute",
+                    right: 5,
+                    top: 5,
+                    height: 28,
+                    padding: "0 9px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    border: isSameAsMobile ? "1px solid #0f172a" : "1px solid #e2e8f0",
+                    backgroundColor: isSameAsMobile ? "#0f172a" : "#f8fafc",
+                    color: isSameAsMobile ? "#ffffff" : "#64748b",
+                    cursor: value.phone?.trim() ? "pointer" : "not-allowed",
+                    transition: "all 0.15s ease",
+                  }}
+                  title="Link mobile number to WhatsApp"
+                >
+                  <div
+                    style={{
+                      width: 13,
+                      height: 13,
+                      borderRadius: 3,
+                      border: isSameAsMobile ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
+                      backgroundColor: isSameAsMobile ? "#0f172a" : "#ffffff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {isSameAsMobile && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
+                  </div>
+                  <span>Same as mob</span>
+                </button>
+              </div>
+            </Field>
+
+            {/* Business / Company Name */}
+            <Field label="Business Name" error={errors["companyName"] || errors["client.companyName"]}>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)"
+                value={value.companyName || ""}
+                onChange={(e) => set({ companyName: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+
+            {/* GST (GSTIN) */}
+            <Field label="GST (GSTIN)" error={errors["gstin"] || errors["client.gstin"]}>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., 29ABCDE1234F1Z5 (Optional)"
+                value={value.gstin || ""}
+                onChange={(e) => set({ gstin: e.target.value.toUpperCase() })}
+                style={{
+                  ...inputStyle,
+                  fontFamily: "var(--font-mono, monospace)",
+                }}
+              />
+            </Field>
+          </div>
+        </div>
+
+        {/* ── RIGHT CARD: ADDRESS, BILLING & FINANCIAL CONNECT ───────── */}
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #d5e4d8",
+            borderRadius: 14,
+            padding: "18px 20px",
+            boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingBottom: 10,
+              borderBottom: "1px solid #eef5ef",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  backgroundColor: "#eaf5ec",
+                  color: "#15803d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Icons.MapPin size={16} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 13.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                  Address, Billing & Financials
+                </h3>
+                <p style={{ fontSize: 11, color: "#64748b", margin: 0, marginTop: 1 }}>
+                  Physical location, invoicing, and accounting contacts
+                </p>
+              </div>
+            </div>
+
+            <span
+              style={{
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: "#15803d",
+                background: "#f0fdf4",
+                padding: "3px 8px",
+                borderRadius: 5,
+                border: "1px solid #bbf7d0",
+              }}
+            >
+              Tax & Invoicing
             </span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--muted)" }}>
-            <span>Preview ID:</span>
-            <code style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 700, fontSize: 11, background: "var(--surface-strong)", border: "1px solid var(--hairline)", padding: "2px 6px", borderRadius: 4 }}>
-              {previewClientCode(idempotencyKey)}
-            </code>
-          </div>
-        </div>
 
-        <div className="ob-grid-2">
-          <F label="Full Name" required error={errors["name"]}>
-            <input className="input-field" value={value.name} maxLength={120} placeholder="e.g., Ramesh Patel" onChange={(e) => set({ name: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="Email ID" required error={errors["email"] ?? (asyncIssue && !asyncIssue.startsWith("Phone") ? asyncIssue : undefined)}>
-            <input className="input-field" value={value.email ?? ""} maxLength={254} inputMode="email" placeholder="e.g., owner@example.com" onChange={(e) => set({ email: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label={`Mobile Number${checking ? " — checking…" : ""}`} required error={errors["phone"] ?? (asyncIssue?.startsWith("Phone") ? asyncIssue : undefined)}>
-            <input className="input-field" value={value.phone ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ phone: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>Whatsapp No</label>
-              {(() => {
-                const isSame = Boolean(value.phone && value.whatsappNo === value.phone);
-                return (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      set({ whatsappNo: isSame ? "" : (value.phone ?? "") });
-                    }}
-                    disabled={!value.phone}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 8,
+            }}
+          >
+            {/* Village */}
+            <Field label="Village / Street" error={errors["village"] || errors["client.village"]} required>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Solur"
+                value={value.village || ""}
+                onChange={(e) => set({ village: e.target.value })}
+                style={{
+                  ...inputStyle,
+                  fontSize: 12.5,
+                  padding: "0 8px",
+                }}
+              />
+            </Field>
+
+            {/* City */}
+            <Field label="City / Taluk" error={errors["city"] || errors["client.city"]} required>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Magadi"
+                value={value.city || ""}
+                onChange={(e) => set({ city: e.target.value })}
+                style={{
+                  ...inputStyle,
+                  fontSize: 12.5,
+                  padding: "0 8px",
+                }}
+              />
+            </Field>
+
+            {/* State */}
+            <Field label="State" error={errors["state"] || errors["client.state"]} required>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Karnataka"
+                value={value.state || ""}
+                onChange={(e) => set({ state: e.target.value })}
+                style={{
+                  ...inputStyle,
+                  fontSize: 12.5,
+                  padding: "0 8px",
+                }}
+              />
+            </Field>
+
+            {/* PIN Code */}
+            <Field label="PIN Code" error={errors["pincode"] || errors["client.pincode"]} required>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., 562127"
+                maxLength={6}
+                value={value.pincode || ""}
+                onChange={(e) => set({ pincode: e.target.value.replace(/\D/g, "") })}
+                style={{
+                  ...inputStyle,
+                  fontSize: 12.5,
+                  fontFamily: "var(--font-mono, monospace)",
+                  padding: "0 8px",
+                }}
+              />
+            </Field>
+
+            {/* Billing Location / Address with [✓] Same as Address toggle */}
+            <Field
+              label="Billing Location / Address"
+              error={errors["billingAddress"] || errors["client.billingAddress"]}
+              required
+              span
+            >
+              <div style={{ position: "relative" }}>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g., 45 Greenfield Agri Tech Park, Hoskote, Bengaluru Rural"
+                  value={value.billingAddress || ""}
+                  onChange={(e) => set({ billingAddress: e.target.value })}
+                  style={{
+                    ...inputStyle,
+                    paddingRight: 145,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={toggleSameAsAddress}
+                  disabled={!addressSummary}
+                  style={{
+                    position: "absolute",
+                    right: 5,
+                    top: 5,
+                    height: 28,
+                    padding: "0 9px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    border: isSameAsAddress ? "1px solid #0f172a" : "1px solid #e2e8f0",
+                    backgroundColor: isSameAsAddress ? "#0f172a" : "#f8fafc",
+                    color: isSameAsAddress ? "#ffffff" : "#64748b",
+                    cursor: addressSummary ? "pointer" : "not-allowed",
+                    transition: "all 0.15s ease",
+                  }}
+                  title="Copy physical address to billing location"
+                >
+                  <div
                     style={{
-                      background: isSame ? "var(--surface-strong)" : "transparent",
-                      color: isSame ? "var(--ink)" : "var(--muted)",
-                      border: `1px solid ${isSame ? "var(--hairline-strong)" : "var(--hairline)"}`,
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 500,
-                      padding: "2px 8px",
-                      cursor: value.phone ? "pointer" : "not-allowed",
-                      display: "inline-flex",
+                      width: 13,
+                      height: 13,
+                      borderRadius: 3,
+                      border: isSameAsAddress ? "1px solid #ffffff" : "1.5px solid #cbd5e1",
+                      backgroundColor: isSameAsAddress ? "#0f172a" : "#ffffff",
+                      display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      opacity: value.phone ? 1 : 0.5,
-                      transition: "all 0.15s ease",
-                      userSelect: "none",
+                      justifyContent: "center",
                     }}
-                    title={value.phone ? "Use mobile number as WhatsApp number" : "Enter mobile number first"}
                   >
-                    <span
-                      style={{
-                        width: 13,
-                        height: 13,
-                        borderRadius: 3,
-                        border: isSame ? "1px solid var(--primary)" : "1px solid var(--muted-soft)",
-                        backgroundColor: isSame ? "var(--primary)" : "transparent",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "var(--on-primary, #fff)",
-                        flexShrink: 0,
-                        transition: "all 0.12s ease",
-                      }}
-                    >
-                      {isSame && <Icons.Check size={9} strokeWidth={3} />}
-                    </span>
-                    <span>Same as mobile</span>
-                  </button>
-                );
-              })()}
-            </div>
-            <input className="input-field" value={value.whatsappNo ?? ""} maxLength={20} inputMode="tel" placeholder="e.g., 9876543210" onChange={(e) => set({ whatsappNo: e.target.value })} style={{ borderRadius: 8 }} />
-            {errors["whatsappNo"] && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{errors["whatsappNo"]}</div>}
+                    {isSameAsAddress && <Icons.Check size={9} strokeWidth={3} style={{ color: "#ffffff" }} />}
+                  </div>
+                  <span>Same as address</span>
+                </button>
+              </div>
+            </Field>
           </div>
-          <F label="Business Name" error={errors["companyName"]}>
-            <input className="input-field" value={value.companyName ?? ""} maxLength={180} placeholder="e.g., Greenfield Agro Pvt Ltd (Optional)" onChange={(e) => set({ companyName: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="GST (GSTIN)" error={errors["gstin"]}>
-            <input className="input-field" value={value.gstin ?? ""} maxLength={25} placeholder="e.g., 29ABCDE1234F1Z5 (Optional)" onChange={(e) => set({ gstin: e.target.value.toUpperCase() })} style={{ borderRadius: 8 }} />
-          </F>
-        </div>
-      </div>
-
-      {/* Location & Address Card */}
-      <div style={{
-        background: "var(--surface-card)",
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-md)",
-        padding: "20px 24px",
-        boxShadow: "var(--shadow-card)"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-          <Icons.MapPin size={14} style={{ color: "var(--primary)" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-            Client Address & Billing Location
-          </span>
-        </div>
-
-        <div className="ob-grid-2">
-          <F label="Village" required error={errors["village"]}>
-            <input className="input-field" value={value.village ?? ""} maxLength={100} placeholder="e.g., Solur" onChange={(e) => set({ village: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="City" required error={errors["city"]}>
-            <input className="input-field" value={value.city ?? ""} maxLength={100} placeholder="e.g., Bengaluru" onChange={(e) => set({ city: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="State" required error={errors["state"]}>
-            <input className="input-field" value={value.state ?? ""} maxLength={100} placeholder="e.g., Karnataka" onChange={(e) => set({ state: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="PIN Code" required error={errors["pincode"]}>
-            <input className="input-field" value={value.pincode ?? ""} maxLength={20} placeholder="e.g., 562127" onChange={(e) => set({ pincode: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
-          <F label="Billing Location" required error={errors["billingAddress"]} span>
-            <input className="input-field" value={value.billingAddress ?? ""} maxLength={500} placeholder="Door / Survey no, street name, layout" onChange={(e) => set({ billingAddress: e.target.value })} style={{ borderRadius: 8 }} />
-          </F>
         </div>
       </div>
     </div>

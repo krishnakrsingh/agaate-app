@@ -45,7 +45,7 @@ export function emptyWizard(idempotencyKey?: string): WizardData {
     plots: [],
     crops: [],
     team: {
-      mode: "later",
+      mode: "create",
       name: "",
       email: "",
       phone: "",
@@ -55,7 +55,7 @@ export function emptyWizard(idempotencyKey?: string): WizardData {
       agronomistName: null,
       fieldOfficerId: null,
       fieldOfficerName: null,
-      createFirstTask: true,
+      createFirstTask: false,
       firstTaskTitle: "Initial Demarcation & Soil Testing",
     },
   };

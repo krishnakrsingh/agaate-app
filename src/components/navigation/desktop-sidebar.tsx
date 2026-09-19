@@ -201,19 +201,13 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else if (role === "FARM_ADMIN") {
     sections.push(
       {
-        title: "PORTFOLIO & LAND",
+        title: "PORTFOLIO & CROPS",
         items: [
           {
             href: "/owner/farms",
             label: "Farm Estates",
             icon: "Farm",
             isActive: (p) => p.startsWith("/owner/farms") || p === "/owner/farm",
-          },
-          {
-            href: "/owner/plots",
-            label: "Plots & Demarcation",
-            icon: "Plot",
-            isActive: (p) => p.startsWith("/owner/plots") || p.startsWith("/owner/land"),
           },
           {
             href: "/owner/crops",
@@ -240,21 +234,10 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
             isActive: (p) => p.startsWith("/owner/chat"),
           },
           {
-            href: "/owner/records",
-            label: "Commercial Records",
-            icon: "Truck",
-            isActive: (p) => p.startsWith("/owner/records") || p.startsWith("/owner/harvest") || p.startsWith("/owner/inventory") || p.startsWith("/owner/financials"),
-          },
-        ],
-      },
-      {
-        title: "ACCOUNT",
-        items: [
-          {
-            href: "/owner/settings",
-            label: "Estate Settings",
-            icon: "Settings",
-            isActive: (p) => p.startsWith("/owner/settings"),
+            href: "/owner/people",
+            label: "Team Management",
+            icon: "Shield",
+            isActive: (p) => p.startsWith("/owner/people") || p.startsWith("/owner/team"),
           },
         ],
       }
@@ -262,49 +245,20 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else if (role === "AGRONOMIST") {
     sections.push(
       {
-        title: "RADAR & PROTOCOLS",
+        title: "FIELD INTELLIGENCE",
         items: [
-          {
-            href: "/agronomy/radar",
-            label: "Clinical Radar",
-            icon: "Activity",
-            isActive: (p) => p.startsWith("/agronomy/radar") || p === "/agronomy",
-          },
-          {
-            href: "/agronomy/prescriptions",
-            label: "Rx Directives",
-            icon: "FileText",
-            isActive: (p) => p.startsWith("/agronomy/prescriptions"),
-          },
           {
             href: "/agronomy/chat",
-            label: "Field Messages",
+            label: "Field Messages & Intel",
             icon: "Users",
             badge: chatBadge,
-            isActive: (p) => p.startsWith("/agronomy/chat"),
+            isActive: (p) => p.startsWith("/agronomy/chat") || p.startsWith("/agronomy"),
           },
           {
-            href: "/agronomy/protocols",
-            label: "Stage Rules",
-            icon: "Sprout",
-            isActive: (p) => p.startsWith("/agronomy/protocols"),
-          },
-        ],
-      },
-      {
-        title: "DIAGNOSTICS & TELEMETRY",
-        items: [
-          {
-            href: "/spatial",
-            label: "GIS Boundary Audit",
-            icon: "Compass",
-            isActive: (p) => p.startsWith("/spatial"),
-          },
-          {
-            href: "/sensor-network",
-            label: "Sensor Hub",
-            icon: "Droplet",
-            isActive: (p) => p.startsWith("/sensor-network") || p.startsWith("/sensors"),
+            href: "/tasks",
+            label: "Tasks Ledger",
+            icon: "ClipboardList",
+            isActive: (p) => p.startsWith("/tasks"),
           },
         ],
       }
@@ -336,19 +290,8 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
   } else {
     // Default / Agronomist fallback
     sections.push({
-      title: "AGRONOMY SUITE",
+      title: "FIELD OPERATIONS",
       items: [
-        {
-          href: "/agronomy/radar",
-          label: "Crop Radar",
-          icon: "TrendingUp",
-          isActive: (p) => p.startsWith("/agronomy/radar") || p === "/dashboard",
-        },
-        {
-          href: "/agronomy/planning",
-          label: "Weekly Plan",
-          icon: "Calendar",
-        },
         {
           href: "/agronomy/chat",
           label: "Field Messages",
@@ -357,19 +300,9 @@ export function DesktopSidebar({ role, userName, onOpenCommandPalette }: Desktop
           isActive: (p) => p.startsWith("/agronomy/chat"),
         },
         {
-          href: "/agronomy/diagnostics",
-          label: "Diagnostics",
-          icon: "Stethoscope",
-        },
-        {
           href: "/tasks",
           label: "Tasks Ledger",
           icon: "ClipboardList",
-        },
-        {
-          href: "/reports/daily",
-          label: "Field Reports",
-          icon: "FileText",
         },
       ],
     });

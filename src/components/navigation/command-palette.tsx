@@ -109,27 +109,24 @@ export function CommandPalette({ isOpen, onClose, onOpen, role }: CommandPalette
     }
     if (role === "FARM_ADMIN") {
       return [
-        { id: "nav-owner-home", title: "Home Cockpit", subtitle: "Today's estate priorities", category: "NAVIGATION", href: "/owner/dashboard", icon: "Farm" },
-        { id: "nav-owner-farm", title: "My Farm", subtitle: "Soil, water & infrastructure", category: "NAVIGATION", href: "/owner/farm", icon: "Plot" },
-        { id: "nav-owner-land", title: "Land & Plots", subtitle: "Acreage & active crops", category: "NAVIGATION", href: "/owner/land", icon: "TrendingUp" },
-        { id: "nav-owner-ops", title: "Operations", subtitle: "Field tasks & schedules", category: "NAVIGATION", href: "/owner/operations", icon: "ClipboardList" },
-        { id: "nav-owner-people", title: "People & Labor", subtitle: "On-site managers & muster", category: "NAVIGATION", href: "/owner/people", icon: "Users" },
-        { id: "nav-owner-records", title: "Logistics & Records", subtitle: "Harvest, inventory & expenses", category: "NAVIGATION", href: "/owner/records", icon: "Truck" },
-        { id: "nav-owner-insights", title: "Farm Insights", subtitle: "Yield & executive brief", category: "NAVIGATION", href: "/owner/insights", icon: "Activity" },
-        { id: "nav-owner-settings", title: "Settings", subtitle: "Geofence & configuration", category: "NAVIGATION", href: "/owner/settings", icon: "Settings" },
+        { id: "nav-owner-farms", title: "Farm Estates", subtitle: "Commercial landholdings", category: "NAVIGATION", href: "/owner/farms", icon: "Farm" },
+        { id: "nav-owner-crops", title: "Crop Cycles", subtitle: "Active plantings & stages", category: "NAVIGATION", href: "/owner/crops", icon: "TrendingUp" },
+        { id: "nav-owner-ops", title: "Operations & Tasks", subtitle: "Field tasks & schedules", category: "NAVIGATION", href: "/owner/operations", icon: "ClipboardList" },
+        { id: "nav-owner-chat", title: "Agronomy & Team Chat", subtitle: "Consultations & messages", category: "NAVIGATION", href: "/owner/chat", icon: "Users" },
+        { id: "nav-owner-people", title: "Team Management", subtitle: "On-site managers & muster", category: "NAVIGATION", href: "/owner/people", icon: "Shield" },
       ];
     }
     if (role === "FARM_OFFICER") {
       return [
         { id: "nav-officer-day", title: "My Day", subtitle: "Clock in, tasks, completion", category: "NAVIGATION", href: "/officer/day", icon: "ClipboardList", badge: "Duty" },
+        { id: "nav-officer-chat", title: "Ask Agronomist", subtitle: "Consultations & messages", category: "NAVIGATION", href: "/officer/chat", icon: "Users" },
         { id: "nav-officer-reports", title: "Field Signals & Incidents", subtitle: "Crop monitoring updates", category: "NAVIGATION", href: "/officer/reports", icon: "AlertTriangle" },
         { id: "nav-officer-profile", title: "Officer Profile", subtitle: "Account & duty logs", category: "NAVIGATION", href: "/officer/profile", icon: "User" },
       ];
     }
     return [
-      { id: "nav-agronomy-radar", title: "Crop Radar", subtitle: "Monitoring & health", category: "NAVIGATION", href: "/agronomy/radar", icon: "TrendingUp" },
-      { id: "nav-agronomy-plan", title: "Weekly Plan", subtitle: "Schedule prescriptions", category: "NAVIGATION", href: "/agronomy/planning", icon: "Calendar" },
-      { id: "nav-tasks", title: "All Tasks", subtitle: "Field activities", category: "NAVIGATION", href: "/tasks", icon: "ClipboardList" },
+      { id: "nav-agronomy-chat", title: "Field Messages & Intel", subtitle: "Farm snapshot & chat", category: "NAVIGATION", href: "/agronomy/chat", icon: "Users" },
+      { id: "nav-tasks", title: "Tasks Ledger", subtitle: "Field activities", category: "NAVIGATION", href: "/tasks", icon: "ClipboardList" },
     ];
   }, [role]);
 

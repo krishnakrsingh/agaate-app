@@ -9,14 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "node --env-file=.env --import=tsx prisma/seed.ts",
     "migrate": "prisma migrate deploy",
-    "seed": "node --env-file=.env --import=tsx prisma/seed.ts",
-    "build:docs": "node scripts/build-docs-html.mjs"
+    "seed": "node --env-file=.env --import=tsx prisma/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.982.0",

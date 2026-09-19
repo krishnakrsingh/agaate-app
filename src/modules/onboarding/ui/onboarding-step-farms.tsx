@@ -1,36 +1,97 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Icons } from "@/components/icons";
-import { MAX_FARMS, type FarmInput, type ClientInput, type ContactsInput, type ContactItem } from "./onboarding-schema";
+import { MAX_FARMS, type FarmInput, type ClientInput, type ContactsInput } from "./onboarding-schema";
 import { emptyFarm } from "./onboarding-draft";
 import { ringAcres } from "@modules/spatial/ui/geo";
-import { representativePoint } from "@modules/spatial";
 
 const GeoMap = dynamic(() => import("@modules/spatial/ui/geo-map").then((m) => m.GeoMap), { ssr: false });
 
-function F({ label, error, helper, required, children }: { label: string; error?: string; helper?: React.ReactNode; required?: boolean; children: React.ReactNode }) {
+const SOIL_TYPES = [
+  "Black Cotton / Clay",
+  "Red Sandy Loam",
+  "Alluvial Loam",
+  "Laterite Soil",
+  "Sandy Soil (Light)",
+  "Clay Loam (Heavy)",
+  "Silty Loam",
+  "Peaty / Organic Rich",
+];
+
+function Field({
+  label,
+  error,
+  required,
+  children,
+  helper,
+}: {
+  label: string;
+  error?: string;
+  required?: boolean;
+  children: React.ReactNode;
+  helper?: React.ReactNode;
+}) {
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
-        <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
-          {label}
-          {required && <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>}
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#1e293b",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          <span>{label}</span>
+          {required && <span style={{ color: "#dc2626", fontWeight: 700 }}>*</span>}
         </label>
         {helper}
       </div>
       {children}
-      {error && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#dc2626",
+            marginTop: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <Icons.AlertTriangle size={11} />
+          <span>{error}</span>
+        </div>
+      )}
     </div>
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  height: 38,
+  fontSize: 13,
+  fontWeight: 500,
+  color: "#0f172a",
+  backgroundColor: "#ffffff",
+  border: "1px solid #d5ded7",
+  borderRadius: 8,
+  padding: "0 11px",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+  outline: "none",
+  width: "100%",
+};
 
 export function OnboardingStepFarms({
   value,
   onChange,
   errors,
   client,
-  contacts,
 }: {
   value: FarmInput[];
   onChange: (v: FarmInput[]) => void;
@@ -38,91 +99,121 @@ export function OnboardingStepFarms({
   client?: ClientInput;
   contacts?: ContactsInput;
 }) {
-  const [sel, setSel] = useState(0);
-  const [gpsBusy, setGpsBusy] = useState(false);
-  const [gpsErr, setGpsErr] = useState("");
-  const [addingLocalContact, setAddingLocalContact] = useState(false);
-  const [newLocalName, setNewLocalName] = useState("");
-  const [newLocalPhone, setNewLocalPhone] = useState("");
-
-  const idx = Math.min(sel, Math.max(0, value.length - 1));
-  const cur = value[idx];
-
-  const dupNames = useMemo(() => {
-    const c = new Map<string, number>();
-    for (const f of value) {
-      const k = f.name.trim().toLowerCase();
-      if (k) c.set(k, (c.get(k) ?? 0) + 1);
-    }
-    return c;
-  }, [value]);
+  const [gpsLoadingRow, setGpsLoadingRow] = useState<number | null>(null);
+  const [gpsStatusRow, setGpsStatusRow] = useState<{ row: number; msg: string; isError?: boolean } | null>(null);
 
   const patch = (i: number, p: Partial<FarmInput>) => onChange(value.map((f, j) => (j === i ? { ...f, ...p } : f)));
 
-  const patchRing = (i: number, ring: [number, number][] | null) => {
-    const f = value[i];
-    if (!f) return;
-    let { latitude, longitude } = f;
-    if (ring && ring.length >= 4 && !Number.isFinite(Number(latitude))) {
-      try {
-        const c = representativePoint(ring as [number, number][]);
-        if (c) {
-          longitude = c[0] as unknown as number;
-          latitude = c[1] as unknown as number;
-        }
-      } catch {
-        /* keep manual coords */
-      }
+  const patchRing = (i: number, nextRing: [number, number][] | null) => {
+    if (!nextRing || nextRing.length < 4) {
+      patch(i, { boundaryRing: null });
+      return;
     }
-    onChange(value.map((x, j) => (j === i ? { ...x, boundaryRing: ring, latitude, longitude } : x)));
+    let acres = 0;
+    try {
+      acres = ringAcres(nextRing);
+    } catch {
+      acres = 0;
+    }
+    const rounded = Math.round(acres * 100) / 100;
+    const curA = Number(value[i]?.cultivableArea);
+    patch(i, {
+      boundaryRing: nextRing,
+      totalArea: rounded > 0 ? rounded : Number.isFinite(curA) ? curA : undefined,
+      cultivableArea: rounded > 0 ? rounded : Number.isFinite(curA) ? curA : undefined,
+    });
   };
 
   const addRow = () => {
     if (value.length >= MAX_FARMS) return;
-    onChange([...value, emptyFarm()]);
-    setSel(value.length);
+    const next = emptyFarm();
+    next.name = client?.name ? `${client.name}'s Farm ${value.length + 1}` : `Farm ${value.length + 1}`;
+    onChange([...value, next]);
   };
 
   const removeRow = (i: number) => {
     if (value.length <= 1) return;
     onChange(value.filter((_, j) => j !== i));
-    setSel(0);
   };
 
-  const gps = () => {
-    setGpsErr("");
-    if (!navigator.geolocation) {
-      setGpsErr("Location not supported.");
+  const detectLocation = (i: number) => {
+    if (!navigator?.geolocation) {
+      setGpsStatusRow({ row: i, msg: "GPS not supported on this browser.", isError: true });
       return;
     }
-    setGpsBusy(true);
+    setGpsLoadingRow(i);
+    setGpsStatusRow({ row: i, msg: "Detecting GPS coordinates…" });
+
     navigator.geolocation.getCurrentPosition(
-      (p) => {
-        patch(idx, { latitude: p.coords.latitude as unknown as number, longitude: p.coords.longitude as unknown as number });
-        setGpsBusy(false);
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        setGpsStatusRow({ row: i, msg: "Reverse-geocoding address…" });
+
+        try {
+          const res = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+          const json = await res.json().catch(() => ({}));
+
+          if (res.ok && json.ok && json.data) {
+            const d = json.data;
+            patch(i, {
+              latitude: lat,
+              longitude: lng,
+              village: d.village || value[i].village || "",
+              city: d.city || value[i].city || "",
+              taluk: d.taluk || value[i].taluk || "",
+              state: d.state || value[i].state || "",
+              pincode: d.pincode || value[i].pincode || "",
+              location: d.location || value[i].location || [d.village, d.city].filter(Boolean).join(", "),
+            });
+            setGpsStatusRow({ row: i, msg: "Location and address filled from GPS!" });
+          } else {
+            patch(i, { latitude: lat, longitude: lng });
+            setGpsStatusRow({ row: i, msg: "Coordinates captured (address lookup offline)." });
+          }
+        } catch {
+          patch(i, { latitude: lat, longitude: lng });
+          setGpsStatusRow({ row: i, msg: "Coordinates captured." });
+        } finally {
+          setGpsLoadingRow(null);
+          setTimeout(() => setGpsStatusRow(null), 4000);
+        }
       },
-      (e) => {
-        setGpsBusy(false);
-        setGpsErr(e.code === 1 ? "Permission denied." : "Location unavailable.");
+      (err) => {
+        setGpsLoadingRow(null);
+        setGpsStatusRow({
+          row: i,
+          msg: err.code === 1 ? "GPS access denied. Enable location." : "GPS signal unavailable.",
+          isError: true,
+        });
+        setTimeout(() => setGpsStatusRow(null), 4000);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 12000 }
     );
   };
 
-  const e = (i: number, f: string) => errors[`farms.${i}.${f}`];
-  const lat = Number(cur?.latitude), lng = Number(cur?.longitude);
-  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-  const ring = (cur?.boundaryRing ?? null) as [number, number][] | null;
-  const ringAcresLive = ring && ring.length >= 4 ? (() => { try { return ringAcres(ring); } catch { return 0; } })() : 0;
-  const mapCenter: [number, number] = hasCoords ? [lat, lng] : [13.0827, 77.5877];
+  const toggleSameAsClientAddress = (i: number, checked: boolean) => {
+    if (checked && client) {
+      patch(i, {
+        sameAsClientAddress: true,
+        village: client.village ?? value[i]?.village ?? "",
+        city: client.city ?? value[i]?.city ?? "",
+        state: client.state ?? value[i]?.state ?? "",
+        pincode: client.pincode ?? value[i]?.pincode ?? "",
+        location: value[i]?.location || client.billingAddress || [client.city, client.state].filter(Boolean).join(", "),
+      });
+    } else {
+      patch(i, { sameAsClientAddress: false });
+    }
+  };
 
-  // Unit conversion helper
-  const handleAreaChange = (rawArea: number, unit: "Acre" | "Hectare" | "Gunta") => {
+  const handleAreaChange = (i: number, rawArea: number, unit: "Acre" | "Hectare" | "Gunta") => {
     let normalizedAcres = rawArea;
     if (unit === "Hectare") normalizedAcres = Number((rawArea * 2.47105).toFixed(2));
     if (unit === "Gunta") normalizedAcres = Number((rawArea * 0.025).toFixed(2));
 
-    patch(idx, {
+    patch(i, {
       area: rawArea,
       areaUnit: unit,
       totalArea: normalizedAcres,
@@ -130,566 +221,513 @@ export function OnboardingStepFarms({
     });
   };
 
-  // Same as Client Address toggle
-  const toggleSameAsClientAddress = (checked: boolean) => {
-    if (checked && client) {
-      patch(idx, {
-        sameAsClientAddress: true,
-        village: client.village ?? cur?.village ?? "",
-        city: client.city ?? cur?.city ?? "",
-        state: client.state ?? cur?.state ?? "",
-        pincode: client.pincode ?? cur?.pincode ?? "",
-        location: cur?.location || client.billingAddress || [client.city, client.state].filter(Boolean).join(", "),
-      });
-    } else {
-      patch(idx, { sameAsClientAddress: false });
-    }
-  };
-
-  // Same as Client for Local Connect
-  const setLocalConnectSameAsClient = () => {
-    if (!client) return;
-    const clientStr = `${client.name}${client.phone ? ` (${client.phone})` : ""}`;
-    patch(idx, {
-      localConnect: clientStr,
-      localContactName: client.name,
-      localContactPhone: client.phone ?? "",
-      localConnectSameAsClient: true,
-    });
-  };
-
-  // Client name default
-  const defaultFarmName = client?.companyName ? `${client.companyName} Estate` : client?.name ? `${client.name}'s Farm` : "Greenfield Estate";
-
-  // Available contact options for Local Connect
-  const contactOptions: ContactItem[] = [];
-  if (client?.name && client?.phone) {
-    contactOptions.push({
-      id: "client_owner",
-      name: `${client.name} (Client Primary)`,
-      phone: client.phone,
-      email: client.email || null,
-      role: "LOCAL",
-    });
-  }
-  if (contacts?.financeContact) {
-    contactOptions.push(contacts.financeContact);
-  }
-  if (contacts?.purchaserContact) {
-    contactOptions.push(contacts.purchaserContact);
-  }
+  const e = (i: number, f: string) => errors[`farms.${i}.${f}`];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* ── Client Context Header ────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "14px 20px",
-          background: "var(--surface-card)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--radius-md)",
-          boxShadow: "var(--shadow-card)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      {/* ── STACKED FARM CARDS ("ADD SUCH FARMS DOWN MORE AND MORE") ── */}
+      {value.map((farm, i) => {
+        const lat = Number(farm.latitude);
+        const lng = Number(farm.longitude);
+        const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        const mapCenter: [number, number] = hasCoords ? [lat, lng] : [13.0827, 77.5877];
+        const ring = (farm.boundaryRing ?? null) as [number, number][] | null;
+        const isGpsLoading = gpsLoadingRow === i;
+        const status = gpsStatusRow?.row === i ? gpsStatusRow : null;
+
+        return (
           <div
+            key={farm.rowId ?? `farm-${i}`}
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: "var(--surface-strong)",
+              background: "#ffffff",
+              border: "1px solid #d5e4d8",
+              borderRadius: 14,
+              padding: "18px 20px",
+              boxShadow: "0 1px 3px rgba(21, 128, 61, 0.04), 0 4px 12px rgba(21, 128, 61, 0.02)",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
+              flexDirection: "column",
+              gap: 12,
             }}
           >
-            🏡
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Client Context
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-              {client?.companyName ? `${client.companyName} · ` : ""}{client?.name || "Client"}
-            </div>
-          </div>
-        </div>
+            {/* Header: Farm Title, Count, & Remove */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingBottom: 10,
+                borderBottom: "1px solid #eef5ef",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "#f0fdf4",
+                    color: "#15803d",
+                    border: "1px solid #bbf7d0",
+                    padding: "3px 9px",
+                    borderRadius: 6,
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  Farm #{i + 1}
+                </span>
+                <h3 style={{ margin: 0, fontSize: 14.5, fontWeight: 700, color: "#0f172a" }}>
+                  {farm.name ? farm.name : `Estate Property ${i + 1}`}
+                </h3>
+              </div>
 
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            padding: "3px 10px",
-            borderRadius: 20,
-            background: "var(--surface-strong)",
-            color: "var(--muted)",
-          }}
-        >
-          {value.length} Farm{value.length > 1 ? "s" : ""} Added
-        </span>
-      </div>
-
-      {/* ── Farm Selector Strip ──────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {value.map((f, i) => {
-            const active = i === idx;
-            const hasErr = Object.keys(errors).some((k) => k.startsWith(`farms.${i}.`));
-            const dup = f.name.trim() && (dupNames.get(f.name.trim().toLowerCase()) ?? 0) > 1;
-
-            return (
-              <button
-                key={f.rowId ?? i}
-                type="button"
-                onClick={() => setSel(i)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  height: 34,
-                  padding: "0 14px",
-                  borderRadius: 20,
-                  border: `1px solid ${active ? "var(--ink)" : hasErr ? "var(--semantic-error)" : "var(--hairline)"}`,
-                  background: active ? "var(--ink)" : "var(--surface-card)",
-                  color: active ? "#fff" : hasErr ? "var(--semantic-error)" : "var(--ink)",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                <span>{f.name.trim() || `Farm ${i + 1}`}</span>
-                {(dup || hasErr) && <span>⚠</span>}
-                {value.length > 1 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {status && (
                   <span
-                    role="button"
-                    aria-label={`Remove farm ${i + 1}`}
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      removeRow(i);
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: status.isError ? "#dc2626" : "#15803d",
                     }}
-                    style={{ opacity: 0.6, fontSize: 13, cursor: "pointer", marginLeft: 2 }}
                   >
-                    ×
+                    {status.msg}
                   </span>
                 )}
-              </button>
-            );
-          })}
-        </div>
-
-        <button
-          type="button"
-          className="btn btn-secondary btn-sm"
-          onClick={addRow}
-          disabled={value.length >= MAX_FARMS}
-          style={{ height: 32, padding: "0 12px", gap: 4 }}
-        >
-          <Icons.Plus size={13} />
-          <span>Add Another Farm</span>
-        </button>
-      </div>
-
-      {/* ── Selected Farm Details ────────────────────────────────────────── */}
-      {cur && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {/* Card 1: Farm Basic Information */}
-          <div
-            style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: "20px 24px",
-              boxShadow: "var(--shadow-card)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid var(--hairline)" }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)" }} />
-              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                Estate Identity & Area
-              </span>
-            </div>
-
-            <div className="ob-grid-3">
-              <F
-                label="Farm Name"
-                required
-                error={e(idx, "name")}
-                helper={
+                {value.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => patch(idx, { name: defaultFarmName })}
+                    onClick={() => removeRow(i)}
                     style={{
-                      background: cur.name === defaultFarmName ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
-                      color: cur.name === defaultFarmName ? "var(--green, #15803d)" : "var(--muted)",
-                      border: "none",
-                      borderRadius: 4,
-                      fontSize: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 11.5,
                       fontWeight: 600,
-                      padding: "1px 6px",
+                      color: "#dc2626",
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      borderRadius: 6,
                       cursor: "pointer",
+                      padding: "4px 8px",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    Use Client Name
+                    <Icons.Trash size={12} />
+                    <span>Remove Farm</span>
                   </button>
-                }
-              >
-                <input
-                  className="input-field"
-                  value={cur.name}
-                  maxLength={120}
-                  placeholder="e.g., North Valley Estate"
-                  onChange={(ev) => patch(idx, { name: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-
-              {/* Area + Unit Selector */}
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>
-                  Total Area & Unit <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 3, fontWeight: 700 }}>*</span>
-                </label>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input
-                    className="input-field"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={cur.area as unknown as string}
-                    placeholder="12.5"
-                    onChange={(ev) => handleAreaChange(Number(ev.target.value), cur.areaUnit ?? "Acre")}
-                    style={{ borderRadius: 8, flex: 1 }}
-                  />
-                  <select
-                    className="input-field"
-                    value={cur.areaUnit ?? "Acre"}
-                    onChange={(ev) => handleAreaChange(Number(cur.area || 0), ev.target.value as "Acre" | "Hectare" | "Gunta")}
-                    style={{ width: 95, borderRadius: 8, padding: "0 8px" }}
-                  >
-                    <option value="Acre">Acre</option>
-                    <option value="Hectare">Hectare</option>
-                    <option value="Gunta">Gunta</option>
-                  </select>
-                </div>
-                {e(idx, "totalArea") && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginTop: 3 }}>{e(idx, "totalArea")}</div>}
+                )}
               </div>
-
-              <F label="Water Source" required error={e(idx, "waterSource")}>
-                <input
-                  className="input-field"
-                  value={cur.waterSource}
-                  maxLength={300}
-                  placeholder="e.g., 2x Borewells + Storage Pond"
-                  onChange={(ev) => patch(idx, { waterSource: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
             </div>
 
-            {/* Local Connect Relationship */}
-            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>
-                    Local Connect (Farm In-charge) <span style={{ color: "var(--semantic-error, #dc2626)", marginLeft: 2, fontWeight: 700 }}>*</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--muted)" }}>Manager or primary contact residing at the farm location</div>
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={setLocalConnectSameAsClient}
-                    style={{
-                      fontSize: 11,
-                      height: 28,
-                      background: cur.localConnectSameAsClient ? "var(--green-light, #dcfce7)" : undefined,
-                      color: cur.localConnectSameAsClient ? "var(--green, #15803d)" : undefined,
-                    }}
-                  >
-                    Same as Client
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setAddingLocalContact(!addingLocalContact)}
-                    style={{ fontSize: 11, height: 28 }}
-                  >
-                    {addingLocalContact ? "Cancel New" : "+ Add New Local Contact"}
-                  </button>
-                </div>
-              </div>
-
-              {!addingLocalContact ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <select
-                    className="input-field"
-                    value={cur.localContactId ?? (cur.localConnect ? "custom" : "")}
-                    onChange={(ev) => {
-                      const selectedId = ev.target.value;
-                      if (selectedId === "custom") return;
-                      const matched = contactOptions.find((c) => c.id === selectedId);
-                      if (matched) {
-                        patch(idx, {
-                          localContactId: matched.id,
-                          localContactName: matched.name,
-                          localContactPhone: matched.phone,
-                          localConnect: `${matched.name} (${matched.phone})`,
-                          localConnectSameAsClient: matched.id === "client_owner",
-                        });
-                      }
-                    }}
-                    style={{ borderRadius: 8, flex: 1 }}
-                  >
-                    <option value="">-- Select Contact for Local Connect --</option>
-                    {contactOptions.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.phone})
-                      </option>
-                    ))}
-                    {cur.localConnect && !contactOptions.some((c) => c.id === cur.localContactId) && (
-                      <option value="custom">{cur.localConnect}</option>
-                    )}
-                  </select>
-                </div>
-              ) : (
-                <div className="ob-grid-2" style={{ background: "var(--surface-strong)", padding: 12, borderRadius: 8 }}>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" }}>Name</label>
-                    <input
-                      className="input-field"
-                      value={newLocalName}
-                      placeholder="e.g., Suresh Gowda"
-                      onChange={(e) => setNewLocalName(e.target.value)}
-                      style={{ borderRadius: 6, marginTop: 4 }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", textTransform: "uppercase" }}>Phone</label>
-                    <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                      <input
-                        className="input-field"
-                        value={newLocalPhone}
-                        placeholder="e.g., 9876543210"
-                        onChange={(e) => setNewLocalPhone(e.target.value)}
-                        style={{ borderRadius: 6, flex: 1 }}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => {
-                          if (!newLocalName.trim() || !newLocalPhone.trim()) return;
-                          patch(idx, {
-                            localConnect: `${newLocalName.trim()} (${newLocalPhone.trim()})`,
-                            localContactName: newLocalName.trim(),
-                            localContactPhone: newLocalPhone.trim(),
-                            localConnectSameAsClient: false,
-                          });
-                          setAddingLocalContact(false);
-                          setNewLocalName("");
-                          setNewLocalPhone("");
-                        }}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Card 2: Farm Location & Interactive Map */}
-          <div
-            style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: "20px 24px",
-              boxShadow: "var(--shadow-card)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Icons.MapPin size={15} style={{ color: "var(--primary)" }} />
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                  Farm Location & Map
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={gps}
-                disabled={gpsBusy}
-                style={{ height: 28, padding: "0 10px", fontSize: 11, gap: 4 }}
-              >
-                <Icons.MapPin size={12} />
-                <span>{gpsBusy ? "Locating…" : "Detect Current GPS"}</span>
-              </button>
-            </div>
-
-            {gpsErr && <div role="alert" style={{ fontSize: 11, color: "var(--semantic-error)", marginBottom: 8 }}>{gpsErr}</div>}
-
-            {/* Map Canvas */}
-            <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--hairline)", marginBottom: 14 }}>
-              <GeoMap
-                center={mapCenter}
-                polygon={ring}
-                onChange={(r) => patchRing(idx, r)}
-                interactive
-                height={260}
-                pins={!ring && hasCoords ? [{ key: cur.rowId ?? String(idx), lat, lng, color: "var(--green, #15803d)", label: cur.name.trim() || `Farm ${idx + 1}` }] : null}
-              />
-            </div>
-
-            {/* Lat/Long and Location Name inputs */}
-            <div className="ob-grid-3">
-              <F label="Farm Location Name" required error={e(idx, "location")}>
-                <input
-                  className="input-field"
-                  value={cur.location}
-                  maxLength={180}
-                  placeholder="e.g., Near Hoskote Gate"
-                  onChange={(ev) => patch(idx, { location: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="Latitude" required error={e(idx, "latitude")}>
-                <input
-                  className="input-field"
-                  type="number"
-                  step="any"
-                  value={cur.latitude as unknown as string}
-                  placeholder="13.1234"
-                  onChange={(ev) => patch(idx, { latitude: ev.target.value as unknown as number })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="Longitude" required error={e(idx, "longitude")}>
-                <input
-                  className="input-field"
-                  type="number"
-                  step="any"
-                  value={cur.longitude as unknown as string}
-                  placeholder="77.5678"
-                  onChange={(ev) => patch(idx, { longitude: ev.target.value as unknown as number })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-            </div>
-          </div>
-
-          {/* Card 3: Farm Address & Soil Type */}
-          <div
-            style={{
-              background: "var(--surface-card)",
-              border: "1px solid var(--hairline)",
-              borderRadius: "var(--radius-md)",
-              padding: "20px 24px",
-              boxShadow: "var(--shadow-card)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Icons.FileText size={15} style={{ color: "var(--primary)" }} />
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--ink)" }}>
-                  Farm Address & Soil Type
-                </span>
-              </div>
-
-              {/* Prominent 'Same as Client Address' toggle */}
-              <label
+            {/* ── 2-COLUMN BODY: SQUARE MAP (LEFT) + FORM FIELDS (RIGHT) ─ */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "320px minmax(0, 1fr)",
+                gap: 16,
+                alignItems: "stretch",
+              }}
+            >
+              {/* ── LEFT COLUMN: SQUARE MAP ──────────────────────────── */}
+              <div
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--ink)",
-                  cursor: "pointer",
-                  background: cur.sameAsClientAddress ? "var(--green-light, #dcfce7)" : "var(--surface-strong)",
-                  padding: "4px 10px",
-                  borderRadius: 6,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  width: 320,
+                  flexShrink: 0,
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={!!cur.sameAsClientAddress}
-                  onChange={(e) => toggleSameAsClientAddress(e.target.checked)}
-                />
-                <span>Same as Client Address</span>
-              </label>
-            </div>
-
-            <div className="ob-grid-3">
-              <F label="Soil Type" required error={e(idx, "soilType")}>
-                <select
-                  className="input-field"
-                  value={cur.soilType ?? ""}
-                  onChange={(ev) => patch(idx, { soilType: ev.target.value })}
-                  style={{ borderRadius: 8 }}
+                <div
+                  style={{
+                    width: 320,
+                    height: 320,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    border: "1px solid #d5e4d8",
+                    position: "relative",
+                    background: "#f8fafc",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                  }}
                 >
-                  <option value="">-- Select Soil Type --</option>
-                  <option value="Red Sandy Loam">Red Sandy Loam</option>
-                  <option value="Black Cotton Soil">Black Cotton Soil</option>
-                  <option value="Clay Loam">Clay Loam</option>
-                  <option value="Alluvial Soil">Alluvial Soil</option>
-                  <option value="Laterite Soil">Laterite Soil</option>
-                  <option value="Sandy Soil">Sandy Soil</option>
-                </select>
-              </F>
-              <F label="Village" required error={e(idx, "village")}>
-                <input
-                  className="input-field"
-                  value={cur.village ?? ""}
-                  placeholder="e.g., Solur"
-                  onChange={(ev) => patch(idx, { village: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="City" required error={e(idx, "city")}>
-                <input
-                  className="input-field"
-                  value={cur.city ?? ""}
-                  placeholder="e.g., Bengaluru"
-                  onChange={(ev) => patch(idx, { city: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="State" required error={e(idx, "state")}>
-                <input
-                  className="input-field"
-                  value={cur.state ?? ""}
-                  placeholder="e.g., Karnataka"
-                  onChange={(ev) => patch(idx, { state: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="PIN Code" required error={e(idx, "pincode")}>
-                <input
-                  className="input-field"
-                  value={cur.pincode ?? ""}
-                  placeholder="e.g., 562127"
-                  onChange={(ev) => patch(idx, { pincode: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
-              <F label="Survey No." error={e(idx, "surveyNumber")}>
-                <input
-                  className="input-field"
-                  value={cur.surveyNumber ?? ""}
-                  placeholder="e.g., 42/1A (Optional)"
-                  onChange={(ev) => patch(idx, { surveyNumber: ev.target.value })}
-                  style={{ borderRadius: 8 }}
-                />
-              </F>
+                  <GeoMap
+                    center={mapCenter}
+                    polygon={ring}
+                    onChange={(nextRing) => patchRing(i, nextRing)}
+                    height="100%"
+                    interactive={true}
+                    pins={
+                      hasCoords
+                        ? [
+                            {
+                              key: `farm_pin_${i}`,
+                              lat,
+                              lng,
+                              color: "#16a34a",
+                              label: farm.name || `Farm ${i + 1}`,
+                            },
+                          ]
+                        : null
+                    }
+                  />
+
+                  {/* Overlay Helper Badge */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 8,
+                      left: 8,
+                      right: 8,
+                      background: "rgba(15, 23, 42, 0.8)",
+                      backdropFilter: "blur(4px)",
+                      color: "#ffffff",
+                      fontSize: 11,
+                      fontWeight: 500,
+                      padding: "5px 9px",
+                      borderRadius: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      zIndex: 900,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span>
+                      {hasCoords
+                        ? `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+                        : "Detect GPS or enter coordinates"}
+                    </span>
+                    {ring && ring.length >= 4 && (
+                      <span style={{ color: "#4ade80", fontWeight: 700 }}>
+                        {ringAcres(ring).toFixed(2)} ac
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Map Quick Action Ribbon */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>
+                    Trace farm boundary using top-left tool
+                  </span>
+                  {ring && ring.length >= 4 && (
+                    <button
+                      type="button"
+                      onClick={() => patch(i, { boundaryRing: null })}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: "#dc2626",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Clear Boundary
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* ── RIGHT COLUMN: FARM DETAILS & COORDINATES ─────────── */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  minWidth: 0,
+                }}
+              >
+                {/* Row 1: Farm Name & Area */}
+                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 10 }}>
+                  <Field
+                    label="Farm Name"
+                    error={e(i, "name")}
+                    required
+                    helper={
+                      client?.name ? (
+                        <button
+                          type="button"
+                          onClick={() => patch(i, { name: `${client.name}'s Estate` })}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            padding: 0,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "#15803d",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Copy Client Name
+                        </button>
+                      ) : null
+                    }
+                  >
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., North Ridge Orchard"
+                      value={farm.name}
+                      onChange={(ev) => patch(i, { name: ev.target.value })}
+                      style={inputStyle}
+                    />
+                  </Field>
+
+                  <Field label="Total Area & Unit" error={e(i, "area") || e(i, "totalArea")} required>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: 6 }}>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        className="input"
+                        placeholder="12.5"
+                        value={farm.area === undefined || farm.area === null ? "" : String(farm.area)}
+                        onChange={(ev) => handleAreaChange(i, parseFloat(ev.target.value) || 0, farm.areaUnit || "Acre")}
+                        style={inputStyle}
+                      />
+                      <select
+                        className="input"
+                        value={farm.areaUnit || "Acre"}
+                        onChange={(ev) =>
+                          handleAreaChange(i, Number(farm.area) || 0, ev.target.value as "Acre" | "Hectare" | "Gunta")
+                        }
+                        style={{
+                          ...inputStyle,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "0 6px",
+                        }}
+                      >
+                        <option value="Acre">Acre</option>
+                        <option value="Hectare">Hectare</option>
+                        <option value="Gunta">Gunta</option>
+                      </select>
+                    </div>
+                  </Field>
+                </div>
+
+                {/* Row 2: Soil Type & Water Source */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <Field label="Soil Type" error={e(i, "soilType")} required>
+                    <select
+                      className="input"
+                      value={farm.soilType || ""}
+                      onChange={(ev) => patch(i, { soilType: ev.target.value })}
+                      style={{
+                        ...inputStyle,
+                        fontSize: 12.5,
+                      }}
+                    >
+                      <option value="">-- Select Soil Type --</option>
+                      {SOIL_TYPES.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field label="Water Source" error={e(i, "waterSource")} required>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., 2 Borewells + Canal"
+                      value={farm.waterSource || ""}
+                      onChange={(ev) => patch(i, { waterSource: ev.target.value })}
+                      style={inputStyle}
+                    />
+                  </Field>
+                </div>
+
+                {/* Coordinates & Detect Location Button */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "flex-end" }}>
+                  <Field label="Latitude" error={e(i, "latitude")} required>
+                    <input
+                      type="number"
+                      step="any"
+                      className="input"
+                      placeholder="e.g., 13.0827"
+                      value={farm.latitude === undefined || farm.latitude === null ? "" : String(farm.latitude)}
+                      onChange={(ev) => patch(i, { latitude: parseFloat(ev.target.value) as unknown as number })}
+                      style={{
+                        ...inputStyle,
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="Longitude" error={e(i, "longitude")} required>
+                    <input
+                      type="number"
+                      step="any"
+                      className="input"
+                      placeholder="e.g., 77.5877"
+                      value={farm.longitude === undefined || farm.longitude === null ? "" : String(farm.longitude)}
+                      onChange={(ev) => patch(i, { longitude: parseFloat(ev.target.value) as unknown as number })}
+                      style={{
+                        ...inputStyle,
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    />
+                  </Field>
+
+                  <button
+                    type="button"
+                    onClick={() => detectLocation(i)}
+                    disabled={isGpsLoading}
+                    style={{
+                      height: 38,
+                      padding: "0 14px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      borderRadius: 8,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      border: "none",
+                      backgroundColor: "#0f172a",
+                      color: "#ffffff",
+                      cursor: isGpsLoading ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                      boxShadow: "0 1px 3px rgba(15, 23, 42, 0.2)",
+                      transition: "all 0.15s ease",
+                    }}
+                    title="Detect GPS coordinates and automatically auto-fill exact address"
+                  >
+                    {isGpsLoading ? (
+                      <Icons.Refresh size={14} className="spin" style={{ color: "#ffffff" }} />
+                    ) : (
+                      <Icons.Navigation size={14} style={{ color: "#ffffff" }} />
+                    )}
+                    <span>{isGpsLoading ? "Detecting…" : "Detect Location"}</span>
+                  </button>
+                </div>
+
+                {/* Row 5: Farm Location / Landmark */}
+                <Field
+                  label="Farm Location / Landmark"
+                  error={e(i, "location")}
+                  required
+                  helper={
+                    client?.village ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleSameAsClientAddress(i, !farm.sameAsClientAddress)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "#15803d",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {farm.sameAsClientAddress ? "[✓] Synced with Client" : "Copy Client Address"}
+                      </button>
+                    ) : null
+                  }
+                >
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Near Hoskote Gate, Survey #45"
+                    value={farm.location || ""}
+                    onChange={(ev) => patch(i, { location: ev.target.value })}
+                    style={inputStyle}
+                  />
+                </Field>
+
+                {/* Row 6: 4-Column Postal & Regional Address */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
+                  <Field label="Village" error={e(i, "village")} required>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Solur"
+                      value={farm.village || ""}
+                      onChange={(ev) => patch(i, { village: ev.target.value })}
+                      style={{
+                        ...inputStyle,
+                        padding: "0 8px",
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="City / Taluk" error={e(i, "city")} required>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Magadi"
+                      value={farm.city || ""}
+                      onChange={(ev) => patch(i, { city: ev.target.value })}
+                      style={{
+                        ...inputStyle,
+                        padding: "0 8px",
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="State" error={e(i, "state")} required>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Karnataka"
+                      value={farm.state || ""}
+                      onChange={(ev) => patch(i, { state: ev.target.value })}
+                      style={{
+                        ...inputStyle,
+                        padding: "0 8px",
+                      }}
+                    />
+                  </Field>
+
+                  <Field label="PIN Code" error={e(i, "pincode")} required>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="562127"
+                      maxLength={6}
+                      value={farm.pincode || ""}
+                      onChange={(ev) => patch(i, { pincode: ev.target.value.replace(/\D/g, "") })}
+                      style={{
+                        ...inputStyle,
+                        fontFamily: "var(--font-mono, monospace)",
+                        padding: "0 8px",
+                      }}
+                    />
+                  </Field>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        );
+      })}
+
+      {/* ── ADD ANOTHER FARM BUTTON ── */}
+      {value.length < MAX_FARMS && (
+        <button
+          type="button"
+          onClick={addRow}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "13px 20px",
+            borderRadius: 10,
+            border: "1px dashed #94a3b8",
+            backgroundColor: "#ffffff",
+            color: "#0f172a",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Icons.Plus size={16} strokeWidth={2.5} />
+          <span>Add Another Farm</span>
+        </button>
       )}
     </div>
   );

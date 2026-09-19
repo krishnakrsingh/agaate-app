@@ -29,7 +29,7 @@ export default async function Home() {
   }
 
   if (user.role === "AGRONOMIST") {
-    redirect("/agronomy/radar");
+    redirect("/agronomy/chat");
   }
 
   if (user.role === "SUPER_ADMIN" || user.role === "OPERATIONS_MANAGER") {

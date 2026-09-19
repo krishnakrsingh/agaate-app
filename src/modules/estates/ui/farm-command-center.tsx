@@ -400,7 +400,7 @@ export function FarmCommandCenter({
 
             {/* Satellite Map */}
             {isBoundaryCorrupt(farm.boundaryGeoJson) && (
-              <div role="alert" style={{ padding: "10px 14px", fontSize: 12, color: "var(--amber)", background: "var(--amber-light)", border: "1px solid var(--amber)", borderRadius: "var(--radius-md)" }}>
+              <div role="alert" style={{ padding: "10px 14px", fontSize: 12, color: "var(--amber)", background: "var(--amber-light)", borderRadius: "var(--radius-md)" }}>
                 Stored fence is unreadable — redraw the estate perimeter and save.
               </div>
             )}

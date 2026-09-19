@@ -482,7 +482,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                backgroundColor: totalAttentionCount > 0 ? "var(--semantic-warning, #f59e0b)" : "var(--semantic-success, #10b981)",
+                backgroundColor: totalAttentionCount > 0 ? "var(--amber)" : "var(--green)",
               }}
             />
           </div>
@@ -564,7 +564,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>
               Overdue
             </span>
-            <Icons.ClipboardList size={14} style={{ color: (data.criticalTasks.length + data.openIncidents.length) > 0 ? "#ef4444" : "var(--muted)" }} />
+            <Icons.ClipboardList size={14} style={{ color: (data.criticalTasks.length + data.openIncidents.length) > 0 ? "var(--red)" : "var(--muted)" }} />
           </div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)" }}>
             {data.criticalTasks.length + data.openIncidents.length}
@@ -592,7 +592,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", color: "var(--muted)", textTransform: "uppercase" }}>
               Stalled
             </span>
-            <Icons.Zap size={14} style={{ color: data.stalledSetups.length > 0 ? "#f59e0b" : "var(--muted)" }} />
+            <Icons.Zap size={14} style={{ color: data.stalledSetups.length > 0 ? "var(--amber)" : "var(--muted)" }} />
           </div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)" }}>{data.stalledSetups.length}</div>
           <div style={{ fontSize: 12, color: "var(--muted)" }}>Estates &gt; 30d SLA</div>
@@ -635,7 +635,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <Icons.Navigation size={13} />
             <span>Geofence</span>
             {exceptions.length > 0 && (
-              <span style={{ fontSize: 11, background: "#f59e0b", color: "#fff", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ fontSize: 11, background: "var(--amber)", color: "var(--white, #fff)", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
                 {exceptions.length}
               </span>
             )}
@@ -650,7 +650,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <Icons.MapPin size={13} />
             <span>Locations</span>
             {locations.length > 0 && (
-              <span style={{ fontSize: 11, background: "#f59e0b", color: "#fff", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ fontSize: 11, background: "var(--amber)", color: "var(--white, #fff)", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
                 {locations.length}
               </span>
             )}
@@ -680,7 +680,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <Icons.ClipboardList size={13} />
             <span>Overdue</span>
             {(data.criticalTasks.length + data.openIncidents.length) > 0 && (
-              <span style={{ fontSize: 11, background: "#ef4444", color: "#fff", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ fontSize: 11, background: "var(--red)", color: "var(--white, #fff)", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
                 {data.criticalTasks.length + data.openIncidents.length}
               </span>
             )}
@@ -695,7 +695,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
             <Icons.Zap size={13} />
             <span>Stalled</span>
             {data.stalledSetups.length > 0 && (
-              <span style={{ fontSize: 11, background: "#f59e0b", color: "#fff", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
+              <span style={{ fontSize: 11, background: "var(--amber)", color: "var(--white, #fff)", padding: "1px 6px", borderRadius: 10, fontWeight: 700 }}>
                 {data.stalledSetups.length}
               </span>
             )}
@@ -857,9 +857,9 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
 
                   const severityBadgeStyle =
                     q.severity === "P0"
-                      ? { bg: "rgba(239, 68, 68, 0.12)", color: "#dc2626", border: "rgba(239, 68, 68, 0.3)" }
+                      ? { bg: "var(--red-light)", color: "var(--red)", border: "none" }
                       : q.severity === "P1"
-                        ? { bg: "rgba(245, 158, 11, 0.12)", color: "#d97706", border: "rgba(245, 158, 11, 0.3)" }
+                        ? { bg: "var(--amber-light)", color: "var(--amber)", border: "none" }
                         : { bg: "var(--surface-strong)", color: "var(--muted)", border: "var(--hairline)" };
 
                   return (
@@ -1014,8 +1014,8 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
               width: 48,
               height: 48,
               borderRadius: "50%",
-              backgroundColor: "rgba(16, 185, 129, 0.12)",
-              color: "#10b981",
+              backgroundColor: "var(--green-light)",
+              color: "var(--green)",
               display: "grid",
               placeItems: "center",
             }}
@@ -1343,7 +1343,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Icons.ClipboardList size={16} style={{ color: "#ef4444" }} />
+                <Icons.ClipboardList size={16} style={{ color: "var(--red)" }} />
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>
                   Overdue Execution Tasks ({data.criticalTasks.length})
                 </h2>
@@ -1391,7 +1391,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Icons.AlertTriangle size={16} style={{ color: "#ef4444" }} />
+                <Icons.AlertTriangle size={16} style={{ color: "var(--red)" }} />
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", margin: 0 }}>
                   High-Severity Incidents ({data.openIncidents.length})
                 </h2>
@@ -1412,7 +1412,7 @@ export function OperationsTriageConsole({ data }: { data: TriageData }) {
                   >
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: "rgba(239, 68, 68, 0.12)", color: "#dc2626", fontWeight: 700 }}>
+                        <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: "var(--red-light)", color: "var(--red)", fontWeight: 700 }}>
                           {inc.severity || "HIGH"}
                         </span>
                         <span style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>{inc.type}</span>

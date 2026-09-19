@@ -13,7 +13,7 @@ export default async function DashboardPage() {
     redirect("/officer/day");
   }
   if (session.role === "AGRONOMIST") {
-    redirect("/agronomy/radar");
+    redirect("/agronomy/chat");
   }
 
   // Super Admin lands directly on HQ

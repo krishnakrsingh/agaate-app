@@ -21,7 +21,7 @@ export default async function AgronomyChatPage() {
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
-      <main className="shell">
+      <main className="shell" style={{ maxWidth: "100%", padding: "14px 20px 32px" }}>
         <AgronomyChat currentUserId={session.userId} />
       </main>
     </>
