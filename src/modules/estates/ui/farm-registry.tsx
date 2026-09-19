@@ -569,13 +569,15 @@ export function HqFarmRegistry({ basePath = "/hq/farms" }: { basePath?: string }
                         onClick={() => setExpandedFarm(farm)}
                         title="Click to inspect satellite map"
                       >
-                        <GeoMap
-                          center={center}
-                          polygon={ring}
-                          compact
-                          height={112}
-                          interactive={false}
-                        />
+                        <div style={{ position: "absolute", inset: 0 }}>
+                          <GeoMap
+                            center={center}
+                            polygon={ring}
+                            compact
+                            height="100%"
+                            interactive={false}
+                          />
+                        </div>
 
                         {/* Demarcation status overlay badge */}
                         <div

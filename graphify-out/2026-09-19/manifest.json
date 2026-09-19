@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "src/app/api/hq/clients/[clientId]/route.ts": {
-    "mtime": 1789725830.7191658,
-    "seen": 1789727744.9352126,
-    "ast_hash": "e70c8c0900303c461148905c804b4fb0",
+    "mtime": 1789795546.2402546,
+    "seen": 1789795871.8936772,
+    "ast_hash": "939ee7b55e9414d569a0828cb46b2b02",
     "semantic_hash": ""
   },
   "src/app/api/hq/clients/route.ts": {
@@ -1272,9 +1272,9 @@
     "semantic_hash": ""
   },
   "src/app/(control)/hq/clients/[clientId]/page.tsx": {
-    "mtime": 1789636915.6316483,
-    "seen": 1789672326.7957778,
-    "ast_hash": "78d5507c542aece1c5069a890e233576",
+    "mtime": 1789796302.185139,
+    "seen": 1789796428.2254562,
+    "ast_hash": "b9928e0849d35efcbd0d8a5c06c10a87",
     "semantic_hash": ""
   },
   "src/app/(control)/hq/clients/page.tsx": {
@@ -1926,9 +1926,9 @@
     "semantic_hash": ""
   },
   "src/modules/estates/ui/client-360.tsx": {
-    "mtime": 1789636915.7959254,
-    "seen": 1789672326.7964528,
-    "ast_hash": "14c2ffa87cca689a2549f7c07c7f8327",
+    "mtime": 1789796775.9557543,
+    "seen": 1789800375.6634593,
+    "ast_hash": "934a904817935789e7e7cf9f1cb39a76",
     "semantic_hash": ""
   },
   "src/modules/estates/ui/client-directory.tsx": {
@@ -2160,9 +2160,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-completion.tsx": {
-    "mtime": 1789577447.3571744,
-    "seen": 1789672326.79655,
-    "ast_hash": "1717ca56a226bc472a5a4c944d699712",
+    "mtime": 1789781044.8323436,
+    "seen": 1789781151.3098748,
+    "ast_hash": "339ae2aabe1e2f28b808b859eb0cd3e5",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-step-contacts.tsx": {
@@ -2202,9 +2202,9 @@
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-wizard.tsx": {
-    "mtime": 1789780452.304946,
-    "seen": 1789780528.315614,
-    "ast_hash": "454dd3b86b374839df044eb72bfeb51c",
+    "mtime": 1789781055.2797422,
+    "seen": 1789781151.3099072,
+    "ast_hash": "26f9c0cb4d5781c370af996331925f95",
     "semantic_hash": ""
   },
   "src/modules/onboarding/ui/onboarding-workspace.tsx": {

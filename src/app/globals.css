@@ -2114,13 +2114,13 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  padding: 4px;
-  border-radius: var(--radius-md);
+  padding: 4px 14px 4px 4px;
+  border-radius: 8px;
   background: var(--surface-card);
   border: 1px solid var(--hairline);
   box-shadow: var(--shadow-card);
   gap: 14px;
-  min-height: 120px;
+  min-height: 112px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .farm-registry-card:hover {
@@ -2129,17 +2129,18 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .farm-registry-card-main {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   gap: 14px;
   flex: 1;
   min-width: 0;
 }
 .farm-registry-map-wrap {
   width: 112px;
-  height: 112px;
   min-width: 112px;
   max-width: 112px;
-  border-radius: var(--radius-sm);
+  align-self: stretch;
+  min-height: 112px;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
   border: 1px solid var(--hairline);
@@ -2150,8 +2151,8 @@ input::placeholder, textarea::placeholder { color: var(--muted-soft); }
 .farm-registry-info {
   flex: 1;
   min-width: 0;
-  padding-left: 4px;
-  padding-right: 14px;
+  padding-left: 0;
+  padding-right: 0;
   height: 100%;
   min-height: 112px;
   display: flex;

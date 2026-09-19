@@ -39,7 +39,18 @@ export default async function HqClientDetailPage({
   return (
     <>
       <Navbar role={session.role} userName={session.name} />
-      <main className="shell">
+      <main
+        className="shell"
+        style={{
+          height: "100vh",
+          maxHeight: "100vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          boxSizing: "border-box",
+          paddingBottom: 16,
+        }}
+      >
         <Breadcrumbs
           items={[{ label: "Dashboard", href: "/hq" }, { label: "Clients", href: "/hq/clients" }, { label: clientLabel }]}
         />
